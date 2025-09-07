@@ -29,7 +29,7 @@ public class RoleService {
     return repository.findAll().stream().map(mapper::toResponse).toList();
   }
 
-  public RoleResponse delete(Long id) {
+  public RoleResponse delete(String id) {
     Role role = repository.findById(id).orElseThrow();
     repository.delete(role);
     return mapper.toResponse(role);

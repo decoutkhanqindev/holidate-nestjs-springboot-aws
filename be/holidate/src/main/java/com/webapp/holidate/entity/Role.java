@@ -1,12 +1,12 @@
 package com.webapp.holidate.entity;
 
-import com.webapp.holidate.constants.DbTableNames;
+import com.webapp.holidate.constants.db.DbTableNames;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-@Table(name = DbTableNames.ROLES)
 @Entity
+@Table(name = DbTableNames.ROLES)
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
@@ -18,8 +18,10 @@ public class Role {
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   String id;
-  @NonNull
+
+  @Column(nullable = false, unique = true)
   String name;
-  @NonNull
+
+  @Column(nullable = false)
   String description;
 }

@@ -37,8 +37,8 @@ public class RoleController {
   }
 
   @DeleteMapping(RoleEndpoints.ROLE_ID)
-  public ApiResponse<RoleResponse> delete(@PathVariable Long roleId) {
-    RoleResponse response = service.delete(roleId);
+  public ApiResponse<RoleResponse> delete(@PathVariable String id) {
+    RoleResponse response = service.delete(id);
     return ApiResponse.<RoleResponse>builder()
       .data(response)
       .build();
