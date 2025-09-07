@@ -12,5 +12,5 @@ public enum RoleType {
   ADMIN("admin"),
   PARTNER("partner");
 
-  String name;
+  String value;
 }
