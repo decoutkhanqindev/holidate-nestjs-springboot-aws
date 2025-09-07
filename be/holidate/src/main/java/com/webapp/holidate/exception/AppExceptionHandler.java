@@ -3,7 +3,6 @@ package com.webapp.holidate.exception;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.type.ErrorType;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.coyote.Response;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
