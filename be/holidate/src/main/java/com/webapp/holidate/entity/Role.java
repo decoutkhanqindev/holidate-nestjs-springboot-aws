@@ -18,10 +18,8 @@ public class Role {
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   String id;
-
   @Column(nullable = false, unique = true)
   String name;
-
   @Column(nullable = false)
   String description;
 }
