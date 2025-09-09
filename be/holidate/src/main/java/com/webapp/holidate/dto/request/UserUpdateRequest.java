@@ -20,12 +20,11 @@ import java.time.LocalDateTime;
 public class UserUpdateRequest {
   @Size(min = 3, max = 100, message = "FULL_NAME_INVALID")
   String fullName;
-
   @Pattern(regexp = ValidationPatterns.PHONE_NUMBER, message = "PHONE_NUMBER_INVALID")
   String phoneNumber;
-
+  String address;
+  String gender;
   @Pattern(regexp = ValidationPatterns.DATE_OF_BIRTH, message = "DATE_OF_BIRTH_INVALID")
   LocalDateTime dateOfBirth;
-
   String avatarUrl;
 }

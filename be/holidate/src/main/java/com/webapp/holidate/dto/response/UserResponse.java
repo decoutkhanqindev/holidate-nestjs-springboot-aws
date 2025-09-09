@@ -25,9 +25,8 @@ public class UserResponse {
   String gender;
   LocalDateTime dateOfBirth;
   String avatarUrl;
-  String authProvider;
-  boolean isActive;
-  Set<Role> roles ;
+  RoleResponse role;
+  UserAuthInfoResponse authInfo;
   LocalDateTime createdAt;
   LocalDateTime updatedAt;
 }

@@ -7,8 +7,6 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
 @Table(name = DbTableNames.USERS)
@@ -23,53 +21,23 @@ public class User {
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   String id;
-
   @Column(nullable = false, unique = true)
   String email;
-
   String password;
-
   @Column(nullable = false)
   String fullName;
-
   @Column(unique = true, length = 11)
   String phoneNumber;
-
   String address;
-
   String gender;
-
   LocalDateTime dateOfBirth;
-
   String avatarUrl;
-
-  String authProvider;
-
-  String authProviderId;
-
-  String emailVerificationToken;
-
-  LocalDateTime emailVerificationTokenExpiry;
-
-  String passwordResetToken;
-
-  LocalDateTime passwordResetTokenExpiry;
-
-  @Builder.Default
-  boolean isActive = false;
-
-  @ManyToMany(fetch = FetchType.EAGER)
-  @JoinTable(
-    name = DbTableNames.USER_ROLES,
-    joinColumns = @JoinColumn(name = DbFieldNames.USER_ID),
-    inverseJoinColumns = @JoinColumn(name = DbFieldNames.ROLE_ID)
-  )
-  @Builder.Default
-  Set<Role> roles = new HashSet<>();
-
+  @ManyToOne(fetch = FetchType.EAGER)
+  @JoinColumn(name = DbFieldNames.ROLE_ID)
+  Role role;
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+  UserAuthInfo authInfo;
   @Builder.Default
   LocalDateTime createdAt = LocalDateTime.now();
-
   LocalDateTime updatedAt;
 }
-
