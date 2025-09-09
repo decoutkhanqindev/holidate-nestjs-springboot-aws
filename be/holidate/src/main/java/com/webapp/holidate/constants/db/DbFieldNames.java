@@ -2,5 +2,6 @@ package com.webapp.holidate.constants.db;
 
 public class DbFieldNames {
   public static final String USER_ID = "user_id";
+  public static final String USER_AUTH_INFO_ID = "auth_info_id";
   public static final String ROLE_ID = "role_id";
 }
