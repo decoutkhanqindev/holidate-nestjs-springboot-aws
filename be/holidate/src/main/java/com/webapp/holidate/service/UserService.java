@@ -5,9 +5,11 @@ import com.webapp.holidate.dto.request.auth.RegisterRequest;
 import com.webapp.holidate.dto.response.UserResponse;
 import com.webapp.holidate.entity.Role;
 import com.webapp.holidate.entity.User;
+import com.webapp.holidate.entity.UserAuthInfo;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.UserMapper;
 import com.webapp.holidate.repository.RoleRepository;
+import com.webapp.holidate.repository.UserAuthInfoRepository;
 import com.webapp.holidate.repository.UserRepository;
 import com.webapp.holidate.type.ErrorType;
 import com.webapp.holidate.type.RoleType;
@@ -24,6 +26,7 @@ import java.util.List;
 @RequiredArgsConstructor()
 public class UserService {
   UserRepository userRepository;
+  UserAuthInfoRepository authInfoRepository;
   RoleRepository roleRepository;
   UserMapper mapper;
   PasswordEncoder passwordEncoder;

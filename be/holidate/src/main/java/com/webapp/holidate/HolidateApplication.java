@@ -17,6 +17,14 @@ public class HolidateApplication {
     System.setProperty(EnvVariables.ADMIN_EMAIL, dotenv.get(EnvVariables.ADMIN_EMAIL));
     System.setProperty(EnvVariables.ADMIN_PASSWORD, dotenv.get(EnvVariables.ADMIN_PASSWORD));
     System.setProperty(EnvVariables.ADMIN_FULLNAME, dotenv.get(EnvVariables.ADMIN_FULLNAME));
+    System.setProperty(EnvVariables.SECRET_KEY, dotenv.get(EnvVariables.SECRET_KEY));
+    System.setProperty(EnvVariables.ISSUER, dotenv.get(EnvVariables.ISSUER));
+    System.setProperty(EnvVariables.MAIL_HOST, dotenv.get(EnvVariables.MAIL_HOST));
+    System.setProperty(EnvVariables.MAIL_PORT, dotenv.get(EnvVariables.MAIL_PORT));
+    System.setProperty(EnvVariables.MAIL_USERNAME, dotenv.get(EnvVariables.MAIL_USERNAME));
+    System.setProperty(EnvVariables.MAIL_PASSWORD, dotenv.get(EnvVariables.MAIL_PASSWORD));
+    System.setProperty(EnvVariables.EMAIL_VERIFICATION_URL, dotenv.get(EnvVariables.EMAIL_VERIFICATION_URL));
+    System.setProperty(EnvVariables.EMAIL_VERIFICATION_EXPIRATION_HOURS, dotenv.get(EnvVariables.EMAIL_VERIFICATION_EXPIRATION_HOURS));
 
     SpringApplication.run(HolidateApplication.class, args);
   }
