@@ -83,7 +83,7 @@ public class AuthService {
     context.setVariable("expiryHours", verificationExpirationHours);
 
     // generate the HTML content
-    String htmlContent = templateEngine.process("verification-email", context);
+    String htmlContent = templateEngine.process("email-verification", context);
 
     // send the email
     try {
