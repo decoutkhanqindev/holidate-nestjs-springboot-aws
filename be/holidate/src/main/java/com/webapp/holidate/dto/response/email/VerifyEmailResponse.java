@@ -13,5 +13,5 @@ import lombok.experimental.FieldDefaults;
 @ToString
 @EqualsAndHashCode
 public class VerifyEmailResponse {
-  boolean isVerified;
+  boolean verified;
 }

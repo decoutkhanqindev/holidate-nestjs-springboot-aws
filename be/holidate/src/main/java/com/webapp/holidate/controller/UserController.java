@@ -4,7 +4,7 @@ import com.webapp.holidate.constants.enpoint.UserEndpoints;
 import com.webapp.holidate.dto.request.UserUpdateRequest;
 import com.webapp.holidate.dto.request.auth.RegisterRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
-import com.webapp.holidate.dto.response.UserResponse;
+import com.webapp.holidate.dto.response.user.UserResponse;
 import com.webapp.holidate.service.UserService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;

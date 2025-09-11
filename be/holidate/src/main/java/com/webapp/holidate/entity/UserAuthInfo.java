@@ -27,8 +27,7 @@ public class UserAuthInfo {
   LocalDateTime emailVerificationTokenExpiry;
   String passwordResetToken;
   LocalDateTime passwordResetTokenExpiry;
-  @Builder.Default
-  boolean isActive = false;
+  boolean active;
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = DbFieldNames.USER_ID, nullable = false, unique = true)
   @ToString.Exclude

@@ -1,11 +1,10 @@
-package com.webapp.holidate.dto.response;
+package com.webapp.holidate.dto.response.user;
 
-import com.webapp.holidate.entity.Role;
+import com.webapp.holidate.dto.response.RoleResponse;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
-import java.util.Set;
 
 @Data
 @Builder

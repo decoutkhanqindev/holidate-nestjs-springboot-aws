@@ -29,7 +29,7 @@ public enum ErrorType {
   INVALID_TOKEN(401, "Token is invalid or expired"),
   TOKEN_NOT_BLANK(400, "Token is required"),
   FORBIDDEN(403, "User is not allowed to access this resource"),
-  SEND_EMAIL_FAILED(500, "Failed to send email"),
+  SEND_EMAIL_FAILED(500, "Failed to send verification email"),
   ;
 
   int statusCode;
