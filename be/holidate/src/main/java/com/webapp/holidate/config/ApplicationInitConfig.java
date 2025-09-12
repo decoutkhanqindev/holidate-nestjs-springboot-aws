@@ -1,7 +1,6 @@
 package com.webapp.holidate.config;
 
 import com.webapp.holidate.constants.AppValues;
-import com.webapp.holidate.constants.EnvVariables;
 import com.webapp.holidate.entity.Role;
 import com.webapp.holidate.entity.User;
 import com.webapp.holidate.entity.UserAuthInfo;
@@ -10,7 +9,6 @@ import com.webapp.holidate.repository.UserRepository;
 import com.webapp.holidate.type.AuthProviderType;
 import com.webapp.holidate.type.RoleType;
 import lombok.AccessLevel;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;

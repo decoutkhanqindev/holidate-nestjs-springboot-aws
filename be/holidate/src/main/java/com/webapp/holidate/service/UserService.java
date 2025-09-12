@@ -1,7 +1,7 @@
 package com.webapp.holidate.service;
 
-import com.webapp.holidate.dto.request.user.UserUpdateRequest;
 import com.webapp.holidate.dto.request.user.UserCreationRequest;
+import com.webapp.holidate.dto.request.user.UserUpdateRequest;
 import com.webapp.holidate.dto.response.user.UserResponse;
 import com.webapp.holidate.entity.Role;
 import com.webapp.holidate.entity.User;

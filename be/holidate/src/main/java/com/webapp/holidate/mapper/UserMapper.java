@@ -1,7 +1,7 @@
 package com.webapp.holidate.mapper;
 
-import com.webapp.holidate.dto.request.user.UserUpdateRequest;
 import com.webapp.holidate.dto.request.user.UserCreationRequest;
+import com.webapp.holidate.dto.request.user.UserUpdateRequest;
 import com.webapp.holidate.dto.response.user.UserResponse;
 import com.webapp.holidate.entity.User;
 import org.mapstruct.Mapper;

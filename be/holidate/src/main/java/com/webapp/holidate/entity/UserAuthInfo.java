@@ -5,7 +5,6 @@ import com.webapp.holidate.constants.db.DbTableNames;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.springframework.cglib.core.Local;
 
 import java.time.LocalDateTime;
 

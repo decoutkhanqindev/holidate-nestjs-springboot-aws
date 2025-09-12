@@ -1,8 +1,8 @@
 package com.webapp.holidate.controller;
 
 import com.webapp.holidate.constants.enpoint.UserEndpoints;
-import com.webapp.holidate.dto.request.user.UserUpdateRequest;
 import com.webapp.holidate.dto.request.user.UserCreationRequest;
+import com.webapp.holidate.dto.request.user.UserUpdateRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.user.UserResponse;
 import com.webapp.holidate.service.UserService;
