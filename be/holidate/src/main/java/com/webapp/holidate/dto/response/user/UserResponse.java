@@ -1,6 +1,5 @@
 package com.webapp.holidate.dto.response.user;
 
-import com.webapp.holidate.dto.response.RoleResponse;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

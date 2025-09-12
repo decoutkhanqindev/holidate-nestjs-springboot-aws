@@ -24,12 +24,16 @@ public enum ErrorType {
   DATE_OF_BIRTH_INVALID(400, "Date of birth is not valid"),
   USER_EXISTS(409, "User already exists"),
   USER_NOT_FOUND(401, "User not found"),
-  USER_ID_NOT_BLANK(400, "User ID is required"),
   UNAUTHENTICATED(401, "User is not authenticated"),
   INVALID_TOKEN(401, "Token is invalid or expired"),
   TOKEN_NOT_BLANK(400, "Token is required"),
   FORBIDDEN(403, "User is not allowed to access this resource"),
   SEND_EMAIL_FAILED(500, "Failed to send verification email"),
+  OTP_NOT_BLANK(400, "OTP is required"),
+  OTP_INVALID(400, "OTP must be 6 digits"),
+  INVALID_OTP(400, "OTP is invalid"),
+  OTP_BLOCKED(429, "Too many failed attempts. Please try again later"),
+  OTP_EXPIRED(400, "OTP has expired"),
   ;
 
   int statusCode;

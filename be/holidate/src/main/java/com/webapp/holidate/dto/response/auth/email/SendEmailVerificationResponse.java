@@ -1,6 +1,5 @@
-package com.webapp.holidate.dto.response.email;
+package com.webapp.holidate.dto.response.auth.email;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

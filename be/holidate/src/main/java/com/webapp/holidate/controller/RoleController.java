@@ -1,9 +1,9 @@
 package com.webapp.holidate.controller;
 
 import com.webapp.holidate.constants.enpoint.RoleEndpoints;
-import com.webapp.holidate.dto.request.RoleRequest;
+import com.webapp.holidate.dto.request.user.RoleRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
-import com.webapp.holidate.dto.response.RoleResponse;
+import com.webapp.holidate.dto.response.user.RoleResponse;
 import com.webapp.holidate.service.RoleService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;

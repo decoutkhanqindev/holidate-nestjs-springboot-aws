@@ -1,4 +1,4 @@
-package com.webapp.holidate.dto.request;
+package com.webapp.holidate.dto.request.user;
 
 import com.webapp.holidate.constants.ValidationPatterns;
 import jakarta.validation.constraints.Pattern;

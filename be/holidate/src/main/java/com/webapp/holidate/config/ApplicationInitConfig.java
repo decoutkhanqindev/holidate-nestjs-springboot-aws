@@ -4,8 +4,11 @@ import com.webapp.holidate.constants.AppValues;
 import com.webapp.holidate.constants.EnvVariables;
 import com.webapp.holidate.entity.Role;
 import com.webapp.holidate.entity.User;
+import com.webapp.holidate.entity.UserAuthInfo;
 import com.webapp.holidate.repository.RoleRepository;
 import com.webapp.holidate.repository.UserRepository;
+import com.webapp.holidate.type.AuthProviderType;
+import com.webapp.holidate.type.RoleType;
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -50,7 +53,7 @@ public class ApplicationInitConfig {
 
   private void createAdminUser() {
     String encodedPassword = passwordEncoder.encode(adminPassword);
-    Role role = roleRepository.findByName("ADMIN");
+    Role role = roleRepository.findByName(RoleType.ADMIN.getValue());
 
     User user = User.builder()
       .email(adminEmail)
@@ -59,8 +62,15 @@ public class ApplicationInitConfig {
       .role(role)
       .build();
 
-    userRepository.save(user);
+    UserAuthInfo userAuthInfo = UserAuthInfo.builder()
+      .authProvider(AuthProviderType.LOCAL.getValue())
+      .active(true)
+      .user(user)
+      .build();
 
+    user.setAuthInfo(userAuthInfo);
+
+    userRepository.save(user);
     log.info("Admin user created. Email: {}, Password: {}, Full Name: {}", adminEmail, adminPassword, adminFullName);
   }
 }

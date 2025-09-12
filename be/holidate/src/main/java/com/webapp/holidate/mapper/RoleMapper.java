@@ -1,7 +1,7 @@
 package com.webapp.holidate.mapper;
 
-import com.webapp.holidate.dto.request.RoleRequest;
-import com.webapp.holidate.dto.response.RoleResponse;
+import com.webapp.holidate.dto.request.user.RoleRequest;
+import com.webapp.holidate.dto.response.user.RoleResponse;
 import com.webapp.holidate.entity.Role;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

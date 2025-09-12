@@ -1,15 +1,17 @@
 package com.webapp.holidate.service;
 
-import com.webapp.holidate.dto.request.UserUpdateRequest;
-import com.webapp.holidate.dto.request.auth.RegisterRequest;
+import com.webapp.holidate.dto.request.user.UserUpdateRequest;
+import com.webapp.holidate.dto.request.user.UserCreationRequest;
 import com.webapp.holidate.dto.response.user.UserResponse;
 import com.webapp.holidate.entity.Role;
 import com.webapp.holidate.entity.User;
+import com.webapp.holidate.entity.UserAuthInfo;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.UserMapper;
 import com.webapp.holidate.repository.RoleRepository;
 import com.webapp.holidate.repository.UserAuthInfoRepository;
 import com.webapp.holidate.repository.UserRepository;
+import com.webapp.holidate.type.AuthProviderType;
 import com.webapp.holidate.type.ErrorType;
 import com.webapp.holidate.type.RoleType;
 import lombok.AccessLevel;
@@ -30,9 +32,16 @@ public class UserService {
   UserMapper mapper;
   PasswordEncoder passwordEncoder;
 
-  public UserResponse create(RegisterRequest request) {
-    if (userRepository.existsByEmail(request.getEmail())) {
+  public UserResponse create(UserCreationRequest request) {
+    UserAuthInfo authInfo = authInfoRepository.findByEmail(request.getEmail()).orElse(null);
+
+    if (authInfo != null && authInfo.isActive()) {
       throw new AppException(ErrorType.USER_EXISTS);
+    }
+
+    if (authInfo != null) {
+      authInfoRepository.delete(authInfo);
+      userRepository.deleteById(authInfo.getUser().getId());
     }
 
     User user = mapper.toEntity(request);
@@ -42,6 +51,14 @@ public class UserService {
 
     Role role = roleRepository.findByName(RoleType.USER.name());
     user.setRole(role);
+
+    UserAuthInfo newAuthInfo = UserAuthInfo.builder()
+      .authProvider(AuthProviderType.LOCAL.getValue())
+      .emailVerificationAttempts(0)
+      .active(false)
+      .user(user)
+      .build();
+    user.setAuthInfo(newAuthInfo);
 
     userRepository.save(user);
     return mapper.toResponse(user);

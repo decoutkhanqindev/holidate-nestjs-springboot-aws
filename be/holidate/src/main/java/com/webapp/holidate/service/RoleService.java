@@ -1,7 +1,7 @@
 package com.webapp.holidate.service;
 
-import com.webapp.holidate.dto.request.RoleRequest;
-import com.webapp.holidate.dto.response.RoleResponse;
+import com.webapp.holidate.dto.request.user.RoleRequest;
+import com.webapp.holidate.dto.response.user.RoleResponse;
 import com.webapp.holidate.entity.Role;
 import com.webapp.holidate.mapper.RoleMapper;
 import com.webapp.holidate.repository.RoleRepository;

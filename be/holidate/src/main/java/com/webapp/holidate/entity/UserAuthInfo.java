@@ -5,6 +5,7 @@ import com.webapp.holidate.constants.db.DbTableNames;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.cglib.core.Local;
 
 import java.time.LocalDateTime;
 
@@ -23,10 +24,14 @@ public class UserAuthInfo {
   String id;
   String authProvider;
   String authProviderId;
-  String emailVerificationToken;
-  LocalDateTime emailVerificationTokenExpiry;
-  String passwordResetToken;
-  LocalDateTime passwordResetTokenExpiry;
+  String emailVerificationOtp;
+  int emailVerificationAttempts;
+  LocalDateTime emailVerificationOtpExpirationTime;
+  LocalDateTime emailVerificationOtpBlockedUntil;
+  String passwordResetOtp;
+  int passwordResetAttempts;
+  LocalDateTime passwordResetOtpExpirationTime;
+  LocalDateTime passwordResetOtpBlockedUntil;
   boolean active;
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = DbFieldNames.USER_ID, nullable = false, unique = true)

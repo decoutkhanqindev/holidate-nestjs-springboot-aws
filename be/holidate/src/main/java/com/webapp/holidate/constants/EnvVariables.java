@@ -13,6 +13,7 @@ public class EnvVariables {
   public static final String MAIL_PORT = "MAIL_PORT";
   public static final String MAIL_USERNAME = "MAIL_USERNAME";
   public static final String MAIL_PASSWORD = "MAIL_PASSWORD";
-  public static final String EMAIL_VERIFICATION_URL = "EMAIL_VERIFICATION_URL";
-  public static final String EMAIL_VERIFICATION_EXPIRATION_HOURS= "EMAIL_VERIFICATION_EXPIRATION_HOURS";
+  public static final String OTP_EXPIRATION_MINUTES = "OTP_EXPIRATION_MINUTES";
+  public static final String OTP_MAX_ATTEMPTS = "OTP_MAX_ATTEMPTS";
+  public static final String OTP_BLOCK_TIME_MINUTES = "OTP_BLOCK_TIME_MINUTES";
 }

@@ -1,8 +1,8 @@
 package com.webapp.holidate.controller;
 
 import com.webapp.holidate.constants.enpoint.UserEndpoints;
-import com.webapp.holidate.dto.request.UserUpdateRequest;
-import com.webapp.holidate.dto.request.auth.RegisterRequest;
+import com.webapp.holidate.dto.request.user.UserUpdateRequest;
+import com.webapp.holidate.dto.request.user.UserCreationRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.user.UserResponse;
 import com.webapp.holidate.service.UserService;
@@ -22,7 +22,7 @@ public class UserController {
   UserService service;
 
   @PostMapping
-  public ApiResponse<UserResponse> create(@RequestBody @Valid RegisterRequest request) {
+  public ApiResponse<UserResponse> create(@RequestBody @Valid UserCreationRequest request) {
     UserResponse response = service.create(request);
     return ApiResponse.<UserResponse>builder()
       .data(response)

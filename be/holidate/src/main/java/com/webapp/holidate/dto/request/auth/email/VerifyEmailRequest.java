@@ -1,4 +1,4 @@
-package com.webapp.holidate.dto.request.auth;
+package com.webapp.holidate.dto.request.auth.email;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -15,14 +15,11 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class RegisterRequest {
+public class VerifyEmailRequest {
   @NotBlank(message = "EMAIL_NOT_BLANK")
   @Email(message = "EMAIL_INVALID")
   String email;
-  @NotBlank(message = "PASSWORD_NOT_BLANK")
-  @Size(min = 8, message = "PASSWORD_INVALID")
-  String password;
-  @NotBlank(message = "FULL_NAME_NOT_BLANK")
-  @Size(min = 3, max = 100, message = "FULL_NAME_INVALID")
-  String fullName;
+  @NotBlank(message = "OTP_NOT_BLANK")
+  @Size(min = 6, max = 6, message = "OTP_INVALID")
+  String otp;
 }

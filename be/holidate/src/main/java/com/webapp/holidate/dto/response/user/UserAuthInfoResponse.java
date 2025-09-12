@@ -18,9 +18,13 @@ public class UserAuthInfoResponse {
   String id;
   String authProvider;
   String authProviderId;
-  String emailVerificationToken;
-  LocalDateTime emailVerificationTokenExpiry;
-  String passwordResetToken;
-  LocalDateTime passwordResetTokenExpiry;
+  String emailVerificationOtp;
+  int emailVerificationAttempts;
+  LocalDateTime emailVerificationOtpExpirationTime;
+  LocalDateTime emailVerificationOtpBlockedUntil;
+  String passwordResetOtp;
+  int passwordResetAttempts;
+  LocalDateTime passwordResetOtpExpirationTime;
+  LocalDateTime passwordResetOtpBlockedUntil;
   boolean active;
 }
