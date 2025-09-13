@@ -2,6 +2,7 @@ package com.webapp.holidate.config.security;
 
 
 import com.webapp.holidate.constants.enpoint.auth.AuthEndpoints;
+import com.webapp.holidate.constants.enpoint.auth.EmailEndpoints;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -25,9 +26,9 @@ public class SecurityConfig {
     AuthEndpoints.AUTH + AuthEndpoints.LOGIN,
     AuthEndpoints.AUTH + AuthEndpoints.LOGOUT,
     AuthEndpoints.AUTH + AuthEndpoints.VERIFY_TOKEN,
-    AuthEndpoints.AUTH + AuthEndpoints.SEND_VERIFICATION_EMAIL,
-    AuthEndpoints.AUTH + AuthEndpoints.RESEND_VERIFICATION_EMAIL,
-    AuthEndpoints.AUTH + AuthEndpoints.VERIFY_EMAIL,
+    AuthEndpoints.AUTH + EmailEndpoints.EMAIL + EmailEndpoints.SEND_VERIFICATION_EMAIL,
+    AuthEndpoints.AUTH + EmailEndpoints.EMAIL + EmailEndpoints.RESEND_VERIFICATION_EMAIL,
+    AuthEndpoints.AUTH + EmailEndpoints.EMAIL + EmailEndpoints.VERIFY_EMAIL,
   };
 
   @Bean

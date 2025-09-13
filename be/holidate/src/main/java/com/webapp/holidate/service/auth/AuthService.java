@@ -8,37 +8,23 @@ import com.nimbusds.jwt.SignedJWT;
 import com.webapp.holidate.constants.AppValues;
 import com.webapp.holidate.dto.request.auth.LoginRequest;
 import com.webapp.holidate.dto.request.auth.VerifyTokenRequest;
-import com.webapp.holidate.dto.request.auth.email.SendEmailVerificationRequest;
-import com.webapp.holidate.dto.request.auth.email.VerifyEmailRequest;
 import com.webapp.holidate.dto.response.auth.LoginResponse;
 import com.webapp.holidate.dto.response.auth.VerificationResponse;
-import com.webapp.holidate.dto.response.auth.email.SendEmailVerificationResponse;
 import com.webapp.holidate.entity.User;
-import com.webapp.holidate.entity.UserAuthInfo;
 import com.webapp.holidate.exception.AppException;
-import com.webapp.holidate.repository.UserAuthInfoRepository;
 import com.webapp.holidate.repository.UserRepository;
-import com.webapp.holidate.type.AuthProviderType;
 import com.webapp.holidate.type.ErrorType;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
 
 import java.text.ParseException;
-import java.time.LocalDateTime;
 import java.util.Date;
-import java.util.Random;
 
 
 @Slf4j
