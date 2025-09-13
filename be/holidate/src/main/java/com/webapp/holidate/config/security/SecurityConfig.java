@@ -62,7 +62,6 @@ public class SecurityConfig {
           )
           .successHandler(successHandler)
           .failureHandler(failureHandler)
-          .permitAll()
       )
       .formLogin(FormLoginConfigurer::disable)
       .csrf(CsrfConfigurer::disable);
