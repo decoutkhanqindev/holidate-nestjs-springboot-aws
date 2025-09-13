@@ -19,6 +19,8 @@ public class HolidateApplication {
     System.setProperty(EnvVariables.ADMIN_FULLNAME, dotenv.get(EnvVariables.ADMIN_FULLNAME));
     System.setProperty(EnvVariables.SECRET_KEY, dotenv.get(EnvVariables.SECRET_KEY));
     System.setProperty(EnvVariables.ISSUER, dotenv.get(EnvVariables.ISSUER));
+    System.setProperty(EnvVariables.ACCESS_TOKEN_EXPIRATION_MINUTES, dotenv.get(EnvVariables.ACCESS_TOKEN_EXPIRATION_MINUTES));
+    System.setProperty(EnvVariables.REFRESH_TOKEN_EXPIRATION_DAYS, dotenv.get(EnvVariables.REFRESH_TOKEN_EXPIRATION_DAYS));
     System.setProperty(EnvVariables.MAIL_HOST, dotenv.get(EnvVariables.MAIL_HOST));
     System.setProperty(EnvVariables.MAIL_PORT, dotenv.get(EnvVariables.MAIL_PORT));
     System.setProperty(EnvVariables.MAIL_USERNAME, dotenv.get(EnvVariables.MAIL_USERNAME));

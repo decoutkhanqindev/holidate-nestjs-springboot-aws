@@ -1,5 +1,6 @@
-package com.webapp.holidate.dto.response.auth.email;
+package com.webapp.holidate.dto.request.auth;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -12,6 +13,7 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class VerifyEmailResponse {
-  boolean verified;
+public class VerifyTokenRequest {
+  @NotBlank(message = "TOKEN_NOT_BLANK")
+  String token;
 }

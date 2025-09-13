@@ -8,6 +8,6 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.Optional;
 
 public interface UserAuthInfoRepository extends JpaRepository<UserAuthInfo, String> {
-  @Query(AuthQueries.FIND_USER_AUTH_INFO_BY_EMAIL)
-  Optional<UserAuthInfo> findByEmail(String email);
+  @Query(AuthQueries.FIND_USER_AUTH_INFO_BY_USER_EMAIL)
+  Optional<UserAuthInfo> findByUserEmail(String email);
 }

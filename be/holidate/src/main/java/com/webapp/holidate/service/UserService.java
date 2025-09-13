@@ -33,7 +33,7 @@ public class UserService {
   PasswordEncoder passwordEncoder;
 
   public UserResponse create(UserCreationRequest request) {
-    UserAuthInfo authInfo = authInfoRepository.findByEmail(request.getEmail()).orElse(null);
+    UserAuthInfo authInfo = authInfoRepository.findByUserEmail(request.getEmail()).orElse(null);
 
     if (authInfo != null && authInfo.isActive()) {
       throw new AppException(ErrorType.USER_EXISTS);

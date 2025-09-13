@@ -1,26 +1,46 @@
 package com.webapp.holidate.config.security;
 
 
+import com.webapp.holidate.constants.enpoint.auth.AuthEndpoints;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
+import org.springframework.security.config.annotation.web.configurers.FormLoginConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@RequiredArgsConstructor
 public class SecurityConfig {
+  private String[] PUBLIC_AUTH_POST_ENDPOINTS = {
+    AuthEndpoints.AUTH + AuthEndpoints.LOGIN,
+    AuthEndpoints.AUTH + AuthEndpoints.LOGOUT,
+    AuthEndpoints.AUTH + AuthEndpoints.VERIFY_TOKEN,
+    AuthEndpoints.AUTH + AuthEndpoints.SEND_VERIFICATION_EMAIL,
+    AuthEndpoints.AUTH + AuthEndpoints.RESEND_VERIFICATION_EMAIL,
+    AuthEndpoints.AUTH + AuthEndpoints.VERIFY_EMAIL,
+  };
+
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http.authorizeHttpRequests(request ->
+      request
+        .requestMatchers(HttpMethod.POST, PUBLIC_AUTH_POST_ENDPOINTS).permitAll()
+        .anyRequest().authenticated()
+    );
+
     http
-      .csrf(AbstractHttpConfigurer::disable)
-      .authorizeHttpRequests(auth -> auth
-        .requestMatchers("/**").permitAll()
-      )
-      .formLogin(AbstractHttpConfigurer::disable);
+      .formLogin(FormLoginConfigurer::disable)
+      .csrf(CsrfConfigurer::disable);
 
     return http.build();
   }

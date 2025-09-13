@@ -9,6 +9,8 @@ public class EnvVariables {
   public static final String ADMIN_FULLNAME = "ADMIN_FULLNAME";
   public static final String SECRET_KEY = "SECRET_KEY";
   public static final String ISSUER = "ISSUER";
+  public static final String ACCESS_TOKEN_EXPIRATION_MINUTES = "ACCESS_TOKEN_EXPIRATION_MINUTES";
+  public static final String REFRESH_TOKEN_EXPIRATION_DAYS = "REFRESH_TOKEN_EXPIRATION_DAYS";
   public static final String MAIL_HOST = "MAIL_HOST";
   public static final String MAIL_PORT = "MAIL_PORT";
   public static final String MAIL_USERNAME = "MAIL_USERNAME";
