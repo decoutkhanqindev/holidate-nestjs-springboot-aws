@@ -22,24 +22,24 @@ public class UserService {
   UserMapper mapper;
 
   public List<RegisterResponse> getAll() {
-    return repository.findAll().stream().map(mapper::toResponse).toList();
+    return repository.findAll().stream().map(mapper::toRegisterResponse).toList();
   }
 
   public RegisterResponse getById(String id) {
     User user = repository.findById(id).orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
-    return mapper.toResponse(user);
+    return mapper.toRegisterResponse(user);
   }
 
   public RegisterResponse update(String id, UserUpdateRequest request) {
     User user = repository.findById(id).orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
     mapper.updateUser(user, request);
     repository.save(user);
-    return mapper.toResponse(user);
+    return mapper.toRegisterResponse(user);
   }
 
   public RegisterResponse delete(String id) {
     User user = repository.findById(id).orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
     repository.delete(user);
-    return mapper.toResponse(user);
+    return mapper.toRegisterResponse(user);
   }
 }

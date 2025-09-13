@@ -12,6 +12,10 @@ public class AppValues {
   public static final String MAIL_PORT = "${spring.mail.port}";
   public static final String MAIL_USERNAME = "${spring.mail.username}";
   public static final String MAIL_PASSWORD = "${spring.mail.password}";
+  public static final String GOOGLE_CLIENT_ID = "${spring.security.oauth2.client.registration.google.client-id}";
+  public static final String GOOGLE_CLIENT_SECRET = "${spring.security.oauth2.client.registration.google.client-secret}";
+  public static final String FRONTEND_LOGIN_SUCCESS_URL = "${spring.security.oauth2.client.frontend-login-success-url}";
+  public static final String FRONTEND_LOGIN_FAILURE_URL = "${spring.security.oauth2.client.frontend-login-failure-url}";
   public static final String OTP_EXPIRATION_MINUTES = "${spring.otp.verification.expiration-minutes}";
   public static final String OTP_MAX_ATTEMPTS = "${spring.otp.verification.max-attempts}";
   public static final String OTP_BLOCK_TIME_MINUTES = "${spring.otp.verification.block-time-minutes}";

@@ -92,7 +92,7 @@ public class AuthService {
     user.setAuthInfo(newAuthInfo);
 
     userRepository.save(user);
-    return mapper.toResponse(user);
+    return mapper.toRegisterResponse(user);
   }
 
   public LoginResponse login(LoginRequest loginRequest) throws JOSEException {
@@ -123,7 +123,7 @@ public class AuthService {
     return passwordEncoder.matches(rawPassword, encodedPassword);
   }
 
-  private String generateToken(User user, int targetExpirationTime) throws JOSEException {
+  public String generateToken(User user, int targetExpirationTime) throws JOSEException {
     Date now = new Date();
     Date expirationTime = new Date(now.getTime() + targetExpirationTime * 60 * 1000L);
 

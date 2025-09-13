@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class HolidateApplication {
   public static void main(String[] args) {
     Dotenv dotenv = Dotenv.load();
+
     System.setProperty(EnvVariables.DB_URL, dotenv.get(EnvVariables.DB_URL));
     System.setProperty(EnvVariables.DB_USERNAME, dotenv.get(EnvVariables.DB_USERNAME));
     System.setProperty(EnvVariables.DB_PASSWORD, dotenv.get(EnvVariables.DB_PASSWORD));
@@ -25,6 +26,10 @@ public class HolidateApplication {
     System.setProperty(EnvVariables.MAIL_PORT, dotenv.get(EnvVariables.MAIL_PORT));
     System.setProperty(EnvVariables.MAIL_USERNAME, dotenv.get(EnvVariables.MAIL_USERNAME));
     System.setProperty(EnvVariables.MAIL_PASSWORD, dotenv.get(EnvVariables.MAIL_PASSWORD));
+    System.setProperty(EnvVariables.GOOGLE_CLIENT_ID, dotenv.get(EnvVariables.GOOGLE_CLIENT_ID));
+    System.setProperty(EnvVariables.GOOGLE_CLIENT_SECRET, dotenv.get(EnvVariables.GOOGLE_CLIENT_SECRET));
+    System.setProperty(EnvVariables.FRONTEND_LOGIN_SUCCESS_URL, dotenv.get(EnvVariables.FRONTEND_LOGIN_SUCCESS_URL));
+    System.setProperty(EnvVariables.FRONTEND_LOGIN_FAILURE_URL, dotenv.get(EnvVariables.FRONTEND_LOGIN_FAILURE_URL));
     System.setProperty(EnvVariables.OTP_EXPIRATION_MINUTES, dotenv.get(EnvVariables.OTP_EXPIRATION_MINUTES));
     System.setProperty(EnvVariables.OTP_MAX_ATTEMPTS, dotenv.get(EnvVariables.OTP_MAX_ATTEMPTS));
     System.setProperty(EnvVariables.OTP_BLOCK_TIME_MINUTES, dotenv.get(EnvVariables.OTP_BLOCK_TIME_MINUTES));
