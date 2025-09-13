@@ -67,10 +67,11 @@ public class AuthService {
       throw new AppException(ErrorType.UNAUTHENTICATED);
     }
 
-    String accessToken = generateToken(user);
+    String accessToken = generateToken(user, accessTokenExpirationMinutes);
+    String refreshToken = generateToken(user, refreshTokenExpirationDays * 24 * 60);
     return LoginResponse.builder()
       .accessToken(accessToken)
-      .refreshToken(null)
+      .refreshToken(refreshToken)
       .build();
   }
 
@@ -78,9 +79,9 @@ public class AuthService {
     return passwordEncoder.matches(rawPassword, encodedPassword);
   }
 
-  private String generateToken(User user) throws JOSEException {
+  private String generateToken(User user, int targetExpirationTime) throws JOSEException {
     Date now = new Date();
-    Date expirationTime = new Date(now.getTime() + accessTokenExpirationMinutes * 60 * 1000L);
+    Date expirationTime = new Date(now.getTime() + targetExpirationTime * 60 * 1000L);
 
     JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
     JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()

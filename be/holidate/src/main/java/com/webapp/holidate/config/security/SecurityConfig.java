@@ -36,6 +36,7 @@ public class SecurityConfig {
     http.authorizeHttpRequests(request ->
       request
         .requestMatchers(HttpMethod.POST, PUBLIC_AUTH_POST_ENDPOINTS).permitAll()
+        .requestMatchers(("/**")).permitAll()
         .anyRequest().authenticated()
     );
 
