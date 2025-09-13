@@ -18,6 +18,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -28,6 +29,7 @@ import org.thymeleaf.context.Context;
 import java.time.LocalDateTime;
 import java.util.Random;
 
+@Log4j2
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
@@ -137,6 +139,11 @@ public class EmailService {
       throw new AppException(ErrorType.INVALID_OTP);
     }
 
+    String storedOtp = authInfo.getEmailVerificationOtp();
+    if (storedOtp == null) {
+      throw new AppException(ErrorType.INVALID_OTP);
+    }
+
     LocalDateTime blockedUntil = authInfo.getEmailVerificationOtpBlockedUntil();
     boolean blocked = isVerificationOtpBlockedUntil(blockedUntil);
     if (blocked) {
@@ -149,7 +156,6 @@ public class EmailService {
       throw new AppException(ErrorType.OTP_EXPIRED);
     }
 
-    String storedOtp = authInfo.getEmailVerificationOtp();
     String otp = request.getOtp();
     boolean otpMatches = otp.equals(storedOtp);
     if (!otpMatches) {
@@ -174,8 +180,8 @@ public class EmailService {
     return expirationTime == null || expirationTime.isBefore(LocalDateTime.now());
   }
 
-  private boolean isVerificationOtpBlockedUntil(LocalDateTime blockedUntil) {
-    return blockedUntil != null && blockedUntil.isAfter(LocalDateTime.now());
+  private boolean isVerificationOtpBlockedUntil(LocalDateTime expirationTime) {
+    return expirationTime != null && expirationTime.isAfter(LocalDateTime.now());
   }
 
   private void incrementVerificationAttempts(UserAuthInfo authInfo) {
