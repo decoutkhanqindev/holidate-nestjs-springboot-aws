@@ -1,4 +1,4 @@
-package com.webapp.holidate.dto.request.user;
+package com.webapp.holidate.dto.request.auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -15,7 +15,7 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class UserCreationRequest {
+public class RegisterRequest {
   @NotBlank(message = "EMAIL_NOT_BLANK")
   @Email(message = "EMAIL_INVALID")
   String email;

@@ -3,10 +3,12 @@ package com.webapp.holidate.controller.auth;
 import com.nimbusds.jose.JOSEException;
 import com.webapp.holidate.constants.enpoint.auth.AuthEndpoints;
 import com.webapp.holidate.dto.request.auth.LoginRequest;
+import com.webapp.holidate.dto.request.auth.RegisterRequest;
 import com.webapp.holidate.dto.request.auth.VerifyTokenRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.auth.LoginResponse;
 import com.webapp.holidate.dto.response.auth.VerificationResponse;
+import com.webapp.holidate.dto.response.auth.RegisterResponse;
 import com.webapp.holidate.service.auth.AuthService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -25,6 +27,14 @@ import java.text.ParseException;
 @RequiredArgsConstructor
 public class AuthController {
   AuthService authService;
+
+  @PostMapping(AuthEndpoints.REGISTER)
+  public ApiResponse<RegisterResponse> register(@RequestBody @Valid RegisterRequest request) {
+    RegisterResponse response = authService.register(request);
+    return ApiResponse.<RegisterResponse>builder()
+      .data(response)
+      .build();
+  }
 
   @PostMapping(AuthEndpoints.LOGIN)
   public ApiResponse<LoginResponse> login(@RequestBody @Valid LoginRequest loginRequest) throws JOSEException {

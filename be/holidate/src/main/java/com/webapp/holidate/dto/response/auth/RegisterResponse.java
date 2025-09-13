@@ -1,5 +1,7 @@
-package com.webapp.holidate.dto.response.user;
+package com.webapp.holidate.dto.response.auth;
 
+import com.webapp.holidate.dto.response.user.RoleResponse;
+import com.webapp.holidate.dto.response.user.UserAuthInfoResponse;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -14,7 +16,7 @@ import java.time.LocalDateTime;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class UserResponse {
+public class RegisterResponse {
   String id;
   String email;
   String fullName;
