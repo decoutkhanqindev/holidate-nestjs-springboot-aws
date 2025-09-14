@@ -26,5 +26,7 @@ public class UserAuthInfoResponse {
   int passwordResetAttempts;
   LocalDateTime passwordResetOtpExpirationTime;
   LocalDateTime passwordResetOtpBlockedUntil;
+  String refreshToken;
+  LocalDateTime refreshTokenExpiresAt;
   boolean active;
 }

@@ -12,6 +12,7 @@ import com.webapp.holidate.repository.UserAuthInfoRepository;
 import com.webapp.holidate.repository.UserRepository;
 import com.webapp.holidate.type.AuthProviderType;
 import com.webapp.holidate.type.ErrorType;
+import com.webapp.holidate.utils.DateTimeUtils;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.AccessLevel;
@@ -30,6 +31,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.Random;
+
+import static com.webapp.holidate.utils.DateTimeUtils.millisToLocalDateTime;
 
 @Log4j2
 @Service
@@ -81,7 +84,7 @@ public class EmailService {
     String otp = generateVerificationOtp();
     authInfo.setEmailVerificationOtp(otp);
 
-    LocalDateTime expirationTime = millisToLocalDateTime(System.currentTimeMillis() + otpExpirationMillis);
+    LocalDateTime expirationTime = DateTimeUtils.millisToLocalDateTime(otpExpirationMillis);
     authInfo.setEmailVerificationOtpExpirationTime(expirationTime);
 
     authInfo.setEmailVerificationAttempts(0);
@@ -192,14 +195,10 @@ public class EmailService {
     authInfo.setEmailVerificationAttempts(attempts);
 
     if (attempts >= otpMaxAttempts) {
-      LocalDateTime blockUntil = millisToLocalDateTime(System.currentTimeMillis() + otpBlockTimeMillis);
+      LocalDateTime blockUntil = DateTimeUtils.millisToLocalDateTime(otpBlockTimeMillis);
       authInfo.setEmailVerificationOtpBlockedUntil(blockUntil);
     }
 
     authInfoRepository.save(authInfo);
-  }
-
-  private LocalDateTime millisToLocalDateTime(long millis) {
-    return new Date(millis).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
   }
 }

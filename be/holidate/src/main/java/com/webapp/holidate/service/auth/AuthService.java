@@ -23,6 +23,7 @@ import com.webapp.holidate.repository.UserRepository;
 import com.webapp.holidate.type.AuthProviderType;
 import com.webapp.holidate.type.ErrorType;
 import com.webapp.holidate.type.RoleType;
+import com.webapp.holidate.utils.DateTimeUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -119,17 +120,17 @@ public class AuthService {
       throw new AppException(ErrorType.UNAUTHENTICATED);
     }
 
-    String accessToken = generateToken(user, accessTokenExpirationMillis);
-    LocalDateTime expiresAt = LocalDateTime.ofInstant(
-      Instant.now().plusMillis(accessTokenExpirationMillis),
-      ZoneId.systemDefault()
-    );
     String refreshToken = generateToken(user, refreshTokenExpirationMillis);
+    LocalDateTime refreshTokenExpiresAt = DateTimeUtils.millisToLocalDateTime(refreshTokenExpirationMillis);
+    authInfo.setRefreshToken(refreshToken);
+    authInfo.setRefreshTokenExpiresAt(refreshTokenExpiresAt);
+    authInfoRepository.save(authInfo);
 
+    String accessToken = generateToken(user, accessTokenExpirationMillis);
+    LocalDateTime accessTokenExpiresAt = DateTimeUtils.millisToLocalDateTime(accessTokenExpirationMillis);
     return LoginResponse.builder()
-      .accessToken(accessToken)
-      .expiresAt(expiresAt)
-      .refreshToken(refreshToken)
+      .token(accessToken)
+      .expiresAt(accessTokenExpiresAt)
       .build();
   }
 

@@ -16,7 +16,6 @@ import java.util.Date;
 @ToString
 @EqualsAndHashCode
 public class LoginResponse {
-  String accessToken;
+  String token;
   LocalDateTime expiresAt;
-  String refreshToken;
 }

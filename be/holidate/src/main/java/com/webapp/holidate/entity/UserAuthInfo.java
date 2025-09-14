@@ -31,6 +31,9 @@ public class UserAuthInfo {
   int passwordResetAttempts;
   LocalDateTime passwordResetOtpExpirationTime;
   LocalDateTime passwordResetOtpBlockedUntil;
+  @Column(name = DbFieldNames.REFRESH_TOKEN, columnDefinition = "TEXT")
+  String refreshToken;
+  LocalDateTime refreshTokenExpiresAt;
   boolean active;
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = DbFieldNames.USER_ID, nullable = false, unique = true)
