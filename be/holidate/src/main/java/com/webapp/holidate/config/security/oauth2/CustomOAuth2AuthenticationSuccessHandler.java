@@ -74,13 +74,19 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
     Cookie accessTokenCookie = new Cookie(accessTokenCookieName, accessToken);
     accessTokenCookie.setHttpOnly(true);
     accessTokenCookie.setPath("/");
-    accessTokenCookie.setMaxAge((int) (accessTokenExpirationMillis / 1000));
+
+    int accessTokenExpirationInt = (int) (accessTokenExpirationMillis / 1000);
+    accessTokenCookie.setMaxAge(accessTokenExpirationInt);
+
     response.addCookie(accessTokenCookie);
 
     Cookie refreshTokenCookie = new Cookie(refreshTokenCookieName, refreshToken);
     refreshTokenCookie.setHttpOnly(true);
     refreshTokenCookie.setPath("/");
-    refreshTokenCookie.setMaxAge((int) (refreshTokenExpirationMillis / 1000));
+
+    int refreshTokenExpirationInt = (int) (refreshTokenExpirationMillis * 24 * 60 / 1000);
+    refreshTokenCookie.setMaxAge(refreshTokenExpirationInt);
+
     response.addCookie(refreshTokenCookie);
   }
 }

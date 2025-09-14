@@ -93,7 +93,9 @@ public class EmailService {
     Context context = new Context();
     context.setVariable("name", user.getFullName());
     context.setVariable("otp", otp);
-    context.setVariable("expiryMinutes", otpExpirationMillis / 60000);
+
+    int otpExpirationMinutes = (int) (otpExpirationMillis / 60000);
+    context.setVariable("expiryMinutes", otpExpirationMinutes);
 
     // generate the HTML content
     String htmlContent = templateEngine.process("email-verification", context);
