@@ -27,6 +27,8 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.Random;
 
 @Log4j2
@@ -40,16 +42,16 @@ public class EmailService {
   TemplateEngine templateEngine;
 
   @NonFinal
-  @Value(AppValues.OTP_EXPIRATION_MINUTES)
-  int otpExpirationMinutes;
+  @Value(AppValues.OTP_EXPIRATION_MILLIS)
+  long otpExpirationMillis;
 
   @NonFinal
   @Value(AppValues.OTP_MAX_ATTEMPTS)
   int otpMaxAttempts;
 
   @NonFinal
-  @Value(AppValues.OTP_BLOCK_TIME_MINUTES)
-  int otpBlockTimeMinutes;
+  @Value(AppValues.OTP_BLOCK_TIME_MILLIS)
+  long otpBlockTimeMillis;
 
   public SendEmailVerificationResponse sendVerificationEmail(SendEmailVerificationRequest request) {
     User user = userRepository.findByEmail(request.getEmail())
@@ -68,21 +70,18 @@ public class EmailService {
       user.setAuthInfo(authInfo);
     }
 
-    boolean active = authInfo.isActive();
-    if (active) {
+    if (authInfo.isActive()) {
       throw new AppException(ErrorType.USER_EXISTS);
     }
 
-    LocalDateTime blockedUntil = authInfo.getEmailVerificationOtpBlockedUntil();
-    boolean blocked = isVerificationOtpBlockedUntil(blockedUntil);
-    if (blocked) {
+    if (isVerificationOtpBlockedUntil(authInfo.getEmailVerificationOtpBlockedUntil())) {
       throw new AppException(ErrorType.OTP_BLOCKED);
     }
 
     String otp = generateVerificationOtp();
     authInfo.setEmailVerificationOtp(otp);
 
-    LocalDateTime expirationTime = LocalDateTime.now().plusMinutes(otpExpirationMinutes);
+    LocalDateTime expirationTime = millisToLocalDateTime(System.currentTimeMillis() + otpExpirationMillis);
     authInfo.setEmailVerificationOtpExpirationTime(expirationTime);
 
     authInfo.setEmailVerificationAttempts(0);
@@ -94,6 +93,8 @@ public class EmailService {
     Context context = new Context();
     context.setVariable("name", user.getFullName());
     context.setVariable("otp", otp);
+
+    int otpExpirationMinutes = (int) (otpExpirationMillis / 60000);
     context.setVariable("expiryMinutes", otpExpirationMinutes);
 
     // generate the HTML content
@@ -139,14 +140,11 @@ public class EmailService {
       throw new AppException(ErrorType.INVALID_OTP);
     }
 
-    String authProvider = authInfo.getAuthProvider();
-    boolean localAuth = AuthProviderType.LOCAL.getValue().equals(authProvider);
-    if (!localAuth) {
+    if (!AuthProviderType.LOCAL.getValue().equals(authInfo.getAuthProvider())) {
       throw new AppException(ErrorType.INVALID_OTP);
     }
 
-    boolean active = authInfo.isActive();
-    if (active) {
+    if (authInfo.isActive()) {
       throw new AppException(ErrorType.USER_EXISTS);
     }
 
@@ -155,21 +153,15 @@ public class EmailService {
       throw new AppException(ErrorType.INVALID_OTP);
     }
 
-    LocalDateTime blockedUntil = authInfo.getEmailVerificationOtpBlockedUntil();
-    boolean blocked = isVerificationOtpBlockedUntil(blockedUntil);
-    if (blocked) {
+    if (isVerificationOtpBlockedUntil(authInfo.getEmailVerificationOtpBlockedUntil())) {
       throw new AppException(ErrorType.OTP_BLOCKED);
     }
 
-    LocalDateTime expirationTime = authInfo.getEmailVerificationOtpExpirationTime();
-    boolean expired = isVerificationOtpExpired(expirationTime);
-    if (expired) {
+    if (isVerificationOtpExpired(authInfo.getEmailVerificationOtpExpirationTime())) {
       throw new AppException(ErrorType.OTP_EXPIRED);
     }
 
-    String otp = request.getOtp();
-    boolean otpMatches = otp.equals(storedOtp);
-    if (!otpMatches) {
+    if (!request.getOtp().equals(storedOtp)) {
       incrementVerificationAttempts(authInfo);
       throw new AppException(ErrorType.INVALID_OTP);
     }
@@ -200,10 +192,14 @@ public class EmailService {
     authInfo.setEmailVerificationAttempts(attempts);
 
     if (attempts >= otpMaxAttempts) {
-      LocalDateTime blockUntil = LocalDateTime.now().plusMinutes(otpBlockTimeMinutes);
+      LocalDateTime blockUntil = millisToLocalDateTime(System.currentTimeMillis() + otpBlockTimeMillis);
       authInfo.setEmailVerificationOtpBlockedUntil(blockUntil);
     }
 
     authInfoRepository.save(authInfo);
+  }
+
+  private LocalDateTime millisToLocalDateTime(long millis) {
+    return new Date(millis).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
   }
 }
