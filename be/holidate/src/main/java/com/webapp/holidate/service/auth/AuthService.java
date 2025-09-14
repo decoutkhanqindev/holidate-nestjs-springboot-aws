@@ -71,7 +71,6 @@ public class AuthService {
     }
 
     if (authInfo != null) {
-      authInfoRepository.delete(authInfo);
       userRepository.deleteById(authInfo.getUser().getId());
     }
 

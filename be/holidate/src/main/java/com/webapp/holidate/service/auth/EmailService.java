@@ -139,6 +139,16 @@ public class EmailService {
       throw new AppException(ErrorType.INVALID_OTP);
     }
 
+    String authProvider = authInfo.getAuthProvider();
+    if (!AuthProviderType.LOCAL.getValue().equals(authProvider)) {
+      throw new AppException(ErrorType.INVALID_OTP);
+    }
+
+    boolean active = authInfo.isActive();
+    if (active) {
+      throw new AppException(ErrorType.USER_EXISTS);
+    }
+
     String storedOtp = authInfo.getEmailVerificationOtp();
     if (storedOtp == null) {
       throw new AppException(ErrorType.INVALID_OTP);
