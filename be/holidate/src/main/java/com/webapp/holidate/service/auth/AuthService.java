@@ -124,7 +124,7 @@ public class AuthService {
       Instant.now().plusMillis(accessTokenExpirationMillis),
       ZoneId.systemDefault()
     );
-    String refreshToken = generateToken(user, refreshTokenExpirationMillis * 24 * 60);
+    String refreshToken = generateToken(user, refreshTokenExpirationMillis);
 
     return LoginResponse.builder()
       .accessToken(accessToken)

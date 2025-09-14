@@ -61,7 +61,7 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
 
     try {
       accessToken = authService.generateToken(user, accessTokenExpirationMillis);
-      refreshToken = authService.generateToken(user, refreshTokenExpirationMillis * 24 * 60);
+      refreshToken = authService.generateToken(user, refreshTokenExpirationMillis);
     } catch (JOSEException e) {
       throw new AppException(ErrorType.UNKNOWN_ERROR);
     }
@@ -84,7 +84,7 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
     refreshTokenCookie.setHttpOnly(true);
     refreshTokenCookie.setPath("/");
 
-    int refreshTokenExpirationInt = (int) (refreshTokenExpirationMillis * 24 * 60 / 1000);
+    int refreshTokenExpirationInt = (int) (refreshTokenExpirationMillis / 1000);
     refreshTokenCookie.setMaxAge(refreshTokenExpirationInt);
 
     response.addCookie(refreshTokenCookie);
