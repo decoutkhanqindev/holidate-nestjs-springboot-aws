@@ -4,13 +4,14 @@ public class EnvVariables {
   public static final String DB_URL = "DB_URL";
   public static final String DB_USERNAME = "DB_USERNAME";
   public static final String DB_PASSWORD = "DB_PASSWORD";
+
   public static final String ADMIN_EMAIL = "ADMIN_EMAIL";
   public static final String ADMIN_PASSWORD = "ADMIN_PASSWORD";
   public static final String ADMIN_FULLNAME = "ADMIN_FULLNAME";
   public static final String SECRET_KEY = "SECRET_KEY";
   public static final String ISSUER = "ISSUER";
-  public static final String ACCESS_TOKEN_EXPIRATION_MINUTES = "ACCESS_TOKEN_EXPIRATION_MINUTES";
-  public static final String REFRESH_TOKEN_EXPIRATION_DAYS = "REFRESH_TOKEN_EXPIRATION_DAYS";
+  public static final String ACCESS_TOKEN_EXPIRATION_MILLIS = "ACCESS_TOKEN_EXPIRATION_MILLIS";
+  public static final String REFRESH_TOKEN_EXPIRATION_MILLIS = "REFRESH_TOKEN_EXPIRATION_MILLIS";
   public static final String ACCESS_TOKEN_COOKIE_NAME = "ACCESS_TOKEN_COOKIE_NAME";
   public static final String REFRESH_TOKEN_COOKIE_NAME = "REFRESH_TOKEN_COOKIE_NAME";
   public static final String MAIL_HOST = "MAIL_HOST";
@@ -22,7 +23,7 @@ public class EnvVariables {
   public static final String FRONTEND_URL = "FRONTEND_URL";
   public static final String FRONTEND_LOGIN_SUCCESS_URL = "FRONTEND_LOGIN_SUCCESS_URL";
   public static final String FRONTEND_LOGIN_FAILURE_URL = "FRONTEND_LOGIN_FAILURE_URL";
-  public static final String OTP_EXPIRATION_MINUTES = "OTP_EXPIRATION_MINUTES";
+  public static final String OTP_EXPIRATION_MILLIS = "OTP_EXPIRATION_MILLIS";
   public static final String OTP_MAX_ATTEMPTS = "OTP_MAX_ATTEMPTS";
-  public static final String OTP_BLOCK_TIME_MINUTES = "OTP_BLOCK_TIME_MINUTES";
+  public static final String OTP_BLOCK_TIME_MILLIS = "OTP_BLOCK_TIME_MILLIS";
 }

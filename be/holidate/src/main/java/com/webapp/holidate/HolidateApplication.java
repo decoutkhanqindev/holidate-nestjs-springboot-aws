@@ -20,8 +20,8 @@ public class HolidateApplication {
     System.setProperty(EnvVariables.ADMIN_FULLNAME, dotenv.get(EnvVariables.ADMIN_FULLNAME));
     System.setProperty(EnvVariables.SECRET_KEY, dotenv.get(EnvVariables.SECRET_KEY));
     System.setProperty(EnvVariables.ISSUER, dotenv.get(EnvVariables.ISSUER));
-    System.setProperty(EnvVariables.ACCESS_TOKEN_EXPIRATION_MINUTES, dotenv.get(EnvVariables.ACCESS_TOKEN_EXPIRATION_MINUTES));
-    System.setProperty(EnvVariables.REFRESH_TOKEN_EXPIRATION_DAYS, dotenv.get(EnvVariables.REFRESH_TOKEN_EXPIRATION_DAYS));
+    System.setProperty(EnvVariables.ACCESS_TOKEN_EXPIRATION_MILLIS, dotenv.get(EnvVariables.ACCESS_TOKEN_EXPIRATION_MILLIS));
+    System.setProperty(EnvVariables.REFRESH_TOKEN_EXPIRATION_MILLIS, dotenv.get(EnvVariables.REFRESH_TOKEN_EXPIRATION_MILLIS));
     System.setProperty(EnvVariables.ACCESS_TOKEN_COOKIE_NAME, dotenv.get(EnvVariables.ACCESS_TOKEN_COOKIE_NAME));
     System.setProperty(EnvVariables.REFRESH_TOKEN_COOKIE_NAME, dotenv.get(EnvVariables.REFRESH_TOKEN_COOKIE_NAME));
     System.setProperty(EnvVariables.MAIL_HOST, dotenv.get(EnvVariables.MAIL_HOST));
@@ -33,9 +33,9 @@ public class HolidateApplication {
     System.setProperty(EnvVariables.FRONTEND_URL, dotenv.get(EnvVariables.FRONTEND_URL));
     System.setProperty(EnvVariables.FRONTEND_LOGIN_SUCCESS_URL, dotenv.get(EnvVariables.FRONTEND_LOGIN_SUCCESS_URL));
     System.setProperty(EnvVariables.FRONTEND_LOGIN_FAILURE_URL, dotenv.get(EnvVariables.FRONTEND_LOGIN_FAILURE_URL));
-    System.setProperty(EnvVariables.OTP_EXPIRATION_MINUTES, dotenv.get(EnvVariables.OTP_EXPIRATION_MINUTES));
+    System.setProperty(EnvVariables.OTP_EXPIRATION_MILLIS, dotenv.get(EnvVariables.OTP_EXPIRATION_MILLIS));
     System.setProperty(EnvVariables.OTP_MAX_ATTEMPTS, dotenv.get(EnvVariables.OTP_MAX_ATTEMPTS));
-    System.setProperty(EnvVariables.OTP_BLOCK_TIME_MINUTES, dotenv.get(EnvVariables.OTP_BLOCK_TIME_MINUTES));
+    System.setProperty(EnvVariables.OTP_BLOCK_TIME_MILLIS, dotenv.get(EnvVariables.OTP_BLOCK_TIME_MILLIS));
 
     SpringApplication.run(HolidateApplication.class, args);
   }

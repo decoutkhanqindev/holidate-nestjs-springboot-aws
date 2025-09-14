@@ -33,9 +33,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
-
 
 @Slf4j
 @Service
@@ -57,12 +58,12 @@ public class AuthService {
   String ISSUER;
 
   @NonFinal
-  @Value(AppValues.ACCESS_TOKEN_EXPIRATION_MINUTES)
-  int accessTokenExpirationMinutes;
+  @Value(AppValues.ACCESS_TOKEN_EXPIRATION_MILLIS)
+  long accessTokenExpirationMillis;
 
   @NonFinal
-  @Value(AppValues.REFRESH_TOKEN_EXPIRATION_DAYS)
-  int refreshTokenExpirationDays;
+  @Value(AppValues.REFRESH_TOKEN_EXPIRATION_MILLIS)
+  long refreshTokenExpirationMillis;
 
   public RegisterResponse register(RegisterRequest request) {
     UserAuthInfo authInfo = authInfoRepository.findByUserEmail(request.getEmail()).orElse(null);
@@ -118,9 +119,13 @@ public class AuthService {
       throw new AppException(ErrorType.UNAUTHENTICATED);
     }
 
-    String accessToken = generateToken(user, accessTokenExpirationMinutes);
-    LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(accessTokenExpirationMinutes);
-    String refreshToken = generateToken(user, refreshTokenExpirationDays * 24 * 60);
+    String accessToken = generateToken(user, accessTokenExpirationMillis);
+    LocalDateTime expiresAt = LocalDateTime.ofInstant(
+      Instant.now().plusMillis(accessTokenExpirationMillis),
+      ZoneId.systemDefault()
+    );
+    String refreshToken = generateToken(user, refreshTokenExpirationMillis);
+
     return LoginResponse.builder()
       .accessToken(accessToken)
       .expiresAt(expiresAt)
@@ -132,9 +137,9 @@ public class AuthService {
     return passwordEncoder.matches(rawPassword, encodedPassword);
   }
 
-  public String generateToken(User user, int targetExpirationTime) throws JOSEException {
+  public String generateToken(User user, long expirationMillis) throws JOSEException {
     Date now = new Date();
-    Date expirationTime = new Date(now.getTime() + targetExpirationTime * 60 * 1000L);
+    Date expirationTime = new Date(now.getTime() + expirationMillis);
 
     JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
     JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
