@@ -10,8 +10,8 @@ import com.webapp.holidate.dto.request.auth.LoginRequest;
 import com.webapp.holidate.dto.request.auth.RegisterRequest;
 import com.webapp.holidate.dto.request.auth.VerifyTokenRequest;
 import com.webapp.holidate.dto.response.auth.LoginResponse;
-import com.webapp.holidate.dto.response.auth.VerificationResponse;
 import com.webapp.holidate.dto.response.auth.RegisterResponse;
+import com.webapp.holidate.dto.response.auth.VerificationResponse;
 import com.webapp.holidate.entity.Role;
 import com.webapp.holidate.entity.User;
 import com.webapp.holidate.entity.UserAuthInfo;
@@ -33,6 +33,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 
@@ -97,8 +98,15 @@ public class AuthService {
   public LoginResponse login(LoginRequest loginRequest) throws JOSEException {
     User user = userRepository.findByEmail(loginRequest.getEmail())
       .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+    UserAuthInfo authInfo = user.getAuthInfo();
 
-    boolean active = user.getAuthInfo() != null && user.getAuthInfo().isActive();
+    String authProvider = authInfo.getAuthProvider();
+    boolean localAuth = AuthProviderType.LOCAL.getValue().equals(authProvider);
+    if (!localAuth) {
+      throw new AppException(ErrorType.ONLY_LOCAL_AUTH);
+    }
+
+    boolean active = authInfo.isActive();
     if (!active) {
       throw new AppException(ErrorType.UNAUTHENTICATED);
     }
@@ -111,9 +119,11 @@ public class AuthService {
     }
 
     String accessToken = generateToken(user, accessTokenExpirationMinutes);
+    LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(accessTokenExpirationMinutes);
     String refreshToken = generateToken(user, refreshTokenExpirationDays * 24 * 60);
     return LoginResponse.builder()
       .accessToken(accessToken)
+      .expiresAt(expiresAt)
       .refreshToken(refreshToken)
       .build();
   }

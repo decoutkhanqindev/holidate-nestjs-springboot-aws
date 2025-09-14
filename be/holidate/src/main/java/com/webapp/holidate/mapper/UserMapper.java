@@ -7,7 +7,6 @@ import com.webapp.holidate.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {

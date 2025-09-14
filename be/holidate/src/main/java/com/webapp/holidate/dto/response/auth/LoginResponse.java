@@ -3,6 +3,9 @@ package com.webapp.holidate.dto.response.auth;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDateTime;
+import java.util.Date;
+
 @Data
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -14,5 +17,6 @@ import lombok.experimental.FieldDefaults;
 @EqualsAndHashCode
 public class LoginResponse {
   String accessToken;
+  LocalDateTime expiresAt;
   String refreshToken;
 }

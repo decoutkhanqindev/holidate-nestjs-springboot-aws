@@ -140,7 +140,8 @@ public class EmailService {
     }
 
     String authProvider = authInfo.getAuthProvider();
-    if (!AuthProviderType.LOCAL.getValue().equals(authProvider)) {
+    boolean localAuth = AuthProviderType.LOCAL.getValue().equals(authProvider);
+    if (!localAuth) {
       throw new AppException(ErrorType.INVALID_OTP);
     }
 
