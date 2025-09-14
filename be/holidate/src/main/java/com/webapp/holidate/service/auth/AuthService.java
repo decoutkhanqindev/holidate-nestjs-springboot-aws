@@ -132,8 +132,25 @@ public class AuthService {
       .build();
   }
 
-  private boolean isPasswordMatches(String rawPassword, String encodedPassword) {
-    return passwordEncoder.matches(rawPassword, encodedPassword);
+  public VerificationResponse verifyToken(VerifyTokenRequest verifyTokenRequest) throws JOSEException, ParseException {
+    String token = verifyTokenRequest.getToken();
+    SignedJWT signedJWT = SignedJWT.parse(token);
+
+    Date expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+    boolean expired = isVerificationTokenExpired(expirationTime);
+    if (expired) {
+      throw new AppException(ErrorType.TOKEN_EXPIRED);
+    }
+
+    JWSVerifier verifier = new MACVerifier(SECRET_KEY.getBytes());
+    boolean verified = signedJWT.verify(verifier);
+    if (!verified) {
+      throw new AppException(ErrorType.INVALID_TOKEN);
+    }
+
+    return VerificationResponse.builder()
+      .verified(true)
+      .build();
   }
 
   public String generateToken(User user, long expirationMillis) throws JOSEException {
@@ -158,25 +175,8 @@ public class AuthService {
     return jwsObject.serialize();
   }
 
-  public VerificationResponse verifyToken(VerifyTokenRequest verifyTokenRequest) throws JOSEException, ParseException {
-    String token = verifyTokenRequest.getToken();
-    SignedJWT signedJWT = SignedJWT.parse(token);
-
-    Date expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
-    boolean expired = isVerificationTokenExpired(expirationTime);
-    if (expired) {
-      throw new AppException(ErrorType.TOKEN_EXPIRED);
-    }
-
-    JWSVerifier verifier = new MACVerifier(SECRET_KEY.getBytes());
-    boolean verified = signedJWT.verify(verifier);
-    if (!verified) {
-      throw new AppException(ErrorType.INVALID_TOKEN);
-    }
-
-    return VerificationResponse.builder()
-      .verified(true)
-      .build();
+  private boolean isPasswordMatches(String rawPassword, String encodedPassword) {
+    return passwordEncoder.matches(rawPassword, encodedPassword);
   }
 
   private boolean isVerificationTokenExpired(Date expirationTime) {

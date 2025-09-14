@@ -125,12 +125,6 @@ public class EmailService {
     return sendVerificationEmail(request);
   }
 
-  private String generateVerificationOtp() {
-    Random random = new Random();
-    int otp = 100000 + random.nextInt(900000);
-    return String.valueOf(otp);
-  }
-
   public VerificationResponse verifyEmail(VerifyEmailRequest request) {
     String email = request.getEmail();
     UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email).orElse(null);
@@ -176,6 +170,12 @@ public class EmailService {
     return VerificationResponse.builder()
       .verified(true)
       .build();
+  }
+
+  private String generateVerificationOtp() {
+    Random random = new Random();
+    int otp = 100000 + random.nextInt(900000);
+    return String.valueOf(otp);
   }
 
   private boolean isVerificationOtpExpired(LocalDateTime expirationTime) {
