@@ -25,12 +25,8 @@ public class CustomOAuth2AuthenticationFailureHandler extends SimpleUrlAuthentic
   String frontendLoginFailureUrl;
 
   @NonFinal
-  @Value(AppValues.ACCESS_TOKEN_COOKIE_NAME)
-  String accessTokenCookieName;
-
-  @NonFinal
-  @Value(AppValues.REFRESH_TOKEN_COOKIE_NAME)
-  String refreshTokenCookieName;
+  @Value(AppValues.TOKEN_COOKIE_NAME)
+  String tokenCookieName;
 
   @Override
   public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
@@ -39,18 +35,11 @@ public class CustomOAuth2AuthenticationFailureHandler extends SimpleUrlAuthentic
   }
 
   private void clearCookie(HttpServletResponse response) {
-    Cookie accessTokenCookie = new Cookie(accessTokenCookieName, null);
+    Cookie accessTokenCookie = new Cookie(tokenCookieName, null);
     accessTokenCookie.setHttpOnly(true);
     accessTokenCookie.setPath("/");
     accessTokenCookie.setSecure(false);
     accessTokenCookie.setMaxAge(0);
     response.addCookie(accessTokenCookie);
-
-    Cookie refreshTokenCookie = new Cookie(refreshTokenCookieName, null);
-    refreshTokenCookie.setHttpOnly(true);
-    refreshTokenCookie.setPath("/");
-    accessTokenCookie.setSecure(false);
-    refreshTokenCookie.setMaxAge(0);
-    response.addCookie(refreshTokenCookie);
   }
 }

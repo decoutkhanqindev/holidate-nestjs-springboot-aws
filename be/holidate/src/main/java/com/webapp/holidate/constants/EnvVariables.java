@@ -4,7 +4,6 @@ public class EnvVariables {
   public static final String DB_URL = "DB_URL";
   public static final String DB_USERNAME = "DB_USERNAME";
   public static final String DB_PASSWORD = "DB_PASSWORD";
-
   public static final String ADMIN_EMAIL = "ADMIN_EMAIL";
   public static final String ADMIN_PASSWORD = "ADMIN_PASSWORD";
   public static final String ADMIN_FULLNAME = "ADMIN_FULLNAME";
@@ -12,8 +11,7 @@ public class EnvVariables {
   public static final String ISSUER = "ISSUER";
   public static final String ACCESS_TOKEN_EXPIRATION_MILLIS = "ACCESS_TOKEN_EXPIRATION_MILLIS";
   public static final String REFRESH_TOKEN_EXPIRATION_MILLIS = "REFRESH_TOKEN_EXPIRATION_MILLIS";
-  public static final String ACCESS_TOKEN_COOKIE_NAME = "ACCESS_TOKEN_COOKIE_NAME";
-  public static final String REFRESH_TOKEN_COOKIE_NAME = "REFRESH_TOKEN_COOKIE_NAME";
+  public static final String TOKEN_COOKIE_NAME = "TOKEN_COOKIE_NAME";
   public static final String MAIL_HOST = "MAIL_HOST";
   public static final String MAIL_PORT = "MAIL_PORT";
   public static final String MAIL_USERNAME = "MAIL_USERNAME";

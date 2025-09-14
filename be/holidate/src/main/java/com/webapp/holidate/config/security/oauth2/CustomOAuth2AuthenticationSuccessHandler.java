@@ -35,19 +35,11 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
 
   @NonFinal
   @Value(AppValues.ACCESS_TOKEN_EXPIRATION_MILLIS)
-  long accessTokenExpirationMillis;
+  long tokenExpirationMillis;
 
   @NonFinal
-  @Value(AppValues.REFRESH_TOKEN_EXPIRATION_MILLIS)
-  long refreshTokenExpirationMillis;
-
-  @NonFinal
-  @Value(AppValues.ACCESS_TOKEN_COOKIE_NAME)
-  String accessTokenCookieName;
-
-  @NonFinal
-  @Value(AppValues.REFRESH_TOKEN_COOKIE_NAME)
-  String refreshTokenCookieName;
+  @Value(AppValues.TOKEN_COOKIE_NAME)
+  String tokenCookieName;
 
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
@@ -56,37 +48,25 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
     User user = userRepository.findByEmail(email)
       .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
 
-    String accessToken;
-    String refreshToken;
-
+    String token;
     try {
-      accessToken = authService.generateToken(user, accessTokenExpirationMillis);
-      refreshToken = authService.generateToken(user, refreshTokenExpirationMillis);
+      token = authService.generateToken(user, tokenExpirationMillis);
     } catch (JOSEException e) {
       throw new AppException(ErrorType.UNKNOWN_ERROR);
     }
 
-    createCookie(response, accessToken, refreshToken);
+    createCookie(response, token);
     getRedirectStrategy().sendRedirect(request, response, frontendLoginSuccessUrl);
   }
 
-  private void createCookie(HttpServletResponse response, String accessToken, String refreshToken) {
-    Cookie accessTokenCookie = new Cookie(accessTokenCookieName, accessToken);
+  private void createCookie(HttpServletResponse response, String token) {
+    Cookie accessTokenCookie = new Cookie(tokenCookieName, token);
     accessTokenCookie.setHttpOnly(true);
     accessTokenCookie.setPath("/");
 
-    int accessTokenExpirationInt = (int) (accessTokenExpirationMillis / 1000);
-    accessTokenCookie.setMaxAge(accessTokenExpirationInt);
+    int tokenExpirationMillisInt = (int) (tokenExpirationMillis / 1000);
+    accessTokenCookie.setMaxAge(tokenExpirationMillisInt);
 
     response.addCookie(accessTokenCookie);
-
-    Cookie refreshTokenCookie = new Cookie(refreshTokenCookieName, refreshToken);
-    refreshTokenCookie.setHttpOnly(true);
-    refreshTokenCookie.setPath("/");
-
-    int refreshTokenExpirationInt = (int) (refreshTokenExpirationMillis / 1000);
-    refreshTokenCookie.setMaxAge(refreshTokenExpirationInt);
-
-    response.addCookie(refreshTokenCookie);
   }
 }
