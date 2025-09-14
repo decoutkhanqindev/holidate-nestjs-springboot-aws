@@ -55,25 +55,22 @@ public class EmailService {
   public SendEmailVerificationResponse sendVerificationEmail(SendEmailVerificationRequest request) {
     User user = userRepository.findByEmail(request.getEmail())
       .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
-    String email = user.getEmail();
-    UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email).orElse(null);
+    UserAuthInfo authInfo = user.getAuthInfo();
 
-    if (authInfo == null) {
-      authInfo = UserAuthInfo.builder()
-        .authProvider(AuthProviderType.LOCAL.getValue())
-        .emailVerificationAttempts(0)
-        .active(false)
-        .user(user)
-        .build();
-
-      user.setAuthInfo(authInfo);
+    String authProvider = authInfo.getAuthProvider();
+    boolean localAuth = AuthProviderType.LOCAL.getValue().equals(authProvider);
+    if (!localAuth) {
+      throw new AppException(ErrorType.ONLY_LOCAL_AUTH);
     }
 
-    if (authInfo.isActive()) {
+    boolean active = authInfo.isActive();
+    if (active) {
       throw new AppException(ErrorType.USER_EXISTS);
     }
 
-    if (isVerificationOtpBlockedUntil(authInfo.getEmailVerificationOtpBlockedUntil())) {
+    LocalDateTime blockedUntil = authInfo.getEmailVerificationOtpBlockedUntil();
+    boolean blocked = isVerificationOtpBlockedUntil(blockedUntil);
+    if (blocked) {
       throw new AppException(ErrorType.OTP_BLOCKED);
     }
 
@@ -133,8 +130,10 @@ public class EmailService {
       throw new AppException(ErrorType.INVALID_OTP);
     }
 
-    if (!AuthProviderType.LOCAL.getValue().equals(authInfo.getAuthProvider())) {
-      throw new AppException(ErrorType.INVALID_OTP);
+    String authProvider = authInfo.getAuthProvider();
+    boolean localAuth = AuthProviderType.LOCAL.getValue().equals(authProvider);
+    if (!localAuth) {
+      throw new AppException(ErrorType.ONLY_LOCAL_AUTH);
     }
 
     if (authInfo.isActive()) {
@@ -146,15 +145,20 @@ public class EmailService {
       throw new AppException(ErrorType.INVALID_OTP);
     }
 
-    if (isVerificationOtpBlockedUntil(authInfo.getEmailVerificationOtpBlockedUntil())) {
+    LocalDateTime blockedUntil = authInfo.getEmailVerificationOtpBlockedUntil();
+    boolean blocked = isVerificationOtpBlockedUntil(blockedUntil);
+    if (blocked) {
       throw new AppException(ErrorType.OTP_BLOCKED);
     }
 
-    if (isVerificationOtpExpired(authInfo.getEmailVerificationOtpExpirationTime())) {
+    LocalDateTime expirationTime = authInfo.getEmailVerificationOtpExpirationTime();
+    boolean expired = isVerificationOtpExpired(expirationTime);
+    if (expired) {
       throw new AppException(ErrorType.OTP_EXPIRED);
     }
 
-    if (!request.getOtp().equals(storedOtp)) {
+    boolean verified = request.getOtp().equals(storedOtp);
+    if (!verified) {
       incrementVerificationAttempts(authInfo);
       throw new AppException(ErrorType.INVALID_OTP);
     }

@@ -7,9 +7,10 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.webapp.holidate.constants.AppValues;
 import com.webapp.holidate.dto.request.auth.LoginRequest;
+import com.webapp.holidate.dto.request.auth.RefreshTokenRequest;
 import com.webapp.holidate.dto.request.auth.RegisterRequest;
 import com.webapp.holidate.dto.request.auth.VerifyTokenRequest;
-import com.webapp.holidate.dto.response.auth.LoginResponse;
+import com.webapp.holidate.dto.response.auth.TokenResponse;
 import com.webapp.holidate.dto.response.auth.RegisterResponse;
 import com.webapp.holidate.dto.response.auth.VerificationResponse;
 import com.webapp.holidate.entity.Role;
@@ -72,7 +73,8 @@ public class AuthService {
     }
 
     if (authInfo != null) {
-      userRepository.deleteById(authInfo.getUser().getId());
+      String userId = authInfo.getUser().getId();
+      userRepository.deleteById(userId);
     }
 
     User user = mapper.toEntity(request);
@@ -95,7 +97,7 @@ public class AuthService {
     return mapper.toRegisterResponse(user);
   }
 
-  public LoginResponse login(LoginRequest loginRequest) throws JOSEException {
+  public TokenResponse login(LoginRequest loginRequest) throws JOSEException {
     User user = userRepository.findByEmail(loginRequest.getEmail())
       .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
     UserAuthInfo authInfo = user.getAuthInfo();
@@ -119,14 +121,12 @@ public class AuthService {
     }
 
     String refreshToken = generateToken(user, refreshTokenExpirationMillis);
-    LocalDateTime refreshTokenExpiresAt = DateTimeUtils.millisToLocalDateTime(refreshTokenExpirationMillis);
     authInfo.setRefreshToken(refreshToken);
-    authInfo.setRefreshTokenExpiresAt(refreshTokenExpiresAt);
     authInfoRepository.save(authInfo);
 
     String accessToken = generateToken(user, accessTokenExpirationMillis);
     LocalDateTime accessTokenExpiresAt = DateTimeUtils.millisToLocalDateTime(accessTokenExpirationMillis);
-    return LoginResponse.builder()
+    return TokenResponse.builder()
       .token(accessToken)
       .expiresAt(accessTokenExpiresAt)
       .build();
@@ -134,6 +134,21 @@ public class AuthService {
 
   public VerificationResponse verifyToken(VerifyTokenRequest verifyTokenRequest) throws JOSEException, ParseException {
     String token = verifyTokenRequest.getToken();
+
+    boolean verified;
+    try {
+      getSignedJWT(token);
+      verified = true;
+    } catch (AppException e) {
+      verified = false;
+    }
+
+    return VerificationResponse.builder()
+      .verified(verified)
+      .build();
+  }
+
+  private SignedJWT getSignedJWT(String token) throws ParseException, JOSEException {
     SignedJWT signedJWT = SignedJWT.parse(token);
 
     Date expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
@@ -148,9 +163,7 @@ public class AuthService {
       throw new AppException(ErrorType.INVALID_TOKEN);
     }
 
-    return VerificationResponse.builder()
-      .verified(true)
-      .build();
+    return signedJWT;
   }
 
   public String generateToken(User user, long expirationMillis) throws JOSEException {

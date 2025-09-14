@@ -3,7 +3,9 @@ package com.webapp.holidate.config.security.oauth2;
 import com.nimbusds.jose.JOSEException;
 import com.webapp.holidate.constants.AppValues;
 import com.webapp.holidate.entity.User;
+import com.webapp.holidate.entity.UserAuthInfo;
 import com.webapp.holidate.exception.AppException;
+import com.webapp.holidate.repository.UserAuthInfoRepository;
 import com.webapp.holidate.repository.UserRepository;
 import com.webapp.holidate.service.auth.AuthService;
 import com.webapp.holidate.type.ErrorType;
@@ -28,6 +30,7 @@ import java.io.IOException;
 public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
   AuthService authService;
   UserRepository userRepository;
+  UserAuthInfoRepository authInfoRepository;
 
   @NonFinal
   @Value(AppValues.FRONTEND_LOGIN_SUCCESS_URL)
@@ -35,7 +38,11 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
 
   @NonFinal
   @Value(AppValues.ACCESS_TOKEN_EXPIRATION_MILLIS)
-  long tokenExpirationMillis;
+  long accessTokenExpirationMillis;
+
+  @NonFinal
+  @Value(AppValues.REFRESH_TOKEN_EXPIRATION_MILLIS)
+  long refreshTokenExpirationMillis;
 
   @NonFinal
   @Value(AppValues.TOKEN_COOKIE_NAME)
@@ -47,15 +54,21 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
     String email = oAuth2User.getAttribute("email");
     User user = userRepository.findByEmail(email)
       .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+    UserAuthInfo authInfo = user.getAuthInfo();
 
-    String token;
+    String accessToken;
+    String refreshToken;
     try {
-      token = authService.generateToken(user, tokenExpirationMillis);
+      accessToken = authService.generateToken(user, accessTokenExpirationMillis);
+      refreshToken = authService.generateToken(user, refreshTokenExpirationMillis);
     } catch (JOSEException e) {
       throw new AppException(ErrorType.UNKNOWN_ERROR);
     }
 
-    createCookie(response, token);
+    authInfo.setRefreshToken(refreshToken);
+    authInfoRepository.save(authInfo);
+
+    createCookie(response, accessToken);
     getRedirectStrategy().sendRedirect(request, response, frontendLoginSuccessUrl);
   }
 
@@ -64,7 +77,7 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
     accessTokenCookie.setHttpOnly(true);
     accessTokenCookie.setPath("/");
 
-    int tokenExpirationMillisInt = (int) (tokenExpirationMillis / 1000);
+    int tokenExpirationMillisInt = (int) (accessTokenExpirationMillis / 1000);
     accessTokenCookie.setMaxAge(tokenExpirationMillisInt);
 
     response.addCookie(accessTokenCookie);

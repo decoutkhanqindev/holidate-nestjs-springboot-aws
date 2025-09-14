@@ -6,7 +6,7 @@ import com.webapp.holidate.dto.request.auth.LoginRequest;
 import com.webapp.holidate.dto.request.auth.RegisterRequest;
 import com.webapp.holidate.dto.request.auth.VerifyTokenRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
-import com.webapp.holidate.dto.response.auth.LoginResponse;
+import com.webapp.holidate.dto.response.auth.TokenResponse;
 import com.webapp.holidate.dto.response.auth.RegisterResponse;
 import com.webapp.holidate.dto.response.auth.VerificationResponse;
 import com.webapp.holidate.service.auth.AuthService;
@@ -37,9 +37,9 @@ public class AuthController {
   }
 
   @PostMapping(AuthEndpoints.LOGIN)
-  public ApiResponse<LoginResponse> login(@RequestBody @Valid LoginRequest loginRequest) throws JOSEException {
-    LoginResponse response = authService.login(loginRequest);
-    return ApiResponse.<LoginResponse>builder()
+  public ApiResponse<TokenResponse> login(@RequestBody @Valid LoginRequest loginRequest) throws JOSEException {
+    TokenResponse response = authService.login(loginRequest);
+    return ApiResponse.<TokenResponse>builder()
       .data(response)
       .build();
   }

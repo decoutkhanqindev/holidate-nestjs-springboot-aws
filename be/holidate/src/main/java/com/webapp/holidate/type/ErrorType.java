@@ -24,6 +24,7 @@ public enum ErrorType {
   DATE_OF_BIRTH_INVALID(400, "Date of birth is not valid"),
   USER_EXISTS(409, "User already exists"),
   USER_NOT_FOUND(401, "User not found"),
+  USER_ID_NOT_BLANK(400, "User ID is required"),
   UNAUTHENTICATED(401, "User is not authenticated"),
   ACCESS_DENIED(403, "User is not allowed to access this resource"),
   ONLY_LOCAL_AUTH(400, "This action is only available for local authentication users"),

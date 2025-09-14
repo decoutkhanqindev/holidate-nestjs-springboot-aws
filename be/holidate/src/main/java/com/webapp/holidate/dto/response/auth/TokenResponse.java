@@ -1,4 +1,4 @@
-package com.webapp.holidate.dto.response.user;
+package com.webapp.holidate.dto.response.auth;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -14,8 +14,7 @@ import java.time.LocalDateTime;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class UserAuthInfoResponse {
-  String id;
-  String authProvider;
-  boolean active;
+public class TokenResponse {
+  String token;
+  LocalDateTime expiresAt;
 }
