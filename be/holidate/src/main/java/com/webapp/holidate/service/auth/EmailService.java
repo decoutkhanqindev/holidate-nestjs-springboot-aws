@@ -28,11 +28,7 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
 import java.util.Random;
-
-import static com.webapp.holidate.utils.DateTimeUtils.millisToLocalDateTime;
 
 @Log4j2
 @Service
