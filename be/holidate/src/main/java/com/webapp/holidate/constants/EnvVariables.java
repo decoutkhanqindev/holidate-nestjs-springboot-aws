@@ -11,12 +11,15 @@ public class EnvVariables {
   public static final String ISSUER = "ISSUER";
   public static final String ACCESS_TOKEN_EXPIRATION_MINUTES = "ACCESS_TOKEN_EXPIRATION_MINUTES";
   public static final String REFRESH_TOKEN_EXPIRATION_DAYS = "REFRESH_TOKEN_EXPIRATION_DAYS";
+  public static final String ACCESS_TOKEN_COOKIE_NAME = "ACCESS_TOKEN_COOKIE_NAME";
+  public static final String REFRESH_TOKEN_COOKIE_NAME = "REFRESH_TOKEN_COOKIE_NAME";
   public static final String MAIL_HOST = "MAIL_HOST";
   public static final String MAIL_PORT = "MAIL_PORT";
   public static final String MAIL_USERNAME = "MAIL_USERNAME";
   public static final String MAIL_PASSWORD = "MAIL_PASSWORD";
   public static final String GOOGLE_CLIENT_ID = "GOOGLE_CLIENT_ID";
   public static final String GOOGLE_CLIENT_SECRET = "GOOGLE_CLIENT_SECRET";
+  public static final String FRONTEND_URL = "FRONTEND_URL";
   public static final String FRONTEND_LOGIN_SUCCESS_URL = "FRONTEND_LOGIN_SUCCESS_URL";
   public static final String FRONTEND_LOGIN_FAILURE_URL = "FRONTEND_LOGIN_FAILURE_URL";
   public static final String OTP_EXPIRATION_MINUTES = "OTP_EXPIRATION_MINUTES";

@@ -4,7 +4,6 @@ import com.webapp.holidate.entity.Role;
 import com.webapp.holidate.entity.User;
 import com.webapp.holidate.entity.UserAuthInfo;
 import com.webapp.holidate.repository.RoleRepository;
-import com.webapp.holidate.repository.UserAuthInfoRepository;
 import com.webapp.holidate.repository.UserRepository;
 import com.webapp.holidate.type.AuthProviderType;
 import com.webapp.holidate.type.RoleType;

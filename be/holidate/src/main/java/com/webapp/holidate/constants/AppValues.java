@@ -8,12 +8,15 @@ public class AppValues {
   public static final String ISSUER = "${spring.jwt.issuer}";
   public static final String ACCESS_TOKEN_EXPIRATION_MINUTES = "${spring.jwt.access-token.expiration-minutes}";
   public static final String REFRESH_TOKEN_EXPIRATION_DAYS = "${spring.jwt.refresh-token.expiration-days}";
+  public static final String ACCESS_TOKEN_COOKIE_NAME = "${spring.jwt.access-token.cookie-name}";
+  public static final String REFRESH_TOKEN_COOKIE_NAME = "${spring.jwt.refresh-token.cookie-name}";
   public static final String MAIL_HOST = "${spring.mail.host}";
   public static final String MAIL_PORT = "${spring.mail.port}";
   public static final String MAIL_USERNAME = "${spring.mail.username}";
   public static final String MAIL_PASSWORD = "${spring.mail.password}";
   public static final String GOOGLE_CLIENT_ID = "${spring.security.oauth2.client.registration.google.client-id}";
   public static final String GOOGLE_CLIENT_SECRET = "${spring.security.oauth2.client.registration.google.client-secret}";
+  public static final String FRONTEND_URL = "${spring.security.oauth2.client.frontend-url}";
   public static final String FRONTEND_LOGIN_SUCCESS_URL = "${spring.security.oauth2.client.frontend-login-success-url}";
   public static final String FRONTEND_LOGIN_FAILURE_URL = "${spring.security.oauth2.client.frontend-login-failure-url}";
   public static final String OTP_EXPIRATION_MINUTES = "${spring.otp.verification.expiration-minutes}";

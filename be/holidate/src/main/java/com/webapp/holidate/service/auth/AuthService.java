@@ -130,7 +130,7 @@ public class AuthService {
     JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
       .jwtID(user.getId())
       .subject(user.getEmail())
-      .subject(user.getFullName())
+      .claim("fullName", user.getFullName())
       .claim("scope", user.getRole().getName())
       .issuer(ISSUER)
       .issueTime(now)

@@ -1,4 +1,4 @@
-package com.webapp.holidate.config.security;
+package com.webapp.holidate.config.security.oauth2;
 
 import com.nimbusds.jose.JOSEException;
 import com.webapp.holidate.constants.AppValues;
@@ -7,6 +7,7 @@ import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.repository.UserRepository;
 import com.webapp.holidate.service.auth.AuthService;
 import com.webapp.holidate.type.ErrorType;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AccessLevel;
@@ -40,6 +41,14 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
   @Value(AppValues.REFRESH_TOKEN_EXPIRATION_DAYS)
   int refreshTokenExpirationDays;
 
+  @NonFinal
+  @Value(AppValues.ACCESS_TOKEN_COOKIE_NAME)
+  String accessTokenCookieName;
+
+  @NonFinal
+  @Value(AppValues.REFRESH_TOKEN_COOKIE_NAME)
+  String refreshTokenCookieName;
+
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
     OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
@@ -47,13 +56,33 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
     User user = userRepository.findByEmail(email)
       .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
 
+    String accessToken;
+    String refreshToken;
+
     try {
-      String accessToken = authService.generateToken(user, accessTokenExpirationMinutes);
-      String refreshToken = authService.generateToken(user, refreshTokenExpirationDays * 24 * 60);
-      String redirectUrl = String.format("%s?accessToken=%s&refreshToken=%s", frontendLoginSuccessUrl, accessToken, refreshToken);
-      getRedirectStrategy().sendRedirect(request, response, redirectUrl);
+      accessToken = authService.generateToken(user, accessTokenExpirationMinutes);
+      refreshToken = authService.generateToken(user, refreshTokenExpirationDays * 24 * 60);
     } catch (JOSEException e) {
       throw new AppException(ErrorType.UNKNOWN_ERROR);
     }
+
+    createCookie(response, accessToken, refreshToken);
+    getRedirectStrategy().sendRedirect(request, response, frontendLoginSuccessUrl);
+  }
+
+  private void createCookie(HttpServletResponse response, String accessToken, String refreshToken) {
+    Cookie accessTokenCookie = new Cookie(accessTokenCookieName, accessToken);
+    accessTokenCookie.setHttpOnly(true);
+    accessTokenCookie.setPath("/");
+    accessTokenCookie.setSecure(false);
+    accessTokenCookie.setMaxAge(accessTokenExpirationMinutes * 60);
+    response.addCookie(accessTokenCookie);
+
+    Cookie refreshTokenCookie = new Cookie(refreshTokenCookieName, refreshToken);
+    refreshTokenCookie.setHttpOnly(true);
+    refreshTokenCookie.setPath("/");
+    accessTokenCookie.setSecure(false);
+    refreshTokenCookie.setMaxAge(refreshTokenExpirationDays * 24 * 60 * 60);
+    response.addCookie(refreshTokenCookie);
   }
 }
