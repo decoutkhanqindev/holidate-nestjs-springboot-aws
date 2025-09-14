@@ -16,7 +16,7 @@ import java.io.IOException;
 @Component
 public class CustomAccessDeniedHandler implements AccessDeniedHandler {
   @Override
-  public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
+  public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException {
     ApiResponse<?> apiResponse = ApiResponse.builder()
       .statusCode(ErrorType.ACCESS_DENIED.getStatusCode())
       .message(ErrorType.ACCESS_DENIED.getMessage())

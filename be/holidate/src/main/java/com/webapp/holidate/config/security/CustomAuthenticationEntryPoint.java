@@ -17,7 +17,7 @@ import java.io.IOException;
 @Component
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
   @Override
-  public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
+  public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException {
     ApiResponse<?> apiResponse = ApiResponse.builder()
       .statusCode(ErrorType.UNAUTHENTICATED.getStatusCode())
       .message(ErrorType.UNAUTHENTICATED.getMessage())
