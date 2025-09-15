@@ -35,11 +35,11 @@ public class CustomOAuth2AuthenticationFailureHandler extends SimpleUrlAuthentic
   }
 
   private void clearCookie(HttpServletResponse response) {
-    Cookie accessTokenCookie = new Cookie(tokenCookieName, null);
-    accessTokenCookie.setHttpOnly(true);
-    accessTokenCookie.setPath("/");
-    accessTokenCookie.setSecure(false);
-    accessTokenCookie.setMaxAge(0);
-    response.addCookie(accessTokenCookie);
+    Cookie tokenCookie = new Cookie(tokenCookieName, null);
+    tokenCookie.setHttpOnly(true);
+    tokenCookie.setPath("/");
+    tokenCookie.setSecure(false);
+    tokenCookie.setMaxAge(0);
+    response.addCookie(tokenCookie);
   }
 }

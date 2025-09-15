@@ -9,11 +9,11 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
 @Setter
+@Getter
 @ToString
 @EqualsAndHashCode
-public class RefreshTokenRequest {
+public class LogoutRequest {
   @NotBlank(message = "TOKEN_NOT_BLANK")
-  private String token;
+  String token;
 }

@@ -2,10 +2,9 @@ package com.webapp.holidate.controller.auth;
 
 import com.nimbusds.jose.JOSEException;
 import com.webapp.holidate.constants.enpoint.auth.AuthEndpoints;
-import com.webapp.holidate.dto.request.auth.LoginRequest;
-import com.webapp.holidate.dto.request.auth.RegisterRequest;
-import com.webapp.holidate.dto.request.auth.VerifyTokenRequest;
+import com.webapp.holidate.dto.request.auth.*;
 import com.webapp.holidate.dto.response.ApiResponse;
+import com.webapp.holidate.dto.response.auth.LogoutResponse;
 import com.webapp.holidate.dto.response.auth.TokenResponse;
 import com.webapp.holidate.dto.response.auth.RegisterResponse;
 import com.webapp.holidate.dto.response.auth.VerificationResponse;
@@ -48,6 +47,22 @@ public class AuthController {
   public ApiResponse<VerificationResponse> verifyToken(@RequestBody @Valid VerifyTokenRequest request) throws ParseException, JOSEException {
     VerificationResponse response = authService.verifyToken(request);
     return ApiResponse.<VerificationResponse>builder()
+      .data(response)
+      .build();
+  }
+
+  @PostMapping(AuthEndpoints.REFRESH_TOKEN)
+  public ApiResponse<TokenResponse> refreshToken(@RequestBody @Valid RefreshTokenRequest request) throws ParseException, JOSEException {
+    TokenResponse response = authService.refreshToken(request);
+    return ApiResponse.<TokenResponse>builder()
+      .data(response)
+      .build();
+  }
+
+  @PostMapping(AuthEndpoints.LOGOUT)
+  public ApiResponse<LogoutResponse> logout(@RequestBody @Valid LogoutRequest request) throws ParseException, JOSEException {
+    LogoutResponse response = authService.logout(request);
+    return ApiResponse.<LogoutResponse>builder()
       .data(response)
       .build();
   }

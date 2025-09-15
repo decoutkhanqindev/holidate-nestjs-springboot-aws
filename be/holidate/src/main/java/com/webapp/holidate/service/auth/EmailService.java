@@ -53,9 +53,8 @@ public class EmailService {
   long otpBlockTimeMillis;
 
   public SendEmailVerificationResponse sendVerificationEmail(SendEmailVerificationRequest request) {
-    User user = userRepository.findByEmail(request.getEmail())
+    UserAuthInfo authInfo = authInfoRepository.findByUserEmail(request.getEmail())
       .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
-    UserAuthInfo authInfo = user.getAuthInfo();
 
     String authProvider = authInfo.getAuthProvider();
     boolean localAuth = AuthProviderType.LOCAL.getValue().equals(authProvider);
@@ -86,6 +85,7 @@ public class EmailService {
     authInfoRepository.save(authInfo);
 
     // prepare the email content using Thymeleaf
+    User user = authInfo.getUser();
     Context context = new Context();
     context.setVariable("name", user.getFullName());
     context.setVariable("otp", otp);
@@ -117,18 +117,24 @@ public class EmailService {
     String email = request.getEmail();
     UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email)
       .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+
+    LocalDateTime blockedUntil = authInfo.getEmailVerificationOtpBlockedUntil();
+    boolean blocked = isVerificationOtpBlockedUntil(blockedUntil);
+    if (blocked) {
+      throw new AppException(ErrorType.OTP_BLOCKED);
+    }
+
     authInfo.setEmailVerificationOtp(null);
+    authInfo.setEmailVerificationOtpBlockedUntil(null);
     authInfoRepository.save(authInfo);
+
     return sendVerificationEmail(request);
   }
 
   public VerificationResponse verifyEmail(VerifyEmailRequest request) {
     String email = request.getEmail();
-    UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email).orElse(null);
-
-    if (authInfo == null) {
-      throw new AppException(ErrorType.INVALID_OTP);
-    }
+    UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email)
+      .orElseThrow(() -> new AppException(ErrorType.INVALID_OTP));
 
     String authProvider = authInfo.getAuthProvider();
     boolean localAuth = AuthProviderType.LOCAL.getValue().equals(authProvider);
@@ -197,6 +203,8 @@ public class EmailService {
     if (attempts >= otpMaxAttempts) {
       LocalDateTime blockUntil = DateTimeUtils.millisToLocalDateTime(otpBlockTimeMillis);
       authInfo.setEmailVerificationOtpBlockedUntil(blockUntil);
+      authInfo.setEmailVerificationOtp(null);
+      authInfo.setEmailVerificationOtpExpirationTime(null);
     }
 
     authInfoRepository.save(authInfo);

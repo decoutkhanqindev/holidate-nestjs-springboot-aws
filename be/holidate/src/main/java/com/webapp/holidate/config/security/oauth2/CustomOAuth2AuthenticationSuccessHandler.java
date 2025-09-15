@@ -37,12 +37,8 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
   String frontendLoginSuccessUrl;
 
   @NonFinal
-  @Value(AppValues.ACCESS_TOKEN_EXPIRATION_MILLIS)
-  long accessTokenExpirationMillis;
-
-  @NonFinal
-  @Value(AppValues.REFRESH_TOKEN_EXPIRATION_MILLIS)
-  long refreshTokenExpirationMillis;
+  @Value(AppValues.TOKEN_EXPIRATION_MILLIS)
+  long tokenExpirationMillis;
 
   @NonFinal
   @Value(AppValues.TOKEN_COOKIE_NAME)
@@ -54,32 +50,26 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
     String email = oAuth2User.getAttribute("email");
     User user = userRepository.findByEmail(email)
       .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
-    UserAuthInfo authInfo = user.getAuthInfo();
 
-    String accessToken;
-    String refreshToken;
+    String token;
     try {
-      accessToken = authService.generateToken(user, accessTokenExpirationMillis);
-      refreshToken = authService.generateToken(user, refreshTokenExpirationMillis);
+      token = authService.generateToken(user, tokenExpirationMillis);
     } catch (JOSEException e) {
       throw new AppException(ErrorType.UNKNOWN_ERROR);
     }
 
-    authInfo.setRefreshToken(refreshToken);
-    authInfoRepository.save(authInfo);
-
-    createCookie(response, accessToken);
+    createCookie(response, token);
     getRedirectStrategy().sendRedirect(request, response, frontendLoginSuccessUrl);
   }
 
   private void createCookie(HttpServletResponse response, String token) {
-    Cookie accessTokenCookie = new Cookie(tokenCookieName, token);
-    accessTokenCookie.setHttpOnly(true);
-    accessTokenCookie.setPath("/");
+    Cookie tokenCookie = new Cookie(tokenCookieName, token);
+    tokenCookie.setHttpOnly(true);
+    tokenCookie.setPath("/");
 
-    int tokenExpirationMillisInt = (int) (accessTokenExpirationMillis / 1000);
-    accessTokenCookie.setMaxAge(tokenExpirationMillisInt);
+    int tokenExpirationMillisInt = (int) (tokenExpirationMillis / 1000);
+    tokenCookie.setMaxAge(tokenExpirationMillisInt);
 
-    response.addCookie(accessTokenCookie);
+    response.addCookie(tokenCookie);
   }
 }

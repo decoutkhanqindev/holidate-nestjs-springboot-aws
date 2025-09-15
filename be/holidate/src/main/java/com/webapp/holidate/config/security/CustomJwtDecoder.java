@@ -3,6 +3,7 @@ package com.webapp.holidate.config.security;
 import com.nimbusds.jose.JOSEException;
 import com.webapp.holidate.constants.AppValues;
 import com.webapp.holidate.dto.request.auth.VerifyTokenRequest;
+import com.webapp.holidate.dto.response.auth.VerificationResponse;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.service.auth.AuthService;
 import com.webapp.holidate.type.ErrorType;
@@ -10,6 +11,8 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
+import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -21,6 +24,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.spec.SecretKeySpec;
 import java.text.ParseException;
 
+@Slf4j
 @Component
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
@@ -41,6 +45,8 @@ public class CustomJwtDecoder implements JwtDecoder {
       authService.verifyToken(request);
     } catch (JOSEException | ParseException e) {
       throw new AppException(ErrorType.UNKNOWN_ERROR);
+    } catch (AppException e) {
+      throw new AppException(e.getError());
     }
 
     SecretKeySpec secretKeySpec = new SecretKeySpec(SECRET_KEY.getBytes(), MacAlgorithm.HS512.name());

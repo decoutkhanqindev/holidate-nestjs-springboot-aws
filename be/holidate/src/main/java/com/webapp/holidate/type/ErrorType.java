@@ -31,6 +31,7 @@ public enum ErrorType {
   TOKEN_NOT_BLANK(400, "Token is required"),
   INVALID_TOKEN(401, "Token is invalid"),
   TOKEN_EXPIRED(401, "Token has expired"),
+  CAN_NOT_REFRESH_TOKEN(400, "Cannot refresh token"),
   SEND_EMAIL_FAILED(500, "Failed to send verification email"),
   OTP_NOT_BLANK(400, "OTP is required"),
   OTP_INVALID(400, "OTP must be 6 digits"),
