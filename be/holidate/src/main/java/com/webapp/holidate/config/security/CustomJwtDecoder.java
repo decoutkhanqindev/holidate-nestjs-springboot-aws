@@ -5,6 +5,7 @@ import com.webapp.holidate.constants.AppValues;
 import com.webapp.holidate.dto.request.auth.VerifyTokenRequest;
 import com.webapp.holidate.dto.response.auth.VerificationResponse;
 import com.webapp.holidate.exception.AppException;
+import com.webapp.holidate.exception.CustomAuthenticationException;
 import com.webapp.holidate.service.auth.AuthService;
 import com.webapp.holidate.type.ErrorType;
 import lombok.AccessLevel;
@@ -37,16 +38,12 @@ public class CustomJwtDecoder implements JwtDecoder {
 
   @Override
   public Jwt decode(String token) throws JwtException {
-    VerifyTokenRequest request = VerifyTokenRequest.builder()
-      .token(token)
-      .build();
-
     try {
-      authService.verifyToken(request);
+      authService.getSignedJWT(token);
     } catch (JOSEException | ParseException e) {
-      throw new AppException(ErrorType.UNKNOWN_ERROR);
+      throw new CustomAuthenticationException(ErrorType.INVALID_TOKEN);
     } catch (AppException e) {
-      throw new AppException(e.getError());
+      throw new CustomAuthenticationException(e.getError());
     }
 
     SecretKeySpec secretKeySpec = new SecretKeySpec(SECRET_KEY.getBytes(), MacAlgorithm.HS512.name());

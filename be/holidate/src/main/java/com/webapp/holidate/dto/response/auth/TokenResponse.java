@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 @ToString
 @EqualsAndHashCode
 public class TokenResponse {
-  String token;
+  String accessToken;
   LocalDateTime expiresAt;
+  String refreshToken;
 }

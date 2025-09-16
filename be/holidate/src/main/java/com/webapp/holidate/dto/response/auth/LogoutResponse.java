@@ -13,5 +13,5 @@ import lombok.experimental.FieldDefaults;
 @ToString
 @EqualsAndHashCode
 public class LogoutResponse {
-  boolean success;
+  boolean loggedOut;
 }

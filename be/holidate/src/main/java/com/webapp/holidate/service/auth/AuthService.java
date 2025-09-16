@@ -60,8 +60,12 @@ public class AuthService {
   String ISSUER;
 
   @NonFinal
-  @Value(AppValues.TOKEN_EXPIRATION_MILLIS)
-  long tokenExpirationMillis;
+  @Value(AppValues.ACCESS_TOKEN_EXPIRATION_MILLIS)
+  long accessTokenExpirationMillis;
+
+  @NonFinal
+  @Value(AppValues.REFRESH_TOKEN_EXPIRATION_MILLIS)
+  long refreshTokenExpirationMillis;
 
   public RegisterResponse register(RegisterRequest request) {
     UserAuthInfo authInfo = authInfoRepository.findByUserEmail(request.getEmail()).orElse(null);
@@ -78,10 +82,11 @@ public class AuthService {
       String encodedPassword = passwordEncoder.encode(request.getPassword());
       user.setPassword(encodedPassword);
 
-      authInfo.setEmailVerificationAttempts(0);
       authInfo.setEmailVerificationOtp(null);
+      authInfo.setEmailVerificationAttempts(0);
       authInfo.setEmailVerificationOtpExpirationTime(null);
       authInfo.setEmailVerificationOtpBlockedUntil(null);
+      authInfo.setRefreshToken(null);
       authInfo.setActive(false);
     } else {
       user = mapper.toEntity(request);
@@ -117,27 +122,121 @@ public class AuthService {
 
     boolean active = authInfo.isActive();
     if (!active) {
-      throw new AppException(ErrorType.UNAUTHENTICATED);
+      throw new AppException(ErrorType.UNAUTHORIZED);
     }
 
     String rawPassword = loginRequest.getPassword();
     String encodedPassword = user.getPassword();
     boolean passwordMatches = isPasswordMatches(rawPassword, encodedPassword);
     if (!passwordMatches) {
-      throw new AppException(ErrorType.UNAUTHENTICATED);
+      throw new AppException(ErrorType.UNAUTHORIZED);
     }
 
-    String token = generateToken(user, tokenExpirationMillis);
-    LocalDateTime expiresAt = DateTimeUtils.millisToLocalDateTime(tokenExpirationMillis);
+    String accessToken = generateToken(user, accessTokenExpirationMillis);
+    LocalDateTime accessTokenExpiresAt = DateTimeUtils.millisToLocalDateTime(accessTokenExpirationMillis);
+
+    String refreshToken = generateToken(user, refreshTokenExpirationMillis);
+    authInfo.setRefreshToken(refreshToken);
+    authInfoRepository.save(authInfo);
 
     return TokenResponse.builder()
-      .token(token)
-      .expiresAt(expiresAt)
+      .accessToken(accessToken)
+      .expiresAt(accessTokenExpiresAt)
+      .refreshToken(refreshToken)
       .build();
   }
 
   public VerificationResponse verifyToken(VerifyTokenRequest verifyTokenRequest) throws JOSEException, ParseException {
     String token = verifyTokenRequest.getToken();
+    boolean verified = true;
+
+    try {
+      getSignedJWT(token);
+    } catch (AppException e) {
+      verified = false;
+    }
+
+    return VerificationResponse.builder()
+      .verified(verified)
+      .build();
+  }
+
+  public TokenResponse refreshToken(RefreshTokenRequest refreshTokenRequest) throws JOSEException, ParseException {
+    String token = refreshTokenRequest.getToken();
+    SignedJWT signedJWT = getSignedJWT(token);
+    String email = signedJWT.getJWTClaimsSet().getSubject();
+    User user = userRepository.findByEmail(email)
+      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+    UserAuthInfo authInfo = user.getAuthInfo();
+
+    String storedRefreshToken = authInfo.getRefreshToken();
+    boolean tokenMatches = token.equals(storedRefreshToken);
+    if (!tokenMatches) {
+      throw new AppException(ErrorType.INVALID_TOKEN);
+    }
+
+    String id = signedJWT.getJWTClaimsSet().getJWTID();
+    createInvalidToken(id, token);
+
+    String accessToken = generateToken(user, accessTokenExpirationMillis);
+    LocalDateTime accessTokenExpiresAt = DateTimeUtils.millisToLocalDateTime(accessTokenExpirationMillis);
+
+    String newRefreshToken = generateToken(user, refreshTokenExpirationMillis);
+    authInfo.setRefreshToken(newRefreshToken);
+    authInfoRepository.save(authInfo);
+
+    return TokenResponse.builder()
+      .accessToken(accessToken)
+      .expiresAt(accessTokenExpiresAt)
+      .refreshToken(newRefreshToken)
+      .build();
+  }
+
+  public LogoutResponse logout(LogoutRequest logoutRequest) throws JOSEException, ParseException {
+    String token = logoutRequest.getToken();
+    boolean loggedOut = true;
+    String id = null;
+
+    try {
+      SignedJWT signedJWT = getSignedJWT(token);
+      id = signedJWT.getJWTClaimsSet().getJWTID();
+
+      String email = signedJWT.getJWTClaimsSet().getSubject();
+      User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+      UserAuthInfo authInfo = user.getAuthInfo();
+
+      String refreshToken = authInfo.getRefreshToken();
+      if (refreshToken != null) {
+        SignedJWT refreshSignedJWT = SignedJWT.parse(refreshToken);
+        String refreshTokenId = refreshSignedJWT.getJWTClaimsSet().getJWTID();
+        createInvalidToken(refreshTokenId, refreshToken);
+      }
+
+      authInfo.setRefreshToken(null);
+      authInfoRepository.save(authInfo);
+    } catch (AppException e) {
+      loggedOut = false;
+    }
+
+    if (id != null) {
+      createInvalidToken(id, token);
+    }
+
+    return LogoutResponse.builder()
+      .loggedOut(loggedOut)
+      .build();
+  }
+
+  private void createInvalidToken(String id, String token) {
+    InvalidToken invalidToken = InvalidToken.builder()
+      .id(id)
+      .token(token)
+      .build();
+    invalidTokenRepository.save(invalidToken);
+  }
+
+  public SignedJWT getSignedJWT(String token) throws JOSEException, ParseException {
     SignedJWT signedJWT = SignedJWT.parse(token);
 
     String id = signedJWT.getJWTClaimsSet().getJWTID();
@@ -164,83 +263,7 @@ public class AuthService {
       throw new AppException(ErrorType.INVALID_TOKEN);
     }
 
-    return VerificationResponse.builder()
-      .verified(true)
-      .build();
-  }
-
-  public TokenResponse refreshToken(RefreshTokenRequest refreshTokenRequest) throws JOSEException, ParseException {
-    String token = refreshTokenRequest.getToken();
-    SignedJWT signedJWT = SignedJWT.parse(token);
-
-    String id = signedJWT.getJWTClaimsSet().getJWTID();
-    boolean tokenInvalid = invalidTokenRepository.findById(id).isPresent();
-    if (tokenInvalid) {
-      throw new AppException(ErrorType.INVALID_TOKEN);
-    }
-
-    String issuer = signedJWT.getJWTClaimsSet().getIssuer();
-    boolean issuerInvalid = !ISSUER.equals(issuer);
-    if (issuerInvalid) {
-      throw new AppException(ErrorType.INVALID_TOKEN);
-    }
-
-    JWSVerifier verifier = new MACVerifier(SECRET_KEY.getBytes());
-    boolean tokenVerified = signedJWT.verify(verifier);
-    if (!tokenVerified) {
-      throw new AppException(ErrorType.INVALID_TOKEN);
-    }
-
-    createInvalidToken(id, token);
-
-    String email = signedJWT.getJWTClaimsSet().getSubject();
-    User user = userRepository.findByEmail(email)
-      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
-
-    String newToken = generateToken(user, tokenExpirationMillis);
-    LocalDateTime expiresAt = DateTimeUtils.millisToLocalDateTime(tokenExpirationMillis);
-
-    return TokenResponse.builder()
-      .token(newToken)
-      .expiresAt(expiresAt)
-      .build();
-  }
-
-  public LogoutResponse logout(LogoutRequest logoutRequest) throws JOSEException, ParseException {
-    String token = logoutRequest.getToken();
-    SignedJWT signedJWT = SignedJWT.parse(token);
-
-    String id = signedJWT.getJWTClaimsSet().getJWTID();
-    boolean tokenInvalid = invalidTokenRepository.findById(id).isPresent();
-    if (tokenInvalid) {
-      throw new AppException(ErrorType.INVALID_TOKEN);
-    }
-
-    String issuer = signedJWT.getJWTClaimsSet().getIssuer();
-    boolean issuerInvalid = !ISSUER.equals(issuer);
-    if (issuerInvalid) {
-      throw new AppException(ErrorType.INVALID_TOKEN);
-    }
-
-    JWSVerifier verifier = new MACVerifier(SECRET_KEY.getBytes());
-    boolean tokenVerified = signedJWT.verify(verifier);
-    if (!tokenVerified) {
-      throw new AppException(ErrorType.INVALID_TOKEN);
-    }
-
-    createInvalidToken(id, token);
-
-    return LogoutResponse.builder()
-      .success(true)
-      .build();
-  }
-
-  private void createInvalidToken(String id, String token) {
-    InvalidToken invalidToken = InvalidToken.builder()
-      .id(id)
-      .token(token)
-      .build();
-    invalidTokenRepository.save(invalidToken);
+    return signedJWT;
   }
 
   public String generateToken(User user, long expirationMillis) throws JOSEException {
