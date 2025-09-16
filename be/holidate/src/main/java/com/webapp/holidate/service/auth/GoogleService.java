@@ -74,6 +74,7 @@ public class GoogleService extends DefaultOAuth2UserService {
     user.setAvatarUrl(picture);
 
     UserAuthInfo authInfo = user.getAuthInfo();
+    authInfo.setAuthProvider(AuthProviderType.GOOGLE.getValue());
     authInfo.setAuthProviderId(googleId);
 
     userRepository.save(user);

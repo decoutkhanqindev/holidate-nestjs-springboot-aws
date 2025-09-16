@@ -3,7 +3,6 @@ package com.webapp.holidate.config.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.type.ErrorType;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;

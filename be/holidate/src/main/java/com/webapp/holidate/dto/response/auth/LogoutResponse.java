@@ -1,21 +1,17 @@
-package com.webapp.holidate.dto.response.user;
+package com.webapp.holidate.dto.response.auth;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
-import java.time.LocalDateTime;
 
 @Data
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
 @Setter
+@Getter
 @ToString
 @EqualsAndHashCode
-public class UserAuthInfoResponse {
-  String id;
-  String authProvider;
-  boolean active;
+public class LogoutResponse {
+  boolean loggedOut;
 }

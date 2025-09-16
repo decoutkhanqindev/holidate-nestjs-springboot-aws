@@ -6,23 +6,25 @@ import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.webapp.holidate.constants.AppValues;
-import com.webapp.holidate.dto.request.auth.LoginRequest;
-import com.webapp.holidate.dto.request.auth.RegisterRequest;
-import com.webapp.holidate.dto.request.auth.VerifyTokenRequest;
-import com.webapp.holidate.dto.response.auth.LoginResponse;
+import com.webapp.holidate.dto.request.auth.*;
+import com.webapp.holidate.dto.response.auth.LogoutResponse;
+import com.webapp.holidate.dto.response.auth.TokenResponse;
 import com.webapp.holidate.dto.response.auth.RegisterResponse;
 import com.webapp.holidate.dto.response.auth.VerificationResponse;
+import com.webapp.holidate.entity.InvalidToken;
 import com.webapp.holidate.entity.Role;
 import com.webapp.holidate.entity.User;
 import com.webapp.holidate.entity.UserAuthInfo;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.UserMapper;
+import com.webapp.holidate.repository.InvalidTokenRepository;
 import com.webapp.holidate.repository.RoleRepository;
 import com.webapp.holidate.repository.UserAuthInfoRepository;
 import com.webapp.holidate.repository.UserRepository;
 import com.webapp.holidate.type.AuthProviderType;
 import com.webapp.holidate.type.ErrorType;
 import com.webapp.holidate.type.RoleType;
+import com.webapp.holidate.utils.DateTimeUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -33,10 +35,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Date;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -45,6 +46,7 @@ import java.util.Date;
 public class AuthService {
   UserRepository userRepository;
   UserAuthInfoRepository authInfoRepository;
+  InvalidTokenRepository invalidTokenRepository;
   RoleRepository roleRepository;
   UserMapper mapper;
   PasswordEncoder passwordEncoder;
@@ -72,34 +74,45 @@ public class AuthService {
       throw new AppException(ErrorType.USER_EXISTS);
     }
 
+    User user;
     if (authInfo != null) {
-      userRepository.deleteById(authInfo.getUser().getId());
+      user = authInfo.getUser();
+      user.setFullName(request.getFullName());
+
+      String encodedPassword = passwordEncoder.encode(request.getPassword());
+      user.setPassword(encodedPassword);
+
+      authInfo.setEmailVerificationOtp(null);
+      authInfo.setEmailVerificationAttempts(0);
+      authInfo.setEmailVerificationOtpExpirationTime(null);
+      authInfo.setEmailVerificationOtpBlockedUntil(null);
+      authInfo.setRefreshToken(null);
+      authInfo.setActive(false);
+    } else {
+      user = mapper.toEntity(request);
+      String encodedPassword = passwordEncoder.encode(request.getPassword());
+      user.setPassword(encodedPassword);
+
+      Role role = roleRepository.findByName(RoleType.USER.name());
+      user.setRole(role);
+
+      UserAuthInfo newAuthInfo = UserAuthInfo.builder()
+        .authProvider(AuthProviderType.LOCAL.getValue())
+        .emailVerificationAttempts(0)
+        .active(false)
+        .user(user)
+        .build();
+      user.setAuthInfo(newAuthInfo);
     }
-
-    User user = mapper.toEntity(request);
-
-    String encodedPassword = passwordEncoder.encode(request.getPassword());
-    user.setPassword(encodedPassword);
-
-    Role role = roleRepository.findByName(RoleType.USER.name());
-    user.setRole(role);
-
-    UserAuthInfo newAuthInfo = UserAuthInfo.builder()
-      .authProvider(AuthProviderType.LOCAL.getValue())
-      .emailVerificationAttempts(0)
-      .active(false)
-      .user(user)
-      .build();
-    user.setAuthInfo(newAuthInfo);
 
     userRepository.save(user);
     return mapper.toRegisterResponse(user);
   }
 
-  public LoginResponse login(LoginRequest loginRequest) throws JOSEException {
-    User user = userRepository.findByEmail(loginRequest.getEmail())
+  public TokenResponse login(LoginRequest loginRequest) throws JOSEException {
+    UserAuthInfo authInfo = authInfoRepository.findByUserEmail(loginRequest.getEmail())
       .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
-    UserAuthInfo authInfo = user.getAuthInfo();
+    User user = authInfo.getUser();
 
     String authProvider = authInfo.getAuthProvider();
     boolean localAuth = AuthProviderType.LOCAL.getValue().equals(authProvider);
@@ -109,32 +122,148 @@ public class AuthService {
 
     boolean active = authInfo.isActive();
     if (!active) {
-      throw new AppException(ErrorType.UNAUTHENTICATED);
+      throw new AppException(ErrorType.UNAUTHORIZED);
     }
 
     String rawPassword = loginRequest.getPassword();
     String encodedPassword = user.getPassword();
     boolean passwordMatches = isPasswordMatches(rawPassword, encodedPassword);
     if (!passwordMatches) {
-      throw new AppException(ErrorType.UNAUTHENTICATED);
+      throw new AppException(ErrorType.UNAUTHORIZED);
     }
 
     String accessToken = generateToken(user, accessTokenExpirationMillis);
-    LocalDateTime expiresAt = LocalDateTime.ofInstant(
-      Instant.now().plusMillis(accessTokenExpirationMillis),
-      ZoneId.systemDefault()
-    );
-    String refreshToken = generateToken(user, refreshTokenExpirationMillis);
+    LocalDateTime accessTokenExpiresAt = DateTimeUtils.millisToLocalDateTime(accessTokenExpirationMillis);
 
-    return LoginResponse.builder()
+    String refreshToken = generateToken(user, refreshTokenExpirationMillis);
+    authInfo.setRefreshToken(refreshToken);
+    authInfoRepository.save(authInfo);
+
+    return TokenResponse.builder()
       .accessToken(accessToken)
-      .expiresAt(expiresAt)
+      .expiresAt(accessTokenExpiresAt)
       .refreshToken(refreshToken)
       .build();
   }
 
-  private boolean isPasswordMatches(String rawPassword, String encodedPassword) {
-    return passwordEncoder.matches(rawPassword, encodedPassword);
+  public VerificationResponse verifyToken(VerifyTokenRequest verifyTokenRequest) throws JOSEException, ParseException {
+    String token = verifyTokenRequest.getToken();
+    boolean verified = true;
+
+    try {
+      getSignedJWT(token);
+    } catch (AppException e) {
+      verified = false;
+    }
+
+    return VerificationResponse.builder()
+      .verified(verified)
+      .build();
+  }
+
+  public TokenResponse refreshToken(RefreshTokenRequest refreshTokenRequest) throws JOSEException, ParseException {
+    String token = refreshTokenRequest.getToken();
+    SignedJWT signedJWT = getSignedJWT(token);
+    String email = signedJWT.getJWTClaimsSet().getSubject();
+    User user = userRepository.findByEmail(email)
+      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+    UserAuthInfo authInfo = user.getAuthInfo();
+
+    String storedRefreshToken = authInfo.getRefreshToken();
+    boolean tokenMatches = token.equals(storedRefreshToken);
+    if (!tokenMatches) {
+      throw new AppException(ErrorType.INVALID_TOKEN);
+    }
+
+    String id = signedJWT.getJWTClaimsSet().getJWTID();
+    createInvalidToken(id, token);
+
+    String accessToken = generateToken(user, accessTokenExpirationMillis);
+    LocalDateTime accessTokenExpiresAt = DateTimeUtils.millisToLocalDateTime(accessTokenExpirationMillis);
+
+    String newRefreshToken = generateToken(user, refreshTokenExpirationMillis);
+    authInfo.setRefreshToken(newRefreshToken);
+    authInfoRepository.save(authInfo);
+
+    return TokenResponse.builder()
+      .accessToken(accessToken)
+      .expiresAt(accessTokenExpiresAt)
+      .refreshToken(newRefreshToken)
+      .build();
+  }
+
+  public LogoutResponse logout(LogoutRequest logoutRequest) throws JOSEException, ParseException {
+    String token = logoutRequest.getToken();
+    boolean loggedOut = true;
+    String id = null;
+
+    try {
+      SignedJWT signedJWT = getSignedJWT(token);
+      id = signedJWT.getJWTClaimsSet().getJWTID();
+
+      String email = signedJWT.getJWTClaimsSet().getSubject();
+      User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+      UserAuthInfo authInfo = user.getAuthInfo();
+
+      String refreshToken = authInfo.getRefreshToken();
+      if (refreshToken != null) {
+        SignedJWT refreshSignedJWT = SignedJWT.parse(refreshToken);
+        String refreshTokenId = refreshSignedJWT.getJWTClaimsSet().getJWTID();
+        createInvalidToken(refreshTokenId, refreshToken);
+      }
+
+      authInfo.setRefreshToken(null);
+      authInfoRepository.save(authInfo);
+    } catch (AppException e) {
+      loggedOut = false;
+    }
+
+    if (id != null) {
+      createInvalidToken(id, token);
+    }
+
+    return LogoutResponse.builder()
+      .loggedOut(loggedOut)
+      .build();
+  }
+
+  private void createInvalidToken(String id, String token) {
+    InvalidToken invalidToken = InvalidToken.builder()
+      .id(id)
+      .token(token)
+      .build();
+    invalidTokenRepository.save(invalidToken);
+  }
+
+  public SignedJWT getSignedJWT(String token) throws JOSEException, ParseException {
+    SignedJWT signedJWT = SignedJWT.parse(token);
+
+    String id = signedJWT.getJWTClaimsSet().getJWTID();
+    boolean tokenInvalid = invalidTokenRepository.findById(id).isPresent();
+    if (tokenInvalid) {
+      throw new AppException(ErrorType.INVALID_TOKEN);
+    }
+
+    Date expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+    boolean expired = isVerificationTokenExpired(expirationTime);
+    if (expired) {
+      throw new AppException(ErrorType.TOKEN_EXPIRED);
+    }
+
+    String issuer = signedJWT.getJWTClaimsSet().getIssuer();
+    boolean issuerInvalid = !ISSUER.equals(issuer);
+    if (issuerInvalid) {
+      throw new AppException(ErrorType.INVALID_TOKEN);
+    }
+
+    JWSVerifier verifier = new MACVerifier(SECRET_KEY.getBytes());
+    boolean tokenVerified = signedJWT.verify(verifier);
+    if (!tokenVerified) {
+      throw new AppException(ErrorType.INVALID_TOKEN);
+    }
+
+    return signedJWT;
   }
 
   public String generateToken(User user, long expirationMillis) throws JOSEException {
@@ -143,7 +272,7 @@ public class AuthService {
 
     JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
     JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-      .jwtID(user.getId())
+      .jwtID(UUID.randomUUID().toString())
       .subject(user.getEmail())
       .claim("fullName", user.getFullName())
       .claim("scope", user.getRole().getName())
@@ -159,25 +288,8 @@ public class AuthService {
     return jwsObject.serialize();
   }
 
-  public VerificationResponse verifyToken(VerifyTokenRequest verifyTokenRequest) throws JOSEException, ParseException {
-    String token = verifyTokenRequest.getToken();
-    SignedJWT signedJWT = SignedJWT.parse(token);
-
-    Date expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
-    boolean expired = isVerificationTokenExpired(expirationTime);
-    if (expired) {
-      throw new AppException(ErrorType.TOKEN_EXPIRED);
-    }
-
-    JWSVerifier verifier = new MACVerifier(SECRET_KEY.getBytes());
-    boolean verified = signedJWT.verify(verifier);
-    if (!verified) {
-      throw new AppException(ErrorType.INVALID_TOKEN);
-    }
-
-    return VerificationResponse.builder()
-      .verified(true)
-      .build();
+  private boolean isPasswordMatches(String rawPassword, String encodedPassword) {
+    return passwordEncoder.matches(rawPassword, encodedPassword);
   }
 
   private boolean isVerificationTokenExpired(Date expirationTime) {

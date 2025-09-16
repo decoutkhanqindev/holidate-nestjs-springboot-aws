@@ -4,7 +4,6 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Data
 @Builder
@@ -15,7 +14,7 @@ import java.util.Date;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class LoginResponse {
+public class TokenResponse {
   String accessToken;
   LocalDateTime expiresAt;
   String refreshToken;

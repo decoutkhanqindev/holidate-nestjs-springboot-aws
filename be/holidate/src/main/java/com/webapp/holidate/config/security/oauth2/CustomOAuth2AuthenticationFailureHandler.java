@@ -49,7 +49,7 @@ public class CustomOAuth2AuthenticationFailureHandler extends SimpleUrlAuthentic
     Cookie refreshTokenCookie = new Cookie(refreshTokenCookieName, null);
     refreshTokenCookie.setHttpOnly(true);
     refreshTokenCookie.setPath("/");
-    accessTokenCookie.setSecure(false);
+    refreshTokenCookie.setSecure(false);
     refreshTokenCookie.setMaxAge(0);
     response.addCookie(refreshTokenCookie);
   }

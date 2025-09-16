@@ -1,9 +1,8 @@
-package com.webapp.holidate.dto.response.user;
+package com.webapp.holidate.dto.request.auth;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
-import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -14,8 +13,7 @@ import java.time.LocalDateTime;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class UserAuthInfoResponse {
-  String id;
-  String authProvider;
-  boolean active;
+public class RefreshTokenRequest {
+  @NotBlank(message = "TOKEN_NOT_BLANK")
+  private String token;
 }
