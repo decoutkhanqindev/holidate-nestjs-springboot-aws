@@ -26,7 +26,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
 
     if (authException instanceof CustomAuthenticationException e) {
       log.error("Authentication error: {}", e.getMessage());
-      errorType = e.getErrorType();
+      errorType = e.getError();
     }
 
     ApiResponse<?> apiResponse = ApiResponse.builder()

@@ -7,10 +7,10 @@ import org.springframework.security.core.AuthenticationException;
 
 @Getter
 public class CustomAuthenticationException extends AuthenticationException {
-  private final ErrorType errorType;
+  private final ErrorType error;
 
-  public CustomAuthenticationException(ErrorType errorType) {
-    super(errorType.getMessage());
-    this.errorType = errorType;
+  public CustomAuthenticationException(ErrorType error) {
+    super(error.getMessage());
+    this.error = error;
   }
 }
