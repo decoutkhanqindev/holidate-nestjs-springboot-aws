@@ -18,5 +18,5 @@ public class LoginResponse {
   String accessToken;
   LocalDateTime expiresAt;
   String refreshToken;
-  String userId;
+  String id;
 }

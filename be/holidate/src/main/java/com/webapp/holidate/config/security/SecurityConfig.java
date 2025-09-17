@@ -18,6 +18,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
@@ -36,6 +38,8 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
+  String ALL_ENDPOINTS = "/**";
+
   GoogleService googleService;
   CustomOAuth2AuthenticationSuccessHandler successHandler;
   CustomOAuth2AuthenticationFailureHandler failureHandler;
@@ -52,13 +56,13 @@ public class SecurityConfig {
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http.authorizeHttpRequests(request -> request
       // public endpoints
-      .requestMatchers(AuthEndpoints.AUTH).permitAll()
+      .requestMatchers(AuthEndpoints.AUTH + ALL_ENDPOINTS).permitAll()
       // user endpoints
       .requestMatchers(HttpMethod.GET, UserEndpoints.USERS + UserEndpoints.USER_ID).hasAuthority(RoleType.USER.getValue())
       .requestMatchers(HttpMethod.PUT, UserEndpoints.USERS + UserEndpoints.USER_ID).hasAuthority(RoleType.USER.getValue())
       // admin endpoints
-      .requestMatchers(UserEndpoints.USERS).hasAuthority(RoleType.ADMIN.getValue())
-      .requestMatchers(RoleEndpoints.ROLES).hasAuthority(RoleType.ADMIN.getValue())
+      .requestMatchers(UserEndpoints.USERS + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
+      .requestMatchers(RoleEndpoints.ROLES + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
       .anyRequest().authenticated()
     );
 
@@ -89,6 +93,11 @@ public class SecurityConfig {
   }
 
   @Bean
+  RoleHierarchy roleHierarchy() {
+    return RoleHierarchyImpl.fromHierarchy(RoleType.ADMIN.getValue() + " > " + RoleType.USER.getValue());
+  }
+
+  @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration corsConfiguration = new CorsConfiguration();
     corsConfiguration.setAllowedOrigins(List.of(frontendUrl));
@@ -97,7 +106,7 @@ public class SecurityConfig {
     corsConfiguration.setAllowCredentials(true);
 
     UrlBasedCorsConfigurationSource urlBasedCorsConfigurationSource = new UrlBasedCorsConfigurationSource();
-    urlBasedCorsConfigurationSource.registerCorsConfiguration("/**", corsConfiguration);
+    urlBasedCorsConfigurationSource.registerCorsConfiguration(ALL_ENDPOINTS, corsConfiguration);
 
     return urlBasedCorsConfigurationSource;
   }

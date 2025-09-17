@@ -32,6 +32,10 @@ public class CustomOAuth2AuthenticationFailureHandler extends SimpleUrlAuthentic
   @Value(AppValues.REFRESH_TOKEN_COOKIE_NAME)
   String refreshTokenCookieName;
 
+  @NonFinal
+  @Value(AppValues.ID_COOKIE_NAME)
+  String idCookieName;
+
   @Override
   public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
     clearCookie(response);
@@ -52,5 +56,12 @@ public class CustomOAuth2AuthenticationFailureHandler extends SimpleUrlAuthentic
     refreshTokenCookie.setSecure(false);
     refreshTokenCookie.setMaxAge(0);
     response.addCookie(refreshTokenCookie);
+
+    Cookie idCookie = new Cookie(idCookieName, null);
+    idCookie.setHttpOnly(true);
+    idCookie.setPath("/");
+    idCookie.setSecure(false);
+    idCookie.setMaxAge(0);
+    response.addCookie(idCookie);
   }
 }

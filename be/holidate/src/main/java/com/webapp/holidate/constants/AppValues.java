@@ -10,6 +10,7 @@ public class AppValues {
   public static final String REFRESH_TOKEN_EXPIRATION_MILLIS = "${spring.jwt.refresh-token.expiration-millis}";
   public static final String ACCESS_TOKEN_COOKIE_NAME = "${spring.jwt.access-token.cookie-name}";
   public static final String REFRESH_TOKEN_COOKIE_NAME = "${spring.jwt.refresh-token.cookie-name}";
+  public static final String ID_COOKIE_NAME = "${spring.jwt.id.cookie-name}";
   public static final String FRONTEND_URL = "${spring.security.oauth2.client.frontend-url}";
   public static final String FRONTEND_LOGIN_SUCCESS_URL = "${spring.security.oauth2.client.frontend-login-success-url}";
   public static final String FRONTEND_LOGIN_FAILURE_URL = "${spring.security.oauth2.client.frontend-login-failure-url}";

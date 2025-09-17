@@ -65,10 +65,14 @@ public class AuthService {
   long refreshTokenExpirationMillis;
 
   public RegisterResponse register(RegisterRequest request) {
-    UserAuthInfo authInfo = authInfoRepository.findByUserEmail(request.getEmail()).orElse(null);
+    String email = request.getEmail();
+    UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email).orElse(null);
 
-    if (authInfo != null && authInfo.isActive()) {
-      throw new AppException(ErrorType.USER_EXISTS);
+    if (authInfo != null) {
+      boolean active = authInfo.isActive();
+      if (active) {
+        throw new AppException(ErrorType.USER_EXISTS);
+      }
     }
 
     User user;
@@ -107,14 +111,15 @@ public class AuthService {
   }
 
   public LoginResponse login(LoginRequest loginRequest) throws JOSEException {
-    UserAuthInfo authInfo = authInfoRepository.findByUserEmail(loginRequest.getEmail())
+    String email = loginRequest.getEmail();
+    UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email)
       .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
     User user = authInfo.getUser();
 
     String authProvider = authInfo.getAuthProvider();
     boolean localAuth = AuthProviderType.LOCAL.getValue().equals(authProvider);
     if (!localAuth) {
-      throw new AppException(ErrorType.ONLY_LOCAL_AUTH);
+      throw new AppException(ErrorType.UNAUTHORIZED);
     }
 
     boolean active = authInfo.isActive();
@@ -140,7 +145,7 @@ public class AuthService {
       .accessToken(accessToken)
       .expiresAt(accessTokenExpiresAt)
       .refreshToken(refreshToken)
-      .userId(user.getId())
+      .id(user.getId())
       .build();
   }
 
