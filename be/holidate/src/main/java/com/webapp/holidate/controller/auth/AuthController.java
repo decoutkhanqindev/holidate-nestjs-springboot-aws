@@ -4,10 +4,7 @@ import com.nimbusds.jose.JOSEException;
 import com.webapp.holidate.constants.enpoint.auth.AuthEndpoints;
 import com.webapp.holidate.dto.request.auth.*;
 import com.webapp.holidate.dto.response.ApiResponse;
-import com.webapp.holidate.dto.response.auth.LogoutResponse;
-import com.webapp.holidate.dto.response.auth.TokenResponse;
-import com.webapp.holidate.dto.response.auth.RegisterResponse;
-import com.webapp.holidate.dto.response.auth.VerificationResponse;
+import com.webapp.holidate.dto.response.auth.*;
 import com.webapp.holidate.service.auth.AuthService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -36,9 +33,9 @@ public class AuthController {
   }
 
   @PostMapping(AuthEndpoints.LOGIN)
-  public ApiResponse<TokenResponse> login(@RequestBody @Valid LoginRequest loginRequest) throws JOSEException {
-    TokenResponse response = authService.login(loginRequest);
-    return ApiResponse.<TokenResponse>builder()
+  public ApiResponse<LoginResponse> login(@RequestBody @Valid LoginRequest loginRequest) throws JOSEException {
+    LoginResponse response = authService.login(loginRequest);
+    return ApiResponse.<LoginResponse>builder()
       .data(response)
       .build();
   }
@@ -52,9 +49,9 @@ public class AuthController {
   }
 
   @PostMapping(AuthEndpoints.REFRESH_TOKEN)
-  public ApiResponse<TokenResponse> refreshToken(@RequestBody @Valid RefreshTokenRequest request) throws ParseException, JOSEException {
-    TokenResponse response = authService.refreshToken(request);
-    return ApiResponse.<TokenResponse>builder()
+  public ApiResponse<RefreshTokenResponse> refreshToken(@RequestBody @Valid RefreshTokenRequest request) throws ParseException, JOSEException {
+    RefreshTokenResponse response = authService.refreshToken(request);
+    return ApiResponse.<RefreshTokenResponse>builder()
       .data(response)
       .build();
   }

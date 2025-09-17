@@ -7,10 +7,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.webapp.holidate.constants.AppValues;
 import com.webapp.holidate.dto.request.auth.*;
-import com.webapp.holidate.dto.response.auth.LogoutResponse;
-import com.webapp.holidate.dto.response.auth.TokenResponse;
-import com.webapp.holidate.dto.response.auth.RegisterResponse;
-import com.webapp.holidate.dto.response.auth.VerificationResponse;
+import com.webapp.holidate.dto.response.auth.*;
 import com.webapp.holidate.entity.InvalidToken;
 import com.webapp.holidate.entity.Role;
 import com.webapp.holidate.entity.User;
@@ -109,7 +106,7 @@ public class AuthService {
     return mapper.toRegisterResponse(user);
   }
 
-  public TokenResponse login(LoginRequest loginRequest) throws JOSEException {
+  public LoginResponse login(LoginRequest loginRequest) throws JOSEException {
     UserAuthInfo authInfo = authInfoRepository.findByUserEmail(loginRequest.getEmail())
       .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
     User user = authInfo.getUser();
@@ -139,29 +136,23 @@ public class AuthService {
     authInfo.setRefreshToken(refreshToken);
     authInfoRepository.save(authInfo);
 
-    return TokenResponse.builder()
+    return LoginResponse.builder()
       .accessToken(accessToken)
       .expiresAt(accessTokenExpiresAt)
       .refreshToken(refreshToken)
+      .userId(user.getId())
       .build();
   }
 
   public VerificationResponse verifyToken(VerifyTokenRequest verifyTokenRequest) throws JOSEException, ParseException {
     String token = verifyTokenRequest.getToken();
-    boolean verified = true;
-
-    try {
-      getSignedJWT(token);
-    } catch (AppException e) {
-      verified = false;
-    }
-
+    getSignedJWT(token);
     return VerificationResponse.builder()
-      .verified(verified)
+      .verified(true)
       .build();
   }
 
-  public TokenResponse refreshToken(RefreshTokenRequest refreshTokenRequest) throws JOSEException, ParseException {
+  public RefreshTokenResponse refreshToken(RefreshTokenRequest refreshTokenRequest) throws JOSEException, ParseException {
     String token = refreshTokenRequest.getToken();
     SignedJWT signedJWT = getSignedJWT(token);
     String email = signedJWT.getJWTClaimsSet().getSubject();
@@ -185,7 +176,7 @@ public class AuthService {
     authInfo.setRefreshToken(newRefreshToken);
     authInfoRepository.save(authInfo);
 
-    return TokenResponse.builder()
+    return RefreshTokenResponse.builder()
       .accessToken(accessToken)
       .expiresAt(accessTokenExpiresAt)
       .refreshToken(newRefreshToken)
