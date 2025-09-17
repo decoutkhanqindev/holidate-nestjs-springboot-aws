@@ -17,6 +17,7 @@ import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
@@ -35,27 +36,6 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
-  String[] PUBLIC_AUTH_ENDPOINTS = {
-    AuthEndpoints.AUTH + AuthEndpoints.REGISTER,
-    AuthEndpoints.AUTH + AuthEndpoints.LOGIN,
-    AuthEndpoints.AUTH + AuthEndpoints.LOGOUT,
-    AuthEndpoints.AUTH + AuthEndpoints.VERIFY_TOKEN,
-    AuthEndpoints.AUTH + AuthEndpoints.REFRESH_TOKEN,
-    AuthEndpoints.AUTH + EmailEndpoints.EMAIL + EmailEndpoints.SEND_VERIFICATION_EMAIL,
-    AuthEndpoints.AUTH + EmailEndpoints.EMAIL + EmailEndpoints.RESEND_VERIFICATION_EMAIL,
-    AuthEndpoints.AUTH + EmailEndpoints.EMAIL + EmailEndpoints.VERIFY_EMAIL,
-  };
-
-  String[] PRIVATE_USER_ENDPOINTS = {
-    UserEndpoints.USERS,
-    UserEndpoints.USERS + UserEndpoints.USER_ID
-  };
-
-  String[] PRIVATE_ROLE_ENDPOINTS = {
-    RoleEndpoints.ROLES,
-    RoleEndpoints.ROLES + RoleEndpoints.ROLE_ID
-  };
-
   GoogleService googleService;
   CustomOAuth2AuthenticationSuccessHandler successHandler;
   CustomOAuth2AuthenticationFailureHandler failureHandler;
@@ -70,14 +50,17 @@ public class SecurityConfig {
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    http
-      .authorizeHttpRequests(request ->
-        request
-          .requestMatchers(PUBLIC_AUTH_ENDPOINTS).permitAll()
-          .requestMatchers(PRIVATE_USER_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
-          .requestMatchers(PRIVATE_ROLE_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
-          .anyRequest().authenticated()
-      );
+    http.authorizeHttpRequests(request -> request
+      // public endpoints
+      .requestMatchers(AuthEndpoints.AUTH).permitAll()
+      // user endpoints
+      .requestMatchers(HttpMethod.GET, UserEndpoints.USERS + UserEndpoints.USER_ID).hasAuthority(RoleType.USER.getValue())
+      .requestMatchers(HttpMethod.PUT, UserEndpoints.USERS + UserEndpoints.USER_ID).hasAuthority(RoleType.USER.getValue())
+      // admin endpoints
+      .requestMatchers(UserEndpoints.USERS).hasAuthority(RoleType.ADMIN.getValue())
+      .requestMatchers(RoleEndpoints.ROLES).hasAuthority(RoleType.ADMIN.getValue())
+      .anyRequest().authenticated()
+    );
 
     http
       .csrf(CsrfConfigurer::disable)
