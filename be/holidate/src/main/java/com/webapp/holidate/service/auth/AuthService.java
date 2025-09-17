@@ -8,11 +8,13 @@ import com.nimbusds.jwt.SignedJWT;
 import com.webapp.holidate.constants.AppValues;
 import com.webapp.holidate.dto.request.auth.*;
 import com.webapp.holidate.dto.response.auth.*;
+import com.webapp.holidate.dto.response.user.RoleResponse;
 import com.webapp.holidate.entity.InvalidToken;
 import com.webapp.holidate.entity.Role;
 import com.webapp.holidate.entity.User;
 import com.webapp.holidate.entity.UserAuthInfo;
 import com.webapp.holidate.exception.AppException;
+import com.webapp.holidate.mapper.RoleMapper;
 import com.webapp.holidate.mapper.UserMapper;
 import com.webapp.holidate.repository.InvalidTokenRepository;
 import com.webapp.holidate.repository.RoleRepository;
@@ -45,7 +47,8 @@ public class AuthService {
   UserAuthInfoRepository authInfoRepository;
   InvalidTokenRepository invalidTokenRepository;
   RoleRepository roleRepository;
-  UserMapper mapper;
+  UserMapper userMapper;
+  RoleMapper roleMapper;
   PasswordEncoder passwordEncoder;
 
   @NonFinal
@@ -90,7 +93,7 @@ public class AuthService {
       authInfo.setRefreshToken(null);
       authInfo.setActive(false);
     } else {
-      user = mapper.toEntity(request);
+      user = userMapper.toEntity(request);
       String encodedPassword = passwordEncoder.encode(request.getPassword());
       user.setPassword(encodedPassword);
 
@@ -107,10 +110,10 @@ public class AuthService {
     }
 
     userRepository.save(user);
-    return mapper.toRegisterResponse(user);
+    return userMapper.toRegisterResponse(user);
   }
 
-  public LoginResponse login(LoginRequest loginRequest) throws JOSEException {
+  public TokenResponse login(LoginRequest loginRequest) throws JOSEException {
     String email = loginRequest.getEmail();
     UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email)
       .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
@@ -141,11 +144,10 @@ public class AuthService {
     authInfo.setRefreshToken(refreshToken);
     authInfoRepository.save(authInfo);
 
-    return LoginResponse.builder()
+    return TokenResponse.builder()
       .accessToken(accessToken)
       .expiresAt(accessTokenExpiresAt)
       .refreshToken(refreshToken)
-      .id(user.getId())
       .build();
   }
 
@@ -157,8 +159,8 @@ public class AuthService {
       .build();
   }
 
-  public RefreshTokenResponse refreshToken(RefreshTokenRequest refreshTokenRequest) throws JOSEException, ParseException {
-    String token = refreshTokenRequest.getToken();
+  public TokenResponse refreshToken(TokenRequest tokenRequest) throws JOSEException, ParseException {
+    String token = tokenRequest.getToken();
     SignedJWT signedJWT = getSignedJWT(token);
     String email = signedJWT.getJWTClaimsSet().getSubject();
     User user = userRepository.findByEmail(email)
@@ -181,46 +183,62 @@ public class AuthService {
     authInfo.setRefreshToken(newRefreshToken);
     authInfoRepository.save(authInfo);
 
-    return RefreshTokenResponse.builder()
+    return TokenResponse.builder()
       .accessToken(accessToken)
       .expiresAt(accessTokenExpiresAt)
       .refreshToken(newRefreshToken)
       .build();
   }
 
-  public LogoutResponse logout(LogoutRequest logoutRequest) throws JOSEException, ParseException {
-    String token = logoutRequest.getToken();
-    boolean loggedOut = true;
-    String id = null;
+  public LogoutResponse logout(TokenRequest request) throws JOSEException, ParseException {
+    String token = request.getToken();
+    SignedJWT signedJWT = getSignedJWT(token);
 
-    try {
-      SignedJWT signedJWT = getSignedJWT(token);
-      id = signedJWT.getJWTClaimsSet().getJWTID();
+    String id = signedJWT.getJWTClaimsSet().getJWTID();
+    createInvalidToken(id, token);
 
-      String email = signedJWT.getJWTClaimsSet().getSubject();
-      User user = userRepository.findByEmail(email)
-        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
-      UserAuthInfo authInfo = user.getAuthInfo();
+    String email = signedJWT.getJWTClaimsSet().getSubject();
+    User user = userRepository.findByEmail(email)
+      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+    UserAuthInfo authInfo = user.getAuthInfo();
 
-      String refreshToken = authInfo.getRefreshToken();
-      if (refreshToken != null) {
-        SignedJWT refreshSignedJWT = SignedJWT.parse(refreshToken);
-        String refreshTokenId = refreshSignedJWT.getJWTClaimsSet().getJWTID();
-        createInvalidToken(refreshTokenId, refreshToken);
-      }
-
-      authInfo.setRefreshToken(null);
-      authInfoRepository.save(authInfo);
-    } catch (AppException e) {
-      loggedOut = false;
+    String refreshToken = authInfo.getRefreshToken();
+    if (refreshToken != null) {
+      SignedJWT refreshSignedJWT = SignedJWT.parse(refreshToken);
+      String refreshTokenId = refreshSignedJWT.getJWTClaimsSet().getJWTID();
+      createInvalidToken(refreshTokenId, refreshToken);
     }
 
-    if (id != null) {
-      createInvalidToken(id, token);
-    }
+    authInfo.setRefreshToken(null);
+    authInfoRepository.save(authInfo);
 
     return LogoutResponse.builder()
-      .loggedOut(loggedOut)
+      .loggedOut(true)
+      .build();
+  }
+
+  public MeResponse getMe(String email) {
+    User user = userRepository.findByEmail(email)
+      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+    String id = user.getId();
+    String fullName = user.getFullName();
+    Role roleEntity = user.getRole();
+    RoleResponse role = roleMapper.toResponse(roleEntity);
+
+    UserAuthInfo authInfo = user.getAuthInfo();
+    String refreshToken = authInfo.getRefreshToken();
+    TokenResponse tokenResponse = TokenResponse.builder()
+      .accessToken(null)
+      .expiresAt(null)
+      .refreshToken(refreshToken)
+      .build();
+
+    return MeResponse.builder()
+      .id(id)
+      .email(email)
+      .fullName(fullName)
+      .role(role)
+      .tokens(tokenResponse)
       .build();
   }
 

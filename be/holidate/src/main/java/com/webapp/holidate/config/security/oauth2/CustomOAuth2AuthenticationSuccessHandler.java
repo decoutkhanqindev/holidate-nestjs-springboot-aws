@@ -29,6 +29,7 @@ import java.io.IOException;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
+
   AuthService authService;
   UserRepository userRepository;
   UserAuthInfoRepository authInfoRepository;
@@ -46,16 +47,8 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
   long refreshTokenExpirationMillis;
 
   @NonFinal
-  @Value(AppValues.ACCESS_TOKEN_COOKIE_NAME)
-  String accessTokenCookieName;
-
-  @NonFinal
-  @Value(AppValues.REFRESH_TOKEN_COOKIE_NAME)
-  String refreshTokenCookieName;
-
-  @NonFinal
-  @Value(AppValues.ID_COOKIE_NAME)
-  String idCookieName;
+  @Value(AppValues.TOKEN_COOKIE_NAME)
+  String tokenCookieName;
 
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
@@ -63,7 +56,6 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
     String email = oAuth2User.getAttribute("email");
     User user = userRepository.findByEmail(email)
       .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
-    String userId = user.getId();
     UserAuthInfo authInfo = user.getAuthInfo();
 
     String accessToken;
@@ -78,29 +70,19 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
     authInfo.setRefreshToken(refreshToken);
     authInfoRepository.save(authInfo);
 
-    createCookie(response, accessToken, refreshToken, userId);
+    Cookie cookie = new Cookie(tokenCookieName, accessToken);
+    int maxAge = (int) (accessTokenExpirationMillis / 1000);
+    cookie.setHttpOnly(true);
+    cookie.setSecure(false); // set to true in production
+    cookie.setPath("/");
+    cookie.setMaxAge(maxAge);
+
+    String cookieHeader = String.format(
+      "%s=%s; Max-Age=%d; Path=/; HttpOnly; Secure; SameSite=None",
+      tokenCookieName, accessToken, maxAge
+    );
+    response.addHeader("Set-Cookie", cookieHeader);
+
     getRedirectStrategy().sendRedirect(request, response, frontendLoginSuccessUrl);
-  }
-
-  private void createCookie(HttpServletResponse response, String accessToken, String refreshToken, String userId) {
-    Cookie accessTokenCookie = new Cookie(accessTokenCookieName, accessToken);
-    accessTokenCookie.setHttpOnly(true);
-    accessTokenCookie.setPath("/");
-    int accessTokenExpirationMillisInt = (int) (accessTokenExpirationMillis / 1000);
-    accessTokenCookie.setMaxAge(accessTokenExpirationMillisInt);
-    response.addCookie(accessTokenCookie);
-
-    Cookie refreshTokenCookie = new Cookie(refreshTokenCookieName, refreshToken);
-    refreshTokenCookie.setHttpOnly(true);
-    refreshTokenCookie.setPath("/");
-    int refreshTokenExpirationMillisInt = (int) (refreshTokenExpirationMillis / 1000);
-    refreshTokenCookie.setMaxAge(refreshTokenExpirationMillisInt);
-    response.addCookie(refreshTokenCookie);
-
-    Cookie userIdCookie = new Cookie(idCookieName, userId);
-    userIdCookie.setHttpOnly(true);
-    userIdCookie.setPath("/");
-    userIdCookie.setMaxAge(refreshTokenExpirationMillisInt);
-    response.addCookie(userIdCookie);
   }
 }

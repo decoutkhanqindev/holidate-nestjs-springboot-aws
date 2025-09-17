@@ -25,43 +25,23 @@ public class CustomOAuth2AuthenticationFailureHandler extends SimpleUrlAuthentic
   String frontendLoginFailureUrl;
 
   @NonFinal
-  @Value(AppValues.ACCESS_TOKEN_COOKIE_NAME)
-  String accessTokenCookieName;
-
-  @NonFinal
-  @Value(AppValues.REFRESH_TOKEN_COOKIE_NAME)
-  String refreshTokenCookieName;
-
-  @NonFinal
-  @Value(AppValues.ID_COOKIE_NAME)
-  String idCookieName;
+  @Value(AppValues.TOKEN_COOKIE_NAME)
+  String tokenCookieName;
 
   @Override
   public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
-    clearCookie(response);
+    Cookie cookie = new Cookie(tokenCookieName, null);
+    cookie.setHttpOnly(true);
+    cookie.setSecure(false); // Set to true in production
+    cookie.setPath("/");
+    cookie.setMaxAge(0);
+
+    String cookieHeader = String.format(
+      "%s=%s; Max-Age=%d; Path=/; HttpOnly; Secure; SameSite=None",
+      tokenCookieName, null, 0
+    );
+    response.addHeader("Set-Cookie", cookieHeader);
+
     getRedirectStrategy().sendRedirect(request, response, frontendLoginFailureUrl);
-  }
-
-  private void clearCookie(HttpServletResponse response) {
-    Cookie accessTokenCookie = new Cookie(accessTokenCookieName, null);
-    accessTokenCookie.setHttpOnly(true);
-    accessTokenCookie.setPath("/");
-    accessTokenCookie.setSecure(false);
-    accessTokenCookie.setMaxAge(0);
-    response.addCookie(accessTokenCookie);
-
-    Cookie refreshTokenCookie = new Cookie(refreshTokenCookieName, null);
-    refreshTokenCookie.setHttpOnly(true);
-    refreshTokenCookie.setPath("/");
-    refreshTokenCookie.setSecure(false);
-    refreshTokenCookie.setMaxAge(0);
-    response.addCookie(refreshTokenCookie);
-
-    Cookie idCookie = new Cookie(idCookieName, null);
-    idCookie.setHttpOnly(true);
-    idCookie.setPath("/");
-    idCookie.setSecure(false);
-    idCookie.setMaxAge(0);
-    response.addCookie(idCookie);
   }
 }

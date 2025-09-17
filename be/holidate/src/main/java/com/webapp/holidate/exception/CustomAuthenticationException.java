@@ -5,13 +5,9 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.springframework.security.core.AuthenticationException;
 
-@Builder
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Getter
-@Setter
-@ToString
 public class CustomAuthenticationException extends AuthenticationException {
-  ErrorType errorType;
+  private final ErrorType errorType;
 
   public CustomAuthenticationException(ErrorType errorType) {
     super(errorType.getMessage());

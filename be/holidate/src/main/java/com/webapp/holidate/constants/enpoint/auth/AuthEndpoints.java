@@ -7,4 +7,5 @@ public class AuthEndpoints {
   public static final String LOGOUT = "/logout";
   public static final String VERIFY_TOKEN = "/verify-token";
   public static final String REFRESH_TOKEN = "/refresh-token";
+  public static final String ME = "/me";
 }

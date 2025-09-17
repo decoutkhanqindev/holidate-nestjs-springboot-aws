@@ -1,5 +1,7 @@
 package com.webapp.holidate.utils;
 
+import org.springframework.cglib.core.Local;
+
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
@@ -9,5 +11,9 @@ public class DateTimeUtils {
     return new Date(System.currentTimeMillis() + millis)
       .toInstant()
       .atZone(ZoneId.systemDefault()).toLocalDateTime();
+  }
+
+  public static LocalDateTime dateToLocalDateTime(Date date) {
+    return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
   }
 }

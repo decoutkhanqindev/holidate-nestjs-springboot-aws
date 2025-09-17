@@ -1,6 +1,7 @@
 package com.webapp.holidate.config.security;
 
 
+import com.webapp.holidate.config.security.oauth2.CustomCookieAuthenticationFilter;
 import com.webapp.holidate.config.security.oauth2.CustomOAuth2AuthenticationFailureHandler;
 import com.webapp.holidate.config.security.oauth2.CustomOAuth2AuthenticationSuccessHandler;
 import com.webapp.holidate.constants.AppValues;
@@ -27,6 +28,7 @@ import org.springframework.security.config.annotation.web.configurers.FormLoginC
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -47,6 +49,7 @@ public class SecurityConfig {
   CustomJwtDecoder jwtDecoder;
   CustomAuthenticationEntryPoint authenticationEntryPoint;
   CustomAccessDeniedHandler accessDeniedHandler;
+  CustomCookieAuthenticationFilter cookieAuthenticationFilter;
 
   @NonFinal
   @Value(AppValues.FRONTEND_URL)
@@ -88,6 +91,8 @@ public class SecurityConfig {
           .authenticationEntryPoint(authenticationEntryPoint)
           .accessDeniedHandler(accessDeniedHandler)
       );
+
+    http.addFilterBefore(cookieAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
   }

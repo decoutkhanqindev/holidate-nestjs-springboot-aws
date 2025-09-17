@@ -22,9 +22,7 @@ public class HolidateApplication {
     System.setProperty(EnvVariables.ISSUER, dotenv.get(EnvVariables.ISSUER));
     System.setProperty(EnvVariables.ACCESS_TOKEN_EXPIRATION_MILLIS, dotenv.get(EnvVariables.ACCESS_TOKEN_EXPIRATION_MILLIS));
     System.setProperty(EnvVariables.REFRESH_TOKEN_EXPIRATION_MILLIS, dotenv.get(EnvVariables.REFRESH_TOKEN_EXPIRATION_MILLIS));
-    System.setProperty(EnvVariables.ACCESS_TOKEN_COOKIE_NAME, dotenv.get(EnvVariables.ACCESS_TOKEN_COOKIE_NAME));
-    System.setProperty(EnvVariables.REFRESH_TOKEN_COOKIE_NAME, dotenv.get(EnvVariables.REFRESH_TOKEN_COOKIE_NAME));
-    System.setProperty(EnvVariables.ID_COOKIE_NAME, dotenv.get(EnvVariables.ID_COOKIE_NAME));
+    System.setProperty(EnvVariables.TOKEN_COOKIE_NAME, dotenv.get(EnvVariables.TOKEN_COOKIE_NAME));
     System.setProperty(EnvVariables.MAIL_HOST, dotenv.get(EnvVariables.MAIL_HOST));
     System.setProperty(EnvVariables.MAIL_PORT, dotenv.get(EnvVariables.MAIL_PORT));
     System.setProperty(EnvVariables.MAIL_USERNAME, dotenv.get(EnvVariables.MAIL_USERNAME));
