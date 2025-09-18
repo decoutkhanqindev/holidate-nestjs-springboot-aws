@@ -9,6 +9,7 @@ import com.webapp.holidate.repository.UserAuthInfoRepository;
 import com.webapp.holidate.repository.UserRepository;
 import com.webapp.holidate.service.auth.AuthService;
 import com.webapp.holidate.type.ErrorType;
+import com.webapp.holidate.utils.AuthenticationUtils;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -16,7 +17,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -57,9 +57,9 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
     User user = userRepository.findByEmail(email)
       .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
     UserAuthInfo authInfo = user.getAuthInfo();
-
     String accessToken;
     String refreshToken;
+
     try {
       accessToken = authService.generateToken(user, accessTokenExpirationMillis);
       refreshToken = authService.generateToken(user, refreshTokenExpirationMillis);
@@ -70,18 +70,8 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
     authInfo.setRefreshToken(refreshToken);
     authInfoRepository.save(authInfo);
 
-    Cookie cookie = new Cookie(tokenCookieName, accessToken);
-    int maxAge = (int) (accessTokenExpirationMillis / 1000);
-    cookie.setHttpOnly(true);
-    cookie.setSecure(false); // set to true in production
-    cookie.setPath("/");
-    cookie.setMaxAge(maxAge);
-
-    String cookieHeader = String.format(
-      "%s=%s; Max-Age=%d; Path=/; HttpOnly; Secure; SameSite=None",
-      tokenCookieName, accessToken, maxAge
-    );
-    response.addHeader("Set-Cookie", cookieHeader);
+    int maxAge = (int) (refreshTokenExpirationMillis / 1000);
+    AuthenticationUtils.createAuthCookies(response, tokenCookieName, accessToken, maxAge);
 
     getRedirectStrategy().sendRedirect(request, response, frontendLoginSuccessUrl);
   }

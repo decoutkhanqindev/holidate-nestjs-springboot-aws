@@ -5,8 +5,12 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.webapp.holidate.config.security.filter.CustomAuthenticationToken;
 import com.webapp.holidate.constants.AppValues;
-import com.webapp.holidate.dto.request.auth.*;
+import com.webapp.holidate.dto.request.auth.LoginRequest;
+import com.webapp.holidate.dto.request.auth.RegisterRequest;
+import com.webapp.holidate.dto.request.auth.TokenRequest;
+import com.webapp.holidate.dto.request.auth.VerifyTokenRequest;
 import com.webapp.holidate.dto.response.auth.*;
 import com.webapp.holidate.dto.response.user.RoleResponse;
 import com.webapp.holidate.entity.InvalidToken;
@@ -137,16 +141,25 @@ public class AuthService {
       throw new AppException(ErrorType.UNAUTHORIZED);
     }
 
+    String id = user.getId();
+    String fullName = user.getFullName();
+    Role roleEntity = user.getRole();
+    RoleResponse roleResponse = roleMapper.toResponse(roleEntity);
+
     String accessToken = generateToken(user, accessTokenExpirationMillis);
-    LocalDateTime accessTokenExpiresAt = DateTimeUtils.millisToLocalDateTime(accessTokenExpirationMillis);
+    LocalDateTime expiresAt = DateTimeUtils.millisToLocalDateTime(accessTokenExpirationMillis);
 
     String refreshToken = generateToken(user, refreshTokenExpirationMillis);
     authInfo.setRefreshToken(refreshToken);
     authInfoRepository.save(authInfo);
 
     return TokenResponse.builder()
+      .id(id)
+      .email(email)
+      .fullName(fullName)
+      .role(roleResponse)
       .accessToken(accessToken)
-      .expiresAt(accessTokenExpiresAt)
+      .expiresAt(expiresAt)
       .refreshToken(refreshToken)
       .build();
   }
@@ -173,20 +186,29 @@ public class AuthService {
       throw new AppException(ErrorType.INVALID_TOKEN);
     }
 
-    String id = signedJWT.getJWTClaimsSet().getJWTID();
-    createInvalidToken(id, token);
+    String tokenId = signedJWT.getJWTClaimsSet().getJWTID();
+    createInvalidToken(tokenId, token);
+
+    String userId = user.getId();
+    String fullName = user.getFullName();
+    Role roleEntity = user.getRole();
+    RoleResponse roleResponse = roleMapper.toResponse(roleEntity);
 
     String accessToken = generateToken(user, accessTokenExpirationMillis);
-    LocalDateTime accessTokenExpiresAt = DateTimeUtils.millisToLocalDateTime(accessTokenExpirationMillis);
+    LocalDateTime expiresAt = DateTimeUtils.millisToLocalDateTime(accessTokenExpirationMillis);
 
-    String newRefreshToken = generateToken(user, refreshTokenExpirationMillis);
-    authInfo.setRefreshToken(newRefreshToken);
+    String refreshToken = generateToken(user, refreshTokenExpirationMillis);
+    authInfo.setRefreshToken(refreshToken);
     authInfoRepository.save(authInfo);
 
     return TokenResponse.builder()
+      .id(userId)
+      .email(email)
+      .fullName(fullName)
+      .role(roleResponse)
       .accessToken(accessToken)
-      .expiresAt(accessTokenExpiresAt)
-      .refreshToken(newRefreshToken)
+      .expiresAt(expiresAt)
+      .refreshToken(refreshToken)
       .build();
   }
 
@@ -217,28 +239,29 @@ public class AuthService {
       .build();
   }
 
-  public MeResponse getMe(String email) {
+  public TokenResponse getMe(CustomAuthenticationToken authentication) {
+    String email = authentication.getName();
+    String accessToken = authentication.getToken();
+    LocalDateTime expiresAt = authentication.getExpiresAt();
+
     User user = userRepository.findByEmail(email)
       .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
     String id = user.getId();
     String fullName = user.getFullName();
     Role roleEntity = user.getRole();
-    RoleResponse role = roleMapper.toResponse(roleEntity);
+    RoleResponse roleResponse = roleMapper.toResponse(roleEntity);
 
     UserAuthInfo authInfo = user.getAuthInfo();
     String refreshToken = authInfo.getRefreshToken();
-    TokenResponse tokenResponse = TokenResponse.builder()
-      .accessToken(null)
-      .expiresAt(null)
-      .refreshToken(refreshToken)
-      .build();
 
-    return MeResponse.builder()
+    return TokenResponse.builder()
       .id(id)
       .email(email)
       .fullName(fullName)
-      .role(role)
-      .tokens(tokenResponse)
+      .role(roleResponse)
+      .accessToken(accessToken)
+      .expiresAt(expiresAt)
+      .refreshToken(refreshToken)
       .build();
   }
 

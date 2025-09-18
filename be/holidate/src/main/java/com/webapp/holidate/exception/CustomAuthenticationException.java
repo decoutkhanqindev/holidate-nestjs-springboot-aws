@@ -1,8 +1,7 @@
 package com.webapp.holidate.exception;
 
 import com.webapp.holidate.type.ErrorType;
-import lombok.*;
-import lombok.experimental.FieldDefaults;
+import lombok.Getter;
 import org.springframework.security.core.AuthenticationException;
 
 @Getter

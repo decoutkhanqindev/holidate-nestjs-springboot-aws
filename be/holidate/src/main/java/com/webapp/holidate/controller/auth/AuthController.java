@@ -1,21 +1,19 @@
 package com.webapp.holidate.controller.auth;
 
 import com.nimbusds.jose.JOSEException;
-import com.nimbusds.openid.connect.sdk.LogoutRequest;
+import com.webapp.holidate.config.security.filter.CustomAuthenticationToken;
 import com.webapp.holidate.constants.enpoint.auth.AuthEndpoints;
-import com.webapp.holidate.dto.request.auth.*;
+import com.webapp.holidate.dto.request.auth.LoginRequest;
+import com.webapp.holidate.dto.request.auth.RegisterRequest;
+import com.webapp.holidate.dto.request.auth.TokenRequest;
+import com.webapp.holidate.dto.request.auth.VerifyTokenRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.auth.*;
-import com.webapp.holidate.entity.Role;
 import com.webapp.holidate.service.auth.AuthService;
-import com.webapp.holidate.type.RoleType;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import lombok.val;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
@@ -68,10 +66,9 @@ public class AuthController {
   }
 
   @GetMapping(AuthEndpoints.ME)
-  public ApiResponse<MeResponse> getMe(Authentication authentication) throws ParseException, JOSEException {
-    String email = authentication.getName();
-    MeResponse response = authService.getMe(email);
-    return ApiResponse.<MeResponse>builder()
+  public ApiResponse<TokenResponse> getMe(CustomAuthenticationToken authentication) {
+    TokenResponse response = authService.getMe(authentication);
+    return ApiResponse.<TokenResponse>builder()
       .data(response)
       .build();
   }

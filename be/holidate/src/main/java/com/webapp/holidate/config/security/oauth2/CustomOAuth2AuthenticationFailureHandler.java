@@ -1,6 +1,7 @@
 package com.webapp.holidate.config.security.oauth2;
 
 import com.webapp.holidate.constants.AppValues;
+import com.webapp.holidate.utils.AuthenticationUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,19 +30,8 @@ public class CustomOAuth2AuthenticationFailureHandler extends SimpleUrlAuthentic
   String tokenCookieName;
 
   @Override
-  public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
-    Cookie cookie = new Cookie(tokenCookieName, null);
-    cookie.setHttpOnly(true);
-    cookie.setSecure(false); // Set to true in production
-    cookie.setPath("/");
-    cookie.setMaxAge(0);
-
-    String cookieHeader = String.format(
-      "%s=%s; Max-Age=%d; Path=/; HttpOnly; Secure; SameSite=None",
-      tokenCookieName, null, 0
-    );
-    response.addHeader("Set-Cookie", cookieHeader);
-
+  public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException {
+    AuthenticationUtils.createAuthCookies(response, tokenCookieName, null, 0);
     getRedirectStrategy().sendRedirect(request, response, frontendLoginFailureUrl);
   }
 }
