@@ -1,11 +1,12 @@
 package com.webapp.holidate.config.security.oauth2;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
 import com.webapp.holidate.constants.AppValues;
 import com.webapp.holidate.constants.enpoint.auth.AuthEndpoints;
+import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.exception.AppException;
-import com.webapp.holidate.exception.CustomAuthenticationException;
 import com.webapp.holidate.service.auth.AuthService;
 import com.webapp.holidate.type.ErrorType;
 import jakarta.servlet.FilterChain;
@@ -19,6 +20,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -52,26 +54,42 @@ public class CustomCookieAuthenticationFilter extends OncePerRequestFilter {
           if (tokenNameMatches) {
             String token = cookie.getValue();
 
+            String email;
+            String scope;
             try {
               SignedJWT signedJWT = authService.getSignedJWT(token);
-              String email = signedJWT.getJWTClaimsSet().getSubject();
-              String scope = signedJWT.getJWTClaimsSet().getClaim("scope").toString();
-
-              List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(scope));
-              UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(email, null, authorities);
-
-              SecurityContextHolder.getContext().setAuthentication(authentication);
+               email = signedJWT.getJWTClaimsSet().getSubject();
+               scope = signedJWT.getJWTClaimsSet().getClaim("scope").toString();
             } catch (JOSEException | ParseException e) {
-              throw new CustomAuthenticationException(ErrorType.INVALID_TOKEN);
+              handleAuthenticationError(response, ErrorType.INVALID_TOKEN);
+              return;
             } catch (AppException e) {
-              throw new CustomAuthenticationException(e.getError());
+              handleAuthenticationError(response, e.getError());
+              return;
             }
+
+            List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(scope));
+            UsernamePasswordAuthenticationToken authentication =
+              new UsernamePasswordAuthenticationToken(email, null, authorities);
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            break;
           }
         }
       }
     }
 
     filterChain.doFilter(request, response);
+  }
+
+  private void handleAuthenticationError(HttpServletResponse response, ErrorType error) throws IOException {
+    ApiResponse<?> apiResponse = ApiResponse.builder()
+      .statusCode(error.getStatusCode())
+      .message(error.getMessage())
+      .build();
+
+    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+    response.setStatus(error.getStatusCode());
+    new ObjectMapper().writeValue(response.getOutputStream(), apiResponse);
   }
 }

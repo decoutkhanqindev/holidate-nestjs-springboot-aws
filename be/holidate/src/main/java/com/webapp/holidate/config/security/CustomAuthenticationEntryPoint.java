@@ -22,10 +22,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
   public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException {
     ErrorType errorType = ErrorType.UNAUTHORIZED;
 
-    log.error("Unauthorized attempt to access resource: {}", request.getRequestURI());
-
     if (authException instanceof CustomAuthenticationException e) {
-      log.error("Authentication error: {}", e.getMessage());
       errorType = e.getError();
     }
 
