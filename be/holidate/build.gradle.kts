@@ -53,6 +53,8 @@ dependencies {
   testImplementation("org.springframework.boot:spring-boot-starter-test")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
   implementation(kotlin("stdlib-jdk8"))
+
+  implementation("com.amazonaws:aws-java-sdk-s3:1.12.782")
 }
 
 tasks.withType<Test> {
