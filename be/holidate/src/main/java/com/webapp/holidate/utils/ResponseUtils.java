@@ -5,6 +5,7 @@ import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.type.ErrorType;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.val;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
@@ -12,9 +13,12 @@ import java.io.IOException;
 
 public class ResponseUtils {
   public static ResponseEntity<ApiResponse<String>> handleExceptionResponse(ErrorType error) {
+    int statusCode = error.getStatusCode();
+    String message = error.getMessage();
+
     ApiResponse<String> response = ApiResponse.<String>builder()
-      .statusCode(error.getStatusCode())
-      .message(error.getMessage())
+      .statusCode(statusCode)
+      .message(message)
       .data(null)
       .build();
     return ResponseEntity.status(error.getStatusCode()).body(response);
