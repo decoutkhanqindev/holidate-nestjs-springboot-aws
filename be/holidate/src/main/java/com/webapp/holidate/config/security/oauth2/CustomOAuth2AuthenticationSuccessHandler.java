@@ -9,7 +9,7 @@ import com.webapp.holidate.repository.UserAuthInfoRepository;
 import com.webapp.holidate.repository.UserRepository;
 import com.webapp.holidate.service.auth.AuthService;
 import com.webapp.holidate.type.ErrorType;
-import com.webapp.holidate.utils.AuthenticationUtils;
+import com.webapp.holidate.utils.ResponseUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AccessLevel;
@@ -70,7 +70,7 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
     authInfoRepository.save(authInfo);
 
     int maxAge = (int) (refreshTokenExpirationMillis / 1000);
-    AuthenticationUtils.createAuthCookies(response, tokenCookieName, accessToken, maxAge);
+    ResponseUtils.handleAuthCookiesResponse(response, tokenCookieName, accessToken, maxAge);
 
     getRedirectStrategy().sendRedirect(request, response, frontendLoginSuccessUrl);
   }

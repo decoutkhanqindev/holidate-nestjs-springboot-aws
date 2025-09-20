@@ -3,7 +3,7 @@ package com.webapp.holidate.config.security;
 
 import com.webapp.holidate.exception.CustomAuthenticationException;
 import com.webapp.holidate.type.ErrorType;
-import com.webapp.holidate.utils.AuthenticationUtils;
+import com.webapp.holidate.utils.ResponseUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +24,6 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
       error = e.getError();
     }
 
-    AuthenticationUtils.handleAuthError(response, error);
+    ResponseUtils.handleAuthErrorResponse(response, error);
   }
 }

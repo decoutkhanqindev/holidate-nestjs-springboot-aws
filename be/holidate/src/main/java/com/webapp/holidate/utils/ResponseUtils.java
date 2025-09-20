@@ -6,19 +6,35 @@ import com.webapp.holidate.type.ErrorType;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 
 import java.io.IOException;
 
-public class AuthenticationUtils {
-  public static void handleAuthError(HttpServletResponse response, ErrorType error) throws IOException {
-    ApiResponse<?> apiResponse = ApiResponse.builder().statusCode(error.getStatusCode()).message(error.getMessage()).build();
+public class ResponseUtils {
+  public static ResponseEntity<ApiResponse<String>> handleExceptionResponse(ErrorType error) {
+    ApiResponse<String> response = ApiResponse.<String>builder()
+      .statusCode(error.getStatusCode())
+      .message(error.getMessage())
+      .data(null)
+      .build();
+    return ResponseEntity.status(error.getStatusCode()).body(response);
+  }
+
+  public static void handleAuthErrorResponse(HttpServletResponse response, ErrorType error) throws IOException {
+    int statusCode = error.getStatusCode();
+    String message = error.getMessage();
+
+    ApiResponse<?> apiResponse = ApiResponse.builder()
+      .statusCode(statusCode)
+      .message(message)
+      .build();
 
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
     response.setStatus(error.getStatusCode());
     new ObjectMapper().writeValue(response.getOutputStream(), apiResponse);
   }
 
-  public static void createAuthCookies(HttpServletResponse response, String name, String token, int maxAge) {
+  public static void handleAuthCookiesResponse(HttpServletResponse response, String name, String token, int maxAge) {
     Cookie cookie = new Cookie(name, token);
     cookie.setHttpOnly(true);
     cookie.setSecure(false); // set to true in production

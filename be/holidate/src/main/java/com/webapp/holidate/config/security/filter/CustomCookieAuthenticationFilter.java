@@ -7,7 +7,7 @@ import com.webapp.holidate.constants.enpoint.auth.AuthEndpoints;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.service.auth.AuthService;
 import com.webapp.holidate.type.ErrorType;
-import com.webapp.holidate.utils.AuthenticationUtils;
+import com.webapp.holidate.utils.ResponseUtils;
 import com.webapp.holidate.utils.DateTimeUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -65,10 +65,10 @@ public class CustomCookieAuthenticationFilter extends OncePerRequestFilter {
               scope = signedJWT.getJWTClaimsSet().getClaim("scope").toString();
               expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
             } catch (JOSEException | ParseException e) {
-              AuthenticationUtils.handleAuthError(response, ErrorType.INVALID_TOKEN);
+              ResponseUtils.handleAuthErrorResponse(response, ErrorType.INVALID_TOKEN);
               return;
             } catch (AppException e) {
-              AuthenticationUtils.handleAuthError(response, e.getError());
+              ResponseUtils.handleAuthErrorResponse(response, e.getError());
               return;
             }
 
