@@ -54,7 +54,7 @@ dependencies {
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
   implementation(kotlin("stdlib-jdk8"))
 
-  implementation("com.amazonaws:aws-java-sdk-s3:1.12.782")
+  implementation("software.amazon.awssdk:s3:2.33.7")
 }
 
 tasks.withType<Test> {

@@ -10,7 +10,6 @@ import com.webapp.holidate.repository.UserRepository;
 import com.webapp.holidate.service.auth.AuthService;
 import com.webapp.holidate.type.ErrorType;
 import com.webapp.holidate.utils.AuthenticationUtils;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AccessLevel;
@@ -39,15 +38,15 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
   String frontendLoginSuccessUrl;
 
   @NonFinal
-  @Value(AppValues.ACCESS_TOKEN_EXPIRATION_MILLIS)
+  @Value(AppValues.JWT_ACCESS_TOKEN_EXPIRATION_MILLIS)
   long accessTokenExpirationMillis;
 
   @NonFinal
-  @Value(AppValues.REFRESH_TOKEN_EXPIRATION_MILLIS)
+  @Value(AppValues.JWT_REFRESH_TOKEN_EXPIRATION_MILLIS)
   long refreshTokenExpirationMillis;
 
   @NonFinal
-  @Value(AppValues.TOKEN_COOKIE_NAME)
+  @Value(AppValues.JWT_TOKEN_COOKIE_NAME)
   String tokenCookieName;
 
   @Override

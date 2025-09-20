@@ -56,19 +56,19 @@ public class AuthService {
   PasswordEncoder passwordEncoder;
 
   @NonFinal
-  @Value(AppValues.SECRET_KEY)
+  @Value(AppValues.JWT_SECRET_KEY)
   String SECRET_KEY;
 
   @NonFinal
-  @Value(AppValues.ISSUER)
+  @Value(AppValues.JWT_ISSUER)
   String ISSUER;
 
   @NonFinal
-  @Value(AppValues.ACCESS_TOKEN_EXPIRATION_MILLIS)
+  @Value(AppValues.JWT_ACCESS_TOKEN_EXPIRATION_MILLIS)
   long accessTokenExpirationMillis;
 
   @NonFinal
-  @Value(AppValues.REFRESH_TOKEN_EXPIRATION_MILLIS)
+  @Value(AppValues.JWT_REFRESH_TOKEN_EXPIRATION_MILLIS)
   long refreshTokenExpirationMillis;
 
   public RegisterResponse register(RegisterRequest request) {

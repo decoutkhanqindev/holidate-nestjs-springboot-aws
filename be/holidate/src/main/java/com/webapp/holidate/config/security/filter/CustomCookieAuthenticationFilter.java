@@ -38,7 +38,7 @@ public class CustomCookieAuthenticationFilter extends OncePerRequestFilter {
   AuthService authService;
 
   @NonFinal
-  @Value(AppValues.TOKEN_COOKIE_NAME)
+  @Value(AppValues.JWT_TOKEN_COOKIE_NAME)
   String tokenCookieName;
 
   @Override

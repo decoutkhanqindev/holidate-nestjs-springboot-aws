@@ -30,7 +30,7 @@ public class CustomJwtDecoder implements JwtDecoder {
   AuthService authService;
 
   @NonFinal
-  @Value(AppValues.SECRET_KEY)
+  @Value(AppValues.JWT_SECRET_KEY)
   String SECRET_KEY;
 
   @Override
