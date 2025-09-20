@@ -9,7 +9,8 @@ import lombok.experimental.FieldDefaults;
 @Getter
 public enum GenderType {
   MALE("male"),
-  FEMALE("female");
+  FEMALE("female"),
+  OTHER("other");
 
   String name;
 }

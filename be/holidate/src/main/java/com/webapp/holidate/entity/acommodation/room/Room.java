@@ -1,0 +1,79 @@
+package com.webapp.holidate.entity.acommodation.room;
+
+import com.webapp.holidate.constants.db.DbFieldNames;
+import com.webapp.holidate.constants.db.DbTableNames;
+import com.webapp.holidate.entity.acommodation.Hotel;
+import com.webapp.holidate.entity.acommodation.amenity.RoomAmenity;
+import jakarta.persistence.*;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = DbTableNames.ROOMS)
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+@ToString
+public class Room {
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  @Column(nullable = false)
+  String id;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = DbFieldNames.HOTEL_ID, nullable = false)
+  @ToString.Exclude
+  Hotel hotel;
+
+  @Column(nullable = false)
+  String name;
+
+  @Column(nullable = false, columnDefinition = "TEXT")
+  String description;
+
+  @Column(nullable = false)
+  double area;
+
+  @Column(nullable = true)
+  @Builder.Default
+  List<String> photoUrls = new ArrayList<>();
+
+  @Column(nullable = false)
+  int maxAdults;
+
+  @Column(nullable = false)
+  int maxChildren;
+
+  @Column(nullable = false)
+  double basePricePerNight;
+
+  @Column(nullable = false)
+  int quantity;
+
+  @Column(nullable = false)
+  String status;
+
+  @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+  @ToString.Exclude
+  @Builder.Default
+  List<RoomInventory> inventories = new ArrayList<>();
+
+  @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+  @ToString.Exclude
+  @Builder.Default
+  List<RoomAmenity> amenities = new ArrayList<>();
+
+  @Column(nullable = false)
+  @Builder.Default
+  LocalDateTime createdAt = LocalDateTime.now();
+
+  @Column(nullable = true)
+  LocalDateTime updatedAt;
+}
