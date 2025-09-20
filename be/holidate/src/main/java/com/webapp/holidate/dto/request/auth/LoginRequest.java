@@ -19,6 +19,7 @@ public class LoginRequest {
   @NotBlank(message = "EMAIL_NOT_BLANK")
   @Email(message = "EMAIL_INVALID")
   String email;
+
   @NotBlank(message = "PASSWORD_NOT_BLANK")
   @Size(min = 8, message = "PASSWORD_INVALID")
   String password;

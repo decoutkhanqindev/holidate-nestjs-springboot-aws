@@ -13,17 +13,18 @@ import com.webapp.holidate.dto.request.auth.TokenRequest;
 import com.webapp.holidate.dto.request.auth.VerifyTokenRequest;
 import com.webapp.holidate.dto.response.auth.*;
 import com.webapp.holidate.dto.response.user.RoleResponse;
-import com.webapp.holidate.entity.InvalidToken;
-import com.webapp.holidate.entity.Role;
-import com.webapp.holidate.entity.User;
-import com.webapp.holidate.entity.UserAuthInfo;
+import com.webapp.holidate.dto.response.user.UserResponse;
+import com.webapp.holidate.entity.user.InvalidToken;
+import com.webapp.holidate.entity.user.Role;
+import com.webapp.holidate.entity.user.User;
+import com.webapp.holidate.entity.user.UserAuthInfo;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.RoleMapper;
 import com.webapp.holidate.mapper.UserMapper;
-import com.webapp.holidate.repository.InvalidTokenRepository;
-import com.webapp.holidate.repository.RoleRepository;
-import com.webapp.holidate.repository.UserAuthInfoRepository;
-import com.webapp.holidate.repository.UserRepository;
+import com.webapp.holidate.repository.user.InvalidTokenRepository;
+import com.webapp.holidate.repository.user.RoleRepository;
+import com.webapp.holidate.repository.user.UserAuthInfoRepository;
+import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.type.AuthProviderType;
 import com.webapp.holidate.type.ErrorType;
 import com.webapp.holidate.type.RoleType;
@@ -71,7 +72,7 @@ public class AuthService {
   @Value(AppValues.JWT_REFRESH_TOKEN_EXPIRATION_MILLIS)
   long refreshTokenExpirationMillis;
 
-  public RegisterResponse register(RegisterRequest request) {
+  public UserResponse register(RegisterRequest request) {
     String email = request.getEmail();
     UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email).orElse(null);
 
@@ -114,7 +115,7 @@ public class AuthService {
     }
 
     userRepository.save(user);
-    return userMapper.toRegisterResponse(user);
+    return userMapper.toUserResponse(user);
   }
 
   public TokenResponse login(LoginRequest loginRequest) throws JOSEException {

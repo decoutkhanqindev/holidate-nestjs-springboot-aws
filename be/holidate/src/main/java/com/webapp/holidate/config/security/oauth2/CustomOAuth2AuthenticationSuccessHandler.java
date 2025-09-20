@@ -2,11 +2,11 @@ package com.webapp.holidate.config.security.oauth2;
 
 import com.nimbusds.jose.JOSEException;
 import com.webapp.holidate.constants.AppValues;
-import com.webapp.holidate.entity.User;
-import com.webapp.holidate.entity.UserAuthInfo;
+import com.webapp.holidate.entity.user.User;
+import com.webapp.holidate.entity.user.UserAuthInfo;
 import com.webapp.holidate.exception.AppException;
-import com.webapp.holidate.repository.UserAuthInfoRepository;
-import com.webapp.holidate.repository.UserRepository;
+import com.webapp.holidate.repository.user.UserAuthInfoRepository;
+import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.service.auth.AuthService;
 import com.webapp.holidate.type.ErrorType;
 import com.webapp.holidate.utils.ResponseUtils;

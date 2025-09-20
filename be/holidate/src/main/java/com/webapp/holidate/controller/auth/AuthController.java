@@ -9,6 +9,7 @@ import com.webapp.holidate.dto.request.auth.TokenRequest;
 import com.webapp.holidate.dto.request.auth.VerifyTokenRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.auth.*;
+import com.webapp.holidate.dto.response.user.UserResponse;
 import com.webapp.holidate.service.auth.AuthService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -26,9 +27,9 @@ public class AuthController {
   AuthService authService;
 
   @PostMapping(AuthEndpoints.REGISTER)
-  public ApiResponse<RegisterResponse> register(@RequestBody @Valid RegisterRequest request) {
-    RegisterResponse response = authService.register(request);
-    return ApiResponse.<RegisterResponse>builder()
+  public ApiResponse<UserResponse> register(@RequestBody @Valid RegisterRequest request) {
+    UserResponse response = authService.register(request);
+    return ApiResponse.<UserResponse>builder()
       .data(response)
       .build();
   }

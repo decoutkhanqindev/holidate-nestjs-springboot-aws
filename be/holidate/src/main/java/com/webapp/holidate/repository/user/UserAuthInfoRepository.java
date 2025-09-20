@@ -1,7 +1,7 @@
-package com.webapp.holidate.repository;
+package com.webapp.holidate.repository.user;
 
 import com.webapp.holidate.constants.db.AuthQueries;
-import com.webapp.holidate.entity.UserAuthInfo;
+import com.webapp.holidate.entity.user.UserAuthInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 

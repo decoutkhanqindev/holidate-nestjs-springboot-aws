@@ -1,11 +1,11 @@
-package com.webapp.holidate.service;
+package com.webapp.holidate.service.user;
 
 import com.webapp.holidate.dto.request.user.UserUpdateRequest;
-import com.webapp.holidate.dto.response.auth.RegisterResponse;
-import com.webapp.holidate.entity.User;
+import com.webapp.holidate.dto.response.user.UserResponse;
+import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.UserMapper;
-import com.webapp.holidate.repository.UserRepository;
+import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.type.ErrorType;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -21,25 +21,25 @@ public class UserService {
   UserRepository repository;
   UserMapper mapper;
 
-  public List<RegisterResponse> getAll() {
-    return repository.findAll().stream().map(mapper::toRegisterResponse).toList();
+  public List<UserResponse> getAll() {
+    return repository.findAll().stream().map(mapper::toUserResponse).toList();
   }
 
-  public RegisterResponse getById(String id) {
+  public UserResponse getById(String id) {
     User user = repository.findById(id).orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
-    return mapper.toRegisterResponse(user);
+    return mapper.toUserResponse(user);
   }
 
-  public RegisterResponse update(String id, UserUpdateRequest request) {
+  public UserResponse update(String id, UserUpdateRequest request) {
     User user = repository.findById(id).orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
     mapper.updateUser(user, request);
     repository.save(user);
-    return mapper.toRegisterResponse(user);
+    return mapper.toUserResponse(user);
   }
 
-  public RegisterResponse delete(String id) {
+  public UserResponse delete(String id) {
     User user = repository.findById(id).orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
     repository.delete(user);
-    return mapper.toRegisterResponse(user);
+    return mapper.toUserResponse(user);
   }
 }

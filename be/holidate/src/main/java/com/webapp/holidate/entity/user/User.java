@@ -1,0 +1,83 @@
+package com.webapp.holidate.entity.user;
+
+import com.webapp.holidate.constants.db.DbFieldNames;
+import com.webapp.holidate.constants.db.DbTableNames;
+import com.webapp.holidate.entity.booking.Review;
+import com.webapp.holidate.entity.location.City;
+import com.webapp.holidate.entity.location.District;
+import jakarta.persistence.*;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = DbTableNames.USERS)
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+@ToString
+public class User {
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  @Column(nullable = false)
+  String id;
+
+  @Column(nullable = false, unique = true)
+  String email;
+
+  @Column(nullable = false)
+  String password;
+
+  @Column(nullable = false)
+  String fullName;
+
+  @Column(nullable = true, unique = true, length = 11)
+  String phoneNumber;
+
+  @Column(nullable = false)
+  String address;
+
+  @ManyToOne(fetch = FetchType.EAGER)
+  @JoinColumn(name = DbFieldNames.CITY_ID, nullable = true)
+  @ToString.Exclude
+  City city;
+
+  @ManyToOne(fetch = FetchType.EAGER)
+  @JoinColumn(name = DbFieldNames.DISTRICT_ID, nullable = true)
+  @ToString.Exclude
+  District district;
+
+  @Column(nullable = true)
+  String gender;
+
+  @Column(nullable = true)
+  LocalDateTime dateOfBirth;
+
+  @Column(nullable = true)
+  String avatarUrl;
+
+  @ManyToOne(fetch = FetchType.EAGER)
+  @JoinColumn(name = DbFieldNames.ROLE_ID, nullable = false)
+  Role role;
+
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+  UserAuthInfo authInfo;
+
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  @ToString.Exclude
+  @Builder.Default
+  List<Review> reviews = new ArrayList<>();
+
+  @Builder.Default
+  @Column(nullable = false)
+  LocalDateTime createdAt = LocalDateTime.now();
+
+  @Column(nullable = true)
+  LocalDateTime updatedAt;
+}

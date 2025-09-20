@@ -1,6 +1,6 @@
-package com.webapp.holidate.repository;
+package com.webapp.holidate.repository.user;
 
-import com.webapp.holidate.entity.InvalidToken;
+import com.webapp.holidate.entity.user.InvalidToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface InvalidTokenRepository extends JpaRepository<InvalidToken, String> {

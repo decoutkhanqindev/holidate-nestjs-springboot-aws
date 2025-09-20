@@ -1,10 +1,10 @@
 package com.webapp.holidate.service.auth;
 
-import com.webapp.holidate.entity.Role;
-import com.webapp.holidate.entity.User;
-import com.webapp.holidate.entity.UserAuthInfo;
-import com.webapp.holidate.repository.RoleRepository;
-import com.webapp.holidate.repository.UserRepository;
+import com.webapp.holidate.entity.user.Role;
+import com.webapp.holidate.entity.user.User;
+import com.webapp.holidate.entity.user.UserAuthInfo;
+import com.webapp.holidate.repository.user.RoleRepository;
+import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.type.AuthProviderType;
 import com.webapp.holidate.type.RoleType;
 import lombok.RequiredArgsConstructor;

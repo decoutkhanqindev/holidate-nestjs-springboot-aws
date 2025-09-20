@@ -1,4 +1,4 @@
-package com.webapp.holidate.entity;
+package com.webapp.holidate.entity.user;
 
 import com.webapp.holidate.constants.db.DbTableNames;
 import jakarta.persistence.Column;
@@ -19,7 +19,9 @@ import lombok.experimental.FieldDefaults;
 @ToString
 public class InvalidToken {
   @Id
+  @Column(nullable = false)
   String id;
+
   @Column(nullable = false, columnDefinition = "TEXT")
   String token;
 }

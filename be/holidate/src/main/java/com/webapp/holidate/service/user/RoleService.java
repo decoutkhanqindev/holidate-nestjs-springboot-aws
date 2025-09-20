@@ -1,10 +1,10 @@
-package com.webapp.holidate.service;
+package com.webapp.holidate.service.user;
 
 import com.webapp.holidate.dto.request.user.RoleRequest;
 import com.webapp.holidate.dto.response.user.RoleResponse;
-import com.webapp.holidate.entity.Role;
+import com.webapp.holidate.entity.user.Role;
 import com.webapp.holidate.mapper.RoleMapper;
-import com.webapp.holidate.repository.RoleRepository;
+import com.webapp.holidate.repository.user.RoleRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

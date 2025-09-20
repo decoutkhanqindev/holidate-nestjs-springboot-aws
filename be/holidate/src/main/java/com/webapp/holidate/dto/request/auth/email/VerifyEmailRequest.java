@@ -19,6 +19,7 @@ public class VerifyEmailRequest {
   @NotBlank(message = "EMAIL_NOT_BLANK")
   @Email(message = "EMAIL_INVALID")
   String email;
+
   @NotBlank(message = "OTP_NOT_BLANK")
   @Size(min = 6, max = 6, message = "OTP_INVALID")
   String otp;

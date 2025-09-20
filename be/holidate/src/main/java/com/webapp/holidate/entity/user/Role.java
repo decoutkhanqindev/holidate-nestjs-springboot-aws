@@ -1,4 +1,4 @@
-package com.webapp.holidate.entity;
+package com.webapp.holidate.entity.user;
 
 import com.webapp.holidate.constants.db.DbTableNames;
 import jakarta.persistence.*;
@@ -17,9 +17,12 @@ import lombok.experimental.FieldDefaults;
 public class Role {
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
+  @Column(nullable = false)
   String id;
+
   @Column(nullable = false, unique = true)
   String name;
+
   @Column(nullable = false)
   String description;
 }
