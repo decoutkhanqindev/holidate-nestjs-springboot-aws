@@ -12,15 +12,15 @@ import com.webapp.holidate.dto.request.auth.RegisterRequest;
 import com.webapp.holidate.dto.request.auth.TokenRequest;
 import com.webapp.holidate.dto.request.auth.VerifyTokenRequest;
 import com.webapp.holidate.dto.response.auth.*;
-import com.webapp.holidate.dto.response.user.RoleResponse;
-import com.webapp.holidate.dto.response.user.UserResponse;
+import com.webapp.holidate.dto.response.user.RoleDetailsResponse;
+import com.webapp.holidate.dto.response.user.UserProfileResponse;
 import com.webapp.holidate.entity.user.InvalidToken;
 import com.webapp.holidate.entity.user.Role;
 import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.entity.user.UserAuthInfo;
 import com.webapp.holidate.exception.AppException;
-import com.webapp.holidate.mapper.RoleMapper;
-import com.webapp.holidate.mapper.UserMapper;
+import com.webapp.holidate.mapper.user.RoleMapper;
+import com.webapp.holidate.mapper.user.UserMapper;
 import com.webapp.holidate.repository.user.InvalidTokenRepository;
 import com.webapp.holidate.repository.user.RoleRepository;
 import com.webapp.holidate.repository.user.UserAuthInfoRepository;
@@ -72,7 +72,7 @@ public class AuthService {
   @Value(AppValues.JWT_REFRESH_TOKEN_EXPIRATION_MILLIS)
   long refreshTokenExpirationMillis;
 
-  public UserResponse register(RegisterRequest request) {
+  public UserProfileResponse register(RegisterRequest request) {
     String email = request.getEmail();
     UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email).orElse(null);
 
@@ -115,7 +115,7 @@ public class AuthService {
     }
 
     userRepository.save(user);
-    return userMapper.toUserResponse(user);
+    return userMapper.toUserProfileResponse(user);
   }
 
   public TokenResponse login(LoginRequest loginRequest) throws JOSEException {
@@ -145,7 +145,7 @@ public class AuthService {
     String id = user.getId();
     String fullName = user.getFullName();
     Role roleEntity = user.getRole();
-    RoleResponse roleResponse = roleMapper.toResponse(roleEntity);
+    RoleDetailsResponse roleDetailsResponse = roleMapper.toRoleDetailsResponse(roleEntity);
 
     String accessToken = generateToken(user, accessTokenExpirationMillis);
     LocalDateTime expiresAt = DateTimeUtils.millisToLocalDateTime(accessTokenExpirationMillis);
@@ -158,7 +158,7 @@ public class AuthService {
       .id(id)
       .email(email)
       .fullName(fullName)
-      .role(roleResponse)
+      .role(roleDetailsResponse)
       .accessToken(accessToken)
       .expiresAt(expiresAt)
       .refreshToken(refreshToken)
@@ -193,7 +193,7 @@ public class AuthService {
     String userId = user.getId();
     String fullName = user.getFullName();
     Role roleEntity = user.getRole();
-    RoleResponse roleResponse = roleMapper.toResponse(roleEntity);
+    RoleDetailsResponse roleDetailsResponse = roleMapper.toRoleDetailsResponse(roleEntity);
 
     String accessToken = generateToken(user, accessTokenExpirationMillis);
     LocalDateTime expiresAt = DateTimeUtils.millisToLocalDateTime(accessTokenExpirationMillis);
@@ -206,7 +206,7 @@ public class AuthService {
       .id(userId)
       .email(email)
       .fullName(fullName)
-      .role(roleResponse)
+      .role(roleDetailsResponse)
       .accessToken(accessToken)
       .expiresAt(expiresAt)
       .refreshToken(refreshToken)
@@ -250,7 +250,7 @@ public class AuthService {
     String id = user.getId();
     String fullName = user.getFullName();
     Role roleEntity = user.getRole();
-    RoleResponse roleResponse = roleMapper.toResponse(roleEntity);
+    RoleDetailsResponse roleDetailsResponse = roleMapper.toRoleDetailsResponse(roleEntity);
 
     UserAuthInfo authInfo = user.getAuthInfo();
     String refreshToken = authInfo.getRefreshToken();
@@ -259,7 +259,7 @@ public class AuthService {
       .id(id)
       .email(email)
       .fullName(fullName)
-      .role(roleResponse)
+      .role(roleDetailsResponse)
       .accessToken(accessToken)
       .expiresAt(expiresAt)
       .refreshToken(refreshToken)

@@ -1,6 +1,5 @@
-package com.webapp.holidate.dto.request.user;
+package com.webapp.holidate.dto.response.user;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -13,10 +12,8 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class RoleRequest {
-  @NotBlank(message = "NAME_NOT_BLANK")
+public class RoleDetailsResponse {
+  String id;
   String name;
-
-  @NotBlank(message = "DESCRIPTION_NOT_BLANK")
   String description;
 }

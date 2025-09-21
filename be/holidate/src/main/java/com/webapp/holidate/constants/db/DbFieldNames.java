@@ -11,10 +11,14 @@ public class DbFieldNames {
   public static final String HOTEL_ID_CAMEL = "hotelId";
   public static final String ROOM_ID = "room_id";
   public static final String ROOM_ID_CAMEL = "roomId";
-  public static final String CITY_ID = "city_id";
-  public static final String DISTRICT_ID = "district_id";
   public static final String AMENITY_ID = "amenity_id";
   public static final String AMENITY_ID_CAMEL = "amenityId";
+
+  // location related fields
+  public static final String COUNTRY_ID = "country_id";
+  public static final String PROVINCE_ID = "province_id";
+  public static final String CITY_ID = "city_id";
+  public static final String DISTRICT_ID = "district_id";
 
   // booking related fields
   public static final String BOOKING_ID = "booking_id";

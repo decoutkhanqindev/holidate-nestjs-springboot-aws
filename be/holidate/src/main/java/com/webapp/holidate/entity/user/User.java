@@ -4,7 +4,9 @@ import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
 import com.webapp.holidate.entity.booking.Review;
 import com.webapp.holidate.entity.location.City;
+import com.webapp.holidate.entity.location.Country;
 import com.webapp.holidate.entity.location.District;
+import com.webapp.holidate.entity.location.Province;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -53,6 +55,16 @@ public class User {
   @ToString.Exclude
   District district;
 
+  @ManyToOne(fetch = FetchType.EAGER)
+  @JoinColumn(name = DbFieldNames.PROVINCE_ID, nullable = true)
+  @ToString.Exclude
+  Province province;
+
+  @ManyToOne(fetch = FetchType.EAGER)
+  @JoinColumn(name = DbFieldNames.COUNTRY_ID, nullable = true)
+  @ToString.Exclude
+  Country country;
+
   @Column(nullable = true)
   String gender;
 
@@ -67,6 +79,7 @@ public class User {
   Role role;
 
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+  @ToString.Exclude
   UserAuthInfo authInfo;
 
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

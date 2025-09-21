@@ -1,4 +1,4 @@
-package com.webapp.holidate.constants.enpoint;
+package com.webapp.holidate.constants.enpoint.user;
 
 public class UserEndpoints {
   public static final String USERS = "/users";

@@ -2,6 +2,8 @@ package com.webapp.holidate.entity.acommodation;
 
 import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
+import com.webapp.holidate.entity.location.Country;
+import com.webapp.holidate.entity.location.Province;
 import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.entity.acommodation.amenity.HotelAmenity;
 import com.webapp.holidate.entity.location.City;
@@ -48,6 +50,16 @@ public class Hotel {
   @JoinColumn(name = DbFieldNames.DISTRICT_ID, nullable = false)
   @ToString.Exclude
   District district;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = DbFieldNames.PROVINCE_ID, nullable = false)
+  @ToString.Exclude
+  Province province;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = DbFieldNames.COUNTRY_ID, nullable = false)
+  @ToString.Exclude
+  Country country;
 
   @Column(nullable = true)
   @Builder.Default

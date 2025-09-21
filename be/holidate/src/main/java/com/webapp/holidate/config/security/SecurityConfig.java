@@ -5,8 +5,9 @@ import com.webapp.holidate.config.security.filter.CustomCookieAuthenticationFilt
 import com.webapp.holidate.config.security.oauth2.CustomOAuth2AuthenticationFailureHandler;
 import com.webapp.holidate.config.security.oauth2.CustomOAuth2AuthenticationSuccessHandler;
 import com.webapp.holidate.constants.AppValues;
-import com.webapp.holidate.constants.enpoint.RoleEndpoints;
-import com.webapp.holidate.constants.enpoint.UserEndpoints;
+import com.webapp.holidate.constants.enpoint.location.LocationEndpoints;
+import com.webapp.holidate.constants.enpoint.user.RoleEndpoints;
+import com.webapp.holidate.constants.enpoint.user.UserEndpoints;
 import com.webapp.holidate.constants.enpoint.auth.AuthEndpoints;
 import com.webapp.holidate.service.auth.GoogleService;
 import com.webapp.holidate.type.RoleType;
@@ -57,14 +58,25 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http.authorizeHttpRequests(request -> request
-      // public endpoints
+      // A. public endpoints
+      // 1. auth endpoints
       .requestMatchers(AuthEndpoints.AUTH + ALL_ENDPOINTS).permitAll()
-      // user endpoints
+      // 2. location endpoints
+      .requestMatchers(HttpMethod.GET, LocationEndpoints.LOCATION + ALL_ENDPOINTS).permitAll()
+
+      // B. protected endpoints
+      // I. user role
+      // 1. profile endpoints
       .requestMatchers(HttpMethod.GET, UserEndpoints.USERS + UserEndpoints.USER_ID).hasAuthority(RoleType.USER.getValue())
       .requestMatchers(HttpMethod.PUT, UserEndpoints.USERS + UserEndpoints.USER_ID).hasAuthority(RoleType.USER.getValue())
-      // admin endpoints
+      // II. admin role
+      // 1. profile endpoints
       .requestMatchers(UserEndpoints.USERS + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
       .requestMatchers(RoleEndpoints.ROLES + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
+      // 2. location endpoints
+      .requestMatchers(LocationEndpoints.LOCATION + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
+
+      // C. any other endpoints
       .anyRequest().authenticated()
     );
 

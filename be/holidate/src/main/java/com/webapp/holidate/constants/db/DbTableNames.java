@@ -11,11 +11,15 @@ public class DbTableNames {
   public static final String HOTELS = "hotels";
   public static final String ROOMS = "rooms";
   public static final String ROOM_INVENTORIES = "room_inventories";
-  public static final String CITIES = "cities";
-  public static final String DISTRICTS = "districts";
   public static final String AMENITIES = "amenities";
   public static final String HOTEL_AMENITIES = "hotel_amenities";
   public static final String ROOM_AMENITIES = "room_amenities";
+
+  // location related tables
+  public static final String COUNTRIES = "countries";
+  public static final String PROVINCES = "provinces";
+  public static final String CITIES = "cities";
+  public static final String DISTRICTS = "districts";
 
   // booking related tables
   public static final String BOOKINGS = "bookings";

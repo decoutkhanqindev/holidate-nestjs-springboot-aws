@@ -1,6 +1,5 @@
 package com.webapp.holidate.entity.location;
 
-import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
 import com.webapp.holidate.entity.acommodation.Hotel;
 import jakarta.persistence.*;
@@ -11,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = DbTableNames.DISTRICTS)
+@Table(name = DbTableNames.COUNTRIES)
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
@@ -19,24 +18,24 @@ import java.util.List;
 @Getter
 @Setter
 @ToString
-public class District {
+public class Country {
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   @Column(nullable = false)
   String id;
 
-  @Column(nullable = false)
+  @Column(nullable = false, unique = true)
   String name;
 
   @Column(nullable = false, unique = true)
   String code;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = DbFieldNames.CITY_ID, nullable = false)
+  @OneToMany(mappedBy = "country", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   @ToString.Exclude
-  City city;
+  @Builder.Default
+  List<Province> provinces = new ArrayList<>();
 
-  @OneToMany(mappedBy = "district", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "country", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   @ToString.Exclude
   @Builder.Default
   List<Hotel> hotels = new ArrayList<>();

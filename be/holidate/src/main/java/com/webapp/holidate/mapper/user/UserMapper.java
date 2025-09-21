@@ -1,8 +1,8 @@
-package com.webapp.holidate.mapper;
+package com.webapp.holidate.mapper.user;
 
 import com.webapp.holidate.dto.request.auth.RegisterRequest;
 import com.webapp.holidate.dto.request.user.UserUpdateRequest;
-import com.webapp.holidate.dto.response.user.UserResponse;
+import com.webapp.holidate.dto.response.user.UserProfileResponse;
 import com.webapp.holidate.entity.user.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -11,7 +11,7 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring")
 public interface UserMapper {
   User toEntity(RegisterRequest request);
-  UserResponse toUserResponse(User user);
+  UserProfileResponse toUserProfileResponse(User user);
 
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "email", ignore = true)

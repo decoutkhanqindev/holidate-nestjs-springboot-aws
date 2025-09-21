@@ -1,7 +1,9 @@
-package com.webapp.holidate.dto.response.user;
+package com.webapp.holidate.dto.response.location;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.util.List;
 
 @Data
 @Builder
@@ -12,8 +14,9 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class RoleResponse {
+public class CityDetailsResponse {
   String id;
   String name;
-  String description;
+  LocationResponse province;
+  List<LocationResponse> districts;
 }

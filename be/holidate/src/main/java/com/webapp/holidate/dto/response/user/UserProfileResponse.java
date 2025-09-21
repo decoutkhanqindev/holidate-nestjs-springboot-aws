@@ -1,7 +1,6 @@
-package com.webapp.holidate.dto.response.auth;
+package com.webapp.holidate.dto.response.user;
 
-import com.webapp.holidate.dto.response.user.RoleResponse;
-import com.webapp.holidate.dto.response.user.UserAuthInfoResponse;
+import com.webapp.holidate.dto.response.location.LocationResponse;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -16,16 +15,20 @@ import java.time.LocalDateTime;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class RegisterResponse {
+public class UserProfileResponse {
   String id;
   String email;
   String fullName;
   String phoneNumber;
   String address;
+  LocationResponse city;
+  LocationResponse district;
+  LocationResponse province;
+  LocationResponse country;
   String gender;
   LocalDateTime dateOfBirth;
   String avatarUrl;
-  RoleResponse role;
+  RoleDetailsResponse role;
   UserAuthInfoResponse authInfo;
   LocalDateTime createdAt;
   LocalDateTime updatedAt;

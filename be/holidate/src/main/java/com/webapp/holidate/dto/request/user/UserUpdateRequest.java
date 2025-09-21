@@ -32,21 +32,20 @@ public class UserUpdateRequest {
   @Pattern(regexp = ValidationPatterns.PHONE_NUMBER, message = "PHONE_NUMBER_INVALID")
   String phoneNumber;
 
-  @Size(min = 5, max = 200, message = "ADDRESS_DETAIL_INVALID")
   String address;
 
-  @NotBlank(message = "CITY_ID_REQUIRED")
   String cityId;
 
-  @NotBlank(message = "DISTRICT_ID_REQUIRED")
   String districtId;
 
-  @Pattern(regexp = "^(male|female|other)$", message = "GENDER_INVALID")
+  String provinceId;
+
+  String countryId;
+
+  @Pattern(regexp = ValidationPatterns.GENDER, message = "GENDER_INVALID")
   String gender;
 
-  @Pattern(regexp = ValidationPatterns.DATE_OF_BIRTH, message = "DATE_OF_BIRTH_INVALID")
   LocalDateTime dateOfBirth;
 
-  @Pattern(regexp = "^https?://.*\\.(jpg|jpeg|png|gif|webp)$", message = "AVATAR_URL_INVALID")
   String avatarUrl;
 }

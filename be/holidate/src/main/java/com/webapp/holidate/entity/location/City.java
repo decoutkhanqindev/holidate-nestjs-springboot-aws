@@ -1,5 +1,6 @@
 package com.webapp.holidate.entity.location;
 
+import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
 import com.webapp.holidate.entity.acommodation.Hotel;
 import jakarta.persistence.*;
@@ -27,10 +28,18 @@ public class City {
   @Column(nullable = false, unique = true)
   String name;
 
+  @Column(nullable = false, unique = true)
+  String code;
+
   @OneToMany(mappedBy = "city", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   @ToString.Exclude
   @Builder.Default
   List<District> districts = new ArrayList<>();
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = DbFieldNames.PROVINCE_ID, nullable = false)
+  @ToString.Exclude
+  Province province;
 
   @OneToMany(mappedBy = "city", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   @ToString.Exclude

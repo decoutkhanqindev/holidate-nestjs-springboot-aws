@@ -1,4 +1,4 @@
-package com.webapp.holidate.service;
+package com.webapp.holidate.service.storage;
 
 import com.webapp.holidate.constants.AppValues;
 import lombok.AccessLevel;

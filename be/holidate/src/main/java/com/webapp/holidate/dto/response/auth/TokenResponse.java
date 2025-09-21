@@ -1,6 +1,6 @@
 package com.webapp.holidate.dto.response.auth;
 
-import com.webapp.holidate.dto.response.user.RoleResponse;
+import com.webapp.holidate.dto.response.user.RoleDetailsResponse;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -19,7 +19,7 @@ public class TokenResponse {
   String id;
   String email;
   String fullName;
-  RoleResponse role;
+  RoleDetailsResponse role;
   String accessToken;
   LocalDateTime expiresAt;
   String refreshToken;
