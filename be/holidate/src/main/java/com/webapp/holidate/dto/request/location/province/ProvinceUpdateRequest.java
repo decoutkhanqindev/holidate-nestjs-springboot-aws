@@ -1,9 +1,8 @@
-package com.webapp.holidate.dto.response.location;
+package com.webapp.holidate.dto.request.location.province;
 
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
-import java.util.List;
 
 @Data
 @Builder
@@ -14,9 +13,9 @@ import java.util.List;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class CountryDetailsResponse {
-  String id;
+public class ProvinceUpdateRequest {
   String name;
+  @Size(min = 2, max = 3, message = "PROVINCE_CODE_INVALID")
   String code;
-  List<LocationResponse> provinces;
+  String countryId;
 }

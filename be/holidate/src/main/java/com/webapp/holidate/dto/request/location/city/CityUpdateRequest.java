@@ -1,6 +1,7 @@
-package com.webapp.holidate.dto.request.location;
+package com.webapp.holidate.dto.request.location.city;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -13,9 +14,9 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class CountryCreationRequest {
-  @NotBlank(message = "NAME_NOT_BLANK")
+public class CityUpdateRequest {
   String name;
-  @NotBlank(message = "COUNTRY_CODE_NOT_BLANK")
+  @Size(min = 2, max = 3, message = "CITY_CODE_INVALID")
   String code;
+  String provinceId;
 }

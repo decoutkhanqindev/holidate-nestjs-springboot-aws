@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class UserProfileResponse {
+public class UserResponse {
   String id;
   String email;
   String fullName;
@@ -28,7 +28,7 @@ public class UserProfileResponse {
   String gender;
   LocalDateTime dateOfBirth;
   String avatarUrl;
-  RoleDetailsResponse role;
+  RoleResponse role;
   UserAuthInfoResponse authInfo;
   LocalDateTime createdAt;
   LocalDateTime updatedAt;

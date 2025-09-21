@@ -1,7 +1,7 @@
 package com.webapp.holidate.service.user;
 
 import com.webapp.holidate.dto.request.user.RoleCreationRequest;
-import com.webapp.holidate.dto.response.user.RoleDetailsResponse;
+import com.webapp.holidate.dto.response.user.RoleResponse;
 import com.webapp.holidate.entity.user.Role;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.user.RoleMapper;
@@ -21,7 +21,7 @@ public class RoleService {
   RoleRepository repository;
   RoleMapper mapper;
 
-  public RoleDetailsResponse create(RoleCreationRequest request) {
+  public RoleResponse create(RoleCreationRequest request) {
     String name = request.getName();
     boolean exists = repository.existsByName(name);
     if (exists) {
@@ -30,16 +30,16 @@ public class RoleService {
 
     Role role = mapper.toEntity(request);
     repository.save(role);
-    return mapper.toRoleDetailsResponse(role);
+    return mapper.toRoleResponse(role);
   }
 
-  public List<RoleDetailsResponse> getAll() {
-    return repository.findAll().stream().map(mapper::toRoleDetailsResponse).toList();
+  public List<RoleResponse> getAll() {
+    return repository.findAll().stream().map(mapper::toRoleResponse).toList();
   }
 
-  public RoleDetailsResponse delete(String id) {
+  public RoleResponse delete(String id) {
     Role role = repository.findById(id).orElseThrow();
     repository.delete(role);
-    return mapper.toRoleDetailsResponse(role);
+    return mapper.toRoleResponse(role);
   }
 }

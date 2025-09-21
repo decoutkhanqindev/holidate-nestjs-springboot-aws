@@ -1,6 +1,7 @@
-package com.webapp.holidate.dto.request.location;
+package com.webapp.holidate.dto.request.location.district;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -13,11 +14,11 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class DistrictCreationRequest {
-  @NotBlank(message = "NAME_NOT_BLANK")
+public class DistrictUpdateRequest {
   String name;
-  @NotBlank(message = "DISTRICT_CODE_NOT_BLANK")
+
+  @Size(min = 2, max = 3, message = "DISTRICT_CODE_INVALID")
   String code;
-  @NotBlank(message = "CITY_ID_NOT_BLANK")
+
   String cityId;
 }

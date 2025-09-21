@@ -3,7 +3,7 @@ package com.webapp.holidate.controller.user;
 import com.webapp.holidate.constants.enpoint.user.RoleEndpoints;
 import com.webapp.holidate.dto.request.user.RoleCreationRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
-import com.webapp.holidate.dto.response.user.RoleDetailsResponse;
+import com.webapp.holidate.dto.response.user.RoleResponse;
 import com.webapp.holidate.service.user.RoleService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -21,25 +21,25 @@ public class RoleController {
   RoleService service;
 
   @PostMapping
-  public ApiResponse<RoleDetailsResponse> create(@RequestBody @Valid RoleCreationRequest request) {
-    RoleDetailsResponse response = service.create(request);
-    return ApiResponse.<RoleDetailsResponse>builder()
+  public ApiResponse<RoleResponse> create(@RequestBody @Valid RoleCreationRequest request) {
+    RoleResponse response = service.create(request);
+    return ApiResponse.<RoleResponse>builder()
       .data(response)
       .build();
   }
 
   @GetMapping
-  public ApiResponse<List<RoleDetailsResponse>> getAll() {
-    List<RoleDetailsResponse> responses = service.getAll();
-    return ApiResponse.<List<RoleDetailsResponse>>builder()
+  public ApiResponse<List<RoleResponse>> getAll() {
+    List<RoleResponse> responses = service.getAll();
+    return ApiResponse.<List<RoleResponse>>builder()
       .data(responses)
       .build();
   }
 
   @DeleteMapping(RoleEndpoints.ROLE_ID)
-  public ApiResponse<RoleDetailsResponse> delete(@PathVariable String id) {
-    RoleDetailsResponse response = service.delete(id);
-    return ApiResponse.<RoleDetailsResponse>builder()
+  public ApiResponse<RoleResponse> delete(@PathVariable String id) {
+    RoleResponse response = service.delete(id);
+    return ApiResponse.<RoleResponse>builder()
       .data(response)
       .build();
   }

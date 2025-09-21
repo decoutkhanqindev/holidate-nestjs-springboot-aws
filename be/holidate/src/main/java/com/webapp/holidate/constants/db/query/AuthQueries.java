@@ -1,4 +1,4 @@
-package com.webapp.holidate.constants.db;
+package com.webapp.holidate.constants.db.query;
 
 public class AuthQueries {
   public static final String FIND_USER_AUTH_INFO_BY_USER_EMAIL =
