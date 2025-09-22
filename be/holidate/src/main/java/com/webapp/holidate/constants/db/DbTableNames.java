@@ -20,6 +20,8 @@ public class DbTableNames {
   public static final String PROVINCES = "provinces";
   public static final String CITIES = "cities";
   public static final String DISTRICTS = "districts";
+  public static final String WARDS = "wards";
+  public static final String STREETS = "streets";
 
   // booking related tables
   public static final String BOOKINGS = "bookings";

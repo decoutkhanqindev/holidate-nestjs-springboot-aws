@@ -42,8 +42,4 @@ public class CountryService {
   public List<LocationResponse> getAll() {
     return repository.findAll().stream().map(mapper::toLocationResponse).toList();
   }
-
-  public List<LocationResponse> getAllByName(String name) {
-    return repository.findAllByName(name).stream().map(mapper::toLocationResponse).toList();
-  }
 }

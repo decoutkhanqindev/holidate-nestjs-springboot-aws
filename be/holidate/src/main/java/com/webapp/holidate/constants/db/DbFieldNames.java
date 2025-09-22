@@ -19,6 +19,8 @@ public class DbFieldNames {
   public static final String PROVINCE_ID = "province_id";
   public static final String CITY_ID = "city_id";
   public static final String DISTRICT_ID = "district_id";
+  public static final String WARD_ID = "ward_id";
+  public static final String STREET_ID = "street_id";
 
   // booking related fields
   public static final String BOOKING_ID = "booking_id";

@@ -7,6 +7,8 @@ import com.webapp.holidate.entity.location.City;
 import com.webapp.holidate.entity.location.Country;
 import com.webapp.holidate.entity.location.District;
 import com.webapp.holidate.entity.location.Province;
+import com.webapp.holidate.entity.location.Ward;
+import com.webapp.holidate.entity.location.Street;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -42,8 +44,20 @@ public class User {
   @Column(nullable = true, unique = true, length = 11)
   String phoneNumber;
 
+  // Địa chỉ chi tiết (số nhà, căn hộ...)
   @Column(nullable = false)
   String address;
+
+  // Cấp địa lý từ lớn đến nhỏ
+  @ManyToOne(fetch = FetchType.EAGER)
+  @JoinColumn(name = DbFieldNames.COUNTRY_ID, nullable = true)
+  @ToString.Exclude
+  Country country;
+
+  @ManyToOne(fetch = FetchType.EAGER)
+  @JoinColumn(name = DbFieldNames.PROVINCE_ID, nullable = true)
+  @ToString.Exclude
+  Province province;
 
   @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = DbFieldNames.CITY_ID, nullable = true)
@@ -56,14 +70,14 @@ public class User {
   District district;
 
   @ManyToOne(fetch = FetchType.EAGER)
-  @JoinColumn(name = DbFieldNames.PROVINCE_ID, nullable = true)
+  @JoinColumn(name = DbFieldNames.WARD_ID, nullable = true)
   @ToString.Exclude
-  Province province;
+  Ward ward;
 
   @ManyToOne(fetch = FetchType.EAGER)
-  @JoinColumn(name = DbFieldNames.COUNTRY_ID, nullable = true)
+  @JoinColumn(name = DbFieldNames.STREET_ID, nullable = true)
   @ToString.Exclude
-  Country country;
+  Street street;
 
   @Column(nullable = true)
   String gender;

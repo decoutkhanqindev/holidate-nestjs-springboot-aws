@@ -28,7 +28,7 @@ public class City {
   @Column(nullable = false, unique = true)
   String name;
 
-  @Column(nullable = false, unique = true)
+  @Column(nullable = true)
   String code;
 
   @OneToMany(mappedBy = "city", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

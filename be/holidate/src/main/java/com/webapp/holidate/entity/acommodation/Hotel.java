@@ -8,6 +8,8 @@ import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.entity.acommodation.amenity.HotelAmenity;
 import com.webapp.holidate.entity.location.City;
 import com.webapp.holidate.entity.location.District;
+import com.webapp.holidate.entity.location.Ward;
+import com.webapp.holidate.entity.location.Street;
 import com.webapp.holidate.entity.booking.Review;
 import jakarta.persistence.*;
 import lombok.*;
@@ -42,6 +44,16 @@ public class Hotel {
   String address;
 
   @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = DbFieldNames.COUNTRY_ID, nullable = false)
+  @ToString.Exclude
+  Country country;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = DbFieldNames.PROVINCE_ID, nullable = false)
+  @ToString.Exclude
+  Province province;
+
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = DbFieldNames.CITY_ID, nullable = false)
   @ToString.Exclude
   City city;
@@ -52,14 +64,14 @@ public class Hotel {
   District district;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = DbFieldNames.PROVINCE_ID, nullable = false)
+  @JoinColumn(name = DbFieldNames.WARD_ID, nullable = false)
   @ToString.Exclude
-  Province province;
+  Ward ward;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = DbFieldNames.COUNTRY_ID, nullable = false)
+  @JoinColumn(name = DbFieldNames.STREET_ID, nullable = false)
   @ToString.Exclude
-  Country country;
+  Street street;
 
   @Column(nullable = true)
   @Builder.Default

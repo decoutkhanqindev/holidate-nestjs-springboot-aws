@@ -1,11 +1,11 @@
 package com.webapp.holidate.service.location;
 
-import com.webapp.holidate.dto.request.location.province.ProvinceCreationRequest;
+import com.webapp.holidate.dto.request.location.district.DistrictCreationRequest;
 import com.webapp.holidate.dto.response.location.LocationResponse;
-import com.webapp.holidate.entity.location.Province;
+import com.webapp.holidate.entity.location.District;
 import com.webapp.holidate.exception.AppException;
-import com.webapp.holidate.mapper.location.ProvinceMapper;
-import com.webapp.holidate.repository.location.ProvinceRepository;
+import com.webapp.holidate.mapper.location.DistrictMapper;
+import com.webapp.holidate.repository.location.DistrictRepository;
 import com.webapp.holidate.type.ErrorType;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -17,32 +17,32 @@ import java.util.List;
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
-public class ProvinceService {
-  ProvinceRepository repository;
-  ProvinceMapper mapper;
+public class DistrictService {
+  DistrictRepository repository;
+  DistrictMapper mapper;
 
-  public LocationResponse create(ProvinceCreationRequest request) {
+  public LocationResponse create(DistrictCreationRequest request) {
     String name = request.getName();
     boolean nameExists = repository.existsByName(name);
     if (nameExists) {
-      throw new AppException(ErrorType.PROVINCE_EXISTS);
+      throw new AppException(ErrorType.DISTRICT_EXISTS);
     }
 
     String code = request.getCode();
     boolean codeExists = repository.existsByCode(code);
     if (codeExists) {
-      throw new AppException(ErrorType.PROVINCE_EXISTS);
+      throw new AppException(ErrorType.DISTRICT_EXISTS);
     }
 
-    String countryId = request.getCountryId();
-    boolean countryExists = repository.existsByCountryId(countryId);
-    if (countryExists) {
-      throw new AppException(ErrorType.PROVINCE_EXISTS);
+    String cityId = request.getCityId();
+    boolean cityExists = repository.existsByCityId(cityId);
+    if (cityExists) {
+      throw new AppException(ErrorType.DISTRICT_EXISTS);
     }
 
-    Province Province = mapper.toEntity(request);
-    repository.save(Province);
-    return mapper.toLocationResponse(Province);
+    District District = mapper.toEntity(request);
+    repository.save(District);
+    return mapper.toLocationResponse(District);
   }
 
   public List<LocationResponse> getAll() {

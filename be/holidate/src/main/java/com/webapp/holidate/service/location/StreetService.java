@@ -1,11 +1,11 @@
 package com.webapp.holidate.service.location;
 
-import com.webapp.holidate.dto.request.location.province.ProvinceCreationRequest;
+import com.webapp.holidate.dto.request.location.street.StreetCreationRequest;
 import com.webapp.holidate.dto.response.location.LocationResponse;
-import com.webapp.holidate.entity.location.Province;
+import com.webapp.holidate.entity.location.Street;
 import com.webapp.holidate.exception.AppException;
-import com.webapp.holidate.mapper.location.ProvinceMapper;
-import com.webapp.holidate.repository.location.ProvinceRepository;
+import com.webapp.holidate.mapper.location.StreetMapper;
+import com.webapp.holidate.repository.location.StreetRepository;
 import com.webapp.holidate.type.ErrorType;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -17,32 +17,32 @@ import java.util.List;
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
-public class ProvinceService {
-  ProvinceRepository repository;
-  ProvinceMapper mapper;
+public class StreetService {
+  StreetRepository repository;
+  StreetMapper mapper;
 
-  public LocationResponse create(ProvinceCreationRequest request) {
+  public LocationResponse create(StreetCreationRequest request) {
     String name = request.getName();
     boolean nameExists = repository.existsByName(name);
     if (nameExists) {
-      throw new AppException(ErrorType.PROVINCE_EXISTS);
+      throw new AppException(ErrorType.STREET_EXISTS);
     }
 
     String code = request.getCode();
     boolean codeExists = repository.existsByCode(code);
     if (codeExists) {
-      throw new AppException(ErrorType.PROVINCE_EXISTS);
+      throw new AppException(ErrorType.STREET_EXISTS);
     }
 
-    String countryId = request.getCountryId();
-    boolean countryExists = repository.existsByCountryId(countryId);
-    if (countryExists) {
-      throw new AppException(ErrorType.PROVINCE_EXISTS);
+    String wardId = request.getWardId();
+    boolean wardExists = repository.existsByWardId(wardId);
+    if (wardExists) {
+      throw new AppException(ErrorType.STREET_EXISTS);
     }
 
-    Province Province = mapper.toEntity(request);
-    repository.save(Province);
-    return mapper.toLocationResponse(Province);
+    Street street = mapper.toEntity(request);
+    repository.save(street);
+    return mapper.toLocationResponse(street);
   }
 
   public List<LocationResponse> getAll() {

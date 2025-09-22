@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = DbTableNames.DISTRICTS)
+@Table(name = DbTableNames.STREETS)
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
@@ -19,7 +19,7 @@ import java.util.List;
 @Getter
 @Setter
 @ToString
-public class District {
+public class Street {
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   @Column(nullable = false)
@@ -31,17 +31,12 @@ public class District {
   @Column(nullable = true)
   String code;
 
-  @OneToMany(mappedBy = "district", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-  @ToString.Exclude
-  @Builder.Default
-  List<Ward> wards = new ArrayList<>();
-
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = DbFieldNames.CITY_ID, nullable = false)
+  @JoinColumn(name = DbFieldNames.WARD_ID, nullable = false)
   @ToString.Exclude
-  City city;
+  Ward ward;
 
-  @OneToMany(mappedBy = "district", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "street", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   @ToString.Exclude
   @Builder.Default
   List<Hotel> hotels = new ArrayList<>();

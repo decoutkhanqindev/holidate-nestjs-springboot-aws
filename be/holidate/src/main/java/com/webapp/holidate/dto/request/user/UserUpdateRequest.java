@@ -33,14 +33,12 @@ public class UserUpdateRequest {
   String phoneNumber;
 
   String address;
-
-  String cityId;
-
-  String districtId;
-
-  String provinceId;
-
   String countryId;
+  String provinceId;
+  String cityId;
+  String districtId;
+  String wardId;
+  String streetId;
 
   @Pattern(regexp = ValidationPatterns.GENDER, message = "GENDER_INVALID")
   String gender;

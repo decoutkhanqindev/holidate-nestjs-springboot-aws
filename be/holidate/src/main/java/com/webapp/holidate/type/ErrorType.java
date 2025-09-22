@@ -65,6 +65,16 @@ public enum ErrorType {
   DISTRICT_CODE_INVALID(400, "District code must be 2 or 3 characters"),
   DISTRICT_CODE_NOT_BLANK(400, "District code is required"),
   DISTRICT_EXISTS(409, "District already exists in this city"),
+  WARD_NOT_FOUND(404, "Ward not found"),
+  WARD_ID_NOT_BLANK(400, "Ward ID is required"),
+  WARD_CODE_INVALID(400, "Ward code must be 2 to 5 characters"),
+  WARD_CODE_NOT_BLANK(400, "Ward code is required"),
+  WARD_EXISTS(409, "Ward already exists in this district"),
+  STREET_NOT_FOUND(404, "Street not found"),
+  STREET_ID_NOT_BLANK(400, "Street ID is required"),
+  STREET_CODE_INVALID(400, "Street code must be 2 to 5 characters"),
+  STREET_CODE_NOT_BLANK(400, "Street code is required"),
+  STREET_EXISTS(409, "Street already exists in this ward"),
   ;
 
   int statusCode;

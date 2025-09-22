@@ -1,7 +1,5 @@
-package com.webapp.holidate.dto.request.location.city;
+package com.webapp.holidate.dto.request.location.street;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -14,8 +12,8 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class CityUpdateRequest {
+public class StreetUpdateRequest {
   String name;
   String code;
-  String provinceId;
+  String wardId;
 }

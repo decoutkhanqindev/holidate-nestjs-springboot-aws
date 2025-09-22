@@ -5,6 +5,7 @@ import com.webapp.holidate.config.security.filter.CustomCookieAuthenticationFilt
 import com.webapp.holidate.config.security.oauth2.CustomOAuth2AuthenticationFailureHandler;
 import com.webapp.holidate.config.security.oauth2.CustomOAuth2AuthenticationSuccessHandler;
 import com.webapp.holidate.constants.AppValues;
+import com.webapp.holidate.constants.db.query.location.LocationEndpoints;
 import com.webapp.holidate.constants.enpoint.user.RoleEndpoints;
 import com.webapp.holidate.constants.enpoint.user.UserEndpoints;
 import com.webapp.holidate.constants.enpoint.auth.AuthEndpoints;
@@ -56,27 +57,28 @@ public class SecurityConfig {
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    http.authorizeHttpRequests(request -> request
-      // A. public endpoints
-      // 1. auth endpoints
-      .requestMatchers(AuthEndpoints.AUTH + ALL_ENDPOINTS).permitAll()
-      // 2. location endpoints
-//      .requestMatchers(HttpMethod.GET, LocationEndpoints.LOCATION + ALL_ENDPOINTS).permitAll()
+    http.authorizeHttpRequests(request ->
+      request
+        // A. public endpoints
+        // 1. auth endpoints
+        .requestMatchers(AuthEndpoints.AUTH + ALL_ENDPOINTS).permitAll()
+        // 2. location endpoints
+        .requestMatchers(HttpMethod.GET, LocationEndpoints.LOCATION + ALL_ENDPOINTS).permitAll()
 
-      // B. protected endpoints
-      // I. user role
-      // 1. profile endpoints
-      .requestMatchers(HttpMethod.GET, UserEndpoints.USERS + UserEndpoints.USER_ID).hasAuthority(RoleType.USER.getValue())
-      .requestMatchers(HttpMethod.PUT, UserEndpoints.USERS + UserEndpoints.USER_ID).hasAuthority(RoleType.USER.getValue())
-      // II. admin role
-      // 1. profile endpoints
-      .requestMatchers(UserEndpoints.USERS + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
-      .requestMatchers(RoleEndpoints.ROLES + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
-      // 2. location endpoints
-//      .requestMatchers(LocationEndpoints.LOCATION + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
+        // B. protected endpoints
+        // I. user role
+        // 1. profile endpoints
+        .requestMatchers(HttpMethod.GET, UserEndpoints.USERS + UserEndpoints.USER_ID).hasAuthority(RoleType.USER.getValue())
+        .requestMatchers(HttpMethod.PUT, UserEndpoints.USERS + UserEndpoints.USER_ID).hasAuthority(RoleType.USER.getValue())
+        // II. admin role
+        // 1. profile endpoints
+        .requestMatchers(UserEndpoints.USERS + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
+        .requestMatchers(RoleEndpoints.ROLES + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
+        // 2. location endpoints
+        .requestMatchers(LocationEndpoints.LOCATION + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
 
-      // C. any other endpoints
-      .anyRequest().authenticated()
+        // C. any other endpoints
+        .anyRequest().authenticated()
     );
 
     http

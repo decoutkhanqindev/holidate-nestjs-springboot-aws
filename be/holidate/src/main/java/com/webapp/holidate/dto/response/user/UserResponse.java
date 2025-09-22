@@ -21,10 +21,12 @@ public class UserResponse {
   String fullName;
   String phoneNumber;
   String address;
+  LocationResponse country;
+  LocationResponse province;
   LocationResponse city;
   LocationResponse district;
-  LocationResponse province;
-  LocationResponse country;
+  LocationResponse ward;
+  LocationResponse street;
   String gender;
   LocalDateTime dateOfBirth;
   String avatarUrl;

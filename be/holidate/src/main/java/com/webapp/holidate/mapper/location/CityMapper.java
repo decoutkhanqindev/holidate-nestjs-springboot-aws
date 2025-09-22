@@ -15,7 +15,8 @@ public interface CityMapper {
   LocationResponse toLocationResponse(City city);
 
   @Mapping(target = "id", ignore = true)
-  @Mapping(target = "provinces", ignore = true)
+  @Mapping(target = "province", ignore = true)
+  @Mapping(target = "districts", ignore = true)
   @Mapping(target = "hotels", ignore = true)
   void updateEntity(@MappingTarget City City, CityUpdateRequest request);
 }
