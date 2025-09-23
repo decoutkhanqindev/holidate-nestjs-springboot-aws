@@ -2,6 +2,7 @@ package com.webapp.holidate.service.location;
 
 import com.webapp.holidate.dto.request.location.city.CityCreationRequest;
 import com.webapp.holidate.dto.response.location.LocationResponse;
+import com.webapp.holidate.dto.response.location.CityResponse;
 import com.webapp.holidate.entity.location.City;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.location.CityMapper;
@@ -21,7 +22,7 @@ public class CityService {
   CityRepository repository;
   CityMapper mapper;
 
-  public LocationResponse create(CityCreationRequest request) {
+  public CityResponse create(CityCreationRequest request) {
     String name = request.getName();
     boolean nameExists = repository.existsByName(name);
     if (nameExists) {
@@ -42,7 +43,7 @@ public class CityService {
 
     City City = mapper.toEntity(request);
     repository.save(City);
-    return mapper.toLocationResponse(City);
+    return mapper.toCityResponse(City);
   }
 
   public List<LocationResponse> getAll() {

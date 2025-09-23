@@ -1,10 +1,11 @@
 package com.webapp.holidate.controller.location;
 
-import com.webapp.holidate.constants.db.query.location.StreetEndpoints;
-import com.webapp.holidate.constants.db.query.location.LocationEndpoints;
+import com.webapp.holidate.constants.enpoint.location.StreetEndpoints;
+import com.webapp.holidate.constants.enpoint.location.LocationEndpoints;
 import com.webapp.holidate.dto.request.location.street.StreetCreationRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.location.LocationResponse;
+import com.webapp.holidate.dto.response.location.StreetResponse;
 import com.webapp.holidate.service.location.StreetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,11 +22,11 @@ public class StreetController {
   StreetService service;
 
   @PostMapping
-  public ApiResponse<LocationResponse> create(@RequestBody @Valid StreetCreationRequest request) {
-    LocationResponse response = service.create(request);
-    return ApiResponse.<LocationResponse>builder()
-      .data(response)
-      .build();
+  public ApiResponse<StreetResponse> create(@RequestBody @Valid StreetCreationRequest request) {
+    StreetResponse response = service.create(request);
+    return ApiResponse.<StreetResponse>builder()
+        .data(response)
+        .build();
   }
 
   @GetMapping

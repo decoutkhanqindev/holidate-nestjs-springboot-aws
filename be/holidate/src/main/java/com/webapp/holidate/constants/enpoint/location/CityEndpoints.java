@@ -1,4 +1,4 @@
-package com.webapp.holidate.constants.db.query.location;
+package com.webapp.holidate.constants.enpoint.location;
 
 public class CityEndpoints {
   public static final String CITIES = "/cities";

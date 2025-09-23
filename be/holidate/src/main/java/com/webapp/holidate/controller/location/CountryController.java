@@ -1,7 +1,7 @@
 package com.webapp.holidate.controller.location;
 
-import com.webapp.holidate.constants.db.query.location.CountryEndpoints;
-import com.webapp.holidate.constants.db.query.location.LocationEndpoints;
+import com.webapp.holidate.constants.enpoint.location.CountryEndpoints;
+import com.webapp.holidate.constants.enpoint.location.LocationEndpoints;
 import com.webapp.holidate.dto.request.location.country.CountryCreationRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.location.LocationResponse;
@@ -28,11 +28,11 @@ public class CountryController {
        .build();
    }
 
-   @GetMapping
-   public ApiResponse<List<LocationResponse>> getAll() {
-     List<LocationResponse> responses = service.getAll();
-     return ApiResponse.<List<LocationResponse>>builder()
-       .data(responses)
-       .build();
-   }
+  @GetMapping
+  public ApiResponse<List<LocationResponse>> getAll() {
+    List<LocationResponse> responses = service.getAll();
+    return ApiResponse.<List<LocationResponse>>builder()
+      .data(responses)
+      .build();
+  }
 }

@@ -1,10 +1,11 @@
 package com.webapp.holidate.controller.location;
 
-import com.webapp.holidate.constants.db.query.location.WardEndpoints;
-import com.webapp.holidate.constants.db.query.location.LocationEndpoints;
+import com.webapp.holidate.constants.enpoint.location.WardEndpoints;
+import com.webapp.holidate.constants.enpoint.location.LocationEndpoints;
 import com.webapp.holidate.dto.request.location.ward.WardCreationRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.location.LocationResponse;
+import com.webapp.holidate.dto.response.location.WardResponse;
 import com.webapp.holidate.service.location.WardService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,11 +22,11 @@ public class WardController {
   WardService service;
 
   @PostMapping
-  public ApiResponse<LocationResponse> create(@RequestBody @Valid WardCreationRequest request) {
-    LocationResponse response = service.create(request);
-    return ApiResponse.<LocationResponse>builder()
-      .data(response)
-      .build();
+  public ApiResponse<WardResponse> create(@RequestBody @Valid WardCreationRequest request) {
+    WardResponse response = service.create(request);
+    return ApiResponse.<WardResponse>builder()
+        .data(response)
+        .build();
   }
 
   @GetMapping

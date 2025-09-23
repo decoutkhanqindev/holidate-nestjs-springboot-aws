@@ -1,4 +1,4 @@
-package com.webapp.holidate.constants.db.query.location;
+package com.webapp.holidate.constants.enpoint.location;
 
 public class CountryEndpoints {
   public static final String COUNTRIES = "/countries";

@@ -2,9 +2,12 @@ package com.webapp.holidate.service.location;
 
 import com.webapp.holidate.dto.request.location.district.DistrictCreationRequest;
 import com.webapp.holidate.dto.response.location.LocationResponse;
+import com.webapp.holidate.dto.response.location.DistrictResponse;
+import com.webapp.holidate.entity.location.City;
 import com.webapp.holidate.entity.location.District;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.location.DistrictMapper;
+import com.webapp.holidate.repository.location.CityRepository;
 import com.webapp.holidate.repository.location.DistrictRepository;
 import com.webapp.holidate.type.ErrorType;
 import lombok.AccessLevel;
@@ -18,34 +21,40 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class DistrictService {
-  DistrictRepository repository;
-  DistrictMapper mapper;
+  DistrictRepository districtRepository;
+  CityRepository cityRepository;
+  DistrictMapper districtMapper;
 
-  public LocationResponse create(DistrictCreationRequest request) {
+  public DistrictResponse create(DistrictCreationRequest request) {
     String name = request.getName();
-    boolean nameExists = repository.existsByName(name);
+    boolean nameExists = districtRepository.existsByName(name);
     if (nameExists) {
       throw new AppException(ErrorType.DISTRICT_EXISTS);
     }
 
     String code = request.getCode();
-    boolean codeExists = repository.existsByCode(code);
+    boolean codeExists = districtRepository.existsByCode(code);
     if (codeExists) {
       throw new AppException(ErrorType.DISTRICT_EXISTS);
     }
 
     String cityId = request.getCityId();
-    boolean cityExists = repository.existsByCityId(cityId);
+    boolean cityExists = districtRepository.existsByCityId(cityId);
     if (cityExists) {
       throw new AppException(ErrorType.DISTRICT_EXISTS);
     }
 
-    District District = mapper.toEntity(request);
-    repository.save(District);
-    return mapper.toLocationResponse(District);
+    District district = districtMapper.toEntity(request);
+
+    City city = cityRepository.findById(cityId)
+        .orElseThrow(() -> new AppException(ErrorType.CITY_NOT_FOUND));
+    district.setCity(city);
+
+    districtRepository.save(district);
+    return districtMapper.toDistrictResponse(district);
   }
 
   public List<LocationResponse> getAll() {
-    return repository.findAll().stream().map(mapper::toLocationResponse).toList();
+    return districtRepository.findAll().stream().map(districtMapper::toLocationResponse).toList();
   }
 }

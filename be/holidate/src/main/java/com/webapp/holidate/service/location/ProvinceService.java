@@ -2,9 +2,12 @@ package com.webapp.holidate.service.location;
 
 import com.webapp.holidate.dto.request.location.province.ProvinceCreationRequest;
 import com.webapp.holidate.dto.response.location.LocationResponse;
+import com.webapp.holidate.dto.response.location.ProvinceResponse;
+import com.webapp.holidate.entity.location.Country;
 import com.webapp.holidate.entity.location.Province;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.location.ProvinceMapper;
+import com.webapp.holidate.repository.location.CountryRepository;
 import com.webapp.holidate.repository.location.ProvinceRepository;
 import com.webapp.holidate.type.ErrorType;
 import lombok.AccessLevel;
@@ -18,34 +21,40 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class ProvinceService {
-  ProvinceRepository repository;
-  ProvinceMapper mapper;
+  ProvinceRepository provinceRepository;
+  CountryRepository countryRepository;
+  ProvinceMapper provinceMapper;
 
-  public LocationResponse create(ProvinceCreationRequest request) {
+  public ProvinceResponse create(ProvinceCreationRequest request) {
     String name = request.getName();
-    boolean nameExists = repository.existsByName(name);
+    boolean nameExists = provinceRepository.existsByName(name);
     if (nameExists) {
       throw new AppException(ErrorType.PROVINCE_EXISTS);
     }
 
     String code = request.getCode();
-    boolean codeExists = repository.existsByCode(code);
+    boolean codeExists = provinceRepository.existsByCode(code);
     if (codeExists) {
       throw new AppException(ErrorType.PROVINCE_EXISTS);
     }
 
     String countryId = request.getCountryId();
-    boolean countryExists = repository.existsByCountryId(countryId);
+    boolean countryExists = provinceRepository.existsByCountryId(countryId);
     if (countryExists) {
       throw new AppException(ErrorType.PROVINCE_EXISTS);
     }
 
-    Province Province = mapper.toEntity(request);
-    repository.save(Province);
-    return mapper.toLocationResponse(Province);
+    Province province = provinceMapper.toEntity(request);
+
+    Country country = countryRepository.findById(countryId)
+        .orElseThrow(() -> new AppException(ErrorType.COUNTRY_NOT_FOUND));
+    province.setCountry(country);
+
+    provinceRepository.save(province);
+    return provinceMapper.toProvinceResponse(province);
   }
 
   public List<LocationResponse> getAll() {
-    return repository.findAll().stream().map(mapper::toLocationResponse).toList();
+    return provinceRepository.findAll().stream().map(provinceMapper::toLocationResponse).toList();
   }
 }
