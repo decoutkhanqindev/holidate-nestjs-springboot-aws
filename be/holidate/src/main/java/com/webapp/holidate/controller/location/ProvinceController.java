@@ -25,13 +25,16 @@ public class ProvinceController {
   public ApiResponse<ProvinceResponse> create(@RequestBody @Valid ProvinceCreationRequest request) {
     ProvinceResponse response = service.create(request);
     return ApiResponse.<ProvinceResponse>builder()
-        .data(response)
-        .build();
+      .data(response)
+      .build();
   }
 
   @GetMapping
-  public ApiResponse<List<LocationResponse>> getAll() {
-    List<LocationResponse> responses = service.getAll();
+  public ApiResponse<List<LocationResponse>> getAll(
+    @RequestParam(value = "name", required = false) String name,
+    @RequestParam(value = "country-id", required = false) String countryId
+    ) {
+    List<LocationResponse> responses = service.getAll(name, countryId);
     return ApiResponse.<List<LocationResponse>>builder()
       .data(responses)
       .build();

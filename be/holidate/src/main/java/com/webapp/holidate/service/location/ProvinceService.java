@@ -13,6 +13,7 @@ import com.webapp.holidate.type.ErrorType;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.val;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -47,14 +48,55 @@ public class ProvinceService {
     Province province = provinceMapper.toEntity(request);
 
     Country country = countryRepository.findById(countryId)
-        .orElseThrow(() -> new AppException(ErrorType.COUNTRY_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.COUNTRY_NOT_FOUND));
     province.setCountry(country);
 
     provinceRepository.save(province);
     return provinceMapper.toProvinceResponse(province);
   }
 
-  public List<LocationResponse> getAll() {
-    return provinceRepository.findAll().stream().map(provinceMapper::toLocationResponse).toList();
+  public List<LocationResponse> getAll(
+    String name,
+    String countryId
+  ) {
+    boolean nameProvided = name != null && !name.isBlank();
+    boolean countryIdProvided = countryId != null && !countryId.isBlank();
+
+    if (nameProvided && countryIdProvided) {
+      boolean countryExists = countryRepository.existsById(countryId);
+      if (!countryExists) {
+        throw new AppException(ErrorType.COUNTRY_NOT_FOUND);
+      }
+
+      return provinceRepository.findAllByNameContainingIgnoreCaseAndCountryId(name, countryId)
+        .stream()
+        .map(provinceMapper::toLocationResponse)
+        .toList();
+    }
+
+
+    if (nameProvided) {
+     return provinceRepository.findAllByNameContainingIgnoreCase(name)
+        .stream()
+        .map(provinceMapper::toLocationResponse)
+        .toList();
+    }
+
+    if (countryIdProvided) {
+      boolean countryExists = countryRepository.existsById(countryId);
+      if (!countryExists) {
+        throw new AppException(ErrorType.COUNTRY_NOT_FOUND);
+      }
+
+      return provinceRepository.findAllByCountryId(countryId)
+        .stream()
+        .map(provinceMapper::toLocationResponse)
+        .toList();
+    }
+
+    return provinceRepository.findAll()
+      .stream()
+      .map(provinceMapper::toLocationResponse)
+      .toList();
   }
 }
