@@ -47,14 +47,54 @@ public class DistrictService {
     District district = districtMapper.toEntity(request);
 
     City city = cityRepository.findById(cityId)
-        .orElseThrow(() -> new AppException(ErrorType.CITY_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.CITY_NOT_FOUND));
     district.setCity(city);
 
     districtRepository.save(district);
     return districtMapper.toDistrictResponse(district);
   }
 
-  public List<LocationResponse> getAll() {
-    return districtRepository.findAll().stream().map(districtMapper::toLocationResponse).toList();
+  public List<LocationResponse> getAll(
+    String name,
+    String cityId
+  ) {
+    boolean nameProvided = name != null && !name.isBlank();
+    boolean cityIdProvided = cityId != null && !cityId.isBlank();
+
+    if (nameProvided && cityIdProvided) {
+      boolean cityExists = cityRepository.existsById(cityId);
+      if (!cityExists) {
+        throw new AppException(ErrorType.CITY_NOT_FOUND);
+      }
+
+      return districtRepository.findAllByNameContainingIgnoreCaseAndCityId(name, cityId)
+        .stream()
+        .map(districtMapper::toLocationResponse)
+        .toList();
+    }
+
+    if (nameProvided) {
+      return districtRepository.findAllByNameContainingIgnoreCase(name)
+        .stream()
+        .map(districtMapper::toLocationResponse)
+        .toList();
+    }
+
+    if (cityIdProvided) {
+      boolean cityExists = cityRepository.existsById(cityId);
+      if (!cityExists) {
+        throw new AppException(ErrorType.CITY_NOT_FOUND);
+      }
+
+      return districtRepository.findAllByCityId(cityId)
+        .stream()
+        .map(districtMapper::toLocationResponse)
+        .toList();
+    }
+
+    return districtRepository.findAll()
+      .stream()
+      .map(districtMapper::toLocationResponse)
+      .toList();
   }
 }

@@ -1,7 +1,7 @@
 package com.webapp.holidate.controller.location;
 
-import com.webapp.holidate.constants.enpoint.location.CountryEndpoints;
-import com.webapp.holidate.constants.enpoint.location.LocationEndpoints;
+import com.webapp.holidate.constants.api.enpoint.location.CountryEndpoints;
+import com.webapp.holidate.constants.api.enpoint.location.LocationEndpoints;
 import com.webapp.holidate.dto.request.location.country.CountryCreationRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.location.LocationResponse;
@@ -18,15 +18,15 @@ import java.util.List;
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class CountryController {
-   CountryService service;
+  CountryService service;
 
-   @PostMapping
-   public ApiResponse<LocationResponse> create(@RequestBody @Valid CountryCreationRequest request) {
-     LocationResponse response = service.create(request);
-     return ApiResponse.<LocationResponse>builder()
-       .data(response)
-       .build();
-   }
+  @PostMapping
+  public ApiResponse<LocationResponse> create(@RequestBody @Valid CountryCreationRequest request) {
+    LocationResponse response = service.create(request);
+    return ApiResponse.<LocationResponse>builder()
+      .data(response)
+      .build();
+  }
 
   @GetMapping
   public ApiResponse<List<LocationResponse>> getAll() {

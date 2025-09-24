@@ -13,4 +13,10 @@ public interface CityRepository extends JpaRepository<City, String> {
   boolean existsByCode(String code);
 
   boolean existsByProvinceId(String provinceId);
+
+  List<City> findAllByNameContainingIgnoreCase(String name);
+
+  List<City> findAllByProvinceId(String provinceId);
+
+  List<City> findAllByNameContainingIgnoreCaseAndProvinceId(String name, String provinceId);
 }

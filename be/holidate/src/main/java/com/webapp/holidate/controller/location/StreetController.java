@@ -1,7 +1,9 @@
 package com.webapp.holidate.controller.location;
 
-import com.webapp.holidate.constants.enpoint.location.StreetEndpoints;
-import com.webapp.holidate.constants.enpoint.location.LocationEndpoints;
+import com.webapp.holidate.constants.api.enpoint.location.StreetEndpoints;
+import com.webapp.holidate.constants.api.enpoint.location.LocationEndpoints;
+import com.webapp.holidate.constants.api.param.CommonParams;
+import com.webapp.holidate.constants.api.param.location.WardParams;
 import com.webapp.holidate.dto.request.location.street.StreetCreationRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.location.LocationResponse;
@@ -25,13 +27,16 @@ public class StreetController {
   public ApiResponse<StreetResponse> create(@RequestBody @Valid StreetCreationRequest request) {
     StreetResponse response = service.create(request);
     return ApiResponse.<StreetResponse>builder()
-        .data(response)
-        .build();
+      .data(response)
+      .build();
   }
 
   @GetMapping
-  public ApiResponse<List<LocationResponse>> getAll() {
-    List<LocationResponse> responses = service.getAll();
+  public ApiResponse<List<LocationResponse>> getAll(
+    @RequestParam(value = CommonParams.NAME, required = false) String name,
+    @RequestParam(value = WardParams.WARD_ID, required = false) String wardId
+  ) {
+    List<LocationResponse> responses = service.getAll(name, wardId);
     return ApiResponse.<List<LocationResponse>>builder()
       .data(responses)
       .build();

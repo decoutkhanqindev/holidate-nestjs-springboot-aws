@@ -2,7 +2,7 @@ package com.webapp.holidate.controller.auth;
 
 import com.nimbusds.jose.JOSEException;
 import com.webapp.holidate.config.security.filter.CustomAuthenticationToken;
-import com.webapp.holidate.constants.enpoint.auth.AuthEndpoints;
+import com.webapp.holidate.constants.api.enpoint.auth.AuthEndpoints;
 import com.webapp.holidate.dto.request.auth.LoginRequest;
 import com.webapp.holidate.dto.request.auth.RegisterRequest;
 import com.webapp.holidate.dto.request.auth.TokenRequest;

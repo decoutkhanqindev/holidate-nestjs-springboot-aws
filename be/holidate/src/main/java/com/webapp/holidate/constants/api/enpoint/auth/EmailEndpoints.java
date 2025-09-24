@@ -1,4 +1,4 @@
-package com.webapp.holidate.constants.enpoint.auth;
+package com.webapp.holidate.constants.api.enpoint.auth;
 
 public class EmailEndpoints {
   public static final String EMAIL = "/email";

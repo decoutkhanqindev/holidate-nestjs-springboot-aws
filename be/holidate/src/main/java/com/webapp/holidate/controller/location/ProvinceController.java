@@ -1,7 +1,9 @@
 package com.webapp.holidate.controller.location;
 
-import com.webapp.holidate.constants.enpoint.location.LocationEndpoints;
-import com.webapp.holidate.constants.enpoint.location.ProvinceEndpoints;
+import com.webapp.holidate.constants.api.enpoint.location.LocationEndpoints;
+import com.webapp.holidate.constants.api.enpoint.location.ProvinceEndpoints;
+import com.webapp.holidate.constants.api.param.CommonParams;
+import com.webapp.holidate.constants.api.param.location.CountryParams;
 import com.webapp.holidate.dto.request.location.province.ProvinceCreationRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.location.LocationResponse;
@@ -31,9 +33,9 @@ public class ProvinceController {
 
   @GetMapping
   public ApiResponse<List<LocationResponse>> getAll(
-    @RequestParam(value = "name", required = false) String name,
-    @RequestParam(value = "country-id", required = false) String countryId
-    ) {
+    @RequestParam(value = CommonParams.NAME, required = false) String name,
+    @RequestParam(value = CountryParams.COUNTRY_ID, required = false) String countryId
+  ) {
     List<LocationResponse> responses = service.getAll(name, countryId);
     return ApiResponse.<List<LocationResponse>>builder()
       .data(responses)

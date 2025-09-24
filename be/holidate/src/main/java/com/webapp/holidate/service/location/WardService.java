@@ -47,14 +47,54 @@ public class WardService {
     Ward ward = wardMapper.toEntity(request);
 
     District district = districtRepository.findById(districtId)
-        .orElseThrow(() -> new AppException(ErrorType.DISTRICT_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.DISTRICT_NOT_FOUND));
     ward.setDistrict(district);
 
     wardRepository.save(ward);
     return wardMapper.toWardResponse(ward);
   }
 
-  public List<LocationResponse> getAll() {
-    return wardRepository.findAll().stream().map(wardMapper::toLocationResponse).toList();
+  public List<LocationResponse> getAll(
+    String name,
+    String districtId
+  ) {
+    boolean nameProvided = name != null && !name.isBlank();
+    boolean districtIdProvided = districtId != null && !districtId.isBlank();
+
+    if (nameProvided && districtIdProvided) {
+      boolean districtExists = districtRepository.existsById(districtId);
+      if (!districtExists) {
+        throw new AppException(ErrorType.DISTRICT_NOT_FOUND);
+      }
+
+      return wardRepository.findAllByNameContainingIgnoreCaseAndDistrictId(name, districtId)
+        .stream()
+        .map(wardMapper::toLocationResponse)
+        .toList();
+    }
+
+    if (nameProvided) {
+      return wardRepository.findAllByNameContainingIgnoreCase(name)
+        .stream()
+        .map(wardMapper::toLocationResponse)
+        .toList();
+    }
+
+    if (districtIdProvided) {
+      boolean districtExists = districtRepository.existsById(districtId);
+      if (!districtExists) {
+        throw new AppException(ErrorType.DISTRICT_NOT_FOUND);
+      }
+
+      return wardRepository.findAllByDistrictId(districtId)
+        .stream()
+        .map(wardMapper::toLocationResponse)
+        .toList();
+    }
+
+    return wardRepository.findAll()
+      .stream()
+      .map(wardMapper::toLocationResponse)
+      .toList();
   }
 }
