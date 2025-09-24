@@ -11,7 +11,10 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
 
@@ -30,6 +33,8 @@ public class FileService {
   String baseUrl;
 
   public void upload(MultipartFile file) throws IOException {
+    String fileName = file.getOriginalFilename();
+    byte[] fileBytes = file.getBytes();
     String mimeType = file.getContentType();
 
     if (mimeType == null) {
@@ -38,10 +43,10 @@ public class FileService {
 
     PutObjectRequest putObjectRequest = PutObjectRequest.builder()
       .bucket(bucketName)
-      .key(file.getOriginalFilename())
+      .key(fileName)
       .contentType(mimeType)
       .build();
-    RequestBody requestBody = RequestBody.fromBytes(file.getBytes());
+    RequestBody requestBody = RequestBody.fromBytes(fileBytes);
     s3Client.putObject(putObjectRequest, requestBody);
   }
 

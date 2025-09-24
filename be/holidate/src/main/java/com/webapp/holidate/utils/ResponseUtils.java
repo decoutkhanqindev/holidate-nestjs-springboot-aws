@@ -5,7 +5,6 @@ import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.type.ErrorType;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.val;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 

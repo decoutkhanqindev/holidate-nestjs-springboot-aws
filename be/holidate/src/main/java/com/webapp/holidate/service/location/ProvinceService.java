@@ -13,7 +13,6 @@ import com.webapp.holidate.type.ErrorType;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import lombok.val;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

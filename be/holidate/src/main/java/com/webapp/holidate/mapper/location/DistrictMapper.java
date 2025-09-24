@@ -2,8 +2,8 @@ package com.webapp.holidate.mapper.location;
 
 import com.webapp.holidate.dto.request.location.district.DistrictCreationRequest;
 import com.webapp.holidate.dto.request.location.district.DistrictUpdateRequest;
-import com.webapp.holidate.dto.response.location.LocationResponse;
 import com.webapp.holidate.dto.response.location.DistrictResponse;
+import com.webapp.holidate.dto.response.location.LocationResponse;
 import com.webapp.holidate.entity.location.District;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

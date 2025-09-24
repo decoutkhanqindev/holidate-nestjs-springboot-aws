@@ -1,8 +1,8 @@
 package com.webapp.holidate.service.location;
 
 import com.webapp.holidate.dto.request.location.district.DistrictCreationRequest;
-import com.webapp.holidate.dto.response.location.LocationResponse;
 import com.webapp.holidate.dto.response.location.DistrictResponse;
+import com.webapp.holidate.dto.response.location.LocationResponse;
 import com.webapp.holidate.entity.location.City;
 import com.webapp.holidate.entity.location.District;
 import com.webapp.holidate.exception.AppException;

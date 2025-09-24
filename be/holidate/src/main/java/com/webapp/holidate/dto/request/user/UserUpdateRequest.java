@@ -1,14 +1,6 @@
 package com.webapp.holidate.dto.request.user;
 
 import com.webapp.holidate.constants.ValidationPatterns;
-import com.webapp.holidate.constants.db.DbFieldNames;
-import com.webapp.holidate.entity.location.City;
-import com.webapp.holidate.entity.location.District;
-import jakarta.persistence.Column;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;

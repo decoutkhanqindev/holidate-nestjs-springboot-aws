@@ -1,7 +1,7 @@
 package com.webapp.holidate.controller.location;
 
-import com.webapp.holidate.constants.api.enpoint.location.StreetEndpoints;
 import com.webapp.holidate.constants.api.enpoint.location.LocationEndpoints;
+import com.webapp.holidate.constants.api.enpoint.location.StreetEndpoints;
 import com.webapp.holidate.constants.api.param.CommonParams;
 import com.webapp.holidate.constants.api.param.location.WardParams;
 import com.webapp.holidate.dto.request.location.street.StreetCreationRequest;

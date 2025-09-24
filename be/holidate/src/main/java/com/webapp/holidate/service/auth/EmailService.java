@@ -9,7 +9,6 @@ import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.entity.user.UserAuthInfo;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.repository.user.UserAuthInfoRepository;
-import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.type.AuthProviderType;
 import com.webapp.holidate.type.ErrorType;
 import com.webapp.holidate.utils.DateTimeUtils;
@@ -35,7 +34,6 @@ import java.util.Random;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class EmailService {
-  UserRepository userRepository;
   UserAuthInfoRepository authInfoRepository;
   JavaMailSender mailSender;
   TemplateEngine templateEngine;

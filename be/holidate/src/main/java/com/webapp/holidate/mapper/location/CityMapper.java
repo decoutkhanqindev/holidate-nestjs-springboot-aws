@@ -2,8 +2,8 @@ package com.webapp.holidate.mapper.location;
 
 import com.webapp.holidate.dto.request.location.city.CityCreationRequest;
 import com.webapp.holidate.dto.request.location.city.CityUpdateRequest;
-import com.webapp.holidate.dto.response.location.LocationResponse;
 import com.webapp.holidate.dto.response.location.CityResponse;
+import com.webapp.holidate.dto.response.location.LocationResponse;
 import com.webapp.holidate.entity.location.City;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

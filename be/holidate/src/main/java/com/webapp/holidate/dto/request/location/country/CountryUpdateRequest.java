@@ -1,6 +1,5 @@
 package com.webapp.holidate.dto.request.location.country;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;

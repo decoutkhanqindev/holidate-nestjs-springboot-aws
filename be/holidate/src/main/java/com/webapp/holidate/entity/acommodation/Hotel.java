@@ -2,15 +2,10 @@ package com.webapp.holidate.entity.acommodation;
 
 import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
-import com.webapp.holidate.entity.location.Country;
-import com.webapp.holidate.entity.location.Province;
-import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.entity.acommodation.amenity.HotelAmenity;
-import com.webapp.holidate.entity.location.City;
-import com.webapp.holidate.entity.location.District;
-import com.webapp.holidate.entity.location.Ward;
-import com.webapp.holidate.entity.location.Street;
 import com.webapp.holidate.entity.booking.Review;
+import com.webapp.holidate.entity.location.*;
+import com.webapp.holidate.entity.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
