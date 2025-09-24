@@ -1,7 +1,6 @@
 package com.webapp.holidate.controller.location;
 
-import com.webapp.holidate.constants.api.enpoint.location.CountryEndpoints;
-import com.webapp.holidate.constants.api.enpoint.location.LocationEndpoints;
+import com.webapp.holidate.constants.api.enpoint.LocationEndpoints;
 import com.webapp.holidate.dto.request.location.country.CountryCreationRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.location.LocationResponse;
@@ -14,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping(LocationEndpoints.LOCATION + CountryEndpoints.COUNTRIES)
+@RequestMapping(LocationEndpoints.LOCATION + LocationEndpoints.COUNTRIES)
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class CountryController {
