@@ -5,8 +5,8 @@ import com.webapp.holidate.config.security.filter.CustomCookieAuthenticationFilt
 import com.webapp.holidate.config.security.oauth2.CustomOAuth2AuthenticationFailureHandler;
 import com.webapp.holidate.config.security.oauth2.CustomOAuth2AuthenticationSuccessHandler;
 import com.webapp.holidate.constants.AppValues;
-import com.webapp.holidate.constants.api.enpoint.auth.AuthEndpoints;
 import com.webapp.holidate.constants.api.enpoint.LocationEndpoints;
+import com.webapp.holidate.constants.api.enpoint.auth.AuthEndpoints;
 import com.webapp.holidate.constants.api.enpoint.user.RoleEndpoints;
 import com.webapp.holidate.constants.api.enpoint.user.UserEndpoints;
 import com.webapp.holidate.service.auth.GoogleService;
