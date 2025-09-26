@@ -72,27 +72,23 @@ public class Hotel {
   @Builder.Default
   List<String> photoUrls = new ArrayList<>();
 
-  @Column(nullable = false)
+  @Column(nullable = true)
   double latitude;
 
-  @Column(nullable = false)
+  @Column(nullable = true)
   double longitude;
 
-  @Column(nullable = false)
-  Integer starRating;
+  @Column(nullable = true)
+  @Builder.Default
+  int starRating = 0;
 
-  @Column(nullable = false)
+  @Column(nullable = true)
   @Builder.Default
   double averageScore = 0.0;
 
-  @Column(nullable = false)
-  String checkinTime;
-
-  @Column(nullable = false)
-  String checkoutTime;
-
-  @Column(nullable = false)
-  Boolean allowsPayAtHotel;
+  @Column(nullable = true)
+  @Builder.Default
+  boolean allowsPayAtHotel = false;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = DbFieldNames.PARTNER_ID, nullable = false)

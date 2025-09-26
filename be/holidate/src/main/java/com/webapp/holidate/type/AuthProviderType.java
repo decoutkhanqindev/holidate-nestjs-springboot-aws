@@ -14,11 +14,5 @@ public enum AuthProviderType {
   LOCAL("local"),
   GOOGLE("google");
 
-  public static AuthProviderType toAuthProvider(String authProvider) {
-    return Arrays.stream(AuthProviderType.values()).findFirst()
-      .filter(type -> type.value.equalsIgnoreCase(authProvider))
-      .orElseThrow(() -> new AppException(ErrorType.AUTH_PROVIDER_NOT_VALID));
-  }
-
   String value;
 }

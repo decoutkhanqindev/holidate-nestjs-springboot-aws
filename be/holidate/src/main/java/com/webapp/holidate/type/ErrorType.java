@@ -45,6 +45,10 @@ public enum ErrorType {
   OTP_BLOCKED(429, "Too many failed attempts. Please try again later"),
   OTP_EXPIRED(400, "OTP has expired"),
 
+  // date errors
+  DATE_UTC_NOT_BLANK(400, "Date is required"),
+  DATE_UTC_INVALID(400, "Date must be in UTC format"),
+
   // role errors
   ROLE_NOT_FOUND(404, "Role not found"),
   ROLE_EXISTS(409, "Role already exists"),
@@ -80,6 +84,19 @@ public enum ErrorType {
   STREET_CODE_INVALID(400, "Street code must be 2 to 5 characters"),
   STREET_CODE_NOT_BLANK(400, "Street code is required"),
   STREET_EXISTS(409, "Street already exists in this ward"),
+
+  // accommodation errors
+  LATITUDE_INVALID(400, "Latitude must be between -90.0 and 90.0"),
+  LONGITUDE_INVALID(400, "Longitude must be between -180.0 and 180.0"),
+  STAR_RATING_NOT_NULL(400, "Star rating is required"),
+  STAR_RATING_INVALID(400, "Star rating must be between 1 and 5"),
+  PARTNER_ID_NOT_BLANK(400, "Partner ID is required"),
+
+  // hotel errors
+  HOTEL_NOT_FOUND(404, "Hotel not found"),
+  HOTEL_EXISTS(409, "Hotel already exists"),
+  HOTEL_STATUS_NOT_BLANK(400, "Hotel status is required"),
+  HOTEL_STATUS_INVALID(400, "Hotel status must be active, inactive, under_maintenance, or closed"),
   ;
 
   int statusCode;

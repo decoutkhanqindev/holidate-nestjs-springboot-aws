@@ -72,4 +72,8 @@ public class FileService {
   private String getFileName(String url) {
     return url.substring(baseUrl.length());
   }
+
+  public String createFileUrl(String fileName) {
+    return baseUrl + fileName;
+  }
 }

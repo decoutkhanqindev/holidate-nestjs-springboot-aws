@@ -55,6 +55,7 @@ public class UserCreationRequest {
   String roleId;
 
   @NotBlank(message = "AUTH_PROVIDER_NOT_BLANK")
+  @Pattern(regexp = ValidationPatterns.AUTH_PROVIDER, message = "AUTH_PROVIDER_INVALID")
   String authProvider;
   String authProviderId;
   boolean active;

@@ -102,19 +102,18 @@ public class UserService {
       user.setStreet(street);
     }
 
-    String authProviderStr = request.getAuthProvider();
-    AuthProviderType authProvider = AuthProviderType.toAuthProvider(authProviderStr);
+    String authProvider = request.getAuthProvider();
     boolean active = request.isActive();
 
     UserAuthInfo authInfo = UserAuthInfo.builder()
-      .authProvider(authProvider.getValue())
+      .authProvider(authProvider)
       .active(active)
       .user(user)
       .build();
     user.setAuthInfo(authInfo);
 
-    User savedUser = userRepository.save(user);
-    return userMapper.toUserResponse(savedUser);
+    userRepository.save(user);
+    return userMapper.toUserResponse(user);
   }
 
   public List<UserResponse> getAll() {
