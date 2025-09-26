@@ -39,11 +39,9 @@ public class User {
   @Column(nullable = true, unique = true, length = 11)
   String phoneNumber;
 
-  // Địa chỉ chi tiết (số nhà, căn hộ...)
   @Column(nullable = false)
   String address;
 
-  // Cấp địa lý từ lớn đến nhỏ
   @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = DbFieldNames.COUNTRY_ID, nullable = true)
   @ToString.Exclude

@@ -14,6 +14,7 @@ public enum ErrorType {
   UNKNOWN_ERROR(500, "An unexpected error occurred"),
 
   // validation errors
+  AUTH_PROVIDER_NOT_VALID(400, "Auth provider must be local or google"),
   NAME_NOT_BLANK(400, "Name is required"),
   DESCRIPTION_NOT_BLANK(400, "Description is required"),
   FULL_NAME_INVALID(400, "Full name must be between 3 and 100 characters"),
@@ -23,6 +24,10 @@ public enum ErrorType {
   EMAIL_INVALID(400, "Email is not valid"),
   EMAIL_NOT_BLANK(400, "Email is required"),
   PHONE_NUMBER_INVALID(400, "Phone number is not valid"),
+  ADDRESS_NOT_BLANK(400, "Address is required"),
+  ROLE_ID_NOT_BLANK(400, "Role ID is required"),
+  AUTH_PROVIDER_NOT_BLANK(400, "Auth provider is required"),
+  GENDER_INVALID(400, "Gender must be male, female, or other"),
   USER_EXISTS(409, "User already exists"),
   USER_NOT_FOUND(401, "User not found"),
   USER_ID_NOT_BLANK(400, "User ID is required"),
