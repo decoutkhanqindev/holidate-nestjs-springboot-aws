@@ -1,4 +1,4 @@
-package com.webapp.holidate.constants.api.enpoint.auth;
+package com.webapp.holidate.constants.api.endpoint.auth;
 
 public class AuthEndpoints {
   public static final String AUTH = "/auth";

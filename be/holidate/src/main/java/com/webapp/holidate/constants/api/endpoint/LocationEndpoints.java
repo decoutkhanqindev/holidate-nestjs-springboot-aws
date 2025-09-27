@@ -1,4 +1,4 @@
-package com.webapp.holidate.constants.api.enpoint;
+package com.webapp.holidate.constants.api.endpoint;
 
 public class LocationEndpoints {
   // location endpoint

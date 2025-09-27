@@ -1,6 +1,6 @@
 package com.webapp.holidate.controller.user;
 
-import com.webapp.holidate.constants.api.enpoint.user.RoleEndpoints;
+import com.webapp.holidate.constants.api.endpoint.user.RoleEndpoints;
 import com.webapp.holidate.dto.request.user.RoleCreationRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.user.RoleResponse;

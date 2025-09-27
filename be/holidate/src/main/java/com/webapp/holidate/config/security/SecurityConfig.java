@@ -5,10 +5,11 @@ import com.webapp.holidate.config.security.filter.CustomCookieAuthenticationFilt
 import com.webapp.holidate.config.security.oauth2.CustomOAuth2AuthenticationFailureHandler;
 import com.webapp.holidate.config.security.oauth2.CustomOAuth2AuthenticationSuccessHandler;
 import com.webapp.holidate.constants.AppValues;
-import com.webapp.holidate.constants.api.enpoint.LocationEndpoints;
-import com.webapp.holidate.constants.api.enpoint.auth.AuthEndpoints;
-import com.webapp.holidate.constants.api.enpoint.user.RoleEndpoints;
-import com.webapp.holidate.constants.api.enpoint.user.UserEndpoints;
+import com.webapp.holidate.constants.api.endpoint.LocationEndpoints;
+import com.webapp.holidate.constants.api.endpoint.accommodation.AccommodationEndpoints;
+import com.webapp.holidate.constants.api.endpoint.auth.AuthEndpoints;
+import com.webapp.holidate.constants.api.endpoint.user.RoleEndpoints;
+import com.webapp.holidate.constants.api.endpoint.user.UserEndpoints;
 import com.webapp.holidate.service.auth.GoogleService;
 import com.webapp.holidate.type.RoleType;
 import lombok.AccessLevel;
@@ -64,6 +65,8 @@ public class SecurityConfig {
         .requestMatchers(AuthEndpoints.AUTH + ALL_ENDPOINTS).permitAll()
         // 2. location endpoints
         .requestMatchers(HttpMethod.GET, LocationEndpoints.LOCATION + ALL_ENDPOINTS).permitAll()
+        // 3. accommodation endpoints
+        .requestMatchers(HttpMethod.GET, AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS).permitAll()
 
         // B. protected endpoints
         // I. user role
@@ -76,6 +79,8 @@ public class SecurityConfig {
         .requestMatchers(RoleEndpoints.ROLES + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
         // 2. location endpoints
         .requestMatchers(LocationEndpoints.LOCATION + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
+        // 3. accommodation endpoints
+        .requestMatchers(AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
 
         // C. any other endpoints
         .anyRequest().authenticated()

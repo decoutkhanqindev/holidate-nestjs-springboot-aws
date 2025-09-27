@@ -1,4 +1,4 @@
-package com.webapp.holidate.entity.acommodation.room;
+package com.webapp.holidate.entity.accommodation.room;
 
 import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;

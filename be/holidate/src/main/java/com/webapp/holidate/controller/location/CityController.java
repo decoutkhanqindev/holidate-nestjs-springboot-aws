@@ -1,6 +1,6 @@
 package com.webapp.holidate.controller.location;
 
-import com.webapp.holidate.constants.api.enpoint.LocationEndpoints;
+import com.webapp.holidate.constants.api.endpoint.LocationEndpoints;
 import com.webapp.holidate.constants.api.param.CommonParams;
 import com.webapp.holidate.constants.api.param.LocationParams;
 import com.webapp.holidate.dto.request.location.city.CityCreationRequest;

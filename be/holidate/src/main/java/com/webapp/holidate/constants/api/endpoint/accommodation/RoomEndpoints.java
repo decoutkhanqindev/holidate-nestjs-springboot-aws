@@ -1,4 +1,4 @@
-package com.webapp.holidate.constants.api.enpoint.acommodation;
+package com.webapp.holidate.constants.api.endpoint.accommodation;
 
 public class RoomEndpoints {
   public static final String ROOMS = "/rooms";

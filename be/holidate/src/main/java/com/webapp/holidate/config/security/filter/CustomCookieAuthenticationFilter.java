@@ -3,7 +3,7 @@ package com.webapp.holidate.config.security.filter;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
 import com.webapp.holidate.constants.AppValues;
-import com.webapp.holidate.constants.api.enpoint.auth.AuthEndpoints;
+import com.webapp.holidate.constants.api.endpoint.auth.AuthEndpoints;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.service.auth.AuthService;
 import com.webapp.holidate.type.ErrorType;

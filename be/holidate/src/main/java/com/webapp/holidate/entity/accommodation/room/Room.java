@@ -1,9 +1,9 @@
-package com.webapp.holidate.entity.acommodation.room;
+package com.webapp.holidate.entity.accommodation.room;
 
 import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
-import com.webapp.holidate.entity.acommodation.Hotel;
-import com.webapp.holidate.entity.acommodation.amenity.RoomAmenity;
+import com.webapp.holidate.entity.accommodation.Hotel;
+import com.webapp.holidate.entity.accommodation.amenity.RoomAmenity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;

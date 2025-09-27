@@ -1,7 +1,7 @@
 package com.webapp.holidate.controller.auth;
 
-import com.webapp.holidate.constants.api.enpoint.auth.AuthEndpoints;
-import com.webapp.holidate.constants.api.enpoint.auth.EmailEndpoints;
+import com.webapp.holidate.constants.api.endpoint.auth.AuthEndpoints;
+import com.webapp.holidate.constants.api.endpoint.auth.EmailEndpoints;
 import com.webapp.holidate.dto.request.auth.email.SendEmailVerificationRequest;
 import com.webapp.holidate.dto.request.auth.email.VerifyEmailRequest;
 import com.webapp.holidate.dto.response.ApiResponse;

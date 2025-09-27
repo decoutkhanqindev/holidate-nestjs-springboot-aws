@@ -1,6 +1,6 @@
 package com.webapp.holidate.controller.user;
 
-import com.webapp.holidate.constants.api.enpoint.user.UserEndpoints;
+import com.webapp.holidate.constants.api.endpoint.user.UserEndpoints;
 import com.webapp.holidate.dto.request.user.UserCreationRequest;
 import com.webapp.holidate.dto.request.user.UserUpdateRequest;
 import com.webapp.holidate.dto.response.ApiResponse;

@@ -1,4 +1,4 @@
-package com.webapp.holidate.constants.api.enpoint.user;
+package com.webapp.holidate.constants.api.endpoint.user;
 
 public class RoleEndpoints {
   public static final String ROLES = "/roles";

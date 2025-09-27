@@ -1,8 +1,8 @@
-package com.webapp.holidate.entity.acommodation;
+package com.webapp.holidate.entity.accommodation;
 
 import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
-import com.webapp.holidate.entity.acommodation.amenity.HotelAmenity;
+import com.webapp.holidate.entity.accommodation.amenity.HotelAmenity;
 import com.webapp.holidate.entity.booking.Review;
 import com.webapp.holidate.entity.location.*;
 import com.webapp.holidate.entity.user.User;

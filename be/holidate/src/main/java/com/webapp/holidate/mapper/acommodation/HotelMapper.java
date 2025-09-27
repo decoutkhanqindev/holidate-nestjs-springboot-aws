@@ -2,7 +2,7 @@ package com.webapp.holidate.mapper.acommodation;
 
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelCreationRequest;
 import com.webapp.holidate.dto.response.acommodation.hotel.HotelResponse;
-import com.webapp.holidate.entity.acommodation.Hotel;
+import com.webapp.holidate.entity.accommodation.Hotel;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

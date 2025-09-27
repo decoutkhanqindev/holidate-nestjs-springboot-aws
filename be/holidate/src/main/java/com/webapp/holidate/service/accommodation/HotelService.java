@@ -1,14 +1,13 @@
-package com.webapp.holidate.service.acommodation;
+package com.webapp.holidate.service.accommodation;
 
-import com.webapp.holidate.constants.AppValues;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelCreationRequest;
 import com.webapp.holidate.dto.response.acommodation.hotel.HotelResponse;
-import com.webapp.holidate.entity.acommodation.Hotel;
+import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.entity.location.*;
 import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.acommodation.HotelMapper;
-import com.webapp.holidate.repository.accomodation.HotelRepository;
+import com.webapp.holidate.repository.accommodation.HotelRepository;
 import com.webapp.holidate.repository.location.*;
 import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.service.storage.FileService;
@@ -16,8 +15,6 @@ import com.webapp.holidate.type.ErrorType;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import lombok.experimental.NonFinal;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -105,10 +102,22 @@ public class HotelService {
     return hotelMapper.toHotelResponse(hotel);
   }
 
-
   public List<HotelResponse> getAll() {
-    return hotelRepository.findAll().stream()
-      .map(hotelMapper::toHotelResponse)
-      .toList();
+    List<Hotel> hotels = hotelRepository.findAllWithLocationsAndPartner();
+    List<HotelResponse> hotelResponses = new ArrayList<>();
+
+    for (Hotel hotel : hotels) {
+      double fakeVndPrice = genFakeVndPrice();
+      HotelResponse response = hotelMapper.toHotelResponse(hotel);
+      response.setRawPricePerNight(fakeVndPrice);
+      response.setCurrentPricePerNight(fakeVndPrice * 0.8);
+      hotelResponses.add(response);
+    }
+
+    return hotelResponses;
+  }
+
+  private double genFakeVndPrice() {
+    return Math.round((100000 + Math.random() * 900000) / 1000.0) * 1000.0;
   }
 }

@@ -1,4 +1,4 @@
-package com.webapp.holidate.entity.acommodation.amenity;
+package com.webapp.holidate.entity.accommodation.amenity;
 
 import com.webapp.holidate.constants.db.DbTableNames;
 import jakarta.persistence.*;

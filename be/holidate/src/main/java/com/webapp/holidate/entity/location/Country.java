@@ -1,7 +1,7 @@
 package com.webapp.holidate.entity.location;
 
 import com.webapp.holidate.constants.db.DbTableNames;
-import com.webapp.holidate.entity.acommodation.Hotel;
+import com.webapp.holidate.entity.accommodation.Hotel;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;

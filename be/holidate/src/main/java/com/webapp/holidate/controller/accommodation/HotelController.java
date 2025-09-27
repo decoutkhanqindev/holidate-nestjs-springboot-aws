@@ -1,11 +1,11 @@
-package com.webapp.holidate.controller.acommodation;
+package com.webapp.holidate.controller.accommodation;
 
-import com.webapp.holidate.constants.api.enpoint.LocationEndpoints;
-import com.webapp.holidate.constants.api.enpoint.acommodation.HotelEndpoints;
+import com.webapp.holidate.constants.api.endpoint.accommodation.AccommodationEndpoints;
+import com.webapp.holidate.constants.api.endpoint.accommodation.HotelEndpoints;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelCreationRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.acommodation.hotel.HotelResponse;
-import com.webapp.holidate.service.acommodation.HotelService;
+import com.webapp.holidate.service.accommodation.HotelService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.List;
 
 @RestController
-@RequestMapping(HotelEndpoints.HOTELS)
+@RequestMapping(AccommodationEndpoints.ACCOMMODATION + HotelEndpoints.HOTELS)
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class HotelController {

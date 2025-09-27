@@ -1,4 +1,4 @@
-package com.webapp.holidate.entity.acommodation.room;
+package com.webapp.holidate.entity.accommodation.amenity;
 
 import com.webapp.holidate.constants.db.DbFieldNames;
 import jakarta.persistence.Column;
@@ -7,7 +7,6 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.io.Serializable;
-import java.time.LocalDate;
 
 @Embeddable
 @Data
@@ -16,10 +15,10 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-public class RoomInventoryId implements Serializable {
+public class RoomAmenityId implements Serializable {
   @Column(name = DbFieldNames.ROOM_ID, nullable = false)
   String roomId;
 
-  @Column(nullable = false)
-  LocalDate date;
+  @Column(name = DbFieldNames.AMENITY_ID, nullable = false)
+  String amenityId;
 }
