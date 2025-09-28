@@ -88,7 +88,6 @@ public enum ErrorType {
   // accommodation errors
   LATITUDE_INVALID(400, "Latitude must be between -90.0 and 90.0"),
   LONGITUDE_INVALID(400, "Longitude must be between -180.0 and 180.0"),
-  STAR_RATING_NOT_NULL(400, "Star rating is required"),
   STAR_RATING_INVALID(400, "Star rating must be between 1 and 5"),
   PARTNER_ID_NOT_BLANK(400, "Partner ID is required"),
 

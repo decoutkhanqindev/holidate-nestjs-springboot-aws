@@ -39,7 +39,7 @@ public class User {
   @Column(nullable = true, unique = true, length = 11)
   String phoneNumber;
 
-  @Column(nullable = false)
+  @Column(nullable = true)
   String address;
 
   @ManyToOne(fetch = FetchType.EAGER)
