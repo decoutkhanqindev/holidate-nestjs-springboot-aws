@@ -27,4 +27,8 @@ public class DbTableNames {
   public static final String BOOKINGS = "bookings";
   public static final String BOOKING_ROOMS = "booking_rooms";
   public static final String REVIEWS = "reviews";
+
+  // images
+  public static final String HOTEL_PHOTOS = "hotel_photos";
+  public static final String ROOM_PHOTOS = "room_photos";
 }

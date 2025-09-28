@@ -4,6 +4,7 @@ import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
 import com.webapp.holidate.entity.accommodation.amenity.HotelAmenity;
 import com.webapp.holidate.entity.booking.Review;
+import com.webapp.holidate.entity.image.HotelPhoto;
 import com.webapp.holidate.entity.location.*;
 import com.webapp.holidate.entity.user.User;
 import jakarta.persistence.*;
@@ -68,9 +69,10 @@ public class Hotel {
   @ToString.Exclude
   Street street;
 
-  @Column(nullable = true)
+  @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @ToString.Exclude
   @Builder.Default
-  List<String> photoUrls = new ArrayList<>();
+  List<HotelPhoto> photos = new ArrayList<>();
 
   @Column(nullable = true)
   double latitude;

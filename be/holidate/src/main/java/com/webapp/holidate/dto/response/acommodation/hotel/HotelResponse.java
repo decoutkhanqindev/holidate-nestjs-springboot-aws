@@ -1,5 +1,6 @@
 package com.webapp.holidate.dto.response.acommodation.hotel;
 
+import com.webapp.holidate.dto.response.image.PhotoResponse;
 import com.webapp.holidate.dto.response.location.LocationResponse;
 import com.webapp.holidate.dto.response.user.UserResponse;
 import lombok.*;
@@ -28,7 +29,7 @@ public class HotelResponse {
   LocationResponse district;
   LocationResponse ward;
   LocationResponse street;
-  List<String> photoUrls;
+  List<PhotoResponse> photos;
   double latitude;
   double longitude;
   int starRating;

@@ -4,6 +4,7 @@ import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
 import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.entity.accommodation.amenity.RoomAmenity;
+import com.webapp.holidate.entity.image.RoomPhoto;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -41,9 +42,10 @@ public class Room {
   @Column(nullable = false)
   double area;
 
-  @Column(nullable = true)
+  @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @ToString.Exclude
   @Builder.Default
-  List<String> photoUrls = new ArrayList<>();
+  List<RoomPhoto> photos = new ArrayList<>();
 
   @Column(nullable = false)
   int maxAdults;

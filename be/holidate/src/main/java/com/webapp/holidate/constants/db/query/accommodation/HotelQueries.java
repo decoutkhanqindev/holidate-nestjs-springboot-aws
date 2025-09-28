@@ -1,7 +1,7 @@
 package com.webapp.holidate.constants.db.query.accommodation;
 
 public class HotelQueries {
-  public static final String FIND_ALL_WITH_LOCATIONS_PARTNER =
+  public static final String FIND_ALL_WITH_LOCATIONS_PHOTOS_PARTNER =
     "SELECT h FROM Hotel h " +
       "LEFT JOIN FETCH h.country " +
       "LEFT JOIN FETCH h.province " +
@@ -9,5 +9,6 @@ public class HotelQueries {
       "LEFT JOIN FETCH h.district " +
       "LEFT JOIN FETCH h.ward " +
       "LEFT JOIN FETCH h.street " +
+      "LEFT JOIN FETCH h.photos " +
       "LEFT JOIN FETCH h.partner";
 }

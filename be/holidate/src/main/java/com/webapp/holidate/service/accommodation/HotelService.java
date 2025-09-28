@@ -3,11 +3,14 @@ package com.webapp.holidate.service.accommodation;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelCreationRequest;
 import com.webapp.holidate.dto.response.acommodation.hotel.HotelResponse;
 import com.webapp.holidate.entity.accommodation.Hotel;
+import com.webapp.holidate.entity.image.HotelPhoto;
 import com.webapp.holidate.entity.location.*;
 import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.acommodation.HotelMapper;
+import com.webapp.holidate.mapper.image.PhotoMapper;
 import com.webapp.holidate.repository.accommodation.HotelRepository;
+import com.webapp.holidate.repository.image.HotelPhotoRepository;
 import com.webapp.holidate.repository.location.*;
 import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.service.storage.FileService;
@@ -27,6 +30,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class HotelService {
   HotelRepository hotelRepository;
+  HotelPhotoRepository hotelPhotoRepository;
   UserRepository userRepository;
   CountryRepository countryRepository;
   ProvinceRepository provinceRepository;
@@ -34,9 +38,11 @@ public class HotelService {
   DistrictRepository districtRepository;
   WardRepository wardRepository;
   StreetRepository streetRepository;
+
   FileService fileService;
 
   HotelMapper hotelMapper;
+  PhotoMapper photoMapper;
 
   public HotelResponse create(HotelCreationRequest request) throws IOException {
     String name = request.getName();
@@ -83,27 +89,26 @@ public class HotelService {
     hotel.setStreet(street);
 
     List<MultipartFile> photoFiles = request.getPhotos();
-    List<String> photoUrls = new ArrayList<>();
-    boolean canUploadPhotos = photoFiles != null && !photoFiles.isEmpty();
-    if (canUploadPhotos) {
+    List<HotelPhoto> photos = new ArrayList<>();
+    if (photoFiles != null && !photoFiles.isEmpty()) {
       for (MultipartFile photoFile : photoFiles) {
-        boolean canUploadFile = photoFile != null && !photoFile.isEmpty();
-        if (canUploadFile) {
-          fileService.upload(photoFile);
-          String fileName = photoFile.getOriginalFilename();
-          String photoUrl = fileService.createFileUrl(fileName);
-          photoUrls.add(photoUrl);
-        }
+        fileService.upload(photoFile);
+        String fileName = photoFile.getOriginalFilename();
+        String photoUrl = fileService.createFileUrl(fileName);
+        HotelPhoto photo = photoMapper.toHotelPhoto(hotel, photoUrl);
+        photos.add(photo);
       }
     }
-    hotel.setPhotoUrls(photoUrls);
+
+    hotel.setPhotos(photos);
 
     hotelRepository.save(hotel);
+
     return hotelMapper.toHotelResponse(hotel);
   }
 
   public List<HotelResponse> getAll() {
-    List<Hotel> hotels = hotelRepository.findAllWithLocationsAndPartner();
+    List<Hotel> hotels = hotelRepository.findAllWithLocationsPhotosPartner();
     List<HotelResponse> hotelResponses = new ArrayList<>();
 
     for (Hotel hotel : hotels) {

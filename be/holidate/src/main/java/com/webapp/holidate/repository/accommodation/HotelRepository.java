@@ -10,6 +10,6 @@ import java.util.List;
 public interface HotelRepository extends JpaRepository<Hotel, String> {
   boolean existsByName(String name);
 
-  @Query(HotelQueries.FIND_ALL_WITH_LOCATIONS_PARTNER)
-  List<Hotel> findAllWithLocationsAndPartner();
+  @Query(HotelQueries.FIND_ALL_WITH_LOCATIONS_PHOTOS_PARTNER)
+  List<Hotel> findAllWithLocationsPhotosPartner();
 }
