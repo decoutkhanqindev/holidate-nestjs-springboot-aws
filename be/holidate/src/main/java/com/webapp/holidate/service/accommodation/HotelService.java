@@ -10,7 +10,6 @@ import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.acommodation.HotelMapper;
 import com.webapp.holidate.mapper.image.PhotoMapper;
 import com.webapp.holidate.repository.accommodation.HotelRepository;
-import com.webapp.holidate.repository.image.HotelPhotoRepository;
 import com.webapp.holidate.repository.location.*;
 import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.service.storage.FileService;
@@ -30,7 +29,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class HotelService {
   HotelRepository hotelRepository;
-  HotelPhotoRepository hotelPhotoRepository;
   UserRepository userRepository;
   CountryRepository countryRepository;
   ProvinceRepository provinceRepository;
@@ -39,10 +37,10 @@ public class HotelService {
   WardRepository wardRepository;
   StreetRepository streetRepository;
 
-  FileService fileService;
-
   HotelMapper hotelMapper;
   PhotoMapper photoMapper;
+
+  FileService fileService;
 
   public HotelResponse create(HotelCreationRequest request) throws IOException {
     String name = request.getName();
@@ -103,7 +101,6 @@ public class HotelService {
     hotel.setPhotos(photos);
 
     hotelRepository.save(hotel);
-
     return hotelMapper.toHotelResponse(hotel);
   }
 
