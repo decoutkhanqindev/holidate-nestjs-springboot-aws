@@ -4,14 +4,16 @@ import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
 import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.entity.accommodation.amenity.RoomAmenity;
-import com.webapp.holidate.entity.image.RoomPhoto;
+import com.webapp.holidate.entity.image.AccommodationPhoto;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = DbTableNames.ROOMS)
@@ -45,7 +47,7 @@ public class Room {
   @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   @ToString.Exclude
   @Builder.Default
-  List<RoomPhoto> photos = new ArrayList<>();
+  List<AccommodationPhoto> photos = new ArrayList<>();
 
   @Column(nullable = false)
   int maxAdults;
@@ -70,7 +72,7 @@ public class Room {
   @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
   @ToString.Exclude
   @Builder.Default
-  List<RoomAmenity> amenities = new ArrayList<>();
+  Set<RoomAmenity> amenities = new HashSet<>();
 
   @Column(nullable = false)
   @Builder.Default

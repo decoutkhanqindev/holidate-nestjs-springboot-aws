@@ -2,15 +2,14 @@ package com.webapp.holidate.entity.image;
 
 import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
+import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.entity.accommodation.room.Room;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDateTime;
-
 @Entity
-@Table(name = DbTableNames.ROOM_PHOTOS)
+@Table(name = DbTableNames.ACCOMMODATION_PHOTOS)
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
@@ -18,20 +17,21 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @ToString
-public class RoomPhoto {
+public class AccommodationPhoto {
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   String id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = DbFieldNames.ROOM_ID, nullable = false)
+  @JoinColumn(name = DbFieldNames.HOTEL_ID, nullable = true)
+  @ToString.Exclude
+  Hotel hotel;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = DbFieldNames.ROOM_ID, nullable = true)
   @ToString.Exclude
   Room room;
 
   @Column(nullable = false, columnDefinition = "TEXT")
   String url;
-
-  @Column(nullable = false)
-  @Builder.Default
-  LocalDateTime createdAt = LocalDateTime.now();
 }

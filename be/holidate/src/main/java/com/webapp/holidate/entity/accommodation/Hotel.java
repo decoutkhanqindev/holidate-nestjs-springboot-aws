@@ -4,7 +4,7 @@ import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
 import com.webapp.holidate.entity.accommodation.amenity.HotelAmenity;
 import com.webapp.holidate.entity.booking.Review;
-import com.webapp.holidate.entity.image.HotelPhoto;
+import com.webapp.holidate.entity.image.AccommodationPhoto;
 import com.webapp.holidate.entity.location.*;
 import com.webapp.holidate.entity.user.User;
 import jakarta.persistence.*;
@@ -13,7 +13,9 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = DbTableNames.HOTELS)
@@ -30,7 +32,7 @@ public class Hotel {
   @Column(nullable = false)
   String id;
 
-  @Column(nullable = false)
+  @Column(nullable = false, unique = true)
   String name;
 
   @Column(nullable = false, columnDefinition = "TEXT")
@@ -72,7 +74,7 @@ public class Hotel {
   @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   @ToString.Exclude
   @Builder.Default
-  List<HotelPhoto> photos = new ArrayList<>();
+  List<AccommodationPhoto> photos = new ArrayList<>();
 
   @Column(nullable = true)
   double latitude;
@@ -103,12 +105,12 @@ public class Hotel {
   @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
   @ToString.Exclude
   @Builder.Default
-  List<HotelAmenity> amenities = new ArrayList<>();
+  Set<HotelAmenity> amenities = new HashSet<>();
 
   @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   @ToString.Exclude
   @Builder.Default
-  List<Review> reviews = new ArrayList<>();
+  Set<Review> reviews = new HashSet<>();
 
   @Column(nullable = false)
   @Builder.Default

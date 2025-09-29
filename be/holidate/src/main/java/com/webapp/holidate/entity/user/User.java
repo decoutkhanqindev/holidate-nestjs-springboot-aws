@@ -10,7 +10,9 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = DbTableNames.USERS)
@@ -92,7 +94,7 @@ public class User {
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   @ToString.Exclude
   @Builder.Default
-  List<Review> reviews = new ArrayList<>();
+  Set<Review> reviews = new HashSet<>();
 
   @Builder.Default
   @Column(nullable = false)
