@@ -94,7 +94,7 @@ public class User {
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   @ToString.Exclude
   @Builder.Default
-  Set<Review> reviews = new HashSet<>();
+  List<Review> reviews = new ArrayList<>();
 
   @Builder.Default
   @Column(nullable = false)

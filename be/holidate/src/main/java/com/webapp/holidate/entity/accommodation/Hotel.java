@@ -110,7 +110,7 @@ public class Hotel {
   @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   @ToString.Exclude
   @Builder.Default
-  Set<Review> reviews = new HashSet<>();
+  List<Review> reviews = new ArrayList<>();
 
   @Column(nullable = false)
   @Builder.Default
