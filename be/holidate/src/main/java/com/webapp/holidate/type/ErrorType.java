@@ -95,6 +95,14 @@ public enum ErrorType {
   HOTEL_EXISTS(409, "Hotel already exists"),
   HOTEL_STATUS_NOT_BLANK(400, "Hotel status is required"),
   HOTEL_STATUS_INVALID(400, "Hotel status must be active, inactive, under_maintenance, or closed"),
+
+  // amenity errors
+  AMENITY_CATEGORY_EXISTS(409, "Amenity category already exists"),
+  AMENITY_CATEGORY_NOT_FOUND(404, "Amenity category not found"),
+  AMENITY_CATEGORY_ID_NOT_BLANK(400, "Amenity category ID is required"),
+  AMENITY_EXISTS(409, "Amenity already exists"),
+  AMENITY_NOT_FOUND(404, "Amenity not found"),
+  IS_FREE_NOT_BLANK(400,  "Is free is required")
   ;
 
   int statusCode;

@@ -8,11 +8,12 @@ public class DbFieldNames {
 
   // accommodation related fields
   public static final String HOTEL_ID = "hotel_id";
-  public static final String HOTEL_ID_CAMEL = "hotelId";
   public static final String ROOM_ID = "room_id";
   public static final String ROOM_ID_CAMEL = "roomId";
+
+  // amenity related fields
   public static final String AMENITY_ID = "amenity_id";
-  public static final String AMENITY_ID_CAMEL = "amenityId";
+  public static final String AMENITY_CATEGORY_ID = "amenity_category_id";
 
   // location related fields
   public static final String COUNTRY_ID = "country_id";

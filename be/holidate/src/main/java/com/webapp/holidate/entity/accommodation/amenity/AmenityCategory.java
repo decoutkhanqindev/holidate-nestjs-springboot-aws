@@ -1,13 +1,17 @@
 package com.webapp.holidate.entity.accommodation.amenity;
 
-import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 @Entity
-@Table(name = DbTableNames.AMENITIES)
+@Table(name = DbTableNames.AMENITY_CATEGORIES)
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
@@ -15,7 +19,7 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @Setter
 @ToString
-public class Amenity {
+public class AmenityCategory {
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   @Column(nullable = false)
@@ -27,11 +31,8 @@ public class Amenity {
   @Column(nullable = false, columnDefinition = "TEXT")
   String description;
 
-  @Column(nullable = false)
-  boolean free;
-
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = DbFieldNames.AMENITY_CATEGORY_ID, nullable = false)
+  @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
   @ToString.Exclude
-  AmenityCategory category;
+  @Builder.Default
+  Set<Amenity> amenities = new HashSet<>();
 }

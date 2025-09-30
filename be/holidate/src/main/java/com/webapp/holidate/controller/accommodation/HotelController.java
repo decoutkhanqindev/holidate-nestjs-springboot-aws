@@ -1,7 +1,7 @@
 package com.webapp.holidate.controller.accommodation;
 
-import com.webapp.holidate.constants.api.endpoint.accommodation.AccommodationEndpoints;
-import com.webapp.holidate.constants.api.endpoint.accommodation.HotelEndpoints;
+import com.webapp.holidate.constants.api.endpoint.CommonEndpoints;
+import com.webapp.holidate.constants.api.endpoint.AccommodationEndpoints;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelUpdateRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.util.List;
 
 @RestController
-@RequestMapping(AccommodationEndpoints.ACCOMMODATION + HotelEndpoints.HOTELS)
+@RequestMapping(AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.HOTELS)
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class HotelController {
@@ -27,26 +27,25 @@ public class HotelController {
   public ApiResponse<HotelResponse> create(@ModelAttribute @Valid HotelCreationRequest request) throws IOException {
     HotelResponse response = hotelService.create(request);
     return ApiResponse.<HotelResponse>builder()
-      .data(response)
-      .build();
+        .data(response)
+        .build();
   }
 
-  @PutMapping(value = HotelEndpoints.HOTEL_ID, consumes = "multipart/form-data")
+  @PutMapping(value = CommonEndpoints.ID, consumes = "multipart/form-data")
   public ApiResponse<HotelResponse> update(
-    @PathVariable String id,
-    @ModelAttribute @Valid HotelUpdateRequest request
-  ) throws IOException {
+      @PathVariable String id,
+      @ModelAttribute @Valid HotelUpdateRequest request) throws IOException {
     HotelResponse response = hotelService.update(id, request);
     return ApiResponse.<HotelResponse>builder()
-      .data(response)
-      .build();
+        .data(response)
+        .build();
   }
 
   @GetMapping
   public ApiResponse<List<HotelResponse>> getAll() {
     List<HotelResponse> responses = hotelService.getAll();
     return ApiResponse.<List<HotelResponse>>builder()
-      .data(responses)
-      .build();
+        .data(responses)
+        .build();
   }
 }

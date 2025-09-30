@@ -1,6 +1,7 @@
 package com.webapp.holidate.controller.user;
 
-import com.webapp.holidate.constants.api.endpoint.user.UserEndpoints;
+import com.webapp.holidate.constants.api.endpoint.CommonEndpoints;
+import com.webapp.holidate.constants.api.endpoint.UserEndpoints;
 import com.webapp.holidate.dto.request.user.UserCreationRequest;
 import com.webapp.holidate.dto.request.user.UserUpdateRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
@@ -37,7 +38,7 @@ public class UserController {
         .build();
   }
 
-  @GetMapping(UserEndpoints.USER_ID)
+  @GetMapping(CommonEndpoints.ID)
   public ApiResponse<UserResponse> getById(@PathVariable String id) {
     UserResponse response = service.getById(id);
     return ApiResponse.<UserResponse>builder()
@@ -45,7 +46,7 @@ public class UserController {
         .build();
   }
 
-  @PutMapping(UserEndpoints.USER_ID)
+  @PutMapping(CommonEndpoints.ID)
   public ApiResponse<UserResponse> update(@PathVariable String id, @RequestBody @Valid UserUpdateRequest request) {
     UserResponse response = service.update(id, request);
     return ApiResponse.<UserResponse>builder()
@@ -53,7 +54,7 @@ public class UserController {
         .build();
   }
 
-  @DeleteMapping(UserEndpoints.USER_ID)
+  @DeleteMapping(CommonEndpoints.ID)
   public ApiResponse<UserResponse> delete(@PathVariable String id) {
     UserResponse response = service.delete(id);
     return ApiResponse.<UserResponse>builder()

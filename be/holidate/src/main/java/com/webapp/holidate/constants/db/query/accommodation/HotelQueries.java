@@ -21,8 +21,7 @@ public class HotelQueries {
       "LEFT JOIN FETCH h.ward " +
       "LEFT JOIN FETCH h.street " +
       "LEFT JOIN FETCH h.photos " +
-      "LEFT JOIN FETCH h.amenities a " +
-      "LEFT JOIN FETCH a.amenity " +
+      "LEFT JOIN FETCH h.amenities " +
       "LEFT JOIN FETCH h.reviews r " +
       "LEFT JOIN FETCH r.user " +
       "LEFT JOIN FETCH h.partner " +

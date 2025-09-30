@@ -11,9 +11,12 @@ public class DbTableNames {
   public static final String HOTELS = "hotels";
   public static final String ROOMS = "rooms";
   public static final String ROOM_INVENTORIES = "room_inventories";
-  public static final String AMENITIES = "amenities";
   public static final String HOTEL_AMENITIES = "hotel_amenities";
   public static final String ROOM_AMENITIES = "room_amenities";
+
+  // amenity related tables
+  public static final String AMENITIES = "amenities";
+  public static final String AMENITY_CATEGORIES = "amenity_categories";
 
   // location related tables
   public static final String COUNTRIES = "countries";
