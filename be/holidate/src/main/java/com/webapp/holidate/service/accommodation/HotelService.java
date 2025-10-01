@@ -2,15 +2,21 @@ package com.webapp.holidate.service.accommodation;
 
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelUpdateRequest;
+import com.webapp.holidate.dto.request.image.PhotoCreationRequest;
+import com.webapp.holidate.dto.request.image.PhotoDeleteRequest;
 import com.webapp.holidate.dto.response.acommodation.hotel.HotelResponse;
 import com.webapp.holidate.entity.accommodation.Hotel;
-import com.webapp.holidate.entity.image.AccommodationPhoto;
+import com.webapp.holidate.entity.image.HotelPhoto;
+import com.webapp.holidate.entity.image.Photo;
+import com.webapp.holidate.entity.image.PhotoCategory;
 import com.webapp.holidate.entity.location.*;
 import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.acommodation.HotelMapper;
-import com.webapp.holidate.mapper.image.PhotoMapper;
 import com.webapp.holidate.repository.accommodation.HotelRepository;
+import com.webapp.holidate.repository.image.HotelPhotoRepository;
+import com.webapp.holidate.repository.image.PhotoCategoryRepository;
+import com.webapp.holidate.repository.image.PhotoRepository;
 import com.webapp.holidate.repository.location.*;
 import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.service.storage.FileService;
@@ -23,13 +29,18 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class HotelService {
   HotelRepository hotelRepository;
+  PhotoCategoryRepository photoCategoryRepository;
+  PhotoRepository photoRepository;
+  HotelPhotoRepository hotelPhotoRepository;
   UserRepository userRepository;
   CountryRepository countryRepository;
   ProvinceRepository provinceRepository;
@@ -37,11 +48,9 @@ public class HotelService {
   DistrictRepository districtRepository;
   WardRepository wardRepository;
   StreetRepository streetRepository;
+  FileService fileService;
 
   HotelMapper hotelMapper;
-  PhotoMapper photoMapper;
-
-  FileService fileService;
 
   public HotelResponse create(HotelCreationRequest request) throws IOException {
     String name = request.getName();
@@ -87,21 +96,42 @@ public class HotelService {
       .orElseThrow(() -> new AppException(ErrorType.STREET_NOT_FOUND));
     hotel.setStreet(street);
 
-    List<MultipartFile> photoFiles = request.getPhotos();
-    List<AccommodationPhoto> photos = new ArrayList<>();
-    if (photoFiles != null && !photoFiles.isEmpty()) {
-      for (MultipartFile photoFile : photoFiles) {
-        fileService.upload(photoFile);
-        String fileName = photoFile.getOriginalFilename();
-        String photoUrl = fileService.createFileUrl(fileName);
-        AccommodationPhoto photo = photoMapper.toEntity(hotel, photoUrl);
-        photos.add(photo);
+    hotelRepository.save(hotel);
+
+    List<PhotoCreationRequest> photoRequests = request.getPhotos();
+    boolean hasPhotos = photoRequests != null && !photoRequests.isEmpty();
+    if (hasPhotos) {
+      Set<HotelPhoto> hotelPhotos = new HashSet<>();
+
+      for (PhotoCreationRequest photoRequest : photoRequests) {
+        String categoryId = photoRequest.getCategoryId();
+        PhotoCategory category = photoCategoryRepository.findById(categoryId)
+          .orElseThrow(() -> new AppException(ErrorType.PHOTO_CATEGORY_NOT_FOUND));
+
+        MultipartFile file = photoRequest.getFile();
+        fileService.upload(file);
+
+        String fileName = file.getOriginalFilename();
+        String url = fileService.createFileUrl(fileName);
+
+        Photo photo = Photo.builder()
+          .url(url)
+          .category(category)
+          .build();
+        photoRepository.save(photo);
+
+        HotelPhoto hotelPhoto = HotelPhoto.builder()
+          .photo(photo)
+          .hotel(hotel)
+          .build();
+        HotelPhoto savedHotelPhoto = hotelPhotoRepository.save(hotelPhoto);
+        hotelPhotos.add(savedHotelPhoto);
       }
+
+      hotel.setPhotos(hotelPhotos);
+      hotelRepository.save(hotel);
     }
 
-    hotel.setPhotos(photos);
-
-    hotelRepository.save(hotel);
     return hotelMapper.toHotelResponse(hotel);
   }
 
@@ -165,7 +195,7 @@ public class HotelService {
 
     String newCityId = request.getCityId();
     String currentCityId = hotel.getCity().getId();
-    boolean cityChanged =  newCityId != null && !currentCityId.equals(newCityId);
+    boolean cityChanged = newCityId != null && !currentCityId.equals(newCityId);
     if (cityChanged) {
       City city = cityRepository.findById(newCityId)
         .orElseThrow(() -> new AppException(ErrorType.CITY_NOT_FOUND));
@@ -215,24 +245,47 @@ public class HotelService {
   }
 
   private void updatePhotos(Hotel hotel, HotelUpdateRequest request) throws IOException {
-    List<String> photosToDelete = request.getPhotosToDelete();
+    Set<HotelPhoto> currentPhotos = hotel.getPhotos();
+
+    List<PhotoDeleteRequest> photosToDelete = request.getPhotosToDelete();
     boolean hasPhotosToDelete = photosToDelete != null && !photosToDelete.isEmpty();
     if (hasPhotosToDelete) {
-      List<AccommodationPhoto> currentPhotos = hotel.getPhotos();
-      currentPhotos.removeIf(photo -> photosToDelete.contains(photo.getId()));
+      List<String> photoIdsToDelete = photosToDelete.stream()
+        .map(PhotoDeleteRequest::getId)
+        .toList();
+      currentPhotos.removeIf(hotelPhoto -> photoIdsToDelete.contains(hotelPhoto.getPhoto().getId()));
+      photoRepository.deleteAllById(photoIdsToDelete);
     }
 
-    List<MultipartFile> newPhotoFiles = request.getNewPhotos();
-    boolean hasNewPhotos = newPhotoFiles != null && !newPhotoFiles.isEmpty();
-    if (hasNewPhotos) {
-      List<AccommodationPhoto> currentPhotos = hotel.getPhotos();
-      for (MultipartFile photoFile : newPhotoFiles) {
-        fileService.upload(photoFile);
-        String fileName = photoFile.getOriginalFilename();
-        String photoUrl = fileService.createFileUrl(fileName);
-        AccommodationPhoto photo = photoMapper.toEntity(hotel, photoUrl);
-        currentPhotos.add(photo);
+    List<PhotoCreationRequest> photosToAdd = request.getPhotosToAdd();
+    boolean hasPhotosToAdd = photosToAdd != null && !photosToAdd.isEmpty();
+    if (hasPhotosToAdd) {
+      for (PhotoCreationRequest photoToAdd : photosToAdd) {
+        String categoryId = photoToAdd.getCategoryId();
+        PhotoCategory category = photoCategoryRepository.findById(categoryId)
+          .orElseThrow(() -> new AppException(ErrorType.PHOTO_CATEGORY_NOT_FOUND));
+
+        MultipartFile file = photoToAdd.getFile();
+        fileService.upload(file);
+
+        String fileName = file.getOriginalFilename();
+        String url = fileService.createFileUrl(fileName);
+
+        Photo photo = Photo.builder()
+          .url(url)
+          .category(category)
+          .build();
+        photoRepository.save(photo);
+
+        HotelPhoto hotelPhoto = HotelPhoto.builder()
+          .photo(photo)
+          .hotel(hotel)
+          .build();
+        hotelPhotoRepository.save(hotelPhoto);
+        currentPhotos.add(hotelPhoto);
       }
     }
+
+    hotel.setPhotos(currentPhotos);
   }
 }

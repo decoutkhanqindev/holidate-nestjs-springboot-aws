@@ -4,7 +4,9 @@ import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
 import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.entity.accommodation.amenity.Amenity;
-import com.webapp.holidate.entity.image.AccommodationPhoto;
+import com.webapp.holidate.entity.image.HotelPhoto;
+import com.webapp.holidate.entity.image.Photo;
+import com.webapp.holidate.entity.image.RoomPhoto;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -38,16 +40,19 @@ public class Room {
   @Column(nullable = false)
   String name;
 
+  @Column(nullable = false)
+  String roomNumber;
+
   @Column(nullable = false, columnDefinition = "TEXT")
   String description;
 
   @Column(nullable = false)
   double area;
 
-  @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
   @ToString.Exclude
   @Builder.Default
-  List<AccommodationPhoto> photos = new ArrayList<>();
+  private Set<RoomPhoto> photos = new HashSet<>();
 
   @Column(nullable = false)
   int maxAdults;
@@ -76,7 +81,8 @@ public class Room {
     inverseJoinColumns = @JoinColumn(name = DbFieldNames.AMENITY_ID)
   )
   @Builder.Default
-  Set<Amenity> amenities = new HashSet<>();
+  @ToString.Exclude
+  List<Amenity> amenities = new ArrayList<>();
 
   @Column(nullable = false)
   @Builder.Default

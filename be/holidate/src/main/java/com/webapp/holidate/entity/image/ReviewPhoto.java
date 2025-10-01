@@ -4,12 +4,13 @@ import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
 import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.entity.accommodation.room.Room;
+import com.webapp.holidate.entity.booking.Review;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Entity
-@Table(name = DbTableNames.ACCOMMODATION_PHOTOS)
+@Table(name = DbTableNames.REVIEW_PHOTOS)
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
@@ -17,20 +18,15 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @Setter
 @ToString
-public class AccommodationPhoto {
+public class ReviewPhoto {
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   String id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = DbFieldNames.HOTEL_ID, nullable = true)
+  @JoinColumn(name = DbFieldNames.REVIEW_ID, nullable = false)
   @ToString.Exclude
-  Hotel hotel;
-
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = DbFieldNames.ROOM_ID, nullable = true)
-  @ToString.Exclude
-  Room room;
+  Review review;
 
   @Column(nullable = false, columnDefinition = "TEXT")
   String url;

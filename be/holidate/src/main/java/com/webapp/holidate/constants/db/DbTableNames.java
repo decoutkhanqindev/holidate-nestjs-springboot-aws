@@ -11,12 +11,12 @@ public class DbTableNames {
   public static final String HOTELS = "hotels";
   public static final String ROOMS = "rooms";
   public static final String ROOM_INVENTORIES = "room_inventories";
-  public static final String HOTEL_AMENITIES = "hotel_amenities";
-  public static final String ROOM_AMENITIES = "room_amenities";
 
   // amenity related tables
   public static final String AMENITIES = "amenities";
   public static final String AMENITY_CATEGORIES = "amenity_categories";
+  public static final String HOTEL_AMENITIES = "hotel_amenities";
+  public static final String ROOM_AMENITIES = "room_amenities";
 
   // location related tables
   public static final String COUNTRIES = "countries";
@@ -32,5 +32,10 @@ public class DbTableNames {
   public static final String REVIEWS = "reviews";
 
   // images
+  public static final String PHOTOS = "photos";
+  public static final String PHOTO_CATEGORIES = "photo_categories";
+  public static final String HOTEL_PHOTOS = "hotel_photos";
+  public static final String ROOM_PHOTOS = "room_photos";
   public static final String ACCOMMODATION_PHOTOS = "accommodation_photos";
+  public static final String REVIEW_PHOTOS = "review_photos";
 }

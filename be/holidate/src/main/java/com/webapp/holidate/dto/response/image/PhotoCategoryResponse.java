@@ -12,8 +12,7 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class PhotoResponse {
-  PhotoCategoryResponse category;
+public class PhotoCategoryResponse {
   String id;
-  String url;
+  String name;
 }

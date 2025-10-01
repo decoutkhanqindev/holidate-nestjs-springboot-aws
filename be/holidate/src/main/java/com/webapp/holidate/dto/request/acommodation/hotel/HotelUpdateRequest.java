@@ -1,6 +1,8 @@
 package com.webapp.holidate.dto.request.acommodation.hotel;
 
 import com.webapp.holidate.constants.ValidationPatterns;
+import com.webapp.holidate.dto.request.image.PhotoCreationRequest;
+import com.webapp.holidate.dto.request.image.PhotoDeleteRequest;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -27,8 +29,9 @@ public class HotelUpdateRequest {
   String districtId;
   String wardId;
   String streetId;
-  List<MultipartFile> newPhotos;
-  List<String> photosToDelete;
+
+  List<PhotoCreationRequest> photosToAdd;
+  List<PhotoDeleteRequest> photosToDelete;
 
   @DecimalMin(value = ValidationPatterns.LATITUDE_MIN, message = "LATITUDE_INVALID")
   @DecimalMax(value = ValidationPatterns.LATITUDE_MAX, message = "LATITUDE_INVALID")

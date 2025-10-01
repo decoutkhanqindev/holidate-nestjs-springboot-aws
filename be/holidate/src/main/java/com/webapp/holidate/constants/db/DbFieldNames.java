@@ -26,4 +26,8 @@ public class DbFieldNames {
   // booking related fields
   public static final String BOOKING_ID = "booking_id";
   public static final String REVIEW_ID = "review_id";
+
+  // image related fields
+  public static final String PHOTO_ID = "photo_id";
+  public static final String PHOTO_CATEGORY_ID = "photo_category_id";
 }

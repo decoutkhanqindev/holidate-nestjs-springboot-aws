@@ -1,6 +1,7 @@
 package com.webapp.holidate.dto.request.acommodation.hotel;
 
 import com.webapp.holidate.constants.ValidationPatterns;
+import com.webapp.holidate.dto.request.image.PhotoCreationRequest;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -45,7 +46,7 @@ public class HotelCreationRequest {
   @NotBlank(message = "STREET_ID_NOT_BLANK")
   String streetId;
 
-  List<MultipartFile> photos;
+  List<PhotoCreationRequest> photos;
 
   @NotBlank(message = "PARTNER_ID_NOT_BLANK")
   String partnerId;

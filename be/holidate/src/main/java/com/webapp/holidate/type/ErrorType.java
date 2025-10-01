@@ -102,7 +102,14 @@ public enum ErrorType {
   AMENITY_CATEGORY_ID_NOT_BLANK(400, "Amenity category ID is required"),
   AMENITY_EXISTS(409, "Amenity already exists"),
   AMENITY_NOT_FOUND(404, "Amenity not found"),
-  IS_FREE_NOT_BLANK(400,  "Is free is required")
+  IS_FREE_NOT_BLANK(400,  "Is free is required"),
+
+  // image errors
+  PHOTO_FILE_NOT_BLANK(400, "File is required"),
+  PHOTO_ID_NOT_BLANK(400, "Photo ID is required"),
+  PHOTO_NOT_FOUND(404, "Photo not found"),
+  PHOTO_CATEGORY_ID_NOT_BLANK(400, "Photo category ID is required"),
+  PHOTO_CATEGORY_NOT_FOUND(404, "Photo category not found"),
   ;
 
   int statusCode;
