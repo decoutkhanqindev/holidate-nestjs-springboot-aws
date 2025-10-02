@@ -2,7 +2,7 @@ package com.webapp.holidate.entity.accommodation;
 
 import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
-import com.webapp.holidate.entity.accommodation.amenity.Amenity;
+import com.webapp.holidate.entity.accommodation.amenity.HotelAmenity;
 import com.webapp.holidate.entity.accommodation.room.Room;
 import com.webapp.holidate.entity.booking.Review;
 import com.webapp.holidate.entity.image.HotelPhoto;
@@ -108,15 +108,10 @@ public class Hotel {
   @Builder.Default
   List<Room> rooms = new ArrayList<>();
 
-  @ManyToMany(fetch = FetchType.LAZY)
-  @JoinTable(
-    name = DbTableNames.HOTEL_AMENITIES,
-    joinColumns = @JoinColumn(name = DbFieldNames.HOTEL_ID),
-    inverseJoinColumns = @JoinColumn(name = DbFieldNames.AMENITY_ID)
-  )
+  @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   @Builder.Default
   @ToString.Exclude
-  Set<Amenity> amenities = new HashSet<>();
+  Set<HotelAmenity> amenities = new HashSet<>();
 
   @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   @ToString.Exclude

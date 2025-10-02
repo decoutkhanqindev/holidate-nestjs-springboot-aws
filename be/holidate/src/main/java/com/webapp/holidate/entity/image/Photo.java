@@ -18,6 +18,7 @@ import lombok.experimental.FieldDefaults;
 public class Photo {
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
+  @Column(nullable = false)
   String id;
 
   @Column(nullable = false, columnDefinition = "TEXT")

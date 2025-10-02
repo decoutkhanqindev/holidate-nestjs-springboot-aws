@@ -2,7 +2,6 @@ package com.webapp.holidate.dto.request.acommodation.hotel;
 
 import com.webapp.holidate.constants.ValidationPatterns;
 import com.webapp.holidate.dto.request.image.PhotoCreationRequest;
-import com.webapp.holidate.dto.request.image.PhotoDeleteRequest;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Pattern;
@@ -31,9 +30,6 @@ public class HotelUpdateRequest {
   String wardId;
   String streetId;
 
-  List<PhotoCreationRequest> photosToAdd;
-  List<PhotoDeleteRequest> photosToDelete;
-
   @DecimalMin(value = ValidationPatterns.LATITUDE_MIN, message = "LATITUDE_INVALID")
   @DecimalMax(value = ValidationPatterns.LATITUDE_MAX, message = "LATITUDE_INVALID")
   Double latitude;
@@ -41,6 +37,12 @@ public class HotelUpdateRequest {
   @DecimalMin(value = ValidationPatterns.LONGITUDE_MIN, message = "LONGITUDE_INVALID")
   @DecimalMax(value = ValidationPatterns.LONGITUDE_MAX, message = "LONGITUDE_INVALID")
   Double longitude;
+
+  List<PhotoCreationRequest> photosToAdd;
+  List<String> photoIdsToDelete;
+
+  List<String> amenityIdsToAdd;
+  List<String> amenityIdsToRemove;
 
   Boolean allowsPayAtHotel;
 

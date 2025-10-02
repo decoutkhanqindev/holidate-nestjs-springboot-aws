@@ -3,6 +3,8 @@ package com.webapp.holidate.dto.response.amenity;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
+
 @Data
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -15,5 +17,5 @@ import lombok.experimental.FieldDefaults;
 public class AmenityCategoryResponse {
   String id;
   String name;
-  String description;
+  List<AmenityResponse> amenities;
 }

@@ -19,6 +19,7 @@ import lombok.experimental.FieldDefaults;
 public class ReviewPhoto {
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
+  @Column(nullable = false)
   String id;
 
   @ManyToOne(fetch = FetchType.LAZY)

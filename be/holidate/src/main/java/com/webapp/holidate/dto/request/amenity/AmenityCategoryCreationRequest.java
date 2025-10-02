@@ -16,7 +16,4 @@ import lombok.experimental.FieldDefaults;
 public class AmenityCategoryCreationRequest {
   @NotBlank(message = "NAME_NOT_BLANK")
   String name;
-
-  @NotBlank(message = "DESCRIPTION_NOT_BLANK")
-  String description;
 }

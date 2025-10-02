@@ -46,12 +46,6 @@ public class HotelCreationRequest {
   @NotBlank(message = "STREET_ID_NOT_BLANK")
   String streetId;
 
-  List<PhotoCreationRequest> photos;
-
   @NotBlank(message = "PARTNER_ID_NOT_BLANK")
   String partnerId;
-
-  @NotBlank(message = "HOTEL_STATUS_NOT_BLANK")
-  @Pattern(regexp = ValidationPatterns.HOTEL_STATUS, message = "HOTEL_STATUS_INVALID")
-  String status;
 }

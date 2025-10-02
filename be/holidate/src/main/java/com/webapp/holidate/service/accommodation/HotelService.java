@@ -3,9 +3,11 @@ package com.webapp.holidate.service.accommodation;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelUpdateRequest;
 import com.webapp.holidate.dto.request.image.PhotoCreationRequest;
-import com.webapp.holidate.dto.request.image.PhotoDeleteRequest;
+import com.webapp.holidate.dto.response.acommodation.hotel.HotelDetailsResponse;
 import com.webapp.holidate.dto.response.acommodation.hotel.HotelResponse;
 import com.webapp.holidate.entity.accommodation.Hotel;
+import com.webapp.holidate.entity.accommodation.amenity.Amenity;
+import com.webapp.holidate.entity.accommodation.amenity.HotelAmenity;
 import com.webapp.holidate.entity.image.HotelPhoto;
 import com.webapp.holidate.entity.image.Photo;
 import com.webapp.holidate.entity.image.PhotoCategory;
@@ -14,6 +16,8 @@ import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.acommodation.HotelMapper;
 import com.webapp.holidate.repository.accommodation.HotelRepository;
+import com.webapp.holidate.repository.amenity.AmenityRepository;
+import com.webapp.holidate.repository.amenity.HotelAmenityRepository;
 import com.webapp.holidate.repository.image.HotelPhotoRepository;
 import com.webapp.holidate.repository.image.PhotoCategoryRepository;
 import com.webapp.holidate.repository.image.PhotoRepository;
@@ -21,6 +25,7 @@ import com.webapp.holidate.repository.location.*;
 import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.service.storage.FileService;
 import com.webapp.holidate.type.ErrorType;
+import com.webapp.holidate.type.HotelStatusType;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -31,7 +36,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -51,11 +55,14 @@ public class HotelService {
   DistrictRepository districtRepository;
   WardRepository wardRepository;
   StreetRepository streetRepository;
+  AmenityRepository amenityRepository;
+  HotelAmenityRepository hotelAmenityRepository;
+
   FileService fileService;
 
   HotelMapper hotelMapper;
 
-  public HotelResponse create(HotelCreationRequest request) throws IOException {
+  public HotelDetailsResponse create(HotelCreationRequest request) throws IOException {
     String name = request.getName();
     boolean nameExists = hotelRepository.existsByName(name);
     if (nameExists) {
@@ -99,51 +106,10 @@ public class HotelService {
         .orElseThrow(() -> new AppException(ErrorType.STREET_NOT_FOUND));
     hotel.setStreet(street);
 
+    hotel.setStatus(HotelStatusType.INACTIVE.getValue());
+
     hotelRepository.save(hotel);
-
-    List<PhotoCreationRequest> photoRequests = request.getPhotos();
-    boolean hasPhotos = photoRequests != null && !photoRequests.isEmpty();
-    if (hasPhotos) {
-      Set<HotelPhoto> hotelPhotos = new HashSet<>();
-
-      for (PhotoCreationRequest photoRequest : photoRequests) {
-        String categoryId = photoRequest.getCategoryId();
-        PhotoCategory category = photoCategoryRepository.findById(categoryId)
-            .orElseThrow(() -> new AppException(ErrorType.PHOTO_CATEGORY_NOT_FOUND));
-
-        List<MultipartFile> files = photoRequest.getFiles();
-        boolean hasFiles = files != null && !files.isEmpty();
-        if (hasFiles) {
-          for (MultipartFile file : files) {
-            boolean hasFile = file != null && !file.isEmpty();
-            if (hasFile) {
-              fileService.upload(file);
-
-              String fileName = file.getOriginalFilename();
-              String url = fileService.createFileUrl(fileName);
-
-              Photo photo = Photo.builder()
-                  .url(url)
-                  .category(category)
-                  .build();
-              photoRepository.save(photo);
-
-              HotelPhoto hotelPhoto = HotelPhoto.builder()
-                  .photo(photo)
-                  .hotel(hotel)
-                  .build();
-              HotelPhoto savedHotelPhoto = hotelPhotoRepository.save(hotelPhoto);
-              hotelPhotos.add(savedHotelPhoto);
-            }
-          }
-        }
-      }
-
-      hotel.setPhotos(hotelPhotos);
-      hotelRepository.save(hotel);
-    }
-
-    return hotelMapper.toHotelResponse(hotel);
+    return hotelMapper.toHotelDetailsResponse(hotel);
   }
 
   public List<HotelResponse> getAll() {
@@ -153,16 +119,23 @@ public class HotelService {
         .toList();
   }
 
-  public HotelResponse update(String id, HotelUpdateRequest request) throws IOException {
+  public HotelDetailsResponse getById(String id) {
+    Hotel hotel = hotelRepository.findByIdWithLocationsPhotosAmenitiesReviewsPartner(id)
+        .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
+    return hotelMapper.toHotelDetailsResponse(hotel);
+  }
+
+  public HotelDetailsResponse update(String id, HotelUpdateRequest request) throws IOException {
     Hotel hotel = hotelRepository.findByIdWithLocationsPhotosAmenitiesReviewsPartner(id)
         .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
 
     updateInfo(hotel, request);
     updateLocation(hotel, request);
     updatePhotos(hotel, request);
+    updateAmenities(hotel, request);
 
     hotelRepository.save(hotel);
-    return hotelMapper.toHotelResponse(hotel);
+    return hotelMapper.toHotelDetailsResponse(hotel);
   }
 
   private void updateInfo(Hotel hotel, HotelUpdateRequest request) {
@@ -278,17 +251,25 @@ public class HotelService {
   private void updatePhotos(Hotel hotel, HotelUpdateRequest request) throws IOException {
     Set<HotelPhoto> currentPhotos = hotel.getPhotos();
 
-    List<PhotoDeleteRequest> photosToDelete = request.getPhotosToDelete();
-    boolean hasPhotosToDelete = photosToDelete != null && !photosToDelete.isEmpty();
+    List<String> photoIdsToDelete = request.getPhotoIdsToDelete();
+    boolean hasPhotosToDelete = photoIdsToDelete != null && !photoIdsToDelete.isEmpty();
     if (hasPhotosToDelete) {
-      List<String> photoIdsToDelete = new ArrayList<>();
-      for (PhotoDeleteRequest photoDeleteRequest : photosToDelete) {
-        List<String> photoIds = photoDeleteRequest.getPhotoIds();
-        photoIdsToDelete.addAll(photoIds);
+      List<HotelPhoto> hotelPhotosToDelete = currentPhotos.stream()
+          .filter(hotelPhoto -> photoIdsToDelete.contains(hotelPhoto.getPhoto().getId()))
+          .toList();
+      hotelPhotosToDelete.forEach(currentPhotos::remove);
+
+      for (HotelPhoto hotelPhoto : hotelPhotosToDelete) {
+        hotelPhotoRepository.delete(hotelPhoto);
       }
 
-      // remove HotelPhoto entries and associated Photo entities
-      currentPhotos.removeIf(hotelPhoto -> photoIdsToDelete.contains(hotelPhoto.getPhoto().getId()));
+      for (String photoId : photoIdsToDelete) {
+        Photo photo = photoRepository.findById(photoId)
+            .orElseThrow(() -> new AppException(ErrorType.PHOTO_NOT_FOUND));
+        String fileUrl = photo.getUrl();
+        fileService.delete(fileUrl);
+        photoRepository.delete(photo);
+      }
     }
 
     List<PhotoCreationRequest> photosToAdd = request.getPhotosToAdd();
@@ -328,5 +309,41 @@ public class HotelService {
     }
 
     hotel.setPhotos(currentPhotos);
+  }
+
+  private void updateAmenities(Hotel hotel, HotelUpdateRequest request) {
+    Set<HotelAmenity> currentAmenities = hotel.getAmenities();
+
+    List<String> amenityIdsToRemove = request.getAmenityIdsToRemove();
+    boolean hasAmenitiesToRemove = amenityIdsToRemove != null && !amenityIdsToRemove.isEmpty();
+    if (hasAmenitiesToRemove) {
+      currentAmenities.removeIf(hotelAmenity -> amenityIdsToRemove.contains(hotelAmenity.getAmenity().getId()));
+    }
+
+    List<String> amenityIdsToAdd = request.getAmenityIdsToAdd();
+    boolean hasAmenitiesToAdd = amenityIdsToAdd != null && !amenityIdsToAdd.isEmpty();
+    if (hasAmenitiesToAdd) {
+      Set<String> existingAmenityIds = currentAmenities.stream()
+          .map(hotelAmenity -> hotelAmenity.getAmenity().getId())
+          .collect(java.util.stream.Collectors.toSet());
+
+      for (String amenityId : amenityIdsToAdd) {
+        boolean alreadyExists = existingAmenityIds.contains(amenityId);
+        if (!alreadyExists) {
+          Amenity amenity = amenityRepository.findById(amenityId)
+              .orElseThrow(() -> new AppException(ErrorType.AMENITY_NOT_FOUND));
+
+          HotelAmenity hotelAmenity = HotelAmenity.builder()
+              .hotel(hotel)
+              .amenity(amenity)
+              .build();
+
+          hotelAmenityRepository.save(hotelAmenity);
+          currentAmenities.add(hotelAmenity);
+        }
+      }
+    }
+
+    hotel.setAmenities(currentAmenities);
   }
 }

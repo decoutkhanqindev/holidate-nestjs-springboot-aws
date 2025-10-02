@@ -5,6 +5,7 @@ import com.webapp.holidate.constants.api.endpoint.CommonEndpoints;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelUpdateRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
+import com.webapp.holidate.dto.response.acommodation.hotel.HotelDetailsResponse;
 import com.webapp.holidate.dto.response.acommodation.hotel.HotelResponse;
 import com.webapp.holidate.service.accommodation.HotelService;
 import jakarta.validation.Valid;
@@ -24,9 +25,9 @@ public class HotelController {
   HotelService hotelService;
 
   @PostMapping(consumes = "multipart/form-data")
-  public ApiResponse<HotelResponse> create(@ModelAttribute @Valid HotelCreationRequest request) throws IOException {
-    HotelResponse response = hotelService.create(request);
-    return ApiResponse.<HotelResponse>builder()
+  public ApiResponse<HotelDetailsResponse> create(@ModelAttribute @Valid HotelCreationRequest request) throws IOException {
+    HotelDetailsResponse response = hotelService.create(request);
+    return ApiResponse.<HotelDetailsResponse>builder()
         .data(response)
         .build();
   }
@@ -39,12 +40,20 @@ public class HotelController {
       .build();
   }
 
+  @GetMapping(CommonEndpoints.ID)
+  public ApiResponse<HotelDetailsResponse> getById(@PathVariable String id) {
+    HotelDetailsResponse response = hotelService.getById(id);
+    return ApiResponse.<HotelDetailsResponse>builder()
+      .data(response)
+      .build();
+  }
+
   @PutMapping(value = CommonEndpoints.ID, consumes = "multipart/form-data")
-  public ApiResponse<HotelResponse> update(
+  public ApiResponse<HotelDetailsResponse> update(
       @PathVariable String id,
       @ModelAttribute @Valid HotelUpdateRequest request) throws IOException {
-    HotelResponse response = hotelService.update(id, request);
-    return ApiResponse.<HotelResponse>builder()
+    HotelDetailsResponse response = hotelService.update(id, request);
+    return ApiResponse.<HotelDetailsResponse>builder()
         .data(response)
         .build();
   }

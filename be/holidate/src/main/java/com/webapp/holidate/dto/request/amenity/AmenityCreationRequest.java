@@ -17,9 +17,6 @@ public class AmenityCreationRequest {
   @NotBlank(message = "NAME_NOT_BLANK")
   String name;
 
-  @NotBlank(message = "DESCRIPTION_NOT_BLANK")
-  String description;
-
   @NotBlank(message = "IS_FREE_NOT_BLANK")
   boolean isFree;
 

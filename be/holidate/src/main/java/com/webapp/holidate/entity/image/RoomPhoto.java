@@ -19,15 +19,16 @@ import lombok.experimental.FieldDefaults;
 public class RoomPhoto {
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
-  private String id;
+  @Column(nullable = false)
+  String id;
 
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = DbFieldNames.ROOM_ID)
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = DbFieldNames.ROOM_ID, nullable = false)
   @ToString.Exclude
-  private Room room;
+  Room room;
 
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = DbFieldNames.PHOTO_ID)
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = DbFieldNames.PHOTO_ID, nullable = false)
   @ToString.Exclude
-  private Photo photo;
+  Photo photo;
 }

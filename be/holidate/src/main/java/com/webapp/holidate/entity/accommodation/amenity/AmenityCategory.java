@@ -26,9 +26,6 @@ public class AmenityCategory {
   @Column(nullable = false, unique = true)
   String name;
 
-  @Column(nullable = false, columnDefinition = "TEXT")
-  String description;
-
   @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
   @ToString.Exclude
   @Builder.Default

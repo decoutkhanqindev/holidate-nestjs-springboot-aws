@@ -1,4 +1,4 @@
-package com.webapp.holidate.entity.image;
+package com.webapp.holidate.entity.accommodation.amenity;
 
 import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
@@ -8,7 +8,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Entity
-@Table(name = DbTableNames.HOTEL_PHOTOS)
+@Table(name = DbTableNames.HOTEL_AMENITIES)
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
@@ -16,7 +16,7 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @Setter
 @ToString
-public class HotelPhoto {
+public class HotelAmenity {
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   @Column(nullable = false)
@@ -28,7 +28,7 @@ public class HotelPhoto {
   Hotel hotel;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = DbFieldNames.PHOTO_ID, nullable = false)
+  @JoinColumn(name = DbFieldNames.AMENITY_ID, nullable = false)
   @ToString.Exclude
-  Photo photo;
+  Amenity amenity;
 }

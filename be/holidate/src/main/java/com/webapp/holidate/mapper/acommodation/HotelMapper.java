@@ -1,13 +1,15 @@
 package com.webapp.holidate.mapper.acommodation;
 
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelCreationRequest;
+import com.webapp.holidate.dto.response.acommodation.hotel.HotelDetailsResponse;
 import com.webapp.holidate.dto.response.acommodation.hotel.HotelResponse;
 import com.webapp.holidate.entity.accommodation.Hotel;
+import com.webapp.holidate.mapper.amenity.AmenityCategoryMapper;
 import com.webapp.holidate.mapper.image.PhotoCategoryMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring", uses = { PhotoCategoryMapper.class })
+@Mapper(componentModel = "spring", uses = { PhotoCategoryMapper.class, AmenityCategoryMapper.class })
 public interface HotelMapper {
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "country", ignore = true)
@@ -25,6 +27,8 @@ public interface HotelMapper {
   @Mapping(target = "partner", ignore = true)
   @Mapping(target = "amenities", ignore = true)
   @Mapping(target = "reviews", ignore = true)
+  @Mapping(target = "rooms", ignore = true)
+  @Mapping(target = "status", ignore = true)
   @Mapping(target = "createdAt", expression = "java(java.time.LocalDateTime.now())")
   @Mapping(target = "updatedAt", ignore = true)
   Hotel toEntity(HotelCreationRequest request);
@@ -32,6 +36,10 @@ public interface HotelMapper {
   @Mapping(target = "rawPricePerNight", ignore = true)
   @Mapping(target = "currentPricePerNight", ignore = true)
   @Mapping(target = "availableRooms", ignore = true)
-  @Mapping(source = "photos", target = "photos", qualifiedByName = "photosToCategories")
+  @Mapping(source = "photos", target = "photos", qualifiedByName = "hotelPhotosToCategories")
   HotelResponse toHotelResponse(Hotel hotel);
+
+  @Mapping(source = "photos", target = "photos", qualifiedByName = "hotelPhotosToCategories")
+  @Mapping(source = "amenities", target = "amenities", qualifiedByName = "hotelAmenitiesToCategories")
+  HotelDetailsResponse toHotelDetailsResponse(Hotel hotel);
 }

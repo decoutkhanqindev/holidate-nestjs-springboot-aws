@@ -1,14 +1,14 @@
-package com.webapp.holidate.entity.image;
+package com.webapp.holidate.entity.accommodation.amenity;
 
 import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
-import com.webapp.holidate.entity.accommodation.Hotel;
+import com.webapp.holidate.entity.accommodation.room.Room;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Entity
-@Table(name = DbTableNames.HOTEL_PHOTOS)
+@Table(name = DbTableNames.ROOM_AMENITIES)
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
@@ -16,19 +16,19 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @Setter
 @ToString
-public class HotelPhoto {
+public class RoomAmenity {
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   @Column(nullable = false)
   String id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = DbFieldNames.HOTEL_ID, nullable = false)
+  @JoinColumn(name = DbFieldNames.ROOM_ID, nullable = false)
   @ToString.Exclude
-  Hotel hotel;
+  Room room;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = DbFieldNames.PHOTO_ID, nullable = false)
+  @JoinColumn(name = DbFieldNames.AMENITY_ID, nullable = false)
   @ToString.Exclude
-  Photo photo;
+  Amenity amenity;
 }
