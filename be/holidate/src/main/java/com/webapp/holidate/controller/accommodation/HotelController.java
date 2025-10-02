@@ -31,6 +31,14 @@ public class HotelController {
         .build();
   }
 
+  @GetMapping
+  public ApiResponse<List<HotelResponse>> getAll() {
+    List<HotelResponse> responses = hotelService.getAll();
+    return ApiResponse.<List<HotelResponse>>builder()
+      .data(responses)
+      .build();
+  }
+
   @PutMapping(value = CommonEndpoints.ID, consumes = "multipart/form-data")
   public ApiResponse<HotelResponse> update(
       @PathVariable String id,
@@ -38,14 +46,6 @@ public class HotelController {
     HotelResponse response = hotelService.update(id, request);
     return ApiResponse.<HotelResponse>builder()
         .data(response)
-        .build();
-  }
-
-  @GetMapping
-  public ApiResponse<List<HotelResponse>> getAll() {
-    List<HotelResponse> responses = hotelService.getAll();
-    return ApiResponse.<List<HotelResponse>>builder()
-        .data(responses)
         .build();
   }
 }

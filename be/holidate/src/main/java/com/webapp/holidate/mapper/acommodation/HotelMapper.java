@@ -4,12 +4,12 @@ import com.webapp.holidate.dto.request.acommodation.hotel.HotelCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelUpdateRequest;
 import com.webapp.holidate.dto.response.acommodation.hotel.HotelResponse;
 import com.webapp.holidate.entity.accommodation.Hotel;
+import com.webapp.holidate.mapper.image.PhotoMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValuePropertyMappingStrategy;
 
-@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+@Mapper(componentModel = "spring", uses = { PhotoMapper.class })
 public interface HotelMapper {
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "country", ignore = true)
@@ -52,5 +52,6 @@ public interface HotelMapper {
   @Mapping(target = "rawPricePerNight", ignore = true)
   @Mapping(target = "currentPricePerNight", ignore = true)
   @Mapping(target = "availableRooms", ignore = true)
+  @Mapping(source = "photos", target = "photos")
   HotelResponse toHotelResponse(Hotel hotel);
 }

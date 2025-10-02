@@ -13,6 +13,7 @@ import com.webapp.holidate.entity.location.*;
 import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.acommodation.HotelMapper;
+import com.webapp.holidate.mapper.image.PhotoMapper;
 import com.webapp.holidate.repository.accommodation.HotelRepository;
 import com.webapp.holidate.repository.image.HotelPhotoRepository;
 import com.webapp.holidate.repository.image.PhotoCategoryRepository;
@@ -24,6 +25,8 @@ import com.webapp.holidate.type.ErrorType;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor

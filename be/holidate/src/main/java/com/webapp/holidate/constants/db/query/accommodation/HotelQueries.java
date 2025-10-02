@@ -12,7 +12,7 @@ public class HotelQueries {
       "LEFT JOIN FETCH h.photos hp " +
       "LEFT JOIN FETCH hp.photo p " +
       "LEFT JOIN FETCH p.category " +
-      "LEFT JOIN FETCH h.partner ";
+      "LEFT JOIN FETCH h.partner";
 
   public static final String FIND_BY_ID_WITH_LOCATIONS_PHOTOS_AMENITIES_REVIEWS_PARTNER =
     "SELECT DISTINCT h FROM Hotel h " +
