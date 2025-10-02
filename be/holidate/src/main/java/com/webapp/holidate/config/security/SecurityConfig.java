@@ -4,12 +4,8 @@ import com.webapp.holidate.config.security.filter.CustomCookieAuthenticationFilt
 import com.webapp.holidate.config.security.oauth2.CustomOAuth2AuthenticationFailureHandler;
 import com.webapp.holidate.config.security.oauth2.CustomOAuth2AuthenticationSuccessHandler;
 import com.webapp.holidate.constants.AppValues;
-import com.webapp.holidate.constants.api.endpoint.CommonEndpoints;
-import com.webapp.holidate.constants.api.endpoint.LocationEndpoints;
-import com.webapp.holidate.constants.api.endpoint.AccommodationEndpoints;
-import com.webapp.holidate.constants.api.endpoint.AmenityEndpoints;
+import com.webapp.holidate.constants.api.endpoint.*;
 import com.webapp.holidate.constants.api.endpoint.auth.AuthEndpoints;
-import com.webapp.holidate.constants.api.endpoint.UserEndpoints;
 import com.webapp.holidate.service.auth.GoogleService;
 import com.webapp.holidate.type.RoleType;
 import lombok.AccessLevel;

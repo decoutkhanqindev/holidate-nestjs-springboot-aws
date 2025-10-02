@@ -3,8 +3,6 @@ package com.webapp.holidate.dto.response.amenity;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.util.Set;
-
 @Data
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)

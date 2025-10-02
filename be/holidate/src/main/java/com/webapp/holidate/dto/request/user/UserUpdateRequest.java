@@ -2,7 +2,6 @@ package com.webapp.holidate.dto.request.user;
 
 import com.webapp.holidate.constants.ValidationPatterns;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

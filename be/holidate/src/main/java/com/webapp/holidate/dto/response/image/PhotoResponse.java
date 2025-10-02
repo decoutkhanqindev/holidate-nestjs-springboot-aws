@@ -13,7 +13,6 @@ import lombok.experimental.FieldDefaults;
 @ToString
 @EqualsAndHashCode
 public class PhotoResponse {
-  PhotoCategoryResponse category;
   String id;
   String url;
 }

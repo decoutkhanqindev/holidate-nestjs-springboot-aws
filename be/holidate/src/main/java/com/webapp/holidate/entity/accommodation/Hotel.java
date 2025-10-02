@@ -6,7 +6,6 @@ import com.webapp.holidate.entity.accommodation.amenity.Amenity;
 import com.webapp.holidate.entity.accommodation.room.Room;
 import com.webapp.holidate.entity.booking.Review;
 import com.webapp.holidate.entity.image.HotelPhoto;
-import com.webapp.holidate.entity.image.Photo;
 import com.webapp.holidate.entity.location.*;
 import com.webapp.holidate.entity.user.User;
 import jakarta.persistence.*;
