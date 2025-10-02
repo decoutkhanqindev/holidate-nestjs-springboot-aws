@@ -1,9 +1,12 @@
 package com.webapp.holidate.dto.request.image;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Data
 @Builder
@@ -15,6 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 @ToString
 @EqualsAndHashCode
 public class PhotoDeleteRequest {
-  @NotBlank(message = "PHOTO_ID_NOT_BLANK")
-  String id;
+  @NotEmpty(message = "PHOTO_IDS_NOT_EMPTY")
+  List<String> photoIds;
 }

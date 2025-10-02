@@ -33,7 +33,15 @@ public class FileService {
   String baseUrl;
 
   public void upload(MultipartFile file) throws IOException {
+    if (file == null || file.isEmpty()) {
+      throw new IllegalArgumentException("File cannot be null or empty");
+    }
+
     String fileName = file.getOriginalFilename();
+    if (fileName == null) {
+      throw new IllegalArgumentException("File name cannot be null");
+    }
+
     byte[] fileBytes = file.getBytes();
     String mimeType = file.getContentType();
 
@@ -42,10 +50,10 @@ public class FileService {
     }
 
     PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-      .bucket(bucketName)
-      .key(fileName)
-      .contentType(mimeType)
-      .build();
+        .bucket(bucketName)
+        .key(fileName)
+        .contentType(mimeType)
+        .build();
     RequestBody requestBody = RequestBody.fromBytes(fileBytes);
     s3Client.putObject(putObjectRequest, requestBody);
   }
@@ -53,18 +61,18 @@ public class FileService {
   public void delete(String url) {
     String fileName = getFileName(url);
     DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
-      .bucket(bucketName)
-      .key(fileName)
-      .build();
+        .bucket(bucketName)
+        .key(fileName)
+        .build();
     s3Client.deleteObject(deleteObjectRequest);
   }
 
   public byte[] download(String url) {
     String fileName = getFileName(url);
     GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-      .bucket(bucketName)
-      .key(fileName)
-      .build();
+        .bucket(bucketName)
+        .key(fileName)
+        .build();
     ResponseBytes<GetObjectResponse> responseBytes = s3Client.getObjectAsBytes(getObjectRequest);
     return responseBytes.asByteArray();
   }

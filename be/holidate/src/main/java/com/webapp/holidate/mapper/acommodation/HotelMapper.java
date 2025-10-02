@@ -31,24 +31,6 @@ public interface HotelMapper {
   @Mapping(target = "updatedAt", ignore = true)
   Hotel toEntity(HotelCreationRequest request);
 
-  @Mapping(target = "id", ignore = true)
-  @Mapping(target = "name", ignore = true)
-  @Mapping(target = "country", ignore = true)
-  @Mapping(target = "province", ignore = true)
-  @Mapping(target = "city", ignore = true)
-  @Mapping(target = "district", ignore = true)
-  @Mapping(target = "ward", ignore = true)
-  @Mapping(target = "street", ignore = true)
-  @Mapping(target = "photos", ignore = true)
-  @Mapping(target = "starRating", ignore = true)
-  @Mapping(target = "averageScore", ignore = true)
-  @Mapping(target = "partner", ignore = true)
-  @Mapping(target = "amenities", ignore = true)
-  @Mapping(target = "reviews", ignore = true)
-  @Mapping(target = "createdAt", ignore = true)
-  @Mapping(target = "updatedAt", expression = "java(java.time.LocalDateTime.now())")
-  void updateEntity(@MappingTarget Hotel hotel, HotelUpdateRequest request);
-
   @Mapping(target = "rawPricePerNight", ignore = true)
   @Mapping(target = "currentPricePerNight", ignore = true)
   @Mapping(target = "availableRooms", ignore = true)

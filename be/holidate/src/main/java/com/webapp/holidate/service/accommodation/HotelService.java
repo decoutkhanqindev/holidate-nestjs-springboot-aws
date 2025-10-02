@@ -13,7 +13,6 @@ import com.webapp.holidate.entity.location.*;
 import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.acommodation.HotelMapper;
-import com.webapp.holidate.mapper.image.PhotoMapper;
 import com.webapp.holidate.repository.accommodation.HotelRepository;
 import com.webapp.holidate.repository.image.HotelPhotoRepository;
 import com.webapp.holidate.repository.image.PhotoCategoryRepository;
@@ -31,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -67,37 +67,37 @@ public class HotelService {
 
     String partnerId = request.getPartnerId();
     User partner = userRepository.findById(partnerId)
-      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
     hotel.setPartner(partner);
 
     String countryId = request.getCountryId();
     Country country = countryRepository.findById(countryId)
-      .orElseThrow(() -> new AppException(ErrorType.COUNTRY_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.COUNTRY_NOT_FOUND));
     hotel.setCountry(country);
 
     String provinceId = request.getProvinceId();
     Province province = provinceRepository.findById(provinceId)
-      .orElseThrow(() -> new AppException(ErrorType.PROVINCE_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.PROVINCE_NOT_FOUND));
     hotel.setProvince(province);
 
     String cityId = request.getCityId();
     City city = cityRepository.findById(cityId)
-      .orElseThrow(() -> new AppException(ErrorType.CITY_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.CITY_NOT_FOUND));
     hotel.setCity(city);
 
     String districtId = request.getDistrictId();
     District district = districtRepository.findById(districtId)
-      .orElseThrow(() -> new AppException(ErrorType.DISTRICT_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.DISTRICT_NOT_FOUND));
     hotel.setDistrict(district);
 
     String wardId = request.getWardId();
     Ward ward = wardRepository.findById(wardId)
-      .orElseThrow(() -> new AppException(ErrorType.WARD_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.WARD_NOT_FOUND));
     hotel.setWard(ward);
 
     String streetId = request.getStreetId();
     Street street = streetRepository.findById(streetId)
-      .orElseThrow(() -> new AppException(ErrorType.STREET_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.STREET_NOT_FOUND));
     hotel.setStreet(street);
 
     hotelRepository.save(hotel);
@@ -110,26 +110,34 @@ public class HotelService {
       for (PhotoCreationRequest photoRequest : photoRequests) {
         String categoryId = photoRequest.getCategoryId();
         PhotoCategory category = photoCategoryRepository.findById(categoryId)
-          .orElseThrow(() -> new AppException(ErrorType.PHOTO_CATEGORY_NOT_FOUND));
+            .orElseThrow(() -> new AppException(ErrorType.PHOTO_CATEGORY_NOT_FOUND));
 
-        MultipartFile file = photoRequest.getFile();
-        fileService.upload(file);
+        List<MultipartFile> files = photoRequest.getFiles();
+        boolean hasFiles = files != null && !files.isEmpty();
+        if (hasFiles) {
+          for (MultipartFile file : files) {
+            boolean hasFile = file != null && !file.isEmpty();
+            if (hasFile) {
+              fileService.upload(file);
 
-        String fileName = file.getOriginalFilename();
-        String url = fileService.createFileUrl(fileName);
+              String fileName = file.getOriginalFilename();
+              String url = fileService.createFileUrl(fileName);
 
-        Photo photo = Photo.builder()
-          .url(url)
-          .category(category)
-          .build();
-        photoRepository.save(photo);
+              Photo photo = Photo.builder()
+                  .url(url)
+                  .category(category)
+                  .build();
+              photoRepository.save(photo);
 
-        HotelPhoto hotelPhoto = HotelPhoto.builder()
-          .photo(photo)
-          .hotel(hotel)
-          .build();
-        HotelPhoto savedHotelPhoto = hotelPhotoRepository.save(hotelPhoto);
-        hotelPhotos.add(savedHotelPhoto);
+              HotelPhoto hotelPhoto = HotelPhoto.builder()
+                  .photo(photo)
+                  .hotel(hotel)
+                  .build();
+              HotelPhoto savedHotelPhoto = hotelPhotoRepository.save(hotelPhoto);
+              hotelPhotos.add(savedHotelPhoto);
+            }
+          }
+        }
       }
 
       hotel.setPhotos(hotelPhotos);
@@ -141,20 +149,26 @@ public class HotelService {
 
   public List<HotelResponse> getAll() {
     return hotelRepository.findAllWithLocationsPhotosPartner()
-      .stream()
-      .map(hotelMapper::toHotelResponse)
-      .toList();
+        .stream()
+        .map(hotelMapper::toHotelResponse)
+        .toList();
   }
 
   public HotelResponse update(String id, HotelUpdateRequest request) throws IOException {
     Hotel hotel = hotelRepository.findByIdWithLocationsPhotosAmenitiesReviewsPartner(id)
-      .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
 
-    hotelMapper.updateEntity(hotel, request);
+    updateInfo(hotel, request);
+    updateLocation(hotel, request);
+    updatePhotos(hotel, request);
 
+    hotelRepository.save(hotel);
+    return hotelMapper.toHotelResponse(hotel);
+  }
+
+  private void updateInfo(Hotel hotel, HotelUpdateRequest request) {
     String newName = request.getName();
-    String currentName = hotel.getName();
-    boolean nameChanged = newName != null && !currentName.equals(newName);
+    boolean nameChanged = newName != null && !newName.equals(hotel.getName());
     if (nameChanged) {
       boolean nameExists = hotelRepository.existsByName(newName);
       if (nameExists) {
@@ -163,12 +177,26 @@ public class HotelService {
       hotel.setName(newName);
     }
 
-    updateLocation(hotel, request);
+    String newDescription = request.getDescription();
+    boolean descriptionChanged = newDescription != null && !newDescription.equals(hotel.getDescription());
+    if (descriptionChanged) {
+      hotel.setDescription(newDescription);
+    }
 
-    updatePhotos(hotel, request);
+    Boolean newAllowsPayAtHotel = request.getAllowsPayAtHotel();
+    boolean allowsPayAtHotelChanged = newAllowsPayAtHotel != null && hotel.isAllowsPayAtHotel() != newAllowsPayAtHotel;
+    if (allowsPayAtHotelChanged) {
+      hotel.setAllowsPayAtHotel(newAllowsPayAtHotel);
+    }
 
-    hotelRepository.save(hotel);
-    return hotelMapper.toHotelResponse(hotel);
+    String newStatus = request.getStatus();
+    boolean statusChanged = newStatus != null && !newStatus.equals(hotel.getStatus());
+    if (statusChanged) {
+      hotel.setStatus(newStatus);
+    }
+
+    LocalDateTime now = LocalDateTime.now();
+    hotel.setUpdatedAt(now);
   }
 
   private void updateLocation(Hotel hotel, HotelUpdateRequest request) {
@@ -184,7 +212,7 @@ public class HotelService {
     boolean countryChanged = newCountryId != null && !currentCountryId.equals(newCountryId);
     if (countryChanged) {
       Country country = countryRepository.findById(newCountryId)
-        .orElseThrow(() -> new AppException(ErrorType.COUNTRY_NOT_FOUND));
+          .orElseThrow(() -> new AppException(ErrorType.COUNTRY_NOT_FOUND));
       hotel.setCountry(country);
     }
 
@@ -193,7 +221,7 @@ public class HotelService {
     boolean provinceChanged = newProvinceId != null && !currentProvinceId.equals(newProvinceId);
     if (provinceChanged) {
       Province province = provinceRepository.findById(newProvinceId)
-        .orElseThrow(() -> new AppException(ErrorType.PROVINCE_NOT_FOUND));
+          .orElseThrow(() -> new AppException(ErrorType.PROVINCE_NOT_FOUND));
       hotel.setProvince(province);
     }
 
@@ -202,7 +230,7 @@ public class HotelService {
     boolean cityChanged = newCityId != null && !currentCityId.equals(newCityId);
     if (cityChanged) {
       City city = cityRepository.findById(newCityId)
-        .orElseThrow(() -> new AppException(ErrorType.CITY_NOT_FOUND));
+          .orElseThrow(() -> new AppException(ErrorType.CITY_NOT_FOUND));
       hotel.setCity(city);
     }
 
@@ -211,7 +239,7 @@ public class HotelService {
     boolean districtChanged = newDistrictId != null && !currentDistrictId.equals(newDistrictId);
     if (districtChanged) {
       District district = districtRepository.findById(newDistrictId)
-        .orElseThrow(() -> new AppException(ErrorType.DISTRICT_NOT_FOUND));
+          .orElseThrow(() -> new AppException(ErrorType.DISTRICT_NOT_FOUND));
       hotel.setDistrict(district);
     }
 
@@ -220,7 +248,7 @@ public class HotelService {
     boolean wardChanged = newWardId != null && !currentWardId.equals(newWardId);
     if (wardChanged) {
       Ward ward = wardRepository.findById(newWardId)
-        .orElseThrow(() -> new AppException(ErrorType.WARD_NOT_FOUND));
+          .orElseThrow(() -> new AppException(ErrorType.WARD_NOT_FOUND));
       hotel.setWard(ward);
     }
 
@@ -229,7 +257,7 @@ public class HotelService {
     boolean streetChanged = newStreetId != null && !currentStreetId.equals(newStreetId);
     if (streetChanged) {
       Street street = streetRepository.findById(newStreetId)
-        .orElseThrow(() -> new AppException(ErrorType.STREET_NOT_FOUND));
+          .orElseThrow(() -> new AppException(ErrorType.STREET_NOT_FOUND));
       hotel.setStreet(street);
     }
 
@@ -254,11 +282,14 @@ public class HotelService {
     List<PhotoDeleteRequest> photosToDelete = request.getPhotosToDelete();
     boolean hasPhotosToDelete = photosToDelete != null && !photosToDelete.isEmpty();
     if (hasPhotosToDelete) {
-      List<String> photoIdsToDelete = photosToDelete.stream()
-        .map(PhotoDeleteRequest::getId)
-        .toList();
+      List<String> photoIdsToDelete = new ArrayList<>();
+      for (PhotoDeleteRequest photoDeleteRequest : photosToDelete) {
+        List<String> photoIds = photoDeleteRequest.getPhotoIds();
+        photoIdsToDelete.addAll(photoIds);
+      }
+
+      // remove HotelPhoto entries and associated Photo entities
       currentPhotos.removeIf(hotelPhoto -> photoIdsToDelete.contains(hotelPhoto.getPhoto().getId()));
-      photoRepository.deleteAllById(photoIdsToDelete);
     }
 
     List<PhotoCreationRequest> photosToAdd = request.getPhotosToAdd();
@@ -267,26 +298,33 @@ public class HotelService {
       for (PhotoCreationRequest photoToAdd : photosToAdd) {
         String categoryId = photoToAdd.getCategoryId();
         PhotoCategory category = photoCategoryRepository.findById(categoryId)
-          .orElseThrow(() -> new AppException(ErrorType.PHOTO_CATEGORY_NOT_FOUND));
+            .orElseThrow(() -> new AppException(ErrorType.PHOTO_CATEGORY_NOT_FOUND));
 
-        MultipartFile file = photoToAdd.getFile();
-        fileService.upload(file);
+        List<MultipartFile> files = photoToAdd.getFiles();
+        boolean hasFiles = files != null && !files.isEmpty();
+        if (hasFiles) {
+          for (MultipartFile file : files) {
+            boolean hasFile = file != null && !file.isEmpty();
+            if (hasFile) {
+              fileService.upload(file);
 
-        String fileName = file.getOriginalFilename();
-        String url = fileService.createFileUrl(fileName);
+              String fileName = file.getOriginalFilename();
+              String url = fileService.createFileUrl(fileName);
+              Photo photo = Photo.builder()
+                  .url(url)
+                  .category(category)
+                  .build();
+              photoRepository.save(photo);
 
-        Photo photo = Photo.builder()
-          .url(url)
-          .category(category)
-          .build();
-        photoRepository.save(photo);
-
-        HotelPhoto hotelPhoto = HotelPhoto.builder()
-          .photo(photo)
-          .hotel(hotel)
-          .build();
-        hotelPhotoRepository.save(hotelPhoto);
-        currentPhotos.add(hotelPhoto);
+              HotelPhoto hotelPhoto = HotelPhoto.builder()
+                  .photo(photo)
+                  .hotel(hotel)
+                  .build();
+              hotelPhotoRepository.save(hotelPhoto);
+              currentPhotos.add(hotelPhoto);
+            }
+          }
+        }
       }
     }
 

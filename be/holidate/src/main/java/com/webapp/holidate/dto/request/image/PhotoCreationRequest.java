@@ -1,10 +1,13 @@
 package com.webapp.holidate.dto.request.image;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Data
 @Builder
@@ -16,8 +19,8 @@ import org.springframework.web.multipart.MultipartFile;
 @ToString
 @EqualsAndHashCode
 public class PhotoCreationRequest {
-  @NotBlank(message = "PHOTO_FILE_NOT_BLANK")
-  MultipartFile file;
+  @NotEmpty(message = "PHOTO_FILES_NOT_EMPTY")
+  List<MultipartFile> files;
 
   @NotBlank(message = "CATEGORY_ID_NOT_BLANK")
   String categoryId;

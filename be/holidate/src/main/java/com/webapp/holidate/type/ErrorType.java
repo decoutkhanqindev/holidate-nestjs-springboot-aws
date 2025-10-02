@@ -105,8 +105,8 @@ public enum ErrorType {
   IS_FREE_NOT_BLANK(400,  "Is free is required"),
 
   // image errors
-  PHOTO_FILE_NOT_BLANK(400, "File is required"),
-  PHOTO_ID_NOT_BLANK(400, "Photo ID is required"),
+  PHOTO_FILES_NOT_EMPTY(400, "At least one photo file is required"),
+  PHOTO_IDS_NOT_EMPTY(400, "At least one photo ID is required"),
   PHOTO_NOT_FOUND(404, "Photo not found"),
   PHOTO_CATEGORY_ID_NOT_BLANK(400, "Photo category ID is required"),
   PHOTO_CATEGORY_NOT_FOUND(404, "Photo category not found"),
