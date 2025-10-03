@@ -32,28 +32,31 @@ public interface AmenityCategoryMapper {
 
     // group amenities by category
     Map<AmenityCategory, List<HotelAmenity>> amenitiesByCategory = hotelAmenities.stream()
-        .collect(Collectors.groupingBy(hotelAmenity -> hotelAmenity.getAmenity().getCategory()));
+      .collect(Collectors.groupingBy(hotelAmenity -> hotelAmenity.getAmenity().getCategory()));
 
     return amenitiesByCategory.entrySet().stream()
-        .map(entry -> {
+      .map(entry -> {
           AmenityCategory category = entry.getKey();
           List<HotelAmenity> amenitiesInCategory = entry.getValue();
 
           List<AmenityResponse> amenityResponses = amenitiesInCategory.stream()
-              .map(hotelAmenity -> AmenityResponse.builder()
-                  .id(hotelAmenity.getAmenity().getId())
-                  .name(hotelAmenity.getAmenity().getName())
-                  .free(hotelAmenity.getAmenity().isFree())
-                  .build())
-              .collect(Collectors.toList());
+            .map(hotelAmenity ->
+              AmenityResponse.builder()
+                .id(hotelAmenity.getAmenity().getId())
+                .name(hotelAmenity.getAmenity().getName())
+                .free(hotelAmenity.getAmenity().isFree())
+                .build()
+            )
+            .collect(Collectors.toList());
 
           return AmenityCategoryResponse.builder()
-              .id(category.getId())
-              .name(category.getName())
-              .amenities(amenityResponses)
-              .build();
-        })
-        .collect(Collectors.toList());
+            .id(category.getId())
+            .name(category.getName())
+            .amenities(amenityResponses)
+            .build();
+        }
+      )
+      .collect(Collectors.toList());
   }
 
   @Named("roomAmenitiesToCategories")
@@ -65,27 +68,30 @@ public interface AmenityCategoryMapper {
 
     // group amenities by category
     Map<AmenityCategory, List<RoomAmenity>> amenitiesByCategory = roomAmenities.stream()
-        .collect(Collectors.groupingBy(roomAmenity -> roomAmenity.getAmenity().getCategory()));
+      .collect(Collectors.groupingBy(roomAmenity -> roomAmenity.getAmenity().getCategory()));
 
     return amenitiesByCategory.entrySet().stream()
-        .map(entry -> {
+      .map(entry -> {
           AmenityCategory category = entry.getKey();
           List<RoomAmenity> amenitiesInCategory = entry.getValue();
 
           List<AmenityResponse> amenityResponses = amenitiesInCategory.stream()
-              .map(roomAmenity -> AmenityResponse.builder()
-                  .id(roomAmenity.getAmenity().getId())
-                  .name(roomAmenity.getAmenity().getName())
-                  .free(roomAmenity.getAmenity().isFree())
-                  .build())
-              .collect(Collectors.toList());
+            .map(roomAmenity ->
+              AmenityResponse.builder()
+                .id(roomAmenity.getAmenity().getId())
+                .name(roomAmenity.getAmenity().getName())
+                .free(roomAmenity.getAmenity().isFree())
+                .build()
+            )
+            .collect(Collectors.toList());
 
           return AmenityCategoryResponse.builder()
-              .id(category.getId())
-              .name(category.getName())
-              .amenities(amenityResponses)
-              .build();
-        })
-        .collect(Collectors.toList());
+            .id(category.getId())
+            .name(category.getName())
+            .amenities(amenityResponses)
+            .build();
+        }
+      )
+      .collect(Collectors.toList());
   }
 }

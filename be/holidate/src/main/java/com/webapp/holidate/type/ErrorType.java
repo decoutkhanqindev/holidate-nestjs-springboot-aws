@@ -97,6 +97,23 @@ public enum ErrorType {
   HOTEL_STATUS_INVALID(400, "Hotel status must be active, inactive, under_maintenance, or closed"),
 
   // room errors
+  HOTEL_ID_NOT_BLANK(400, "Hotel ID is required"),
+  ROOM_NOT_FOUND(404, "Room not found"),
+  ROOM_EXISTS(409, "Room already exists in this hotel"),
+  CANCELLATION_POLICY_ID_NOT_BLANK(400, "Cancellation policy ID is required"),
+  ROOM_STATUS_NOT_BLANK(400, "Room status is required"),
+  ROOM_STATUS_INVALID(400, "Room status must be available, booked, maintenance, or closed"),
+  VIEW_NOT_BLANK(400, "View is required"),
+  AREA_NOT_BLANK(400, "Area is required"),
+  MAX_ADULTS_NOT_BLANK(400, "Max adults is required"),
+  MAX_CHILDREN_NOT_BLANK(400, "Max children is required"),
+  BASE_PRICE_PER_NIGHT_NOT_BLANK(400, "Base price per night is required"),
+  BED_TYPE_ID_NOT_BLANK(400, "Bed type ID is required"),
+  SMOKING_ALLOWED_NOT_BLANK(400, "Smoking allowed is required"),
+  WIFI_AVAILABLE_NOT_BLANK(400, "WiFi available is required"),
+  BREAKFAST_INCLUDED_NOT_BLANK(400, "Breakfast included is required"),
+  QUANTITY_NOT_BLANK(400, "Quantity is required"),
+  AMENITY_IDS_NOT_EMPTY(400, "At least one amenity ID is required"),
 
 
   // amenity errors
@@ -108,6 +125,7 @@ public enum ErrorType {
   IS_FREE_NOT_BLANK(400,  "Is free is required"),
 
   // image errors
+  PHOTOS_NOT_BLANK(400, "Photos are required"),
   PHOTO_FILES_NOT_EMPTY(400, "At least one photo file is required"),
   PHOTO_IDS_NOT_EMPTY(400, "At least one photo ID is required"),
   PHOTO_NOT_FOUND(404, "Photo not found"),

@@ -44,6 +44,6 @@ public class HotelUpdateRequest {
   List<String> amenityIdsToAdd;
   List<String> amenityIdsToRemove;
 
-  @Pattern(regexp = ValidationPatterns.HOTEL_STATUS, message = "HOTEL_STATUS_INVALID")
+  @Pattern(regexp = ValidationPatterns.ACCOMMODATION_STATUS, message = "HOTEL_STATUS_INVALID")
   String status;
 }

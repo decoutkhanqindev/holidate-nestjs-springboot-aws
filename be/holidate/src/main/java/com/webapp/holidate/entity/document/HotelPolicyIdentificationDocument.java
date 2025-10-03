@@ -3,7 +3,6 @@ package com.webapp.holidate.entity.document;
 
 import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
-import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.entity.policy.HotelPolicy;
 import jakarta.persistence.*;
 import lombok.*;

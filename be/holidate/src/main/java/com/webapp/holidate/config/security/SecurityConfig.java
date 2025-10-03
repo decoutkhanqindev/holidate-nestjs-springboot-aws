@@ -7,7 +7,7 @@ import com.webapp.holidate.constants.AppValues;
 import com.webapp.holidate.constants.api.endpoint.*;
 import com.webapp.holidate.constants.api.endpoint.auth.AuthEndpoints;
 import com.webapp.holidate.service.auth.GoogleService;
-import com.webapp.holidate.type.RoleType;
+import com.webapp.holidate.type.user.RoleType;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

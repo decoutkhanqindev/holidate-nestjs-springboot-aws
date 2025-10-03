@@ -39,9 +39,6 @@ public class Room {
   @Column(nullable = false)
   String name;
 
-  @Column(nullable = false, columnDefinition = "TEXT")
-  String description;
-
   @Column(nullable = false)
   String view;
 
