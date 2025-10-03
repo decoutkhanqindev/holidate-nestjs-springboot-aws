@@ -38,6 +38,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -153,12 +154,6 @@ public class HotelService {
     boolean descriptionChanged = newDescription != null && !newDescription.equals(hotel.getDescription());
     if (descriptionChanged) {
       hotel.setDescription(newDescription);
-    }
-
-    Boolean newAllowsPayAtHotel = request.getAllowsPayAtHotel();
-    boolean allowsPayAtHotelChanged = newAllowsPayAtHotel != null && hotel.isAllowsPayAtHotel() != newAllowsPayAtHotel;
-    if (allowsPayAtHotelChanged) {
-      hotel.setAllowsPayAtHotel(newAllowsPayAtHotel);
     }
 
     String newStatus = request.getStatus();
@@ -325,7 +320,7 @@ public class HotelService {
     if (hasAmenitiesToAdd) {
       Set<String> existingAmenityIds = currentAmenities.stream()
           .map(hotelAmenity -> hotelAmenity.getAmenity().getId())
-          .collect(java.util.stream.Collectors.toSet());
+          .collect(Collectors.toSet());
 
       for (String amenityId : amenityIdsToAdd) {
         boolean alreadyExists = existingAmenityIds.contains(amenityId);

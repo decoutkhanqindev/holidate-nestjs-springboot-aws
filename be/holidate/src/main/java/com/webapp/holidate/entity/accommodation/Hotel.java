@@ -7,6 +7,7 @@ import com.webapp.holidate.entity.accommodation.room.Room;
 import com.webapp.holidate.entity.booking.Review;
 import com.webapp.holidate.entity.image.HotelPhoto;
 import com.webapp.holidate.entity.location.*;
+import com.webapp.holidate.entity.policy.HotelPolicy;
 import com.webapp.holidate.entity.user.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -91,9 +92,9 @@ public class Hotel {
   @Builder.Default
   double averageScore = 0.0;
 
-  @Column(nullable = true)
-  @Builder.Default
-  boolean allowsPayAtHotel = false;
+  @OneToOne(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true)
+  @ToString.Exclude
+  HotelPolicy policy;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = DbFieldNames.PARTNER_ID, nullable = false)

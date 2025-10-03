@@ -10,6 +10,13 @@ public class DbFieldNames {
   public static final String HOTEL_ID = "hotel_id";
   public static final String ROOM_ID = "room_id";
   public static final String ROOM_ID_CAMEL = "roomId";
+  public static final String BED_TYPE_ID = "bed_type_id";
+
+  // policy related fields
+  public static final String POLICY_ID = "policy_id";
+  public static final String HOTEL_POLICY_ID = "hotel_policy_id";
+  public static final String CANCELLATION_POLICY_ID = "cancellation_policy_id";
+  public static final String IDENTIFICATION_DOCUMENT_ID = "identification_document_id";
 
   // amenity related fields
   public static final String AMENITY_ID = "amenity_id";

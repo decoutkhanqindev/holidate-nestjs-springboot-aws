@@ -5,6 +5,7 @@ import com.webapp.holidate.constants.db.DbTableNames;
 import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.entity.accommodation.amenity.RoomAmenity;
 import com.webapp.holidate.entity.image.RoomPhoto;
+import com.webapp.holidate.entity.policy.cancelation.CancellationPolicy;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -38,11 +39,11 @@ public class Room {
   @Column(nullable = false)
   String name;
 
-  @Column(nullable = false)
-  String roomNumber;
-
   @Column(nullable = false, columnDefinition = "TEXT")
   String description;
+
+  @Column(nullable = false)
+  String view;
 
   @Column(nullable = false)
   double area;
@@ -60,6 +61,25 @@ public class Room {
 
   @Column(nullable = false)
   double basePricePerNight;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = DbFieldNames.BED_TYPE_ID, nullable = false)
+  @ToString.Exclude
+  BedType bedType;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = DbFieldNames.CANCELLATION_POLICY_ID, nullable = true)
+  @ToString.Exclude
+  CancellationPolicy cancellationPolicy;
+
+  @Column(nullable = false)
+  boolean smokingAllowed;
+
+  @Column(nullable = false)
+  boolean wifiAvailable;
+
+  @Column(nullable = false)
+  boolean breakfastIncluded;
 
   @Column(nullable = false)
   int quantity;

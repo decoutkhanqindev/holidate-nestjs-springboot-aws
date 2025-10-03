@@ -96,6 +96,9 @@ public enum ErrorType {
   HOTEL_STATUS_NOT_BLANK(400, "Hotel status is required"),
   HOTEL_STATUS_INVALID(400, "Hotel status must be active, inactive, under_maintenance, or closed"),
 
+  // room errors
+
+
   // amenity errors
   AMENITY_CATEGORY_EXISTS(409, "Amenity category already exists"),
   AMENITY_CATEGORY_NOT_FOUND(404, "Amenity category not found"),

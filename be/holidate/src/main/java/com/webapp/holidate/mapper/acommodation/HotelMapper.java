@@ -23,7 +23,7 @@ public interface HotelMapper {
   @Mapping(target = "longitude", ignore = true)
   @Mapping(target = "starRating", ignore = true)
   @Mapping(target = "averageScore", ignore = true)
-  @Mapping(target = "allowsPayAtHotel", ignore = true)
+  @Mapping(target = "policy", ignore = true)
   @Mapping(target = "partner", ignore = true)
   @Mapping(target = "amenities", ignore = true)
   @Mapping(target = "reviews", ignore = true)
