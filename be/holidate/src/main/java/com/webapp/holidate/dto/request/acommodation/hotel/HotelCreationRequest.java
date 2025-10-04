@@ -1,12 +1,8 @@
 package com.webapp.holidate.dto.request.acommodation.hotel;
 
-import com.webapp.holidate.constants.ValidationPatterns;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
 
 @Data
 @Builder
@@ -45,12 +41,6 @@ public class HotelCreationRequest {
   @NotBlank(message = "STREET_ID_NOT_BLANK")
   String streetId;
 
-  List<MultipartFile> photos;
-
   @NotBlank(message = "PARTNER_ID_NOT_BLANK")
   String partnerId;
-
-  @NotBlank(message = "HOTEL_STATUS_NOT_BLANK")
-  @Pattern(regexp = ValidationPatterns.HOTEL_STATUS, message = "HOTEL_STATUS_INVALID")
-  String status;
 }

@@ -3,8 +3,11 @@ package com.webapp.holidate.entity.accommodation;
 import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
 import com.webapp.holidate.entity.accommodation.amenity.HotelAmenity;
+import com.webapp.holidate.entity.accommodation.room.Room;
 import com.webapp.holidate.entity.booking.Review;
+import com.webapp.holidate.entity.image.HotelPhoto;
 import com.webapp.holidate.entity.location.*;
+import com.webapp.holidate.entity.policy.HotelPolicy;
 import com.webapp.holidate.entity.user.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -12,7 +15,9 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = DbTableNames.HOTELS)
@@ -29,7 +34,7 @@ public class Hotel {
   @Column(nullable = false)
   String id;
 
-  @Column(nullable = false)
+  @Column(nullable = false, unique = true)
   String name;
 
   @Column(nullable = false, columnDefinition = "TEXT")
@@ -68,9 +73,10 @@ public class Hotel {
   @ToString.Exclude
   Street street;
 
-  @Column(nullable = true)
+  @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @ToString.Exclude
   @Builder.Default
-  List<String> photoUrls = new ArrayList<>();
+  private Set<HotelPhoto> photos = new HashSet<>();
 
   @Column(nullable = true)
   double latitude;
@@ -86,9 +92,9 @@ public class Hotel {
   @Builder.Default
   double averageScore = 0.0;
 
-  @Column(nullable = true)
-  @Builder.Default
-  boolean allowsPayAtHotel = false;
+  @OneToOne(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true)
+  @ToString.Exclude
+  HotelPolicy policy;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = DbFieldNames.PARTNER_ID, nullable = false)
@@ -98,10 +104,15 @@ public class Hotel {
   @Column(nullable = false)
   String status;
 
-  @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+  @OneToMany(mappedBy = "hotel")
   @ToString.Exclude
   @Builder.Default
-  List<HotelAmenity> amenities = new ArrayList<>();
+  List<Room> rooms = new ArrayList<>();
+
+  @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @Builder.Default
+  @ToString.Exclude
+  Set<HotelAmenity> amenities = new HashSet<>();
 
   @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   @ToString.Exclude

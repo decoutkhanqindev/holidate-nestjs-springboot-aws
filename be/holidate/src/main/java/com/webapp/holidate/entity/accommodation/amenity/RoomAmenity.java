@@ -17,17 +17,17 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @ToString
 public class RoomAmenity {
-  @EmbeddedId
-  RoomAmenityId id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  @Column(nullable = false)
+  String id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @MapsId(DbFieldNames.ROOM_ID_CAMEL)
   @JoinColumn(name = DbFieldNames.ROOM_ID, nullable = false)
   @ToString.Exclude
   Room room;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @MapsId(DbFieldNames.AMENITY_ID_CAMEL)
   @JoinColumn(name = DbFieldNames.AMENITY_ID, nullable = false)
   @ToString.Exclude
   Amenity amenity;

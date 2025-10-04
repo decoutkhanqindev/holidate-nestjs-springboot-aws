@@ -1,9 +1,11 @@
 package com.webapp.holidate.controller.accommodation;
 
-import com.webapp.holidate.constants.api.endpoint.accommodation.AccommodationEndpoints;
-import com.webapp.holidate.constants.api.endpoint.accommodation.HotelEndpoints;
+import com.webapp.holidate.constants.api.endpoint.AccommodationEndpoints;
+import com.webapp.holidate.constants.api.endpoint.CommonEndpoints;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelCreationRequest;
+import com.webapp.holidate.dto.request.acommodation.hotel.HotelUpdateRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
+import com.webapp.holidate.dto.response.acommodation.hotel.HotelDetailsResponse;
 import com.webapp.holidate.dto.response.acommodation.hotel.HotelResponse;
 import com.webapp.holidate.service.accommodation.HotelService;
 import jakarta.validation.Valid;
@@ -16,25 +18,44 @@ import java.io.IOException;
 import java.util.List;
 
 @RestController
-@RequestMapping(AccommodationEndpoints.ACCOMMODATION + HotelEndpoints.HOTELS)
+@RequestMapping(AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.HOTELS)
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class HotelController {
   HotelService hotelService;
 
   @PostMapping(consumes = "multipart/form-data")
-  public ApiResponse<HotelResponse> create(@ModelAttribute @Valid HotelCreationRequest request) throws IOException {
-    HotelResponse response = hotelService.create(request);
-    return ApiResponse.<HotelResponse>builder()
-        .data(response)
-        .build();
+  public ApiResponse<HotelDetailsResponse> create(@ModelAttribute @Valid HotelCreationRequest request) throws IOException {
+    HotelDetailsResponse response = hotelService.create(request);
+    return ApiResponse.<HotelDetailsResponse>builder()
+      .data(response)
+      .build();
   }
 
   @GetMapping
   public ApiResponse<List<HotelResponse>> getAll() {
     List<HotelResponse> responses = hotelService.getAll();
     return ApiResponse.<List<HotelResponse>>builder()
-        .data(responses)
-        .build();
+      .data(responses)
+      .build();
+  }
+
+  @GetMapping(CommonEndpoints.ID)
+  public ApiResponse<HotelDetailsResponse> getById(@PathVariable String id) {
+    HotelDetailsResponse response = hotelService.getById(id);
+    return ApiResponse.<HotelDetailsResponse>builder()
+      .data(response)
+      .build();
+  }
+
+  @PutMapping(value = CommonEndpoints.ID, consumes = "application/json")
+  public ApiResponse<HotelDetailsResponse> update(
+    @PathVariable String id,
+    @RequestBody @Valid HotelUpdateRequest request
+  ) throws IOException {
+    HotelDetailsResponse response = hotelService.update(id, request);
+    return ApiResponse.<HotelDetailsResponse>builder()
+      .data(response)
+      .build();
   }
 }

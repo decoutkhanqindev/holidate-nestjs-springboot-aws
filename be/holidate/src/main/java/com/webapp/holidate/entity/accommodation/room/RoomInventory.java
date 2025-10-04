@@ -26,6 +26,9 @@ public class RoomInventory {
   Room room;
 
   @Column(nullable = false)
+  double discount;
+
+  @Column(nullable = false)
   double price;
 
   @Column(nullable = false)

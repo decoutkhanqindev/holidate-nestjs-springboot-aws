@@ -1,6 +1,0 @@
-package com.webapp.holidate.constants.api.endpoint.user;
-
-public class RoleEndpoints {
-  public static final String ROLES = "/roles";
-  public static final String ROLE_ID = "/{id}";
-}

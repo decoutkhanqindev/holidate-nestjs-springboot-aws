@@ -1,0 +1,38 @@
+package com.webapp.holidate.controller.amenity;
+
+import com.webapp.holidate.constants.api.endpoint.AmenityEndpoints;
+import com.webapp.holidate.dto.request.amenity.AmenityCreationRequest;
+import com.webapp.holidate.dto.response.ApiResponse;
+import com.webapp.holidate.dto.response.amenity.AmenityResponse;
+import com.webapp.holidate.service.amenity.AmenityService;
+import jakarta.validation.Valid;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping(AmenityEndpoints.AMENITY + AmenityEndpoints.AMENITIES)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@RequiredArgsConstructor
+public class AmenityController {
+  AmenityService service;
+
+  @PostMapping
+  public ApiResponse<AmenityResponse> create(@RequestBody @Valid AmenityCreationRequest request) {
+    AmenityResponse response = service.create(request);
+    return ApiResponse.<AmenityResponse>builder()
+      .data(response)
+      .build();
+  }
+
+  @GetMapping
+  public ApiResponse<List<AmenityResponse>> getAll() {
+    List<AmenityResponse> responses = service.getAll();
+    return ApiResponse.<List<AmenityResponse>>builder()
+      .data(responses)
+      .build();
+  }
+}

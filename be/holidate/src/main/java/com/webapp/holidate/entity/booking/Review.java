@@ -3,6 +3,7 @@ package com.webapp.holidate.entity.booking;
 import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
 import com.webapp.holidate.entity.accommodation.Hotel;
+import com.webapp.holidate.entity.image.ReviewPhoto;
 import com.webapp.holidate.entity.user.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -46,9 +47,10 @@ public class Review {
   @Column(nullable = true, columnDefinition = "TEXT")
   String comment;
 
-  @Column(nullable = true)
+  @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @ToString.Exclude
   @Builder.Default
-  List<String> photoUrls = new ArrayList<>();
+  List<ReviewPhoto> photos = new ArrayList<>();
 
   @Column(nullable = false)
   @Builder.Default

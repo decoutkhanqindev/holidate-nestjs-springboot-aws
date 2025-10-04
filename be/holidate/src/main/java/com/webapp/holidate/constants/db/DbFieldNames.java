@@ -8,11 +8,20 @@ public class DbFieldNames {
 
   // accommodation related fields
   public static final String HOTEL_ID = "hotel_id";
-  public static final String HOTEL_ID_CAMEL = "hotelId";
   public static final String ROOM_ID = "room_id";
   public static final String ROOM_ID_CAMEL = "roomId";
+  public static final String BED_TYPE_ID = "bed_type_id";
+
+  // policy related fields
+  public static final String POLICY_ID = "policy_id";
+  public static final String HOTEL_POLICY_ID = "hotel_policy_id";
+  public static final String CANCELLATION_POLICY_ID = "cancellation_policy_id";
+  public static final String RESCHEDULE_POLICY_ID = "reschedule_policy_id";
+  public static final String IDENTIFICATION_DOCUMENT_ID = "identification_document_id";
+
+  // amenity related fields
   public static final String AMENITY_ID = "amenity_id";
-  public static final String AMENITY_ID_CAMEL = "amenityId";
+  public static final String AMENITY_CATEGORY_ID = "amenity_category_id";
 
   // location related fields
   public static final String COUNTRY_ID = "country_id";
@@ -25,4 +34,8 @@ public class DbFieldNames {
   // booking related fields
   public static final String BOOKING_ID = "booking_id";
   public static final String REVIEW_ID = "review_id";
+
+  // image related fields
+  public static final String PHOTO_ID = "photo_id";
+  public static final String PHOTO_CATEGORY_ID = "photo_category_id";
 }

@@ -1,5 +1,6 @@
 package com.webapp.holidate.entity.accommodation.amenity;
 
+import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
 import jakarta.persistence.*;
 import lombok.*;
@@ -24,5 +25,10 @@ public class Amenity {
   String name;
 
   @Column(nullable = false)
-  String type; // hotel or room
+  boolean free;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = DbFieldNames.AMENITY_CATEGORY_ID, nullable = false)
+  @ToString.Exclude
+  AmenityCategory category;
 }
