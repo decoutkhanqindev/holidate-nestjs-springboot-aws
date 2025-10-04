@@ -6,6 +6,7 @@ import com.webapp.holidate.constants.db.DbTableNames;
 import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.entity.document.HotelPolicyIdentificationDocument;
 import com.webapp.holidate.entity.policy.cancelation.CancellationPolicy;
+import com.webapp.holidate.entity.policy.reschedule.ReschedulePolicy;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -44,17 +45,14 @@ public class HotelPolicy {
 
   @OneToMany(mappedBy = "hotelPolicy", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   @Builder.Default
-  Set<PetPolicyRule> petPolicyRules = new HashSet<>();
-
-  @OneToMany(mappedBy = "hotelPolicy", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-  @Builder.Default
-  Set<ChildrenPolicyRule> childrenPolicyRules = new HashSet<>();
-
-  @OneToMany(mappedBy = "hotelPolicy", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-  @Builder.Default
   Set<HotelPolicyIdentificationDocument> requiredIdentificationDocuments = new HashSet<>();
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = DbFieldNames.CANCELLATION_POLICY_ID)
   CancellationPolicy cancellationPolicy;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = DbFieldNames.RESCHEDULE_POLICY_ID)
+  @ToString.Exclude
+  ReschedulePolicy reschedulePolicy;
 }

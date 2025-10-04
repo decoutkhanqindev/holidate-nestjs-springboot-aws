@@ -1,15 +1,8 @@
 package com.webapp.holidate.dto.response.acommodation.hotel;
 
-import com.webapp.holidate.dto.response.acommodation.room.RoomResponse;
-import com.webapp.holidate.dto.response.amenity.AmenityCategoryResponse;
 import com.webapp.holidate.dto.response.image.PhotoCategoryResponse;
 import com.webapp.holidate.dto.response.location.LocationResponse;
-import com.webapp.holidate.dto.response.policy.cancellation.CancellationPolicyResponse;
-import com.webapp.holidate.dto.response.policy.reschedule.ReschedulePolicyResponse;
-import com.webapp.holidate.dto.response.policy.HotelPolicyResponse;
-import com.webapp.holidate.dto.response.user.PartnerResponse;
 import com.webapp.holidate.dto.response.user.UserResponse;
-import com.webapp.holidate.entity.accommodation.room.Room;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -25,10 +18,9 @@ import java.util.List;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class HotelDetailsResponse {
+public class HotelBriefResponse {
   String id;
   String name;
-  String description;
   String address;
   LocationResponse country;
   LocationResponse province;
@@ -36,15 +28,9 @@ public class HotelDetailsResponse {
   LocationResponse district;
   LocationResponse ward;
   LocationResponse street;
-  List<PhotoCategoryResponse> photos;
-  List<AmenityCategoryResponse> amenities;
-  HotelPolicyResponse policy;
-  PartnerResponse partner;
   double latitude;
   double longitude;
   int starRating;
   double averageScore;
   String status;
-  LocalDateTime createdAt;
-  LocalDateTime updatedAt;
 }

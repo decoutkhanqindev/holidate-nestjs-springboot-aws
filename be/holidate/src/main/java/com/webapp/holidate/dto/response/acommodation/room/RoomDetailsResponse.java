@@ -1,5 +1,6 @@
 package com.webapp.holidate.dto.response.acommodation.room;
 
+import com.webapp.holidate.dto.response.acommodation.hotel.HotelBriefResponse;
 import com.webapp.holidate.dto.response.amenity.AmenityCategoryResponse;
 import com.webapp.holidate.dto.response.image.PhotoCategoryResponse;
 import com.webapp.holidate.dto.response.policy.cancellation.CancellationPolicyResponse;
@@ -19,9 +20,10 @@ import java.util.List;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class RoomResponse {
+public class RoomDetailsResponse {
   String id;
   String name;
+  HotelBriefResponse hotel;
   String view;
   double area;
   List<PhotoCategoryResponse> photos;

@@ -2,6 +2,7 @@ package com.webapp.holidate.dto.request.acommodation.hotel;
 
 import com.webapp.holidate.constants.ValidationPatterns;
 import com.webapp.holidate.dto.request.image.PhotoCreationRequest;
+import com.webapp.holidate.dto.request.policy.HotelPolicyRequest;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Pattern;
@@ -43,6 +44,8 @@ public class HotelUpdateRequest {
 
   List<String> amenityIdsToAdd;
   List<String> amenityIdsToRemove;
+
+  HotelPolicyRequest policy;
 
   @Pattern(regexp = ValidationPatterns.ACCOMMODATION_STATUS, message = "HOTEL_STATUS_INVALID")
   String status;

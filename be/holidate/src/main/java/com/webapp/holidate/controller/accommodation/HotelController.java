@@ -28,8 +28,8 @@ public class HotelController {
   public ApiResponse<HotelDetailsResponse> create(@ModelAttribute @Valid HotelCreationRequest request) throws IOException {
     HotelDetailsResponse response = hotelService.create(request);
     return ApiResponse.<HotelDetailsResponse>builder()
-        .data(response)
-        .build();
+      .data(response)
+      .build();
   }
 
   @GetMapping
@@ -48,13 +48,14 @@ public class HotelController {
       .build();
   }
 
-  @PutMapping(value = CommonEndpoints.ID, consumes = "multipart/form-data")
+  @PutMapping(value = CommonEndpoints.ID, consumes = "application/json")
   public ApiResponse<HotelDetailsResponse> update(
-      @PathVariable String id,
-      @ModelAttribute @Valid HotelUpdateRequest request) throws IOException {
+    @PathVariable String id,
+    @RequestBody @Valid HotelUpdateRequest request
+  ) throws IOException {
     HotelDetailsResponse response = hotelService.update(id, request);
     return ApiResponse.<HotelDetailsResponse>builder()
-        .data(response)
-        .build();
+      .data(response)
+      .build();
   }
 }

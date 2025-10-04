@@ -16,6 +16,7 @@ public class DbFieldNames {
   public static final String POLICY_ID = "policy_id";
   public static final String HOTEL_POLICY_ID = "hotel_policy_id";
   public static final String CANCELLATION_POLICY_ID = "cancellation_policy_id";
+  public static final String RESCHEDULE_POLICY_ID = "reschedule_policy_id";
   public static final String IDENTIFICATION_DOCUMENT_ID = "identification_document_id";
 
   // amenity related fields

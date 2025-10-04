@@ -6,10 +6,18 @@ import com.webapp.holidate.dto.response.acommodation.hotel.HotelResponse;
 import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.mapper.amenity.AmenityCategoryMapper;
 import com.webapp.holidate.mapper.image.PhotoCategoryMapper;
+import com.webapp.holidate.mapper.policy.HotelPolicyMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring", uses = { PhotoCategoryMapper.class, AmenityCategoryMapper.class })
+@Mapper(
+  componentModel = "spring",
+  uses = {
+    PhotoCategoryMapper.class,
+    AmenityCategoryMapper.class,
+    HotelPolicyMapper.class
+  }
+)
 public interface HotelMapper {
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "country", ignore = true)

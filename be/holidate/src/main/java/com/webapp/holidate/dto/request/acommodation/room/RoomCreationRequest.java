@@ -3,6 +3,8 @@ package com.webapp.holidate.dto.request.acommodation.room;
 import com.webapp.holidate.dto.request.image.PhotoCreationRequest;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -27,34 +29,29 @@ public class RoomCreationRequest {
   @NotBlank(message = "VIEW_NOT_BLANK")
   String view;
 
-  @NotBlank(message = "AREA_NOT_BLANK")
+  @Positive(message = "AREA_MUST_BE_POSITIVE")
   double area;
 
-  @NotBlank(message = "PHOTOS_NOT_BLANK")
+  @NotEmpty(message = "PHOTOS_NOT_EMPTY")
   List<PhotoCreationRequest> photos;
 
-  @NotBlank(message = "MAX_ADULTS_NOT_BLANK")
+  @Positive(message = "MAX_ADULTS_MUST_BE_POSITIVE")
   int maxAdults;
 
-  @NotBlank(message = "MAX_CHILDREN_NOT_BLANK")
+  @PositiveOrZero(message = "MAX_CHILDREN_MUST_BE_POSITIVE_OR_ZERO")
   int maxChildren;
 
-  @NotBlank(message = "BASE_PRICE_PER_NIGHT_NOT_BLANK")
+  @Positive(message = "BASE_PRICE_PER_NIGHT_MUST_BE_POSITIVE")
   double basePricePerNight;
 
   @NotBlank(message = "BED_TYPE_ID_NOT_BLANK")
   String bedTypeId;
 
-  @NotBlank(message = "SMOKING_ALLOWED_NOT_BLANK")
   boolean smokingAllowed;
-
-  @NotBlank(message = "WIFI_AVAILABLE_NOT_BLANK")
   boolean wifiAvailable;
-
-  @NotBlank(message = "BREAKFAST_INCLUDED_NOT_BLANK")
   boolean breakfastIncluded;
 
-  @NotBlank(message = "QUANTITY_NOT_BLANK")
+  @Positive(message = "QUANTITY_MUST_BE_POSITIVE")
   int quantity;
 
   @NotEmpty(message = "AMENITY_IDS_NOT_EMPTY")

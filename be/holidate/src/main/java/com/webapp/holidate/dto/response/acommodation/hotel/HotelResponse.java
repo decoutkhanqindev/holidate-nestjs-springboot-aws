@@ -2,6 +2,8 @@ package com.webapp.holidate.dto.response.acommodation.hotel;
 
 import com.webapp.holidate.dto.response.image.PhotoCategoryResponse;
 import com.webapp.holidate.dto.response.location.LocationResponse;
+import com.webapp.holidate.dto.response.policy.HotelPolicyResponse;
+import com.webapp.holidate.dto.response.user.PartnerResponse;
 import com.webapp.holidate.dto.response.user.UserResponse;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -34,8 +36,8 @@ public class HotelResponse {
   double longitude;
   int starRating;
   double averageScore;
-  boolean allowsPayAtHotel;
-  UserResponse partner;
+  HotelPolicyResponse policy;
+  PartnerResponse partner;
   String status;
   double rawPricePerNight;
   double currentPricePerNight;

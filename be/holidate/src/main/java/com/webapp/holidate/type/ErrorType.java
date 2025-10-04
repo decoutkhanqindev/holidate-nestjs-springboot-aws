@@ -94,7 +94,7 @@ public enum ErrorType {
   HOTEL_NOT_FOUND(404, "Hotel not found"),
   HOTEL_EXISTS(409, "Hotel already exists"),
   HOTEL_STATUS_NOT_BLANK(400, "Hotel status is required"),
-  HOTEL_STATUS_INVALID(400, "Hotel status must be active, inactive, under_maintenance, or closed"),
+  HOTEL_STATUS_INVALID(400, "Hotel status must be active, inactive, maintenance, or closed"),
 
   // room errors
   HOTEL_ID_NOT_BLANK(400, "Hotel ID is required"),
@@ -104,17 +104,25 @@ public enum ErrorType {
   ROOM_STATUS_NOT_BLANK(400, "Room status is required"),
   ROOM_STATUS_INVALID(400, "Room status must be available, booked, maintenance, or closed"),
   VIEW_NOT_BLANK(400, "View is required"),
-  AREA_NOT_BLANK(400, "Area is required"),
-  MAX_ADULTS_NOT_BLANK(400, "Max adults is required"),
-  MAX_CHILDREN_NOT_BLANK(400, "Max children is required"),
-  BASE_PRICE_PER_NIGHT_NOT_BLANK(400, "Base price per night is required"),
+  AREA_MUST_BE_POSITIVE(400, "Area must be a positive number"),
+  MAX_ADULTS_MUST_BE_POSITIVE(400, "Max adults must be a positive number"),
+  MAX_CHILDREN_MUST_BE_POSITIVE_OR_ZERO(400, "Max children must be zero or a positive number"),
+  BASE_PRICE_PER_NIGHT_MUST_BE_POSITIVE(400, "Base price per night must be a positive number"),
+  QUANTITY_MUST_BE_POSITIVE(400, "Quantity must be a positive number"),
   BED_TYPE_ID_NOT_BLANK(400, "Bed type ID is required"),
   SMOKING_ALLOWED_NOT_BLANK(400, "Smoking allowed is required"),
   WIFI_AVAILABLE_NOT_BLANK(400, "WiFi available is required"),
   BREAKFAST_INCLUDED_NOT_BLANK(400, "Breakfast included is required"),
-  QUANTITY_NOT_BLANK(400, "Quantity is required"),
   AMENITY_IDS_NOT_EMPTY(400, "At least one amenity ID is required"),
+  BED_TYPE_NOT_FOUND(404, "Bed type not found"),
 
+  // policy errors
+  CHECK_IN_OUT_TIME_INVALID(400, "Check-in and check-out time must be in HH:mm format"),
+  CANCELLATION_POLICY_NOT_FOUND(404, "Cancellation policy not found"),
+  RESCHEDULE_POLICY_NOT_FOUND(404, "Reschedule policy not found"),
+  PET_POLICY_RULE_NOT_FOUND(404, "Pet policy rule not found"),
+  CHILDREN_POLICY_RULE_NOT_FOUND(404, "Children policy rule not found"),
+  IDENTIFICATION_DOCUMENT_NOT_FOUND(404, "Identification document not found"),
 
   // amenity errors
   AMENITY_CATEGORY_EXISTS(409, "Amenity category already exists"),
@@ -122,7 +130,7 @@ public enum ErrorType {
   AMENITY_CATEGORY_ID_NOT_BLANK(400, "Amenity category ID is required"),
   AMENITY_EXISTS(409, "Amenity already exists"),
   AMENITY_NOT_FOUND(404, "Amenity not found"),
-  IS_FREE_NOT_BLANK(400,  "Is free is required"),
+  IS_FREE_NOT_BLANK(400, "Is free is required"),
 
   // image errors
   PHOTOS_NOT_BLANK(400, "Photos are required"),

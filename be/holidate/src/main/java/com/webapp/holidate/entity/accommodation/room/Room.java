@@ -6,6 +6,7 @@ import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.entity.accommodation.amenity.RoomAmenity;
 import com.webapp.holidate.entity.image.RoomPhoto;
 import com.webapp.holidate.entity.policy.cancelation.CancellationPolicy;
+import com.webapp.holidate.entity.policy.reschedule.ReschedulePolicy;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -68,6 +69,11 @@ public class Room {
   @JoinColumn(name = DbFieldNames.CANCELLATION_POLICY_ID, nullable = true)
   @ToString.Exclude
   CancellationPolicy cancellationPolicy;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = DbFieldNames.RESCHEDULE_POLICY_ID, nullable = true)
+  @ToString.Exclude
+  ReschedulePolicy reschedulePolicy;
 
   @Column(nullable = false)
   boolean smokingAllowed;

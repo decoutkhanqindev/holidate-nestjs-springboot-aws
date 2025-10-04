@@ -1,11 +1,13 @@
-package com.webapp.holidate.mapper.acommodation.room;
+package com.webapp.holidate.mapper.acommodation;
 
 import com.webapp.holidate.dto.request.acommodation.room.RoomCreationRequest;
+import com.webapp.holidate.dto.response.acommodation.room.RoomDetailsResponse;
 import com.webapp.holidate.dto.response.acommodation.room.RoomResponse;
 import com.webapp.holidate.entity.accommodation.room.Room;
 import com.webapp.holidate.mapper.amenity.AmenityCategoryMapper;
 import com.webapp.holidate.mapper.image.PhotoCategoryMapper;
 import com.webapp.holidate.mapper.policy.cancellation.CancellationPolicyMapper;
+import com.webapp.holidate.mapper.policy.reschedule.ReschedulePolicyMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -14,7 +16,8 @@ import org.mapstruct.Mapping;
   uses = {
     PhotoCategoryMapper.class,
     AmenityCategoryMapper.class,
-    CancellationPolicyMapper.class
+    CancellationPolicyMapper.class,
+    ReschedulePolicyMapper.class
   }
 )
 public interface RoomMapper {
@@ -23,9 +26,7 @@ public interface RoomMapper {
   @Mapping(target = "photos", ignore = true)
   @Mapping(target = "bedType", ignore = true)
   @Mapping(target = "amenities", ignore = true)
-  @Mapping(target = "inventories", ignore = true)
-  @Mapping(target = "cancellationPolicy", ignore = true)
-  @Mapping(target = "status", constant = "ACTIVE")
+  @Mapping(target = "status", ignore = true)
   @Mapping(target = "createdAt", expression = "java(java.time.LocalDateTime.now())")
   @Mapping(target = "updatedAt", ignore = true)
   Room toEntity(RoomCreationRequest request);
@@ -33,4 +34,8 @@ public interface RoomMapper {
   @Mapping(source = "photos", target = "photos", qualifiedByName = "roomPhotosToCategories")
   @Mapping(source = "amenities", target = "amenities", qualifiedByName = "roomAmenitiesToCategories")
   RoomResponse toRoomResponse(Room room);
+
+  @Mapping(source = "photos", target = "photos", qualifiedByName = "roomPhotosToCategories")
+  @Mapping(source = "amenities", target = "amenities", qualifiedByName = "roomAmenitiesToCategories")
+  RoomDetailsResponse toRoomDetailsResponse(Room room);
 }

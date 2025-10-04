@@ -1,4 +1,4 @@
-package com.webapp.holidate.dto.response.acommodation.room;
+package com.webapp.holidate.dto.response.policy.reschedule;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -8,11 +8,10 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
-@Setter
 @ToString
 @EqualsAndHashCode
-public class BedTypeResponse {
+public class RescheduleRuleResponse {
   String id;
-  String name;
+  int daysBeforeCheckin;
+  int feePercentage;
 }

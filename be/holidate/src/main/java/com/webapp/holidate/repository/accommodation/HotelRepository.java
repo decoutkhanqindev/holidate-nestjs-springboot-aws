@@ -11,9 +11,9 @@ import java.util.Optional;
 public interface HotelRepository extends JpaRepository<Hotel, String> {
   boolean existsByName(String name);
 
-  @Query(HotelQueries.FIND_ALL_WITH_LOCATIONS_PHOTOS_PARTNER)
-  List<Hotel> findAllWithLocationsPhotosPartner();
+  @Query(HotelQueries.FIND_ALL_WITH_LOCATIONS_PHOTOS_PARTNER_POLICY)
+  List<Hotel> findAllWithLocationsPhotosPartnerPolicy();
 
-  @Query(HotelQueries.FIND_BY_ID_WITH_LOCATIONS_PHOTOS_AMENITIES_REVIEWS_PARTNER)
-  Optional<Hotel> findByIdWithLocationsPhotosAmenitiesReviewsPartner(String id);
+  @Query(HotelQueries.FIND_BY_ID_WITH_LOCATIONS_PHOTOS_AMENITIES_REVIEWS_PARTNER_POLICY)
+  Optional<Hotel> findByIdWithLocationsPhotosAmenitiesReviewsPartnerPolicy(String id);
 }
