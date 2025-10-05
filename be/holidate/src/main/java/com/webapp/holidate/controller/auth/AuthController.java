@@ -2,6 +2,7 @@ package com.webapp.holidate.controller.auth;
 
 import com.nimbusds.jose.JOSEException;
 import com.webapp.holidate.config.security.filter.CustomAuthenticationToken;
+import com.webapp.holidate.constants.AppValues;
 import com.webapp.holidate.constants.api.endpoint.auth.AuthEndpoints;
 import com.webapp.holidate.dto.request.auth.LoginRequest;
 import com.webapp.holidate.dto.request.auth.RegisterRequest;
@@ -13,10 +14,15 @@ import com.webapp.holidate.dto.response.auth.TokenResponse;
 import com.webapp.holidate.dto.response.auth.VerificationResponse;
 import com.webapp.holidate.dto.response.user.UserResponse;
 import com.webapp.holidate.service.auth.AuthService;
+import com.webapp.holidate.utils.ResponseUtils;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
@@ -27,6 +33,10 @@ import java.text.ParseException;
 @RequiredArgsConstructor
 public class AuthController {
   AuthService authService;
+
+  @NonFinal
+  @Value(AppValues.JWT_TOKEN_COOKIE_NAME)
+  String tokenCookieName;
 
   @PostMapping(AuthEndpoints.REGISTER)
   public ApiResponse<UserResponse> register(@RequestBody @Valid RegisterRequest request) {
@@ -61,8 +71,15 @@ public class AuthController {
   }
 
   @PostMapping(AuthEndpoints.LOGOUT)
-  public ApiResponse<LogoutResponse> logout(@RequestBody @Valid TokenRequest request) throws ParseException, JOSEException {
+  public ApiResponse<LogoutResponse> logout(
+    @RequestBody @Valid TokenRequest request,
+    HttpServletResponse httpServletResponse
+  ) throws ParseException, JOSEException {
     LogoutResponse response = authService.logout(request);
+
+    // clear the token cookie
+    ResponseUtils.handleAuthCookiesResponse(httpServletResponse, tokenCookieName, "", 0);
+
     return ApiResponse.<LogoutResponse>builder()
       .data(response)
       .build();

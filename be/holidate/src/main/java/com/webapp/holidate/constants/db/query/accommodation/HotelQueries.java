@@ -19,6 +19,15 @@ public class HotelQueries {
       "LEFT JOIN FETCH pol.reschedulePolicy " +
       "LEFT JOIN FETCH h.partner ";
 
+  public static final String FIND_ALL_BY_LOCATION_FILTER_WITH_LOCATIONS_PHOTOS_PARTNER_POLICY =
+    FIND_ALL_WITH_LOCATIONS_PHOTOS_PARTNER_POLICY +
+      "WHERE (:countryId IS NULL OR h.country.id = :countryId) " +
+      "AND (:provinceId IS NULL OR h.province.id = :provinceId) " +
+      "AND (:cityId IS NULL OR h.city.id = :cityId) " +
+      "AND (:districtId IS NULL OR h.district.id = :districtId) " +
+      "AND (:wardId IS NULL OR h.ward.id = :wardId) " +
+      "AND (:streetId IS NULL OR h.street.id = :streetId)";
+
   public static final String FIND_BY_ID_WITH_LOCATIONS_PHOTOS_AMENITIES_REVIEWS_PARTNER_POLICY =
     "SELECT h FROM Hotel h " +
       "LEFT JOIN FETCH h.country " +

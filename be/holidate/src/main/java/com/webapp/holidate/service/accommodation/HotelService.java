@@ -131,11 +131,28 @@ public class HotelService {
     return hotelMapper.toHotelDetailsResponse(hotel);
   }
 
-  public List<HotelResponse> getAll() {
-    return hotelRepository.findAllWithLocationsPhotosPartnerPolicy()
-      .stream()
-      .map(hotelMapper::toHotelResponse)
-      .toList();
+  public List<HotelResponse> getAll(
+    String countryId,
+    String provinceId,
+    String cityId,
+    String districtId,
+    String wardId,
+    String streetId
+  ) {
+    boolean hasLocationFilter = countryId != null || provinceId != null || cityId != null
+      || districtId != null || wardId != null || streetId != null;
+
+    if (hasLocationFilter) {
+      return hotelRepository.findAllByLocationFilterWithLocationsPhotosPartnerPolicy(
+          countryId, provinceId, cityId, districtId, wardId, streetId
+        ).stream()
+        .map(hotelMapper::toHotelResponse)
+        .toList();
+    } else {
+      return hotelRepository.findAllWithLocationsPhotosPartnerPolicy().stream()
+        .map(hotelMapper::toHotelResponse)
+        .toList();
+    }
   }
 
   public HotelDetailsResponse getById(String id) {

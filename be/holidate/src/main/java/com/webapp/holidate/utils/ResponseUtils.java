@@ -40,14 +40,9 @@ public class ResponseUtils {
   public static void handleAuthCookiesResponse(HttpServletResponse response, String name, String token, int maxAge) {
     Cookie cookie = new Cookie(name, token);
     cookie.setHttpOnly(true);
-    cookie.setSecure(false); // set to true in production
+    cookie.setSecure(false); // set to true in production with HTTPS
     cookie.setPath("/");
     cookie.setMaxAge(maxAge);
-
-    String cookieHeader = String.format(
-      "%s=%s; Max-Age=%d; Path=/; HttpOnly; Secure; SameSite=None",
-      name, token, maxAge
-    );
-    response.addHeader("Set-Cookie", cookieHeader);
+    response.addCookie(cookie);
   }
 }

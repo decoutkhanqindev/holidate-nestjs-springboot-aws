@@ -226,7 +226,8 @@ public class AuthService {
     UserAuthInfo authInfo = user.getAuthInfo();
 
     String refreshToken = authInfo.getRefreshToken();
-    if (refreshToken != null) {
+    boolean hasRefreshToken = refreshToken != null && !refreshToken.isEmpty();
+    if (hasRefreshToken) {
       SignedJWT refreshSignedJWT = SignedJWT.parse(refreshToken);
       String refreshTokenId = refreshSignedJWT.getJWTClaimsSet().getJWTID();
       createInvalidToken(refreshTokenId, refreshToken);
