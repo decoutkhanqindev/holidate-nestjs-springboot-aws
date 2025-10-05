@@ -1,7 +1,7 @@
 package com.webapp.holidate.config.security;
 
 import com.nimbusds.jose.JOSEException;
-import com.webapp.holidate.constants.AppValues;
+import com.webapp.holidate.constants.AppProperties;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.exception.CustomAuthenticationException;
 import com.webapp.holidate.service.auth.AuthService;
@@ -30,7 +30,7 @@ public class CustomJwtDecoder implements JwtDecoder {
   AuthService authService;
 
   @NonFinal
-  @Value(AppValues.JWT_SECRET_KEY)
+  @Value(AppProperties.JWT_SECRET_KEY)
   String SECRET_KEY;
 
   @Override

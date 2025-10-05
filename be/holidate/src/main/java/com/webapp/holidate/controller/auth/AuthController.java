@@ -2,7 +2,7 @@ package com.webapp.holidate.controller.auth;
 
 import com.nimbusds.jose.JOSEException;
 import com.webapp.holidate.config.security.filter.CustomAuthenticationToken;
-import com.webapp.holidate.constants.AppValues;
+import com.webapp.holidate.constants.AppProperties;
 import com.webapp.holidate.constants.api.endpoint.auth.AuthEndpoints;
 import com.webapp.holidate.dto.request.auth.LoginRequest;
 import com.webapp.holidate.dto.request.auth.RegisterRequest;
@@ -15,7 +15,6 @@ import com.webapp.holidate.dto.response.auth.VerificationResponse;
 import com.webapp.holidate.dto.response.user.UserResponse;
 import com.webapp.holidate.service.auth.AuthService;
 import com.webapp.holidate.utils.ResponseUtils;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -35,7 +34,7 @@ public class AuthController {
   AuthService authService;
 
   @NonFinal
-  @Value(AppValues.JWT_TOKEN_COOKIE_NAME)
+  @Value(AppProperties.JWT_TOKEN_COOKIE_NAME)
   String tokenCookieName;
 
   @PostMapping(AuthEndpoints.REGISTER)

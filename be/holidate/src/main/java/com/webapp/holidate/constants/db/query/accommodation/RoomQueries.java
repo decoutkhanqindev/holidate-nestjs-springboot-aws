@@ -1,8 +1,8 @@
 package com.webapp.holidate.constants.db.query.accommodation;
 
 public class RoomQueries {
-  public static final String FIND_ALL_BY_HOTEL_ID_WITH_BED_TYPE_PHOTOS_AMENITIES_INVENTORIES_CANCELLATION_POLICY_RESCHEDULE_POLICY = "SELECT DISTINCT r FROM Room r "
-      +
+  public static final String FIND_ALL_BY_HOTEL_ID_WITH_BED_TYPE_PHOTOS_AMENITIES_INVENTORIES_CANCELLATION_POLICY_RESCHEDULE_POLICY =
+    "SELECT DISTINCT r FROM Room r " +
       "LEFT JOIN FETCH r.hotel h " +
       "LEFT JOIN FETCH r.bedType bt " +
       "LEFT JOIN FETCH r.photos rph " +

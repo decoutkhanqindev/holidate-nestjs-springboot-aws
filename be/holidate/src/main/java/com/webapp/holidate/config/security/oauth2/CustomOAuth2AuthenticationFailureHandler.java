@@ -1,6 +1,6 @@
 package com.webapp.holidate.config.security.oauth2;
 
-import com.webapp.holidate.constants.AppValues;
+import com.webapp.holidate.constants.AppProperties;
 import com.webapp.holidate.utils.ResponseUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,11 +20,11 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class CustomOAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationFailureHandler {
   @NonFinal
-  @Value(AppValues.FRONTEND_LOGIN_FAILURE_URL)
+  @Value(AppProperties.FRONTEND_LOGIN_FAILURE_URL)
   String frontendLoginFailureUrl;
 
   @NonFinal
-  @Value(AppValues.JWT_TOKEN_COOKIE_NAME)
+  @Value(AppProperties.JWT_TOKEN_COOKIE_NAME)
   String tokenCookieName;
 
   @Override

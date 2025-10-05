@@ -2,7 +2,7 @@ package com.webapp.holidate.config.security.filter;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
-import com.webapp.holidate.constants.AppValues;
+import com.webapp.holidate.constants.AppProperties;
 import com.webapp.holidate.constants.api.endpoint.auth.AuthEndpoints;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.service.auth.AuthService;
@@ -38,7 +38,7 @@ public class CustomCookieAuthenticationFilter extends OncePerRequestFilter {
   AuthService authService;
 
   @NonFinal
-  @Value(AppValues.JWT_TOKEN_COOKIE_NAME)
+  @Value(AppProperties.JWT_TOKEN_COOKIE_NAME)
   String tokenCookieName;
 
   @Override

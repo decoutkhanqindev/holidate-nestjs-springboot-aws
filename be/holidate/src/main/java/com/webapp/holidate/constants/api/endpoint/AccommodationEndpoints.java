@@ -5,4 +5,6 @@ public class AccommodationEndpoints {
   public static final String HOTELS = "/hotels";
   public static final String HOTEL_ID = "/{hotelId}";
   public static final String ROOMS = "/rooms";
+  public static final String ROOM_INVENTORY = "/room-inventory";
+  public static final String ROOM_INVENTORY_ID = "/{roomInventoryId}";
 }

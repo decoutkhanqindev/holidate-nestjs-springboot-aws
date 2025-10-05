@@ -1,6 +1,6 @@
 package com.webapp.holidate.service.auth;
 
-import com.webapp.holidate.constants.AppValues;
+import com.webapp.holidate.constants.AppProperties;
 import com.webapp.holidate.dto.request.auth.email.SendEmailVerificationRequest;
 import com.webapp.holidate.dto.request.auth.email.VerifyEmailRequest;
 import com.webapp.holidate.dto.response.auth.VerificationResponse;
@@ -39,15 +39,15 @@ public class EmailService {
   TemplateEngine templateEngine;
 
   @NonFinal
-  @Value(AppValues.OTP_EXPIRATION_MILLIS)
+  @Value(AppProperties.OTP_EXPIRATION_MILLIS)
   long otpExpirationMillis;
 
   @NonFinal
-  @Value(AppValues.OTP_MAX_ATTEMPTS)
+  @Value(AppProperties.OTP_MAX_ATTEMPTS)
   int otpMaxAttempts;
 
   @NonFinal
-  @Value(AppValues.OTP_BLOCK_TIME_MILLIS)
+  @Value(AppProperties.OTP_BLOCK_TIME_MILLIS)
   long otpBlockTimeMillis;
 
   public SendEmailVerificationResponse sendVerificationEmail(SendEmailVerificationRequest request) {

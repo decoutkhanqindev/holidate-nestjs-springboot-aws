@@ -1,6 +1,6 @@
 package com.webapp.holidate.constants;
 
-public class AppValues {
+public class AppProperties {
   public static final String ADMIN_EMAIL = "${spring.admin.email}";
   public static final String ADMIN_PASSWORD = "${spring.admin.password}";
   public static final String ADMIN_FULL_NAME = "${spring.admin.fullname}";
@@ -20,4 +20,8 @@ public class AppValues {
   public static final String OTP_EXPIRATION_MILLIS = "${spring.otp.verification.expiration-millis}";
   public static final String OTP_MAX_ATTEMPTS = "${spring.otp.verification.max-attempts}";
   public static final String OTP_BLOCK_TIME_MILLIS = "${spring.otp.verification.block-time-millis}";
+  public static final String VAT_RATE = "${spring.pricing.vat-rate}";
+  public static final String SERVICE_FEE_RATE = "${spring.pricing.service-fee-rate}";
+  public static final String DYNAMIC_PRICING_LOOK_AHEAD_MILLIS = "${spring.pricing.dynamic-pricing.look-ahead-millis}";
+  public static final String WEEKEND_MULTIPLIER = "${spring.pricing.dynamic-pricing.weekend-multiplier}";
 }

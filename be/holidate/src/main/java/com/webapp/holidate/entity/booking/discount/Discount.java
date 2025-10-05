@@ -1,0 +1,51 @@
+package com.webapp.holidate.entity.booking.discount;
+
+import com.webapp.holidate.constants.db.DbTableNames;
+import jakarta.persistence.*;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+
+import java.time.LocalDate;
+
+@Entity
+@Table(name = DbTableNames.DISCOUNTS)
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+@ToString
+public class Discount {
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  @Column(nullable = false)
+  String id;
+
+  @Column(nullable = false)
+  String code;
+
+  @Column(nullable = false)
+  double percentage; // e.g., 10.0 for a 10% discount
+
+  @Column(nullable = false)
+  int usageLimit;
+
+  @Column(nullable = false)
+  int timesUsed;
+
+  @Column(nullable = false)
+  int minBookingPrice;
+
+  @Column(nullable = false)
+  int minBookingCount;
+
+  @Column(nullable = false)
+  LocalDate validFrom;
+
+  @Column(nullable = false)
+  LocalDate validTo;
+
+  @Column(nullable = false)
+  boolean active;
+}

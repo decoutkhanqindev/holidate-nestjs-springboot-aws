@@ -1,7 +1,7 @@
 package com.webapp.holidate.config.security.oauth2;
 
 import com.nimbusds.jose.JOSEException;
-import com.webapp.holidate.constants.AppValues;
+import com.webapp.holidate.constants.AppProperties;
 import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.entity.user.UserAuthInfo;
 import com.webapp.holidate.exception.AppException;
@@ -34,19 +34,19 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
   UserAuthInfoRepository authInfoRepository;
 
   @NonFinal
-  @Value(AppValues.FRONTEND_LOGIN_SUCCESS_URL)
+  @Value(AppProperties.FRONTEND_LOGIN_SUCCESS_URL)
   String frontendLoginSuccessUrl;
 
   @NonFinal
-  @Value(AppValues.JWT_ACCESS_TOKEN_EXPIRATION_MILLIS)
+  @Value(AppProperties.JWT_ACCESS_TOKEN_EXPIRATION_MILLIS)
   long accessTokenExpirationMillis;
 
   @NonFinal
-  @Value(AppValues.JWT_REFRESH_TOKEN_EXPIRATION_MILLIS)
+  @Value(AppProperties.JWT_REFRESH_TOKEN_EXPIRATION_MILLIS)
   long refreshTokenExpirationMillis;
 
   @NonFinal
-  @Value(AppValues.JWT_TOKEN_COOKIE_NAME)
+  @Value(AppProperties.JWT_TOKEN_COOKIE_NAME)
   String tokenCookieName;
 
   @Override

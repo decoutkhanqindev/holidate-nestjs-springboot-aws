@@ -3,7 +3,7 @@ package com.webapp.holidate.config.security;
 import com.webapp.holidate.config.security.filter.CustomCookieAuthenticationFilter;
 import com.webapp.holidate.config.security.oauth2.CustomOAuth2AuthenticationFailureHandler;
 import com.webapp.holidate.config.security.oauth2.CustomOAuth2AuthenticationSuccessHandler;
-import com.webapp.holidate.constants.AppValues;
+import com.webapp.holidate.constants.AppProperties;
 import com.webapp.holidate.constants.api.endpoint.*;
 import com.webapp.holidate.constants.api.endpoint.auth.AuthEndpoints;
 import com.webapp.holidate.service.auth.GoogleService;
@@ -49,7 +49,7 @@ public class SecurityConfig {
   CustomCookieAuthenticationFilter cookieAuthenticationFilter;
 
   @NonFinal
-  @Value(AppValues.FRONTEND_URL)
+  @Value(AppProperties.FRONTEND_URL)
   String frontendUrl;
 
   @Bean

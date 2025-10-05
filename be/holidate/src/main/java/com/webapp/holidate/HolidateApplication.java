@@ -2,12 +2,12 @@ package com.webapp.holidate;
 
 import com.webapp.holidate.constants.EnvVariables;
 import io.github.cdimascio.dotenv.Dotenv;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
-@Slf4j
 @SpringBootApplication
+@EnableScheduling
 public class HolidateApplication {
   public static void main(String[] args) {
     Dotenv dotenv = Dotenv.load();
@@ -40,6 +40,10 @@ public class HolidateApplication {
     System.setProperty(EnvVariables.OTP_EXPIRATION_MILLIS, dotenv.get(EnvVariables.OTP_EXPIRATION_MILLIS));
     System.setProperty(EnvVariables.OTP_MAX_ATTEMPTS, dotenv.get(EnvVariables.OTP_MAX_ATTEMPTS));
     System.setProperty(EnvVariables.OTP_BLOCK_TIME_MILLIS, dotenv.get(EnvVariables.OTP_BLOCK_TIME_MILLIS));
+    System.setProperty(EnvVariables.VAT_RATE, dotenv.get(EnvVariables.VAT_RATE));
+    System.setProperty(EnvVariables.SERVICE_FEE_RATE, dotenv.get(EnvVariables.SERVICE_FEE_RATE));
+    System.setProperty(EnvVariables.DYNAMIC_PRICING_LOOK_AHEAD_MILLIS, dotenv.get(EnvVariables.DYNAMIC_PRICING_LOOK_AHEAD_MILLIS));
+    System.setProperty(EnvVariables.WEEKEND_PRICE_MULTIPLIER, dotenv.get(EnvVariables.WEEKEND_PRICE_MULTIPLIER));
 
     SpringApplication.run(HolidateApplication.class, args);
   }

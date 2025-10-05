@@ -1,6 +1,6 @@
 package com.webapp.holidate.config;
 
-import com.webapp.holidate.constants.AppValues;
+import com.webapp.holidate.constants.AppProperties;
 import com.webapp.holidate.entity.user.Role;
 import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.entity.user.UserAuthInfo;
@@ -29,12 +29,12 @@ public class ApplicationInitConfig {
   PasswordEncoder passwordEncoder;
 
   @NonFinal
-  @Value(AppValues.ADMIN_EMAIL)
+  @Value(AppProperties.ADMIN_EMAIL)
   String adminEmail;
-  @Value(AppValues.ADMIN_PASSWORD)
+  @Value(AppProperties.ADMIN_PASSWORD)
   @NonFinal
   String adminPassword;
-  @Value(AppValues.ADMIN_FULL_NAME)
+  @Value(AppProperties.ADMIN_FULL_NAME)
   @NonFinal
   String adminFullName;
 

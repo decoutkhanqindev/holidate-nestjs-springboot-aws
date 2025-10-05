@@ -7,7 +7,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @Getter
-public enum RoomStatus {
+public enum RoomStatusType {
   AVAILABLE("available"),
   UNAVAILABLE("unavailable"),
   MAINTENANCE("maintenance"),

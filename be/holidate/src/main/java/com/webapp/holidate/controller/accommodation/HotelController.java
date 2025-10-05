@@ -60,7 +60,7 @@ public class HotelController {
       .build();
   }
 
-  @PutMapping(value = CommonEndpoints.ID, consumes = "application/json")
+  @PutMapping(path = CommonEndpoints.ID, consumes = "multipart/form-data")
   public ApiResponse<HotelDetailsResponse> update(
     @PathVariable String id,
     @RequestBody @Valid HotelUpdateRequest request
