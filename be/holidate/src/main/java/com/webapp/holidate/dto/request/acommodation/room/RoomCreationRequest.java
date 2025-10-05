@@ -41,7 +41,7 @@ public class RoomCreationRequest {
   @PositiveOrZero(message = "MAX_CHILDREN_MUST_BE_POSITIVE_OR_ZERO")
   int maxChildren;
 
-  @Positive(message = "BASE_PRICE_PER_NIGHT_MUST_BE_POSITIVE")
+  @Positive(message = "PRICE_MUST_BE_POSITIVE")
   double basePricePerNight;
 
   @NotBlank(message = "BED_TYPE_ID_NOT_BLANK")

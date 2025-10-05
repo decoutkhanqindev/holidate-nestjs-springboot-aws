@@ -3,7 +3,7 @@ package com.webapp.holidate.dto.response.acommodation.room;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Data
 @Builder
@@ -16,8 +16,7 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode
 public class RoomInventoryResponse {
   String roomId;
-  LocalDateTime date;
-  double discount;
+  LocalDate date;
   double price;
   int availableRooms;
   String status;

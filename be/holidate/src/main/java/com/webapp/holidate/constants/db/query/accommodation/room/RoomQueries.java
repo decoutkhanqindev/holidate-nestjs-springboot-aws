@@ -1,4 +1,4 @@
-package com.webapp.holidate.constants.db.query.accommodation;
+package com.webapp.holidate.constants.db.query.accommodation.room;
 
 public class RoomQueries {
   public static final String FIND_ALL_BY_HOTEL_ID_WITH_BED_TYPE_PHOTOS_AMENITIES_INVENTORIES_CANCELLATION_POLICY_RESCHEDULE_POLICY =

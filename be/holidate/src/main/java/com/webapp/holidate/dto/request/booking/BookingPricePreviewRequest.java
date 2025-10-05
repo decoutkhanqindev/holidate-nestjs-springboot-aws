@@ -14,7 +14,7 @@ import java.time.LocalDate;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class RoomPricePreviewRequest {
+public class BookingPricePreviewRequest {
   String roomId;
   LocalDate startDate;
   LocalDate endDate;

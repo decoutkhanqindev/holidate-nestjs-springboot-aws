@@ -100,6 +100,7 @@ public enum ErrorType {
   HOTEL_ID_NOT_BLANK(400, "Hotel ID is required"),
   ROOM_NOT_FOUND(404, "Room not found"),
   ROOM_EXISTS(409, "Room already exists in this hotel"),
+  ROOM_ID_NOT_BLANK(400, "Room ID is required"),
   CANCELLATION_POLICY_ID_NOT_BLANK(400, "Cancellation policy ID is required"),
   ROOM_STATUS_NOT_BLANK(400, "Room status is required"),
   ROOM_STATUS_INVALID(400, "Room status must be available, booked, maintenance, or closed"),
@@ -107,7 +108,7 @@ public enum ErrorType {
   AREA_MUST_BE_POSITIVE(400, "Area must be a positive number"),
   MAX_ADULTS_MUST_BE_POSITIVE(400, "Max adults must be a positive number"),
   MAX_CHILDREN_MUST_BE_POSITIVE_OR_ZERO(400, "Max children must be zero or a positive number"),
-  BASE_PRICE_PER_NIGHT_MUST_BE_POSITIVE(400, "Base price per night must be a positive number"),
+  PRICE_MUST_BE_POSITIVE(400, "Base price per night must be a positive number"),
   QUANTITY_MUST_BE_POSITIVE(400, "Quantity must be a positive number"),
   BED_TYPE_ID_NOT_BLANK(400, "Bed type ID is required"),
   SMOKING_ALLOWED_NOT_BLANK(400, "Smoking allowed is required"),
@@ -115,6 +116,12 @@ public enum ErrorType {
   BREAKFAST_INCLUDED_NOT_BLANK(400, "Breakfast included is required"),
   AMENITY_IDS_NOT_EMPTY(400, "At least one amenity ID is required"),
   BED_TYPE_NOT_FOUND(404, "Bed type not found"),
+  START_DATE_NOT_BLANK(400, "Start date is required"),
+  END_DATE_NOT_BLANK(400, "End date is required"),
+
+  // discount errors
+  HOLIDAY_DISCOUNT_NOT_FOUND(404, "SpecialDay discount not found"),
+  HOLIDAY_DISCOUNT_EXISTS(409, "SpecialDay discount already exists"),
 
   // policy errors
   CHECK_IN_OUT_TIME_INVALID(400, "Check-in and check-out time must be in HH:mm format"),

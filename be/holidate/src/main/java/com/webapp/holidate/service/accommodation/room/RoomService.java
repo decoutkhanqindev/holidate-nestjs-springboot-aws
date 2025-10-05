@@ -1,4 +1,4 @@
-package com.webapp.holidate.service.accommodation;
+package com.webapp.holidate.service.accommodation.room;
 
 import com.webapp.holidate.dto.request.acommodation.room.RoomCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.room.RoomUpdateRequest;
@@ -19,7 +19,6 @@ import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.acommodation.RoomMapper;
 import com.webapp.holidate.repository.accommodation.HotelRepository;
 import com.webapp.holidate.repository.accommodation.room.BedTypeRepository;
-import com.webapp.holidate.repository.accommodation.room.RoomInventoryRepository;
 import com.webapp.holidate.repository.accommodation.room.RoomRepository;
 import com.webapp.holidate.repository.amenity.AmenityRepository;
 import com.webapp.holidate.repository.amenity.RoomAmenityRepository;
@@ -48,12 +47,11 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@RequiredArgsConstructor()
+@RequiredArgsConstructor
 public class RoomService {
   HotelRepository hotelRepository;
   RoomRepository roomRepository;
   BedTypeRepository bedTypeRepository;
-  RoomInventoryRepository roomInventoryRepository;
   CancellationPolicyRepository cancellationPolicyRepository;
   ReschedulePolicyRepository reschedulePolicyRepository;
   AmenityRepository amenityRepository;
@@ -63,6 +61,7 @@ public class RoomService {
   RoomPhotoRepository roomPhotoRepository;
 
   FileService fileService;
+  RoomInventoryService roomInventoryService;
 
   RoomMapper roomMapper;
 
@@ -150,6 +149,9 @@ public class RoomService {
     }
 
     roomRepository.save(room);
+
+    roomInventoryService.create(room, 365);
+
     return roomMapper.toRoomDetailsResponse(room);
   }
 

@@ -2,8 +2,6 @@ package com.webapp.holidate.dto.request.acommodation.room;
 
 import com.webapp.holidate.constants.ValidationPatterns;
 import com.webapp.holidate.dto.request.image.PhotoCreationRequest;
-import jakarta.validation.constraints.DecimalMax;
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -37,7 +35,7 @@ public class RoomUpdateRequest {
   @PositiveOrZero(message = "MAX_CHILDREN_MUST_BE_POSITIVE_OR_ZERO")
   Integer maxChildren;
 
-  @Positive(message = "BASE_PRICE_PER_NIGHT_MUST_BE_POSITIVE")
+  @Positive(message = "PRICE_MUST_BE_POSITIVE")
   Double basePricePerNight;
 
   String bedTypeId;
