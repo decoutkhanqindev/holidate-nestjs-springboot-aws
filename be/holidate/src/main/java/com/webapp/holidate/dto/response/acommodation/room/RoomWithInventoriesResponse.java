@@ -21,25 +21,19 @@ import java.util.List;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class RoomDetailsResponse {
+public class RoomWithInventoriesResponse {
   String id;
   String name;
-  HotelBriefResponse hotel;
   String view;
   double area;
-  List<PhotoCategoryResponse> photos;
   int maxAdults;
   int maxChildren;
   double basePricePerNight;
   BedTypeResponse bedType;
-  CancellationPolicyResponse cancellationPolicy;
-  ReschedulePolicyResponse reschedulePolicy;
   boolean smokingAllowed;
   boolean wifiAvailable;
   boolean breakfastIncluded;
   int quantity;
   String status;
-  List<AmenityCategoryResponse> amenities;
-  LocalDateTime createdAt;
-  LocalDateTime updatedAt;
+  List<RoomInventoryResponse> inventories;
 }

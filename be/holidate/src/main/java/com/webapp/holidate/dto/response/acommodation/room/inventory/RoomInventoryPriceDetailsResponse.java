@@ -1,4 +1,4 @@
-package com.webapp.holidate.dto.response.acommodation.room;
+package com.webapp.holidate.dto.response.acommodation.room.inventory;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;

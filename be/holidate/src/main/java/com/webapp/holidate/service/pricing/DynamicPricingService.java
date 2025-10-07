@@ -66,8 +66,8 @@ public class DynamicPricingService {
         LocalDate currentDate = inventory.getId().getDate();
         DayOfWeek dayOfWeek = currentDate.getDayOfWeek();
 
+        double newPrice;
         double basePrice = room.getBasePricePerNight();
-        double newPrice = basePrice;
 
         boolean isSpecialDay = specialDayMap.containsKey(currentDate);
         boolean isWeekend = dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY;

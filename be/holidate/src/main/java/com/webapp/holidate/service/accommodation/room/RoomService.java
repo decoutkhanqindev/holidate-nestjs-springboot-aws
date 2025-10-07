@@ -3,8 +3,10 @@ package com.webapp.holidate.service.accommodation.room;
 import com.webapp.holidate.dto.request.acommodation.room.RoomCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.room.RoomUpdateRequest;
 import com.webapp.holidate.dto.request.image.PhotoCreationRequest;
+import com.webapp.holidate.dto.response.acommodation.hotel.HotelBriefResponse;
 import com.webapp.holidate.dto.response.acommodation.room.RoomDetailsResponse;
 import com.webapp.holidate.dto.response.acommodation.room.RoomResponse;
+import com.webapp.holidate.dto.response.acommodation.room.inventory.RoomInventoryResponse;
 import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.entity.accommodation.amenity.Amenity;
 import com.webapp.holidate.entity.accommodation.amenity.RoomAmenity;
@@ -16,7 +18,8 @@ import com.webapp.holidate.entity.image.RoomPhoto;
 import com.webapp.holidate.entity.policy.cancelation.CancellationPolicy;
 import com.webapp.holidate.entity.policy.reschedule.ReschedulePolicy;
 import com.webapp.holidate.exception.AppException;
-import com.webapp.holidate.mapper.acommodation.RoomMapper;
+import com.webapp.holidate.mapper.acommodation.HotelMapper;
+import com.webapp.holidate.mapper.acommodation.room.RoomMapper;
 import com.webapp.holidate.repository.accommodation.HotelRepository;
 import com.webapp.holidate.repository.accommodation.room.BedTypeRepository;
 import com.webapp.holidate.repository.accommodation.room.RoomRepository;
@@ -39,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -69,7 +73,7 @@ public class RoomService {
   public RoomDetailsResponse create(RoomCreationRequest request) throws IOException {
     String hotelId = request.getHotelId().trim();
     Hotel hotel = hotelRepository.findById(hotelId)
-        .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
 
     String name = request.getName().trim();
     boolean roomExists = roomRepository.existsByNameAndHotelId(name, hotelId);
@@ -79,7 +83,7 @@ public class RoomService {
 
     String bedTypeId = request.getBedTypeId();
     BedType bedType = bedTypeRepository.findById(bedTypeId)
-        .orElseThrow(() -> new AppException(ErrorType.BED_TYPE_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.BED_TYPE_NOT_FOUND));
 
     Room room = roomMapper.toEntity(request);
     room.setHotel(hotel);
@@ -96,7 +100,7 @@ public class RoomService {
       for (PhotoCreationRequest photoRequest : photos) {
         String categoryId = photoRequest.getCategoryId();
         PhotoCategory category = photoCategoryRepository.findById(categoryId)
-            .orElseThrow(() -> new AppException(ErrorType.PHOTO_CATEGORY_NOT_FOUND));
+          .orElseThrow(() -> new AppException(ErrorType.PHOTO_CATEGORY_NOT_FOUND));
 
         List<MultipartFile> files = photoRequest.getFiles();
         boolean hasFiles = files != null && !files.isEmpty();
@@ -109,15 +113,15 @@ public class RoomService {
               String fileName = file.getOriginalFilename();
               String url = fileService.createFileUrl(fileName);
               Photo photo = Photo.builder()
-                  .url(url)
-                  .category(category)
-                  .build();
+                .url(url)
+                .category(category)
+                .build();
               photoRepository.save(photo);
 
               RoomPhoto roomPhoto = RoomPhoto.builder()
-                  .room(room)
-                  .photo(photo)
-                  .build();
+                .room(room)
+                .photo(photo)
+                .build();
               roomPhotoRepository.save(roomPhoto);
               roomPhotos.add(roomPhoto);
             }
@@ -149,23 +153,20 @@ public class RoomService {
     }
 
     roomRepository.save(room);
-
-    roomInventoryService.create(room, 365);
-
     return roomMapper.toRoomDetailsResponse(room);
   }
 
   public List<RoomResponse> getAllByHotelId(String hotelId) {
     return roomRepository
-        .findAllByHotelIdWithBedTypePhotosAmenitiesInventoriesCancellationPolicyReschedulePolicy(hotelId).stream()
-        .map(roomMapper::toRoomResponse)
-        .toList();
+      .findAllByHotelIdWithBedTypePhotosAmenitiesInventoriesCancellationPolicyReschedulePolicy(hotelId).stream()
+      .map(roomMapper::toRoomResponse)
+      .toList();
   }
 
   @Transactional
   public RoomDetailsResponse update(String id, RoomUpdateRequest request) throws IOException {
-    Room room = roomRepository.findById(id)
-        .orElseThrow(() -> new AppException(ErrorType.ROOM_NOT_FOUND));
+    Room room = roomRepository.findByIdWithHotelBedTypePhotosAmenitiesInventoriesCancellationPolicyReschedulePolicy(id)
+      .orElseThrow(() -> new AppException(ErrorType.ROOM_NOT_FOUND));
 
     updateInfo(room, request);
     updatePhotos(room, request);
@@ -214,7 +215,7 @@ public class RoomService {
 
     Double newBasePricePerNight = request.getBasePricePerNight();
     boolean basePriceChanged = newBasePricePerNight != null
-        && !newBasePricePerNight.equals(room.getBasePricePerNight());
+      && !newBasePricePerNight.equals(room.getBasePricePerNight());
     if (basePriceChanged) {
       room.setBasePricePerNight(newBasePricePerNight);
     }
@@ -223,7 +224,7 @@ public class RoomService {
     boolean bedTypeChanged = newBedTypeId != null && !newBedTypeId.equals(room.getBedType().getId());
     if (bedTypeChanged) {
       BedType bedType = bedTypeRepository.findById(newBedTypeId)
-          .orElseThrow(() -> new AppException(ErrorType.BED_TYPE_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.BED_TYPE_NOT_FOUND));
       room.setBedType(bedType);
     }
 
@@ -241,7 +242,7 @@ public class RoomService {
 
     Boolean newBreakfastIncluded = request.getBreakfastIncluded();
     boolean breakfastIncludedChanged = newBreakfastIncluded != null
-        && !newBreakfastIncluded.equals(room.isBreakfastIncluded());
+      && !newBreakfastIncluded.equals(room.isBreakfastIncluded());
     if (breakfastIncludedChanged) {
       room.setBreakfastIncluded(newBreakfastIncluded);
     }
@@ -267,8 +268,8 @@ public class RoomService {
     boolean hasPhotosToDelete = photoIdsToDelete != null && !photoIdsToDelete.isEmpty();
     if (hasPhotosToDelete) {
       List<RoomPhoto> photosToRemove = currentPhotos.stream()
-          .filter(roomPhoto -> photoIdsToDelete.contains(roomPhoto.getPhoto().getId()))
-          .toList();
+        .filter(roomPhoto -> photoIdsToDelete.contains(roomPhoto.getPhoto().getId()))
+        .toList();
 
       for (RoomPhoto photoToRemove : photosToRemove) {
         currentPhotos.remove(photoToRemove);
@@ -277,7 +278,7 @@ public class RoomService {
 
       for (String photoId : photoIdsToDelete) {
         Photo photo = photoRepository.findById(photoId)
-            .orElseThrow(() -> new AppException(ErrorType.PHOTO_NOT_FOUND));
+          .orElseThrow(() -> new AppException(ErrorType.PHOTO_NOT_FOUND));
         String fileUrl = photo.getUrl();
         fileService.delete(fileUrl);
         photoRepository.delete(photo);
@@ -291,7 +292,7 @@ public class RoomService {
       for (PhotoCreationRequest photoToAdd : photosToAdd) {
         String categoryId = photoToAdd.getCategoryId();
         PhotoCategory category = photoCategoryRepository.findById(categoryId)
-            .orElseThrow(() -> new AppException(ErrorType.PHOTO_CATEGORY_NOT_FOUND));
+          .orElseThrow(() -> new AppException(ErrorType.PHOTO_CATEGORY_NOT_FOUND));
 
         List<MultipartFile> files = photoToAdd.getFiles();
         boolean hasFiles = files != null && !files.isEmpty();
@@ -304,15 +305,15 @@ public class RoomService {
               String fileName = file.getOriginalFilename();
               String url = fileService.createFileUrl(fileName);
               Photo photo = Photo.builder()
-                  .url(url)
-                  .category(category)
-                  .build();
+                .url(url)
+                .category(category)
+                .build();
               photoRepository.save(photo);
 
               RoomPhoto roomPhoto = RoomPhoto.builder()
-                  .room(room)
-                  .photo(photo)
-                  .build();
+                .room(room)
+                .photo(photo)
+                .build();
               roomPhotoRepository.save(roomPhoto);
               currentPhotos.add(roomPhoto);
             }
@@ -337,19 +338,19 @@ public class RoomService {
     boolean hasAmenitiesToAdd = amenityIdsToAdd != null && !amenityIdsToAdd.isEmpty();
     if (hasAmenitiesToAdd) {
       Set<String> existingAmenityIds = currentAmenities.stream()
-          .map(roomAmenity -> roomAmenity.getAmenity().getId())
-          .collect(Collectors.toSet());
+        .map(roomAmenity -> roomAmenity.getAmenity().getId())
+        .collect(Collectors.toSet());
 
       for (String amenityId : amenityIdsToAdd) {
         boolean alreadyExists = existingAmenityIds.contains(amenityId);
         if (!alreadyExists) {
           Amenity amenity = amenityRepository.findById(amenityId)
-              .orElseThrow(() -> new AppException(ErrorType.AMENITY_NOT_FOUND));
+            .orElseThrow(() -> new AppException(ErrorType.AMENITY_NOT_FOUND));
 
           RoomAmenity roomAmenity = RoomAmenity.builder()
-              .room(room)
-              .amenity(amenity)
-              .build();
+            .room(room)
+            .amenity(amenity)
+            .build();
           roomAmenityRepository.save(roomAmenity);
           currentAmenities.add(roomAmenity);
         }
@@ -365,7 +366,7 @@ public class RoomService {
 
     if (hasCancellationPolicyUpdate) {
       CancellationPolicy cancellationPolicy = cancellationPolicyRepository.findById(newCancellationPolicyId)
-          .orElseThrow(() -> new AppException(ErrorType.CANCELLATION_POLICY_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.CANCELLATION_POLICY_NOT_FOUND));
       room.setCancellationPolicy(cancellationPolicy);
     }
 
@@ -374,7 +375,7 @@ public class RoomService {
 
     if (hasReschedulePolicyUpdate) {
       ReschedulePolicy reschedulePolicy = reschedulePolicyRepository.findById(newReschedulePolicyId)
-          .orElseThrow(() -> new AppException(ErrorType.RESCHEDULE_POLICY_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.RESCHEDULE_POLICY_NOT_FOUND));
       room.setReschedulePolicy(reschedulePolicy);
     }
   }

@@ -1,4 +1,4 @@
-package com.webapp.holidate.dto.request.acommodation.room;
+package com.webapp.holidate.dto.request.acommodation.room.inventory;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;

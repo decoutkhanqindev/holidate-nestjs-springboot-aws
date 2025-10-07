@@ -6,10 +6,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface RoomRepository extends JpaRepository<Room, String> {
   boolean existsByNameAndHotelId(String name, String hotelId);
 
   @Query(RoomQueries.FIND_ALL_BY_HOTEL_ID_WITH_BED_TYPE_PHOTOS_AMENITIES_INVENTORIES_CANCELLATION_POLICY_RESCHEDULE_POLICY)
   List<Room> findAllByHotelIdWithBedTypePhotosAmenitiesInventoriesCancellationPolicyReschedulePolicy(String hotelId);
+
+  @Query(RoomQueries.FIND_BY_ID_WITH_HOTEL_BED_TYPE_PHOTOS_AMENITIES_INVENTORIES_CANCELLATION_POLICY_RESCHEDULE_POLICY)
+  Optional<Room> findByIdWithHotelBedTypePhotosAmenitiesInventoriesCancellationPolicyReschedulePolicy(String id);
 }

@@ -118,6 +118,7 @@ public enum ErrorType {
   BED_TYPE_NOT_FOUND(404, "Bed type not found"),
   START_DATE_NOT_BLANK(400, "Start date is required"),
   END_DATE_NOT_BLANK(400, "End date is required"),
+  DAYS_NOT_POSITIVE(400, "Days must be a positive number"),
 
   // discount errors
   HOLIDAY_DISCOUNT_NOT_FOUND(404, "SpecialDay discount not found"),

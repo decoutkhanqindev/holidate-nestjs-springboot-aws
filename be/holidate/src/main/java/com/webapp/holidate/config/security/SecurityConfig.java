@@ -55,53 +55,66 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http.authorizeHttpRequests(request -> request
-        // A. public endpoints
-        // 1. auth endpoints
-        .requestMatchers(AuthEndpoints.AUTH + ALL_ENDPOINTS).permitAll()
-        // 2. location endpoints
-        .requestMatchers(HttpMethod.GET, LocationEndpoints.LOCATION + ALL_ENDPOINTS).permitAll()
-        // 3. accommodation endpoints
-        .requestMatchers(HttpMethod.GET, AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS).permitAll()
-        // 4. amenity endpoints
-        .requestMatchers(HttpMethod.GET, AmenityEndpoints.AMENITY + ALL_ENDPOINTS).permitAll()
+      // A. public endpoints
+      // 1. auth endpoints
+      .requestMatchers(AuthEndpoints.AUTH + ALL_ENDPOINTS).permitAll()
+      // 2. location endpoints
+      .requestMatchers(HttpMethod.GET, LocationEndpoints.LOCATION + ALL_ENDPOINTS).permitAll()
+      // 3. accommodation endpoints
+      .requestMatchers(HttpMethod.GET, AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS).permitAll()
+      // 4. amenity endpoints
+      .requestMatchers(HttpMethod.GET, AmenityEndpoints.AMENITY + ALL_ENDPOINTS).permitAll()
 
-        // B. protected endpoints
-        // I. user role
-        // 1. profile endpoints
-        .requestMatchers(HttpMethod.GET, UserEndpoints.USERS + CommonEndpoints.ID)
-        .hasAuthority(RoleType.USER.getValue())
-        .requestMatchers(HttpMethod.PUT, UserEndpoints.USERS + CommonEndpoints.ID)
-        .hasAuthority(RoleType.USER.getValue())
-        // II. admin role
-        // 1. profile endpoints
-        .requestMatchers(UserEndpoints.USERS + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
-        .requestMatchers(UserEndpoints.ROLES + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
-        // 2. location endpoints
-        .requestMatchers(LocationEndpoints.LOCATION + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
-        // 3. accommodation endpoints
-        .requestMatchers(AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
-        // 4. amenity endpoints
-        .requestMatchers(AmenityEndpoints.AMENITY + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
+      // B. protected endpoints
+      // I. user role
+      // 1. profile endpoints
+      .requestMatchers(HttpMethod.GET, UserEndpoints.USERS + CommonEndpoints.ID)
+      .hasAuthority(RoleType.USER.getValue())
+      .requestMatchers(HttpMethod.PUT, UserEndpoints.USERS + CommonEndpoints.ID)
+      .hasAuthority(RoleType.USER.getValue())
+      // II. partner role
+      // 1. profile endpoints
+      .requestMatchers(HttpMethod.GET, UserEndpoints.USERS + CommonEndpoints.ID)
+      .hasAuthority(RoleType.USER.getValue())
+      .requestMatchers(HttpMethod.PUT, UserEndpoints.USERS + CommonEndpoints.ID)
+      .hasAuthority(RoleType.USER.getValue())
+      // 2. accommodation endpoints
+      .requestMatchers(HttpMethod.POST, AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS)
+      .hasAuthority(RoleType.PARTNER.getValue())
+      .requestMatchers(HttpMethod.PUT, AccommodationEndpoints.ACCOMMODATION + CommonEndpoints.ID)
+      .hasAuthority(RoleType.PARTNER.getValue())
+      .requestMatchers(HttpMethod.DELETE, AccommodationEndpoints.ACCOMMODATION + CommonEndpoints.ID)
+      .hasAuthority(RoleType.PARTNER.getValue())
+      // III. admin role
+      // 1. profile endpoints
+      .requestMatchers(UserEndpoints.USERS + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
+      .requestMatchers(UserEndpoints.ROLES + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
+      // 2. location endpoints
+      .requestMatchers(LocationEndpoints.LOCATION + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
+      // 3. accommodation endpoints
+      .requestMatchers(AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
+      // 4. amenity endpoints
+      .requestMatchers(AmenityEndpoints.AMENITY + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
 
-        // C. any other endpoints
-        .anyRequest().authenticated());
+      // C. any other endpoints
+      .anyRequest().authenticated());
 
     http
-        .csrf(CsrfConfigurer::disable)
-        .cors(corsConfigurer -> corsConfigurer.configurationSource(corsConfigurationSource()))
-        .oauth2Login(oAuth2LoginConfigurer -> oAuth2LoginConfigurer
-            .userInfoEndpoint(userInfoEndpointConfig -> userInfoEndpointConfig.userService(googleService))
-            .successHandler(successHandler)
-            .failureHandler(failureHandler))
-        .formLogin(FormLoginConfigurer::disable);
+      .csrf(CsrfConfigurer::disable)
+      .cors(corsConfigurer -> corsConfigurer.configurationSource(corsConfigurationSource()))
+      .oauth2Login(oAuth2LoginConfigurer -> oAuth2LoginConfigurer
+        .userInfoEndpoint(userInfoEndpointConfig -> userInfoEndpointConfig.userService(googleService))
+        .successHandler(successHandler)
+        .failureHandler(failureHandler))
+      .formLogin(FormLoginConfigurer::disable);
 
     http
-        .oauth2ResourceServer(oAuth2ResourceServerConfigurer -> oAuth2ResourceServerConfigurer
-            .jwt(jwtConfigurer -> jwtConfigurer
-                .decoder(jwtDecoder)
-                .jwtAuthenticationConverter(jwtAuthenticationConverter()))
-            .authenticationEntryPoint(authenticationEntryPoint)
-            .accessDeniedHandler(accessDeniedHandler));
+      .oauth2ResourceServer(oAuth2ResourceServerConfigurer -> oAuth2ResourceServerConfigurer
+        .jwt(jwtConfigurer -> jwtConfigurer
+          .decoder(jwtDecoder)
+          .jwtAuthenticationConverter(jwtAuthenticationConverter()))
+        .authenticationEntryPoint(authenticationEntryPoint)
+        .accessDeniedHandler(accessDeniedHandler));
 
     http.addFilterBefore(cookieAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

@@ -1,6 +1,7 @@
 package com.webapp.holidate.mapper.acommodation;
 
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelCreationRequest;
+import com.webapp.holidate.dto.response.acommodation.hotel.HotelBriefResponse;
 import com.webapp.holidate.dto.response.acommodation.hotel.HotelDetailsResponse;
 import com.webapp.holidate.dto.response.acommodation.hotel.HotelResponse;
 import com.webapp.holidate.entity.accommodation.Hotel;
@@ -50,4 +51,6 @@ public interface HotelMapper {
   @Mapping(source = "photos", target = "photos", qualifiedByName = "hotelPhotosToCategories")
   @Mapping(source = "amenities", target = "amenities", qualifiedByName = "hotelAmenitiesToCategories")
   HotelDetailsResponse toHotelDetailsResponse(Hotel hotel);
+
+  HotelBriefResponse toHotelBriefResponse(Hotel hotel);
 }

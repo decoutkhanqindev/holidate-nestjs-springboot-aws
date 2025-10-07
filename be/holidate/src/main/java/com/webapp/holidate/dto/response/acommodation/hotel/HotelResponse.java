@@ -36,7 +36,6 @@ public class HotelResponse {
   int starRating;
   double averageScore;
   HotelPolicyResponse policy;
-  PartnerResponse partner;
   String status;
   double rawPricePerNight;
   double currentPricePerNight;
