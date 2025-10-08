@@ -2,8 +2,9 @@ package com.webapp.holidate.controller.accommodation;
 
 import com.webapp.holidate.constants.api.endpoint.AccommodationEndpoints;
 import com.webapp.holidate.constants.api.endpoint.CommonEndpoints;
-import com.webapp.holidate.constants.api.param.BookingParams;
+import com.webapp.holidate.constants.api.param.HotelParams;
 import com.webapp.holidate.constants.api.param.LocationParams;
+import com.webapp.holidate.constants.api.param.RoomParams;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelUpdateRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
@@ -36,17 +37,25 @@ public class HotelController {
 
   @GetMapping
   public ApiResponse<List<HotelResponse>> getAll(
+    // location params
     @RequestParam(value = LocationParams.COUNTRY_ID, required = false) String countryId,
     @RequestParam(value = LocationParams.PROVINCE_ID, required = false) String provinceId,
     @RequestParam(value = LocationParams.CITY_ID, required = false) String cityId,
     @RequestParam(value = LocationParams.DISTRICT_ID, required = false) String districtId,
     @RequestParam(value = LocationParams.WARD_ID, required = false) String wardId,
     @RequestParam(value = LocationParams.STREET_ID, required = false) String streetId,
-    @RequestParam(value = BookingParams.ADULTS_COUNT, required = false) Integer adultsCount,
-    @RequestParam(value = BookingParams.CHILDREN_COUNT, required = false) Integer childrenCount,
-    @RequestParam(value = BookingParams.ROOMS_COUNT, required = false) Integer roomsCount
+    // room params
+    @RequestParam(value = RoomParams.ADULTS_COUNT, required = false) Integer maxAdults,
+    @RequestParam(value = RoomParams.CHILDREN_COUNT, required = false) Integer maxChildren,
+    @RequestParam(value = RoomParams.ROOMS_COUNT, required = false) Integer maxRooms,
+    @RequestParam(value = RoomParams.MIN_PRICE, required = false) Double minPrice,
+    @RequestParam(value = RoomParams.MAX_PRICE, required = false) Double maxPrice,
+    @RequestParam(value = HotelParams.AMENITY_IDS, required = false) List<String> amenityIds
   ) {
-    List<HotelResponse> responses = hotelService.getAll(countryId, provinceId, cityId, districtId, wardId, streetId);
+    List<HotelResponse> responses = hotelService.getAll(
+      countryId, provinceId, cityId, districtId, wardId, streetId,
+      maxAdults, maxChildren, maxRooms, minPrice, maxPrice, amenityIds
+    );
     return ApiResponse.<List<HotelResponse>>builder()
       .data(responses)
       .build();

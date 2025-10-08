@@ -40,11 +40,13 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
@@ -136,19 +138,33 @@ public class HotelService {
     String cityId,
     String districtId,
     String wardId,
-    String streetId
+    String streetId,
+    Integer maxAdults,
+    Integer maxChildren,
+    Integer maxRooms,
+    Double minPrice,
+    Double maxPrice,
+    List<String> amenityIds
   ) {
-    boolean hasLocationFilter = countryId != null || provinceId != null || cityId != null
-      || districtId != null || wardId != null || streetId != null;
+    boolean hasAnyFilter = countryId != null || provinceId != null || cityId != null
+      || districtId != null || wardId != null || streetId != null
+      || maxAdults != null || maxChildren != null || maxRooms != null
+      || minPrice != null || maxPrice != null || (amenityIds != null && !amenityIds.isEmpty());
 
-    if (hasLocationFilter) {
-      return hotelRepository.findAllByLocationFilterWithLocationsPhotosPartnerPolicy(
-          countryId, provinceId, cityId, districtId, wardId, streetId
+    LocalDate currentDate = LocalDate.now();
+
+    if (hasAnyFilter) {
+      int amenityIdsCount = amenityIds != null ? amenityIds.size() : 0;
+
+      return hotelRepository.findAllByFilterWithLocationsPhotosPolicy(
+          countryId, provinceId, cityId, districtId, wardId, streetId,
+          maxAdults, maxChildren, maxRooms, minPrice, maxPrice,
+          currentDate, amenityIds, amenityIdsCount
         ).stream()
         .map(hotelMapper::toHotelResponse)
         .toList();
     } else {
-      return hotelRepository.findAllWithLocationsPhotosPartnerPolicy().stream()
+      return hotelRepository.findAllWithLocationsPhotosPolicy().stream()
         .map(hotelMapper::toHotelResponse)
         .toList();
     }

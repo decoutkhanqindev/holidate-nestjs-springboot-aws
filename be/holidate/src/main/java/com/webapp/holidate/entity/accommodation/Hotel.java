@@ -108,7 +108,7 @@ public class Hotel {
   @OneToMany(mappedBy = "hotel")
   @ToString.Exclude
   @Builder.Default
-  List<Room> rooms = new ArrayList<>();
+  Set<Room> rooms = new HashSet<>();
 
   @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   @Builder.Default

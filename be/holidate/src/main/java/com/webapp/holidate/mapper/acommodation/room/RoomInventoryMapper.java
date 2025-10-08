@@ -13,11 +13,4 @@ public interface RoomInventoryMapper {
   @Mapping(target = "roomId", source = "id.roomId")
   @Mapping(target = "date", source = "id.date")
   RoomInventoryResponse toRoomInventoryResponse(RoomInventory inventory);
-
-  @Named("roomInventoriesToInventoryResponses")
-  default List<RoomInventoryResponse> toRoomInventoryResponses(List<RoomInventory> inventory) {
-    return inventory.stream()
-      .map(this::toRoomInventoryResponse)
-      .toList();
-  }
 }

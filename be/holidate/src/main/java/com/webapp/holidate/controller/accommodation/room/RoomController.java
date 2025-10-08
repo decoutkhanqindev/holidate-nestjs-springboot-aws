@@ -33,11 +33,19 @@ public class RoomController {
       .build();
   }
 
-  @GetMapping(AccommodationEndpoints.HOTEL_ID)
+  @GetMapping(AccommodationEndpoints.HOTEL + AccommodationEndpoints.HOTEL_ID)
   public ApiResponse<List<RoomResponse>> getAllByHotelId(@PathVariable String hotelId) {
     List<RoomResponse> responses = service.getAllByHotelId(hotelId);
     return ApiResponse.<List<RoomResponse>>builder()
       .data(responses)
+      .build();
+  }
+
+  @GetMapping(CommonEndpoints.ID)
+  public ApiResponse<RoomDetailsResponse> getById(@PathVariable String id) {
+    RoomDetailsResponse response = service.getById(id);
+    return ApiResponse.<RoomDetailsResponse>builder()
+      .data(response)
       .build();
   }
 

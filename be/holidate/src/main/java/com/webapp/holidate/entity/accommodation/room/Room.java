@@ -93,7 +93,7 @@ public class Room {
   @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
   @ToString.Exclude
   @Builder.Default
-  List<RoomInventory> inventories = new ArrayList<>();
+  Set<RoomInventory> inventories = new HashSet<>();
 
   @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   @Builder.Default

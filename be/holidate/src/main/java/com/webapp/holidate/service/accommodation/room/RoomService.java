@@ -163,6 +163,12 @@ public class RoomService {
       .toList();
   }
 
+  public RoomDetailsResponse getById(String id) {
+    Room room = roomRepository.findByIdWithHotelBedTypePhotosAmenitiesInventoriesCancellationPolicyReschedulePolicy(id)
+      .orElseThrow(() -> new AppException(ErrorType.ROOM_NOT_FOUND));
+    return roomMapper.toRoomDetailsResponse(room);
+  }
+
   @Transactional
   public RoomDetailsResponse update(String id, RoomUpdateRequest request) throws IOException {
     Room room = roomRepository.findByIdWithHotelBedTypePhotosAmenitiesInventoriesCancellationPolicyReschedulePolicy(id)
