@@ -1,4 +1,4 @@
-package com.webapp.holidate.config.security;
+package com.webapp.holidate.component.security;
 
 import com.nimbusds.jose.JOSEException;
 import com.webapp.holidate.constants.AppProperties;

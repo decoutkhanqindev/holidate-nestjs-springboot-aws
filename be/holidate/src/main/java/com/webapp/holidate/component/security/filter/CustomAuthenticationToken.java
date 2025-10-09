@@ -1,4 +1,4 @@
-package com.webapp.holidate.config.security.filter;
+package com.webapp.holidate.component.security.filter;
 
 import lombok.AccessLevel;
 import lombok.Getter;

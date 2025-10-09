@@ -23,29 +23,49 @@ public class HotelQueries {
       "LEFT JOIN FETCH h.rooms r " +
       "LEFT JOIN FETCH r.inventories i";
 
-  public static final String FIND_ALL_BY_FILTER_WITH_LOCATIONS_PHOTOS_POLICY =
-    FIND_ALL_BASE +
+  public static final String FIND_IDS_BY_FILTER =
+    "SELECT DISTINCT h.id FROM Hotel h " +
       "LEFT JOIN h.amenities ha " +
-      "LEFT JOIN FETCH h.rooms r " +
-      "LEFT JOIN FETCH r.inventories i " +
-      "WHERE i.id.date = :currentDate " +
-      // location filters
-      "AND (:countryId IS NULL OR h.country.id = :countryId) " +
+      "WHERE " +
+      "(:countryId IS NULL OR h.country.id = :countryId) " +
       "AND (:provinceId IS NULL OR h.province.id = :provinceId) " +
       "AND (:cityId IS NULL OR h.city.id = :cityId) " +
       "AND (:districtId IS NULL OR h.district.id = :districtId) " +
       "AND (:wardId IS NULL OR h.ward.id = :wardId) " +
       "AND (:streetId IS NULL OR h.street.id = :streetId) " +
-      // room & inventory filters
-      "AND (:maxAdults IS NULL OR r.maxAdults >= :maxAdults) " +
-      "AND (:maxChildren IS NULL OR r.maxChildren >= :maxChildren) " +
-      "AND (:maxRooms IS NULL OR i.availableRooms >= :maxRooms) " +
-      "AND (:minPrice IS NULL OR i.price >= :minPrice) " +
-      "AND (:maxPrice IS NULL OR i.price <= :maxPrice) " +
-      // amenity filters
-      "AND (:amenityIds IS NULL OR ha.amenity.id IN :amenityIds) " +
+      "AND (:minPrice IS NULL OR EXISTS (" +
+      "  SELECT 1 FROM Room r2 JOIN r2.inventories i2 " +
+      "  WHERE r2.hotel = h AND i2.price >= :minPrice" +
+      ")) " +
+      "AND (:maxPrice IS NULL OR EXISTS (" +
+      "  SELECT 1 FROM Room r3 JOIN r3.inventories i3 " +
+      "  WHERE r3.hotel = h AND i3.price <= :maxPrice" +
+      ")) " +
+      "AND (:amenityIdsCount = 0 OR ha.amenity.id IN :amenityIds) " +
       "GROUP BY h.id " +
-      "HAVING (:amenityIds IS NULL OR COUNT(DISTINCT ha.amenity.id) = :amenityIdsCount)";
+      "HAVING (:amenityIdsCount = 0 OR COUNT(DISTINCT ha.amenity.id) = :amenityIdsCount)";
+
+  public static final String FIND_ALL_BY_IDS_WITH_LOCATIONS_PHOTOS_POLICY =
+    FIND_ALL_BASE +
+      "LEFT JOIN FETCH h.rooms r " +
+      "LEFT JOIN FETCH r.inventories i " +
+      "WHERE h.id IN :hotelIds";
+
+//  public static final String FIND_ALL_BY_FILTER_WITH_LOCATIONS_PHOTOS_POLICY =
+//    FIND_ALL_BASE +
+//      "LEFT JOIN h.amenities ha " +
+//      "LEFT JOIN FETCH h.rooms r " +
+//      "LEFT JOIN FETCH r.inventories i " +
+//      "WHERE " +
+//      "(:countryId IS NULL OR h.country.id = :countryId) " +
+//      "AND (:provinceId IS NULL OR h.province.id = :provinceId) " +
+//      "AND (:cityId IS NULL OR h.city.id = :cityId) " +
+//      "AND (:districtId IS NULL OR h.district.id = :districtId) " +
+//      "AND (:wardId IS NULL OR h.ward.id = :wardId) " +
+//      "AND (:streetId IS NULL OR h.street.id = :streetId) " +
+//      "AND (:amenityIdsCount = 0 OR ha.amenity.id IN :amenityIds) " +
+//      "GROUP BY h.id " +
+//      "HAVING (:amenityIdsCount = 0 OR COUNT(DISTINCT ha.amenity.id) = :amenityIdsCount)";
 
   public static final String FIND_BY_ID_WITH_LOCATIONS_PHOTOS_AMENITIES_REVIEWS_PARTNER_POLICY =
     "SELECT h FROM Hotel h " +

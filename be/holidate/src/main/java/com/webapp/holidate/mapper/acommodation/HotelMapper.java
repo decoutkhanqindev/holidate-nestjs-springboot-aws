@@ -83,5 +83,4 @@ public interface HotelMapper {
   @Mapping(source = "photos", target = "photos", qualifiedByName = "hotelPhotosToCategories")
   @Mapping(source = "amenities", target = "amenities", qualifiedByName = "hotelAmenitiesToCategories")
   HotelDetailsResponse toHotelDetailsResponse(Hotel hotel);
-
 }

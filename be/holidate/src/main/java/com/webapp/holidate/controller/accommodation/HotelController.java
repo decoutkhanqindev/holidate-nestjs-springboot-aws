@@ -15,9 +15,11 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -37,24 +39,29 @@ public class HotelController {
 
   @GetMapping
   public ApiResponse<List<HotelResponse>> getAll(
-    // location params
-    @RequestParam(value = LocationParams.COUNTRY_ID, required = false) String countryId,
-    @RequestParam(value = LocationParams.PROVINCE_ID, required = false) String provinceId,
-    @RequestParam(value = LocationParams.CITY_ID, required = false) String cityId,
-    @RequestParam(value = LocationParams.DISTRICT_ID, required = false) String districtId,
-    @RequestParam(value = LocationParams.WARD_ID, required = false) String wardId,
-    @RequestParam(value = LocationParams.STREET_ID, required = false) String streetId,
-    // room params
-    @RequestParam(value = RoomParams.ADULTS_COUNT, required = false) Integer maxAdults,
-    @RequestParam(value = RoomParams.CHILDREN_COUNT, required = false) Integer maxChildren,
-    @RequestParam(value = RoomParams.ROOMS_COUNT, required = false) Integer maxRooms,
-    @RequestParam(value = RoomParams.MIN_PRICE, required = false) Double minPrice,
-    @RequestParam(value = RoomParams.MAX_PRICE, required = false) Double maxPrice,
-    @RequestParam(value = HotelParams.AMENITY_IDS, required = false) List<String> amenityIds
+    @RequestParam(name = LocationParams.COUNTRY_ID, required = false) String countryId,
+    @RequestParam(name = LocationParams.PROVINCE_ID, required = false) String provinceId,
+    @RequestParam(name = LocationParams.CITY_ID, required = false) String cityId,
+    @RequestParam(name = LocationParams.DISTRICT_ID, required = false) String districtId,
+    @RequestParam(name = LocationParams.WARD_ID, required = false) String wardId,
+    @RequestParam(name = LocationParams.STREET_ID, required = false) String streetId,
+    @RequestParam(name = HotelParams.AMENITY_IDS, required = false) List<String> amenityIds,
+    @RequestParam(name = RoomParams.CHECKIN_DATE, required = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkinDate,
+    @RequestParam(name = RoomParams.CHECKOUT_DATE, required = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkoutDate,
+    @RequestParam(name = RoomParams.REQUIRED_ADULTS, required = false) Integer requiredAdults,
+    @RequestParam(name = RoomParams.REQUIRED_CHILDREN, required = false) Integer requiredChildren,
+    @RequestParam(name = RoomParams.REQUIRED_ROOMS, required = false) Integer requiredRooms,
+    @RequestParam(name = RoomParams.MIN_PRICE, required = false) Double minPrice,
+    @RequestParam(name = RoomParams.MAX_PRICE, required = false) Double maxPrice
   ) {
     List<HotelResponse> responses = hotelService.getAll(
-      countryId, provinceId, cityId, districtId, wardId, streetId,
-      maxAdults, maxChildren, maxRooms, minPrice, maxPrice, amenityIds
+      countryId, provinceId, cityId, districtId,
+      wardId, streetId, amenityIds,
+      checkinDate, checkoutDate,
+      requiredAdults, requiredChildren, requiredRooms,
+      minPrice, maxPrice
     );
     return ApiResponse.<List<HotelResponse>>builder()
       .data(responses)

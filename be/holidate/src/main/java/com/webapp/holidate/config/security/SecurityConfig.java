@@ -1,8 +1,11 @@
 package com.webapp.holidate.config.security;
 
-import com.webapp.holidate.config.security.filter.CustomCookieAuthenticationFilter;
-import com.webapp.holidate.config.security.oauth2.CustomOAuth2AuthenticationFailureHandler;
-import com.webapp.holidate.config.security.oauth2.CustomOAuth2AuthenticationSuccessHandler;
+import com.webapp.holidate.component.security.CustomAccessDeniedHandler;
+import com.webapp.holidate.component.security.CustomAuthenticationEntryPoint;
+import com.webapp.holidate.component.security.CustomJwtDecoder;
+import com.webapp.holidate.component.security.filter.CustomCookieAuthenticationFilter;
+import com.webapp.holidate.component.security.oauth2.CustomOAuth2AuthenticationFailureHandler;
+import com.webapp.holidate.component.security.oauth2.CustomOAuth2AuthenticationSuccessHandler;
 import com.webapp.holidate.constants.AppProperties;
 import com.webapp.holidate.constants.api.endpoint.*;
 import com.webapp.holidate.constants.api.endpoint.auth.AuthEndpoints;

@@ -1,4 +1,4 @@
-package com.webapp.holidate.config.security;
+package com.webapp.holidate.component.security;
 
 import com.webapp.holidate.type.ErrorType;
 import com.webapp.holidate.utils.ResponseUtils;

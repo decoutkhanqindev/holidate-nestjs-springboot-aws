@@ -1,4 +1,4 @@
-package com.webapp.holidate.config.scheduler;
+package com.webapp.holidate.component.scheduler;
 
 import com.webapp.holidate.service.pricing.DynamicPricingService;
 import lombok.RequiredArgsConstructor;

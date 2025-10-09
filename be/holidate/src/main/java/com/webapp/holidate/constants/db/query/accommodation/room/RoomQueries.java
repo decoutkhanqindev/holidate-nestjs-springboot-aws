@@ -35,4 +35,20 @@ public class RoomQueries {
       "LEFT JOIN FETCH r.cancellationPolicy cp " +
       "LEFT JOIN FETCH r.reschedulePolicy rp " +
       "WHERE r.id = :id";
+
+  public static final String FIND_AVAILABLE_ROOM_CANDIDATES =
+    """
+          SELECT new com.webapp.holidate.component.room.RoomCandidate(
+              r,
+              CAST(MIN(i.availableRooms) AS int),
+              r.basePricePerNight
+          )
+          FROM Room r JOIN r.inventories i
+          WHERE r.hotel.id = :hotelId
+            AND i.id.date >= :checkinDate
+            AND i.id.date < :checkoutDate
+          GROUP BY r
+          HAVING MIN(i.availableRooms) > 0
+             AND COUNT(i.id.date) = :numberOfNights
+      """;
 }

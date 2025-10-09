@@ -1,5 +1,7 @@
 package com.webapp.holidate.service.accommodation;
 
+import com.webapp.holidate.component.room.RoomCandidate;
+import com.webapp.holidate.component.room.RoomCombinationFinder;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelUpdateRequest;
 import com.webapp.holidate.dto.request.image.PhotoCreationRequest;
@@ -9,6 +11,7 @@ import com.webapp.holidate.dto.response.acommodation.hotel.HotelResponse;
 import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.entity.accommodation.amenity.Amenity;
 import com.webapp.holidate.entity.accommodation.amenity.HotelAmenity;
+import com.webapp.holidate.entity.accommodation.room.Room;
 import com.webapp.holidate.entity.document.HotelPolicyIdentificationDocument;
 import com.webapp.holidate.entity.image.HotelPhoto;
 import com.webapp.holidate.entity.image.Photo;
@@ -21,6 +24,7 @@ import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.acommodation.HotelMapper;
 import com.webapp.holidate.repository.accommodation.HotelRepository;
+import com.webapp.holidate.repository.accommodation.room.RoomRepository;
 import com.webapp.holidate.repository.amenity.AmenityRepository;
 import com.webapp.holidate.repository.amenity.HotelAmenityRepository;
 import com.webapp.holidate.repository.document.HotelPolicyIdentificationDocumentRepository;
@@ -49,6 +53,8 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -59,6 +65,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class HotelService {
   HotelRepository hotelRepository;
+  RoomRepository roomRepository;
   PhotoCategoryRepository photoCategoryRepository;
   PhotoRepository photoRepository;
   HotelPhotoRepository hotelPhotoRepository;
@@ -78,6 +85,8 @@ public class HotelService {
   IdentificationDocumentRepository identificationDocumentRepository;
 
   FileService fileService;
+
+  RoomCombinationFinder roomCombinationFinder;
 
   HotelMapper hotelMapper;
 
@@ -133,41 +142,82 @@ public class HotelService {
   }
 
   public List<HotelResponse> getAll(
-    String countryId,
-    String provinceId,
-    String cityId,
-    String districtId,
-    String wardId,
-    String streetId,
-    Integer maxAdults,
-    Integer maxChildren,
-    Integer maxRooms,
-    Double minPrice,
-    Double maxPrice,
-    List<String> amenityIds
+    String countryId, String provinceId, String cityId, String districtId,
+    String wardId, String streetId, List<String> amenityIds,
+    LocalDate checkinDate, LocalDate checkoutDate,
+    Integer requiredAdults, Integer requiredChildren, Integer requiredRooms,
+    Double minPrice, Double maxPrice
   ) {
-    boolean hasAnyFilter = countryId != null || provinceId != null || cityId != null
-      || districtId != null || wardId != null || streetId != null
-      || maxAdults != null || maxChildren != null || maxRooms != null
-      || minPrice != null || maxPrice != null || (amenityIds != null && !amenityIds.isEmpty());
+    boolean hasAnyFilter =
+      countryId != null || provinceId != null || cityId != null || districtId != null ||
+        wardId != null || streetId != null || (amenityIds != null && !amenityIds.isEmpty()) ||
+        checkinDate != null || checkoutDate != null || requiredAdults != null ||
+        requiredChildren != null || requiredRooms != null || minPrice != null || maxPrice != null;
 
-    LocalDate currentDate = LocalDate.now();
-
-    if (hasAnyFilter) {
-      int amenityIdsCount = amenityIds != null ? amenityIds.size() : 0;
-
-      return hotelRepository.findAllByFilterWithLocationsPhotosPolicy(
-          countryId, provinceId, cityId, districtId, wardId, streetId,
-          maxAdults, maxChildren, maxRooms, minPrice, maxPrice,
-          currentDate, amenityIds, amenityIdsCount
-        ).stream()
-        .map(hotelMapper::toHotelResponse)
-        .toList();
-    } else {
+    // 🔹 Không có filter → query đầy đủ
+    if (!hasAnyFilter) {
       return hotelRepository.findAllWithLocationsPhotosPolicy().stream()
         .map(hotelMapper::toHotelResponse)
         .toList();
     }
+
+    // 🔹 Có filter → tách 2 bước
+    int amenityIdsCount = (amenityIds != null) ? amenityIds.size() : 0;
+
+    // Bước 1: Lấy danh sách ID
+    List<String> hotelIds = hotelRepository.findIdsByFilter(
+      countryId, provinceId, cityId, districtId, wardId, streetId,
+      minPrice, maxPrice, amenityIds, amenityIdsCount
+    );
+
+    if (hotelIds.isEmpty()) {
+      return List.of(); // không tìm thấy khách sạn nào
+    }
+
+    // Bước 2: Lấy đầy đủ dữ liệu hotel theo ID
+    List<Hotel> candidateHotels = hotelRepository.findAllByIdsFilterWithLocationsPhotosPolicy(hotelIds);
+
+    // Nếu không tìm kiếm theo ngày → map luôn
+    boolean isDateSearch = checkinDate != null && checkoutDate != null;
+    boolean isCombinationSearch = isDateSearch && requiredAdults != null && requiredChildren != null && requiredRooms != null;
+
+    if (!isDateSearch) {
+      return candidateHotels.stream()
+        .map(hotelMapper::toHotelResponse)
+        .toList();
+    }
+
+    // Bước 3: Lọc theo phòng trống (như bạn đã làm)
+    final LocalDate finalCheckinDate = checkinDate;
+    final LocalDate finalCheckoutDate = checkoutDate.isAfter(finalCheckinDate) ? checkoutDate : finalCheckinDate.plusDays(1);
+    final long numberOfNights = ChronoUnit.DAYS.between(finalCheckinDate, finalCheckoutDate);
+
+    if (numberOfNights <= 0) {
+      return new ArrayList<>();
+    }
+
+    List<Hotel> finalHotels = candidateHotels.stream()
+      .filter(hotel -> {
+        List<RoomCandidate> roomCandidates = roomRepository.findAvailableRoomCandidates(
+          hotel.getId(), finalCheckinDate, finalCheckoutDate, numberOfNights
+        );
+
+        if (roomCandidates.isEmpty()) return false;
+
+        if (isCombinationSearch) {
+          List<List<Room>> combinations = roomCombinationFinder.findCombinations(
+            roomCandidates, requiredAdults, requiredChildren, requiredRooms
+          );
+          return !combinations.isEmpty();
+        } else {
+          return true;
+        }
+      })
+      .toList();
+
+    return finalHotels.stream()
+      .map(hotelMapper::toHotelResponse)
+      .toList();
   }
 
   public HotelDetailsResponse getById(String id) {

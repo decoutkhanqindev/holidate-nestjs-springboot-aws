@@ -5,7 +5,7 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import com.webapp.holidate.config.security.filter.CustomAuthenticationToken;
+import com.webapp.holidate.component.security.filter.CustomAuthenticationToken;
 import com.webapp.holidate.constants.AppProperties;
 import com.webapp.holidate.dto.request.auth.LoginRequest;
 import com.webapp.holidate.dto.request.auth.RegisterRequest;
