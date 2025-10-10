@@ -89,10 +89,6 @@ public class Hotel {
   @Builder.Default
   int starRating = 0;
 
-  @Column(nullable = true)
-  @Builder.Default
-  double averageScore = 0.0;
-
   @OneToOne(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true)
   @ToString.Exclude
   HotelPolicy policy;

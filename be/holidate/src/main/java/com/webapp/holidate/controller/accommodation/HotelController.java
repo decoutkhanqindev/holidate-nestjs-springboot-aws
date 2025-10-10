@@ -30,7 +30,8 @@ public class HotelController {
   HotelService hotelService;
 
   @PostMapping(consumes = "multipart/form-data")
-  public ApiResponse<HotelDetailsResponse> create(@ModelAttribute @Valid HotelCreationRequest request) throws IOException {
+  public ApiResponse<HotelDetailsResponse> create(@ModelAttribute @Valid HotelCreationRequest request)
+    throws IOException {
     HotelDetailsResponse response = hotelService.create(request);
     return ApiResponse.<HotelDetailsResponse>builder()
       .data(response)
@@ -45,6 +46,7 @@ public class HotelController {
     @RequestParam(name = LocationParams.DISTRICT_ID, required = false) String districtId,
     @RequestParam(name = LocationParams.WARD_ID, required = false) String wardId,
     @RequestParam(name = LocationParams.STREET_ID, required = false) String streetId,
+    @RequestParam(name = HotelParams.STAR_RATING, required = false) Integer starRating,
     @RequestParam(name = HotelParams.AMENITY_IDS, required = false) List<String> amenityIds,
     @RequestParam(name = RoomParams.CHECKIN_DATE, required = false)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkinDate,
@@ -57,11 +59,8 @@ public class HotelController {
     @RequestParam(name = RoomParams.MAX_PRICE, required = false) Double maxPrice
   ) {
     List<HotelResponse> responses = hotelService.getAll(
-      countryId, provinceId, cityId, districtId,
-      wardId, streetId, amenityIds,
-      checkinDate, checkoutDate,
-      requiredAdults, requiredChildren, requiredRooms,
-      minPrice, maxPrice
+      countryId, provinceId, cityId, districtId, wardId, streetId, amenityIds, starRating,
+      checkinDate, checkoutDate, requiredAdults, requiredChildren, requiredRooms, minPrice, maxPrice
     );
     return ApiResponse.<List<HotelResponse>>builder()
       .data(responses)
@@ -79,8 +78,7 @@ public class HotelController {
   @PutMapping(path = CommonEndpoints.ID, consumes = "multipart/form-data")
   public ApiResponse<HotelDetailsResponse> update(
     @PathVariable String id,
-    @RequestBody @Valid HotelUpdateRequest request
-  ) throws IOException {
+    @RequestBody @Valid HotelUpdateRequest request) throws IOException {
     HotelDetailsResponse response = hotelService.update(id, request);
     return ApiResponse.<HotelDetailsResponse>builder()
       .data(response)

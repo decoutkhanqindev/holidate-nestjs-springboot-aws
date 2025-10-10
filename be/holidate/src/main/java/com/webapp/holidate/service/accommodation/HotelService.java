@@ -44,7 +44,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -143,43 +142,63 @@ public class HotelService {
 
   public List<HotelResponse> getAll(
     String countryId, String provinceId, String cityId, String districtId,
-    String wardId, String streetId, List<String> amenityIds,
+    String wardId, String streetId, List<String> amenityIds, Integer starRating,
     LocalDate checkinDate, LocalDate checkoutDate,
     Integer requiredAdults, Integer requiredChildren, Integer requiredRooms,
     Double minPrice, Double maxPrice
   ) {
-    boolean hasAnyFilter =
-      countryId != null || provinceId != null || cityId != null || districtId != null ||
-        wardId != null || streetId != null || (amenityIds != null && !amenityIds.isEmpty()) ||
-        checkinDate != null || checkoutDate != null || requiredAdults != null ||
-        requiredChildren != null || requiredRooms != null || minPrice != null || maxPrice != null;
+    boolean hasAnyFilter = countryId != null || provinceId != null || cityId != null || districtId != null ||
+      wardId != null || streetId != null || (amenityIds != null && !amenityIds.isEmpty()) || starRating != null ||
+      checkinDate != null || checkoutDate != null || requiredAdults != null ||
+      requiredChildren != null || requiredRooms != null || minPrice != null || maxPrice != null;
 
-    // 🔹 Không có filter → query đầy đủ
     if (!hasAnyFilter) {
-      return hotelRepository.findAllWithLocationsPhotosPolicy().stream()
+      List<Hotel> hotels = hotelRepository.findAllWithLocationsPhotosPolicy();
+      boolean hasHotels = hotels != null && !hotels.isEmpty();
+
+      if (hasHotels) {
+        List<String> hotelIds = hotels.stream().map(Hotel::getId).toList();
+        List<Hotel> hotelsWithRooms = hotelRepository.findAllByIdsWithRoomsAndInventories(hotelIds);
+
+        hotels.forEach(hotel -> {
+            hotelsWithRooms.stream()
+              .filter(h -> h.getId().equals(hotel.getId()))
+              .findFirst()
+              .ifPresent(h -> hotel.setRooms(h.getRooms()));
+          }
+        );
+      }
+
+      return hotels.stream()
         .map(hotelMapper::toHotelResponse)
         .toList();
     }
 
-    // 🔹 Có filter → tách 2 bước
     int amenityIdsCount = (amenityIds != null) ? amenityIds.size() : 0;
-
-    // Bước 1: Lấy danh sách ID
-    List<String> hotelIds = hotelRepository.findIdsByFilter(
+    List<String> hotelIds = hotelRepository.findAllIdsByFilter(
       countryId, provinceId, cityId, districtId, wardId, streetId,
-      minPrice, maxPrice, amenityIds, amenityIdsCount
+      amenityIds, amenityIdsCount, starRating, minPrice, maxPrice
     );
+    boolean hasHotelIds = hotelIds != null && !hotelIds.isEmpty();
 
-    if (hotelIds.isEmpty()) {
-      return List.of(); // không tìm thấy khách sạn nào
+    if (!hasHotelIds) {
+      return List.of();
     }
 
-    // Bước 2: Lấy đầy đủ dữ liệu hotel theo ID
     List<Hotel> candidateHotels = hotelRepository.findAllByIdsFilterWithLocationsPhotosPolicy(hotelIds);
+    List<Hotel> hotelsWithRooms = hotelRepository.findAllByIdsWithRoomsAndInventories(hotelIds);
 
-    // Nếu không tìm kiếm theo ngày → map luôn
+    candidateHotels.forEach(hotel -> {
+        hotelsWithRooms.stream()
+          .filter(h -> h.getId().equals(hotel.getId()))
+          .findFirst()
+          .ifPresent(h -> hotel.setRooms(h.getRooms()));
+      }
+    );
+
     boolean isDateSearch = checkinDate != null && checkoutDate != null;
-    boolean isCombinationSearch = isDateSearch && requiredAdults != null && requiredChildren != null && requiredRooms != null;
+    boolean isCombinationSearch = isDateSearch && requiredAdults != null && requiredChildren != null
+      && requiredRooms != null;
 
     if (!isDateSearch) {
       return candidateHotels.stream()
@@ -187,32 +206,35 @@ public class HotelService {
         .toList();
     }
 
-    // Bước 3: Lọc theo phòng trống (như bạn đã làm)
     final LocalDate finalCheckinDate = checkinDate;
-    final LocalDate finalCheckoutDate = checkoutDate.isAfter(finalCheckinDate) ? checkoutDate : finalCheckinDate.plusDays(1);
+    final LocalDate finalCheckoutDate = checkoutDate.isAfter(finalCheckinDate) ? checkoutDate
+      : finalCheckinDate.plusDays(1);
     final long numberOfNights = ChronoUnit.DAYS.between(finalCheckinDate, finalCheckoutDate);
+    boolean numberOfNightsInvalid = numberOfNights <= 0;
 
-    if (numberOfNights <= 0) {
+    if (numberOfNightsInvalid) {
       return new ArrayList<>();
     }
 
     List<Hotel> finalHotels = candidateHotels.stream()
       .filter(hotel -> {
-        List<RoomCandidate> roomCandidates = roomRepository.findAvailableRoomCandidates(
-          hotel.getId(), finalCheckinDate, finalCheckoutDate, numberOfNights
-        );
+          List<RoomCandidate> roomCandidates = roomRepository.findAvailableRoomCandidates(
+            hotel.getId(), finalCheckinDate, finalCheckoutDate, numberOfNights);
+          boolean hasRoomCandidates = roomCandidates != null && !roomCandidates.isEmpty();
 
-        if (roomCandidates.isEmpty()) return false;
+          if (!hasRoomCandidates) {
+            return false;
+          }
 
-        if (isCombinationSearch) {
-          List<List<Room>> combinations = roomCombinationFinder.findCombinations(
-            roomCandidates, requiredAdults, requiredChildren, requiredRooms
-          );
-          return !combinations.isEmpty();
-        } else {
-          return true;
+          if (isCombinationSearch) {
+            List<List<Room>> combinations = roomCombinationFinder.findCombinations(
+              roomCandidates, requiredAdults, requiredChildren, requiredRooms);
+            return !combinations.isEmpty();
+          } else {
+            return true;
+          }
         }
-      })
+      )
       .toList();
 
     return finalHotels.stream()
@@ -455,9 +477,12 @@ public class HotelService {
     boolean hasPolicy = policy != null;
 
     if (!hasPolicy) {
-      LocalTime checkInTime = policyRequest.getCheckInTime() != null ? policyRequest.getCheckInTime() : LocalTime.of(14, 0);
-      LocalTime checkOutTime = policyRequest.getCheckOutTime() != null ? policyRequest.getCheckOutTime() : LocalTime.of(12, 0);
-      boolean allowsPayAtHotel = policyRequest.getAllowsPayAtHotel() != null ? policyRequest.getAllowsPayAtHotel() : false;
+      LocalTime checkInTime = policyRequest.getCheckInTime() != null ? policyRequest.getCheckInTime()
+        : LocalTime.of(14, 0);
+      LocalTime checkOutTime = policyRequest.getCheckOutTime() != null ? policyRequest.getCheckOutTime()
+        : LocalTime.of(12, 0);
+      boolean allowsPayAtHotel = policyRequest.getAllowsPayAtHotel() != null ? policyRequest.getAllowsPayAtHotel()
+        : false;
 
       policy = HotelPolicy.builder()
         .hotel(hotel)

@@ -19,14 +19,11 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-@Mapper(
-  componentModel = "spring",
-  uses = {
+@Mapper(componentModel = "spring", uses = {
     PhotoCategoryMapper.class,
     AmenityCategoryMapper.class,
     HotelPolicyMapper.class
-  }
-)
+})
 public interface HotelMapper {
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "country", ignore = true)
@@ -39,7 +36,6 @@ public interface HotelMapper {
   @Mapping(target = "latitude", ignore = true)
   @Mapping(target = "longitude", ignore = true)
   @Mapping(target = "starRating", ignore = true)
-  @Mapping(target = "averageScore", ignore = true)
   @Mapping(target = "policy", ignore = true)
   @Mapping(target = "partner", ignore = true)
   @Mapping(target = "amenities", ignore = true)
@@ -58,15 +54,32 @@ public interface HotelMapper {
     LocalDate today = LocalDate.now();
 
     List<Room> rooms = hotel.getRooms().stream().toList();
-    List<RoomInventory> roomInventories = rooms.stream()
-      .flatMap(room -> room.getInventories().stream())
-      .toList();
-    Optional<RoomInventory> cheapestAvailableInventory = roomInventories.stream()
-      .filter(inventory -> !inventory.getId().getDate().isBefore(today))
-      .filter(inventory -> inventory.getAvailableRooms() > 0)
-      .min(Comparator.comparingDouble(RoomInventory::getPrice));
+    boolean hasRooms = !rooms.isEmpty();
+    if (!hasRooms) {
+      responseBuilder.rawPricePerNight(0.0);
+      responseBuilder.currentPricePerNight(0.0);
+      responseBuilder.availableRooms(0);
+      return;
+    }
 
-    if (cheapestAvailableInventory.isPresent()) {
+    List<RoomInventory> roomInventories = rooms.stream()
+        .flatMap(room -> room.getInventories().stream())
+        .toList();
+    boolean hasInventories = !roomInventories.isEmpty();
+    if (!hasInventories) {
+      Room firstRoom = rooms.getFirst();
+      responseBuilder.rawPricePerNight(firstRoom.getBasePricePerNight());
+      responseBuilder.currentPricePerNight(firstRoom.getBasePricePerNight());
+      responseBuilder.availableRooms(firstRoom.getQuantity());
+      return;
+    }
+
+    Optional<RoomInventory> cheapestAvailableInventory = roomInventories.stream()
+        .filter(inventory -> !inventory.getId().getDate().isBefore(today))
+        .filter(inventory -> inventory.getAvailableRooms() > 0)
+        .min(Comparator.comparingDouble(RoomInventory::getPrice));
+    boolean hasAvailableInventories = cheapestAvailableInventory.isPresent();
+    if (hasAvailableInventories) {
       RoomInventory inventory = cheapestAvailableInventory.get();
       Room room = inventory.getRoom();
 
@@ -74,9 +87,19 @@ public interface HotelMapper {
       responseBuilder.currentPricePerNight(inventory.getPrice());
       responseBuilder.availableRooms(inventory.getAvailableRooms());
     } else {
-      responseBuilder.rawPricePerNight(0.0);
-      responseBuilder.currentPricePerNight(0.0);
-      responseBuilder.availableRooms(0);
+      Optional<Room> roomWithLowestBasePrice = rooms.stream()
+          .min(Comparator.comparingDouble(Room::getBasePricePerNight));
+
+      Room room = roomWithLowestBasePrice.get();
+      responseBuilder.rawPricePerNight(room.getBasePricePerNight());
+      responseBuilder.currentPricePerNight(room.getBasePricePerNight());
+
+      int totalAvailableRooms = roomInventories.stream()
+          .filter(inventory -> !inventory.getId().getDate().isBefore(today))
+          .mapToInt(RoomInventory::getAvailableRooms)
+          .sum();
+
+      responseBuilder.availableRooms(totalAvailableRooms > 0 ? totalAvailableRooms : room.getQuantity());
     }
   }
 
