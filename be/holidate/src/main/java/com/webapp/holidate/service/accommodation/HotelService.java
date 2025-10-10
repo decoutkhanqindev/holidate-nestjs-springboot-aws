@@ -147,46 +147,53 @@ public class HotelService {
     Integer requiredAdults, Integer requiredChildren, Integer requiredRooms,
     Double minPrice, Double maxPrice
   ) {
-    boolean hasAnyFilter = countryId != null || provinceId != null || cityId != null || districtId != null ||
-      wardId != null || streetId != null || (amenityIds != null && !amenityIds.isEmpty()) || starRating != null ||
-      checkinDate != null || checkoutDate != null || requiredAdults != null ||
-      requiredChildren != null || requiredRooms != null || minPrice != null || maxPrice != null;
+    boolean hasLocationFilter = countryId != null || provinceId != null || cityId != null ||
+      districtId != null || wardId != null || streetId != null;
+    boolean hasAmenityFilter = amenityIds != null && !amenityIds.isEmpty();
+    boolean hasStarRatingFilter = starRating != null;
+    boolean hasDateFilter = checkinDate != null || checkoutDate != null;
+    boolean hasGuestRequirementsFilter = requiredAdults != null || requiredChildren != null || requiredRooms != null;
+    boolean hasPriceFilter = minPrice != null || maxPrice != null;
+
+    boolean hasAnyFilter = hasLocationFilter || hasAmenityFilter || hasStarRatingFilter ||
+      hasDateFilter || hasGuestRequirementsFilter || hasPriceFilter;
 
     if (!hasAnyFilter) {
-      List<Hotel> hotels = hotelRepository.findAllWithLocationsPhotosPolicy();
-      boolean hasHotels = hotels != null && !hotels.isEmpty();
+      List<Hotel> allHotelsFromDb = hotelRepository.findAllWithLocationsPhotosPolicy();
+      boolean hasAnyHotelsInDb = allHotelsFromDb != null && !allHotelsFromDb.isEmpty();
 
-      if (hasHotels) {
-        List<String> hotelIds = hotels.stream().map(Hotel::getId).toList();
+      if (hasAnyHotelsInDb) {
+        List<String> hotelIds = allHotelsFromDb.stream().map(Hotel::getId).toList();
         List<Hotel> hotelsWithRooms = hotelRepository.findAllByIdsWithRoomsAndInventories(hotelIds);
 
-        hotels.forEach(hotel -> {
+        allHotelsFromDb.forEach(hotel -> {
             hotelsWithRooms.stream()
               .filter(h -> h.getId().equals(hotel.getId()))
               .findFirst()
               .ifPresent(h -> hotel.setRooms(h.getRooms()));
           }
         );
+
+        return allHotelsFromDb.stream()
+          .map(hotelMapper::toHotelResponse)
+          .toList();
       }
 
-      return hotels.stream()
-        .map(hotelMapper::toHotelResponse)
-        .toList();
-    }
-
-    int amenityIdsCount = (amenityIds != null) ? amenityIds.size() : 0;
-    List<String> hotelIds = hotelRepository.findAllIdsByFilter(
-      countryId, provinceId, cityId, districtId, wardId, streetId,
-      amenityIds, amenityIdsCount, starRating, minPrice, maxPrice
-    );
-    boolean hasHotelIds = hotelIds != null && !hotelIds.isEmpty();
-
-    if (!hasHotelIds) {
       return List.of();
     }
 
-    List<Hotel> candidateHotels = hotelRepository.findAllByIdsFilterWithLocationsPhotosPolicy(hotelIds);
-    List<Hotel> hotelsWithRooms = hotelRepository.findAllByIdsWithRoomsAndInventories(hotelIds);
+    int requiredAmenityCount = (amenityIds != null) ? amenityIds.size() : 0;
+    List<String> filteredHotelIds = hotelRepository.findAllIdsByFilter(
+      countryId, provinceId, cityId, districtId, wardId, streetId,
+      amenityIds, requiredAmenityCount, starRating, minPrice, maxPrice);
+    boolean hasMatchingHotels = filteredHotelIds != null && !filteredHotelIds.isEmpty();
+
+    if (!hasMatchingHotels) {
+      return List.of();
+    }
+
+    List<Hotel> candidateHotels = hotelRepository.findAllByIdsFilterWithLocationsPhotosPolicy(filteredHotelIds);
+    List<Hotel> hotelsWithRooms = hotelRepository.findAllByIdsWithRoomsAndInventories(filteredHotelIds);
 
     candidateHotels.forEach(hotel -> {
         hotelsWithRooms.stream()
@@ -196,40 +203,60 @@ public class HotelService {
       }
     );
 
-    boolean isDateSearch = checkinDate != null && checkoutDate != null;
-    boolean isCombinationSearch = isDateSearch && requiredAdults != null && requiredChildren != null
-      && requiredRooms != null;
+    boolean hasValidDateRange = checkinDate != null && checkoutDate != null;
+    boolean hasGuestRequirements = requiredAdults != null || requiredChildren != null || requiredRooms != null;
+    boolean needsDateAndGuestValidation = hasValidDateRange && hasGuestRequirements;
 
-    if (!isDateSearch) {
+    if (!hasValidDateRange && !hasGuestRequirements) {
       return candidateHotels.stream()
         .map(hotelMapper::toHotelResponse)
         .toList();
     }
 
-    final LocalDate finalCheckinDate = checkinDate;
-    final LocalDate finalCheckoutDate = checkoutDate.isAfter(finalCheckinDate) ? checkoutDate
-      : finalCheckinDate.plusDays(1);
-    final long numberOfNights = ChronoUnit.DAYS.between(finalCheckinDate, finalCheckoutDate);
-    boolean numberOfNightsInvalid = numberOfNights <= 0;
+    if (!hasValidDateRange) {
+      return candidateHotels.stream()
+        .filter(hotel -> {
+            Set<Room> rooms = hotel.getRooms();
+            if (rooms == null || rooms.isEmpty()) {
+              return false;
+            }
 
-    if (numberOfNightsInvalid) {
+            return hasCapacityForRequirements(rooms, requiredAdults, requiredChildren, requiredRooms);
+          }
+        )
+        .map(hotelMapper::toHotelResponse)
+        .toList();
+    }
+
+    final LocalDate validatedCheckinDate = checkinDate;
+    final LocalDate validatedCheckoutDate = checkoutDate.isAfter(validatedCheckinDate)
+      ? checkoutDate
+      : validatedCheckinDate.plusDays(1);
+    final long totalNightsStay = ChronoUnit.DAYS.between(validatedCheckinDate, validatedCheckoutDate);
+    boolean isInvalidStayDuration = totalNightsStay <= 0;
+
+    if (isInvalidStayDuration) {
       return new ArrayList<>();
     }
 
-    List<Hotel> finalHotels = candidateHotels.stream()
+    List<Hotel> availableHotels = candidateHotels.stream()
       .filter(hotel -> {
-          List<RoomCandidate> roomCandidates = roomRepository.findAvailableRoomCandidates(
-            hotel.getId(), finalCheckinDate, finalCheckoutDate, numberOfNights);
-          boolean hasRoomCandidates = roomCandidates != null && !roomCandidates.isEmpty();
+          List<RoomCandidate> availableRoomCandidates = roomRepository.findAvailableRoomCandidates(
+            hotel.getId(), validatedCheckinDate, validatedCheckoutDate, totalNightsStay);
+          boolean hasAvailableRooms = availableRoomCandidates != null && !availableRoomCandidates.isEmpty();
 
-          if (!hasRoomCandidates) {
+          if (!hasAvailableRooms) {
             return false;
           }
 
-          if (isCombinationSearch) {
-            List<List<Room>> combinations = roomCombinationFinder.findCombinations(
-              roomCandidates, requiredAdults, requiredChildren, requiredRooms);
-            return !combinations.isEmpty();
+          if (needsDateAndGuestValidation) {
+            int adultsRequired = requiredAdults != null ? requiredAdults : 0;
+            int childrenRequired = requiredChildren != null ? requiredChildren : 0;
+            int roomsRequired = requiredRooms != null ? requiredRooms : 1; // Default 1 room if not specified
+
+            List<List<Room>> validCombinations = roomCombinationFinder.findCombinations(
+              availableRoomCandidates, adultsRequired, childrenRequired, roomsRequired);
+            return !validCombinations.isEmpty();
           } else {
             return true;
           }
@@ -237,7 +264,7 @@ public class HotelService {
       )
       .toList();
 
-    return finalHotels.stream()
+    return availableHotels.stream()
       .map(hotelMapper::toHotelResponse)
       .toList();
   }
@@ -583,5 +610,102 @@ public class HotelService {
     }
 
     policy.setRequiredIdentificationDocuments(currentDocuments);
+  }
+
+  private boolean hasCapacityForRequirements(
+    Set<Room> hotelRooms,
+    Integer requiredAdults,
+    Integer requiredChildren,
+    Integer requiredRooms
+  ) {
+    boolean hasAvailableRooms = hotelRooms != null && !hotelRooms.isEmpty();
+    if (!hasAvailableRooms) {
+      return false;
+    }
+
+    boolean hasNoGuestRequirements = requiredAdults == null && requiredChildren == null && requiredRooms == null;
+    if (hasNoGuestRequirements) {
+      return true;
+    }
+
+    int adultsToAccommodate = requiredAdults != null ? requiredAdults : 0;
+    int childrenToAccommodate = requiredChildren != null ? requiredChildren : 0;
+    int roomsNeeded = requiredRooms != null ? requiredRooms : (adultsToAccommodate + childrenToAccommodate > 0 ? 1 : 0);
+
+    boolean noGuestsNoRoomsRequired = adultsToAccommodate == 0 && childrenToAccommodate == 0 && roomsNeeded == 0;
+    if (noGuestsNoRoomsRequired) {
+      return true;
+    }
+
+    boolean onlyRoomsRequiredNoGuests = adultsToAccommodate == 0 && childrenToAccommodate == 0 && roomsNeeded > 0;
+    if (onlyRoomsRequiredNoGuests) {
+      return hotelRooms.size() >= roomsNeeded;
+    }
+
+    boolean hasGuestsButNoRooms = (adultsToAccommodate > 0 || childrenToAccommodate > 0) && roomsNeeded == 0;
+    if (hasGuestsButNoRooms) {
+      return false; // Có khách nhưng không yêu cầu phòng là không hợp lý
+    }
+
+    List<Room> roomsSortedByCapacity = hotelRooms.stream()
+      .sorted((room1, room2) -> Integer.compare(
+        room2.getMaxAdults() + room2.getMaxChildren(),
+        room1.getMaxAdults() + room1.getMaxChildren()))
+      .toList();
+
+    return canAccommodateGuests(roomsSortedByCapacity, adultsToAccommodate, childrenToAccommodate, roomsNeeded);
+  }
+
+  private boolean canAccommodateGuests(
+    List<Room> availableRooms,
+    int totalAdultsRequired,
+    int totalChildrenRequired,
+    int totalRoomsRequired
+  ) {
+    boolean hasSufficientRooms = availableRooms.size() >= totalRoomsRequired;
+    if (!hasSufficientRooms) {
+      return false;
+    }
+
+    int adultsStillNeedAccommodation = totalAdultsRequired;
+    int childrenStillNeedAccommodation = totalChildrenRequired;
+    int roomsCurrentlyUsed = 0;
+
+    for (Room currentRoom : availableRooms) {
+      if (roomsCurrentlyUsed >= totalRoomsRequired) {
+        break;
+      }
+
+      if (adultsStillNeedAccommodation <= 0 && childrenStillNeedAccommodation <= 0) {
+        break;
+      }
+
+      int adultsCanFitInThisRoom = Math.min(adultsStillNeedAccommodation, currentRoom.getMaxAdults());
+      int childrenCanFitInThisRoom = getChildrenCanFitInThisRoom(currentRoom, childrenStillNeedAccommodation, adultsCanFitInThisRoom);
+
+      adultsStillNeedAccommodation -= adultsCanFitInThisRoom;
+      childrenStillNeedAccommodation -= childrenCanFitInThisRoom;
+      roomsCurrentlyUsed++;
+    }
+
+    boolean allGuestsAccommodated = adultsStillNeedAccommodation <= 0 && childrenStillNeedAccommodation <= 0;
+    boolean withinRoomLimit = roomsCurrentlyUsed <= totalRoomsRequired;
+
+    return allGuestsAccommodated && withinRoomLimit;
+  }
+
+  private int getChildrenCanFitInThisRoom(Room currentRoom, int childrenStillNeedAccommodation, int adultsCanFitInThisRoom) {
+    int childrenCanFitInThisRoom = Math.min(childrenStillNeedAccommodation, currentRoom.getMaxChildren());
+
+    int totalGuestsInRoom = adultsCanFitInThisRoom + childrenCanFitInThisRoom;
+    int maxRoomCapacity = currentRoom.getMaxAdults() + currentRoom.getMaxChildren();
+
+    if (totalGuestsInRoom > maxRoomCapacity) {
+      if (adultsCanFitInThisRoom <= currentRoom.getMaxAdults()) {
+        int remainingCapacity = maxRoomCapacity - adultsCanFitInThisRoom;
+        childrenCanFitInThisRoom = Math.min(childrenStillNeedAccommodation, remainingCapacity);
+      }
+    }
+    return childrenCanFitInThisRoom;
   }
 }

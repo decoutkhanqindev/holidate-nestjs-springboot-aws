@@ -23,14 +23,14 @@ public class RoomCombinationFinder {
    * @param targetAdults   Số người lớn yêu cầu.
    * @param targetChildren Số trẻ em yêu cầu.
    * @param targetRooms    Số lượng phòng mong muốn.
-   * @return Một danh sách chứa tất cả các tổ hợp phòng hợp lệ (mỗi tổ hợp là một List<Room>).
+   * @return Một danh sách chứa tất cả các tổ hợp phòng hợp lệ (mỗi tổ hợp là một
+   *         List<Room>).
    */
   public List<List<Room>> findCombinations(
-    List<RoomCandidate> candidates,
-    int targetAdults,
-    int targetChildren,
-    int targetRooms
-  ) {
+      List<RoomCandidate> candidates,
+      int targetAdults,
+      int targetChildren,
+      int targetRooms) {
     List<List<Room>> allSolutions = new ArrayList<>();
     findRecursive(candidates, targetAdults, targetChildren, targetRooms, new ArrayList<>(), 0, allSolutions);
     return allSolutions;
@@ -44,18 +44,19 @@ public class RoomCombinationFinder {
    * @param targetChildren     Số trẻ em mục tiêu.
    * @param targetRooms        Số phòng mục tiêu.
    * @param currentCombination Tổ hợp đang được xây dựng trong mỗi lần đệ quy.
-   * @param startIndex         Chỉ số bắt đầu trong danh sách candidates để tránh các tổ hợp trùng lặp.
-   * @param allSolutions       Danh sách tổng để lưu trữ tất cả các kết quả hợp lệ.
+   * @param startIndex         Chỉ số bắt đầu trong danh sách candidates để tránh
+   *                           các tổ hợp trùng lặp.
+   * @param allSolutions       Danh sách tổng để lưu trữ tất cả các kết quả hợp
+   *                           lệ.
    */
   private void findRecursive(
-    List<RoomCandidate> candidates,
-    int targetAdults,
-    int targetChildren,
-    int targetRooms,
-    List<Room> currentCombination,
-    int startIndex,
-    List<List<Room>> allSolutions
-  ) {
+      List<RoomCandidate> candidates,
+      int targetAdults,
+      int targetChildren,
+      int targetRooms,
+      List<Room> currentCombination,
+      int startIndex,
+      List<List<Room>> allSolutions) {
     // Điều kiện dừng 1: Nếu tổ hợp đã đủ số phòng yêu cầu.
     if (currentCombination.size() == targetRooms) {
       // Kiểm tra xem tổ hợp này có đủ sức chứa không.
@@ -73,8 +74,8 @@ public class RoomCombinationFinder {
 
       // Đếm số lượng phòng của loại này đã có trong tổ hợp hiện tại.
       long countOfThisRoomTypeInCombination = currentCombination.stream()
-        .filter(room -> room.getId().equals(candidate.getRoom().getId()))
-        .count();
+          .filter(room -> room.getId().equals(candidate.getRoom().getId()))
+          .count();
 
       // Nếu vẫn có thể thêm phòng loại này (số lượng chưa vượt quá số phòng có sẵn).
       if (countOfThisRoomTypeInCombination < candidate.getAvailableCount()) {
@@ -100,6 +101,12 @@ public class RoomCombinationFinder {
    * @return true nếu tổ hợp hợp lệ, ngược lại false.
    */
   private boolean isCombinationValid(List<Room> combination, int targetAdults, int targetChildren) {
+    // Trường hợp đặc biệt: nếu không yêu cầu phòng nào (combination rỗng)
+    if (combination.isEmpty()) {
+      // Chỉ hợp lệ nếu cũng không yêu cầu khách nào
+      return targetAdults == 0 && targetChildren == 0;
+    }
+
     int totalAdultsCapacity = 0;
     int totalCapacity = 0;
 
