@@ -1,5 +1,7 @@
 package com.webapp.holidate.service.accommodation;
 
+import com.webapp.holidate.component.room.RoomCandidate;
+import com.webapp.holidate.component.room.RoomCombinationFinder;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelUpdateRequest;
 import com.webapp.holidate.dto.request.image.PhotoCreationRequest;
@@ -9,6 +11,7 @@ import com.webapp.holidate.dto.response.acommodation.hotel.HotelResponse;
 import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.entity.accommodation.amenity.Amenity;
 import com.webapp.holidate.entity.accommodation.amenity.HotelAmenity;
+import com.webapp.holidate.entity.accommodation.room.Room;
 import com.webapp.holidate.entity.document.HotelPolicyIdentificationDocument;
 import com.webapp.holidate.entity.image.HotelPhoto;
 import com.webapp.holidate.entity.image.Photo;
@@ -21,17 +24,18 @@ import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.acommodation.HotelMapper;
 import com.webapp.holidate.repository.accommodation.HotelRepository;
+import com.webapp.holidate.repository.accommodation.room.RoomRepository;
 import com.webapp.holidate.repository.amenity.AmenityRepository;
 import com.webapp.holidate.repository.amenity.HotelAmenityRepository;
+import com.webapp.holidate.repository.document.HotelPolicyIdentificationDocumentRepository;
+import com.webapp.holidate.repository.document.IdentificationDocumentRepository;
 import com.webapp.holidate.repository.image.HotelPhotoRepository;
 import com.webapp.holidate.repository.image.PhotoCategoryRepository;
 import com.webapp.holidate.repository.image.PhotoRepository;
 import com.webapp.holidate.repository.location.*;
+import com.webapp.holidate.repository.policy.HotelPolicyRepository;
 import com.webapp.holidate.repository.policy.cancellation.CancellationPolicyRepository;
 import com.webapp.holidate.repository.policy.resechedule.ReschedulePolicyRepository;
-import com.webapp.holidate.repository.policy.HotelPolicyRepository;
-import com.webapp.holidate.repository.document.HotelPolicyIdentificationDocumentRepository;
-import com.webapp.holidate.repository.document.IdentificationDocumentRepository;
 import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.service.storage.FileService;
 import com.webapp.holidate.type.ErrorType;
@@ -45,9 +49,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -58,6 +64,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class HotelService {
   HotelRepository hotelRepository;
+  RoomRepository roomRepository;
   PhotoCategoryRepository photoCategoryRepository;
   PhotoRepository photoRepository;
   HotelPhotoRepository hotelPhotoRepository;
@@ -77,6 +84,8 @@ public class HotelService {
   IdentificationDocumentRepository identificationDocumentRepository;
 
   FileService fileService;
+
+  RoomCombinationFinder roomCombinationFinder;
 
   HotelMapper hotelMapper;
 
@@ -131,9 +140,131 @@ public class HotelService {
     return hotelMapper.toHotelDetailsResponse(hotel);
   }
 
-  public List<HotelResponse> getAll() {
-    return hotelRepository.findAllWithLocationsPhotosPartnerPolicy()
-      .stream()
+  public List<HotelResponse> getAll(
+    String countryId, String provinceId, String cityId, String districtId,
+    String wardId, String streetId, List<String> amenityIds, Integer starRating,
+    LocalDate checkinDate, LocalDate checkoutDate,
+    Integer requiredAdults, Integer requiredChildren, Integer requiredRooms,
+    Double minPrice, Double maxPrice
+  ) {
+    boolean hasLocationFilter = countryId != null || provinceId != null || cityId != null ||
+      districtId != null || wardId != null || streetId != null;
+    boolean hasAmenityFilter = amenityIds != null && !amenityIds.isEmpty();
+    boolean hasStarRatingFilter = starRating != null;
+    boolean hasDateFilter = checkinDate != null || checkoutDate != null;
+    boolean hasGuestRequirementsFilter = requiredAdults != null || requiredChildren != null || requiredRooms != null;
+    boolean hasPriceFilter = minPrice != null || maxPrice != null;
+
+    boolean hasAnyFilter = hasLocationFilter || hasAmenityFilter || hasStarRatingFilter ||
+      hasDateFilter || hasGuestRequirementsFilter || hasPriceFilter;
+
+    if (!hasAnyFilter) {
+      List<Hotel> allHotelsFromDb = hotelRepository.findAllWithLocationsPhotosPolicy();
+      boolean hasAnyHotelsInDb = allHotelsFromDb != null && !allHotelsFromDb.isEmpty();
+
+      if (hasAnyHotelsInDb) {
+        List<String> hotelIds = allHotelsFromDb.stream().map(Hotel::getId).toList();
+        List<Hotel> hotelsWithRooms = hotelRepository.findAllByIdsWithRoomsAndInventories(hotelIds);
+
+        allHotelsFromDb.forEach(hotel -> {
+            hotelsWithRooms.stream()
+              .filter(h -> h.getId().equals(hotel.getId()))
+              .findFirst()
+              .ifPresent(h -> hotel.setRooms(h.getRooms()));
+          }
+        );
+
+        return allHotelsFromDb.stream()
+          .map(hotelMapper::toHotelResponse)
+          .toList();
+      }
+
+      return List.of();
+    }
+
+    int requiredAmenityCount = (amenityIds != null) ? amenityIds.size() : 0;
+    List<String> filteredHotelIds = hotelRepository.findAllIdsByFilter(
+      countryId, provinceId, cityId, districtId, wardId, streetId,
+      amenityIds, requiredAmenityCount, starRating, minPrice, maxPrice);
+    boolean hasMatchingHotels = filteredHotelIds != null && !filteredHotelIds.isEmpty();
+
+    if (!hasMatchingHotels) {
+      return List.of();
+    }
+
+    List<Hotel> candidateHotels = hotelRepository.findAllByIdsFilterWithLocationsPhotosPolicy(filteredHotelIds);
+    List<Hotel> hotelsWithRooms = hotelRepository.findAllByIdsWithRoomsAndInventories(filteredHotelIds);
+
+    candidateHotels.forEach(hotel -> {
+        hotelsWithRooms.stream()
+          .filter(h -> h.getId().equals(hotel.getId()))
+          .findFirst()
+          .ifPresent(h -> hotel.setRooms(h.getRooms()));
+      }
+    );
+
+    boolean hasValidDateRange = checkinDate != null && checkoutDate != null;
+    boolean hasGuestRequirements = requiredAdults != null || requiredChildren != null || requiredRooms != null;
+    boolean needsDateAndGuestValidation = hasValidDateRange && hasGuestRequirements;
+
+    if (!hasValidDateRange && !hasGuestRequirements) {
+      return candidateHotels.stream()
+        .map(hotelMapper::toHotelResponse)
+        .toList();
+    }
+
+    if (!hasValidDateRange) {
+      return candidateHotels.stream()
+        .filter(hotel -> {
+            Set<Room> rooms = hotel.getRooms();
+            if (rooms == null || rooms.isEmpty()) {
+              return false;
+            }
+
+            return hasCapacityForRequirements(rooms, requiredAdults, requiredChildren, requiredRooms);
+          }
+        )
+        .map(hotelMapper::toHotelResponse)
+        .toList();
+    }
+
+    final LocalDate validatedCheckinDate = checkinDate;
+    final LocalDate validatedCheckoutDate = checkoutDate.isAfter(validatedCheckinDate)
+      ? checkoutDate
+      : validatedCheckinDate.plusDays(1);
+    final long totalNightsStay = ChronoUnit.DAYS.between(validatedCheckinDate, validatedCheckoutDate);
+    boolean isInvalidStayDuration = totalNightsStay <= 0;
+
+    if (isInvalidStayDuration) {
+      return new ArrayList<>();
+    }
+
+    List<Hotel> availableHotels = candidateHotels.stream()
+      .filter(hotel -> {
+          List<RoomCandidate> availableRoomCandidates = roomRepository.findAvailableRoomCandidates(
+            hotel.getId(), validatedCheckinDate, validatedCheckoutDate, totalNightsStay);
+          boolean hasAvailableRooms = availableRoomCandidates != null && !availableRoomCandidates.isEmpty();
+
+          if (!hasAvailableRooms) {
+            return false;
+          }
+
+          if (needsDateAndGuestValidation) {
+            int adultsRequired = requiredAdults != null ? requiredAdults : 0;
+            int childrenRequired = requiredChildren != null ? requiredChildren : 0;
+            int roomsRequired = requiredRooms != null ? requiredRooms : 1; // Default 1 room if not specified
+
+            List<List<Room>> validCombinations = roomCombinationFinder.findCombinations(
+              availableRoomCandidates, adultsRequired, childrenRequired, roomsRequired);
+            return !validCombinations.isEmpty();
+          } else {
+            return true;
+          }
+        }
+      )
+      .toList();
+
+    return availableHotels.stream()
       .map(hotelMapper::toHotelResponse)
       .toList();
   }
@@ -373,9 +504,12 @@ public class HotelService {
     boolean hasPolicy = policy != null;
 
     if (!hasPolicy) {
-      LocalTime checkInTime = policyRequest.getCheckInTime() != null ? policyRequest.getCheckInTime() : LocalTime.of(14, 0);
-      LocalTime checkOutTime = policyRequest.getCheckOutTime() != null ? policyRequest.getCheckOutTime() : LocalTime.of(12, 0);
-      boolean allowsPayAtHotel = policyRequest.getAllowsPayAtHotel() != null ? policyRequest.getAllowsPayAtHotel() : false;
+      LocalTime checkInTime = policyRequest.getCheckInTime() != null ? policyRequest.getCheckInTime()
+        : LocalTime.of(14, 0);
+      LocalTime checkOutTime = policyRequest.getCheckOutTime() != null ? policyRequest.getCheckOutTime()
+        : LocalTime.of(12, 0);
+      boolean allowsPayAtHotel = policyRequest.getAllowsPayAtHotel() != null ? policyRequest.getAllowsPayAtHotel()
+        : false;
 
       policy = HotelPolicy.builder()
         .hotel(hotel)
@@ -476,5 +610,102 @@ public class HotelService {
     }
 
     policy.setRequiredIdentificationDocuments(currentDocuments);
+  }
+
+  private boolean hasCapacityForRequirements(
+    Set<Room> hotelRooms,
+    Integer requiredAdults,
+    Integer requiredChildren,
+    Integer requiredRooms
+  ) {
+    boolean hasAvailableRooms = hotelRooms != null && !hotelRooms.isEmpty();
+    if (!hasAvailableRooms) {
+      return false;
+    }
+
+    boolean hasNoGuestRequirements = requiredAdults == null && requiredChildren == null && requiredRooms == null;
+    if (hasNoGuestRequirements) {
+      return true;
+    }
+
+    int adultsToAccommodate = requiredAdults != null ? requiredAdults : 0;
+    int childrenToAccommodate = requiredChildren != null ? requiredChildren : 0;
+    int roomsNeeded = requiredRooms != null ? requiredRooms : (adultsToAccommodate + childrenToAccommodate > 0 ? 1 : 0);
+
+    boolean noGuestsNoRoomsRequired = adultsToAccommodate == 0 && childrenToAccommodate == 0 && roomsNeeded == 0;
+    if (noGuestsNoRoomsRequired) {
+      return true;
+    }
+
+    boolean onlyRoomsRequiredNoGuests = adultsToAccommodate == 0 && childrenToAccommodate == 0 && roomsNeeded > 0;
+    if (onlyRoomsRequiredNoGuests) {
+      return hotelRooms.size() >= roomsNeeded;
+    }
+
+    boolean hasGuestsButNoRooms = (adultsToAccommodate > 0 || childrenToAccommodate > 0) && roomsNeeded == 0;
+    if (hasGuestsButNoRooms) {
+      return false; // Có khách nhưng không yêu cầu phòng là không hợp lý
+    }
+
+    List<Room> roomsSortedByCapacity = hotelRooms.stream()
+      .sorted((room1, room2) -> Integer.compare(
+        room2.getMaxAdults() + room2.getMaxChildren(),
+        room1.getMaxAdults() + room1.getMaxChildren()))
+      .toList();
+
+    return canAccommodateGuests(roomsSortedByCapacity, adultsToAccommodate, childrenToAccommodate, roomsNeeded);
+  }
+
+  private boolean canAccommodateGuests(
+    List<Room> availableRooms,
+    int totalAdultsRequired,
+    int totalChildrenRequired,
+    int totalRoomsRequired
+  ) {
+    boolean hasSufficientRooms = availableRooms.size() >= totalRoomsRequired;
+    if (!hasSufficientRooms) {
+      return false;
+    }
+
+    int adultsStillNeedAccommodation = totalAdultsRequired;
+    int childrenStillNeedAccommodation = totalChildrenRequired;
+    int roomsCurrentlyUsed = 0;
+
+    for (Room currentRoom : availableRooms) {
+      if (roomsCurrentlyUsed >= totalRoomsRequired) {
+        break;
+      }
+
+      if (adultsStillNeedAccommodation <= 0 && childrenStillNeedAccommodation <= 0) {
+        break;
+      }
+
+      int adultsCanFitInThisRoom = Math.min(adultsStillNeedAccommodation, currentRoom.getMaxAdults());
+      int childrenCanFitInThisRoom = getChildrenCanFitInThisRoom(currentRoom, childrenStillNeedAccommodation, adultsCanFitInThisRoom);
+
+      adultsStillNeedAccommodation -= adultsCanFitInThisRoom;
+      childrenStillNeedAccommodation -= childrenCanFitInThisRoom;
+      roomsCurrentlyUsed++;
+    }
+
+    boolean allGuestsAccommodated = adultsStillNeedAccommodation <= 0 && childrenStillNeedAccommodation <= 0;
+    boolean withinRoomLimit = roomsCurrentlyUsed <= totalRoomsRequired;
+
+    return allGuestsAccommodated && withinRoomLimit;
+  }
+
+  private int getChildrenCanFitInThisRoom(Room currentRoom, int childrenStillNeedAccommodation, int adultsCanFitInThisRoom) {
+    int childrenCanFitInThisRoom = Math.min(childrenStillNeedAccommodation, currentRoom.getMaxChildren());
+
+    int totalGuestsInRoom = adultsCanFitInThisRoom + childrenCanFitInThisRoom;
+    int maxRoomCapacity = currentRoom.getMaxAdults() + currentRoom.getMaxChildren();
+
+    if (totalGuestsInRoom > maxRoomCapacity) {
+      if (adultsCanFitInThisRoom <= currentRoom.getMaxAdults()) {
+        int remainingCapacity = maxRoomCapacity - adultsCanFitInThisRoom;
+        childrenCanFitInThisRoom = Math.min(childrenStillNeedAccommodation, remainingCapacity);
+      }
+    }
+    return childrenCanFitInThisRoom;
   }
 }

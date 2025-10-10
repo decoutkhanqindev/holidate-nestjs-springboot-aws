@@ -42,6 +42,12 @@ public class DbTableNames {
   public static final String BOOKINGS = "bookings";
   public static final String BOOKING_ROOMS = "booking_rooms";
   public static final String REVIEWS = "reviews";
+  public static final String DISCOUNTS = "discounts";
+  public static final String HOTEL_DISCOUNTS = "hotel_discounts";
+  public static final String SPECIAL_DAY_DISCOUNTS = "special_day_discounts";
+
+  // special day related tables
+  public static final String SPECIAL_DAYS = "special_days";
 
   // images
   public static final String PHOTOS = "photos";

@@ -29,4 +29,8 @@ public class EnvVariables {
   public static final String OTP_EXPIRATION_MILLIS = "OTP_EXPIRATION_MILLIS";
   public static final String OTP_MAX_ATTEMPTS = "OTP_MAX_ATTEMPTS";
   public static final String OTP_BLOCK_TIME_MILLIS = "OTP_BLOCK_TIME_MILLIS";
+  public static final String VAT_RATE = "VAT_RATE";
+  public static final String SERVICE_FEE_RATE = "SERVICE_FEE_RATE";
+  public static final String DYNAMIC_PRICING_LOOK_AHEAD_MILLIS = "DYNAMIC_PRICING_LOOK_AHEAD_MILLIS";
+  public static final String WEEKEND_PRICE_MULTIPLIER = "WEEKEND_PRICE_MULTIPLIER";
 }

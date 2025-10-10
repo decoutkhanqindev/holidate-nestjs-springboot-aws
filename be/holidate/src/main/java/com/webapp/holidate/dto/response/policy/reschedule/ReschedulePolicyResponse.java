@@ -1,6 +1,5 @@
 package com.webapp.holidate.dto.response.policy.reschedule;
 
-import com.webapp.holidate.dto.response.policy.cancellation.CancellationRuleResponse;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

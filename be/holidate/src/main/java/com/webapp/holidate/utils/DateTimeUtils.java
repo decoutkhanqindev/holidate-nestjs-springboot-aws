@@ -5,6 +5,10 @@ import java.time.ZoneId;
 import java.util.Date;
 
 public class DateTimeUtils {
+  public static int millisToDays(long millis) {
+    return (int) (millis / (1000 * 60 * 60 * 24));
+  }
+
   public static LocalDateTime millisToLocalDateTime(long millis) {
     return new Date(System.currentTimeMillis() + millis)
       .toInstant()

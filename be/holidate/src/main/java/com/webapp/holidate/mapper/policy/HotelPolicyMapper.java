@@ -1,9 +1,9 @@
 package com.webapp.holidate.mapper.policy;
 
-import com.webapp.holidate.dto.response.policy.HotelPolicyResponse;
 import com.webapp.holidate.dto.response.policy.HotelPolicyIdentificationDocumentResponse;
-import com.webapp.holidate.entity.policy.HotelPolicy;
+import com.webapp.holidate.dto.response.policy.HotelPolicyResponse;
 import com.webapp.holidate.entity.document.HotelPolicyIdentificationDocument;
+import com.webapp.holidate.entity.policy.HotelPolicy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

@@ -1,6 +1,6 @@
 package com.webapp.holidate.service.storage;
 
-import com.webapp.holidate.constants.AppValues;
+import com.webapp.holidate.constants.AppProperties;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -25,11 +25,11 @@ public class FileService {
   S3Client s3Client;
 
   @NonFinal
-  @Value(AppValues.AWS_S3_BUCKET_NAME)
+  @Value(AppProperties.AWS_S3_BUCKET_NAME)
   String bucketName;
 
   @NonFinal
-  @Value(AppValues.AWS_S3_BASE_URL)
+  @Value(AppProperties.AWS_S3_BASE_URL)
   String baseUrl;
 
   public void upload(MultipartFile file) throws IOException {

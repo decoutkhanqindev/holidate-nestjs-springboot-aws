@@ -36,7 +36,6 @@ public class RoomResponse {
   boolean breakfastIncluded;
   int quantity;
   String status;
-  List<RoomInventoryResponse> inventories;
   List<AmenityCategoryResponse> amenities;
   LocalDateTime createdAt;
   LocalDateTime updatedAt;

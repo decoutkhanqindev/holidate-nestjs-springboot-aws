@@ -5,8 +5,8 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import com.webapp.holidate.config.security.filter.CustomAuthenticationToken;
-import com.webapp.holidate.constants.AppValues;
+import com.webapp.holidate.component.security.filter.CustomAuthenticationToken;
+import com.webapp.holidate.constants.AppProperties;
 import com.webapp.holidate.dto.request.auth.LoginRequest;
 import com.webapp.holidate.dto.request.auth.RegisterRequest;
 import com.webapp.holidate.dto.request.auth.TokenRequest;
@@ -57,19 +57,19 @@ public class AuthService {
   PasswordEncoder passwordEncoder;
 
   @NonFinal
-  @Value(AppValues.JWT_SECRET_KEY)
+  @Value(AppProperties.JWT_SECRET_KEY)
   String SECRET_KEY;
 
   @NonFinal
-  @Value(AppValues.JWT_ISSUER)
+  @Value(AppProperties.JWT_ISSUER)
   String ISSUER;
 
   @NonFinal
-  @Value(AppValues.JWT_ACCESS_TOKEN_EXPIRATION_MILLIS)
+  @Value(AppProperties.JWT_ACCESS_TOKEN_EXPIRATION_MILLIS)
   long accessTokenExpirationMillis;
 
   @NonFinal
-  @Value(AppValues.JWT_REFRESH_TOKEN_EXPIRATION_MILLIS)
+  @Value(AppProperties.JWT_REFRESH_TOKEN_EXPIRATION_MILLIS)
   long refreshTokenExpirationMillis;
 
   public UserResponse register(RegisterRequest request) {
@@ -226,7 +226,8 @@ public class AuthService {
     UserAuthInfo authInfo = user.getAuthInfo();
 
     String refreshToken = authInfo.getRefreshToken();
-    if (refreshToken != null) {
+    boolean hasRefreshToken = refreshToken != null && !refreshToken.isEmpty();
+    if (hasRefreshToken) {
       SignedJWT refreshSignedJWT = SignedJWT.parse(refreshToken);
       String refreshTokenId = refreshSignedJWT.getJWTClaimsSet().getJWTID();
       createInvalidToken(refreshTokenId, refreshToken);

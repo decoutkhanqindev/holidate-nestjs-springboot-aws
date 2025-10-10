@@ -10,5 +10,5 @@ public class ValidationPatterns {
   public static final String LATITUDE_MAX = "90.0";
   public static final String LONGITUDE_MIN = "-180.0";
   public static final String LONGITUDE_MAX = "180.0";
-  public static final String CHECK_IN_OUT_TIME = "HH:mm";
+  public static final String CHECK_IN_OUT_TIME = "HH:mm:ss";
 }

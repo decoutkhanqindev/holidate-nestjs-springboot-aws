@@ -1,10 +1,7 @@
 package com.webapp.holidate.dto.response.user;
 
-import com.webapp.holidate.dto.response.location.LocationResponse;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
-import java.time.LocalDateTime;
 
 @Data
 @Builder
