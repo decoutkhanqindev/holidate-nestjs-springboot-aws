@@ -8,6 +8,7 @@ import com.webapp.holidate.entity.accommodation.room.Room;
 import com.webapp.holidate.entity.accommodation.room.RoomInventory;
 import com.webapp.holidate.mapper.amenity.AmenityCategoryMapper;
 import com.webapp.holidate.mapper.image.PhotoCategoryMapper;
+import com.webapp.holidate.mapper.location.entertainment_venue.EntertainmentVenueCategoryMapper;
 import com.webapp.holidate.mapper.policy.HotelPolicyMapper;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
@@ -19,11 +20,15 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-@Mapper(componentModel = "spring", uses = {
+@Mapper(
+  componentModel = "spring",
+  uses = {
+    EntertainmentVenueCategoryMapper.class,
     PhotoCategoryMapper.class,
     AmenityCategoryMapper.class,
     HotelPolicyMapper.class
-})
+  }
+)
 public interface HotelMapper {
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "country", ignore = true)
@@ -32,6 +37,7 @@ public interface HotelMapper {
   @Mapping(target = "district", ignore = true)
   @Mapping(target = "ward", ignore = true)
   @Mapping(target = "street", ignore = true)
+  @Mapping(target = "entertainmentVenues", ignore = true)
   @Mapping(target = "photos", ignore = true)
   @Mapping(target = "latitude", ignore = true)
   @Mapping(target = "longitude", ignore = true)
@@ -63,8 +69,8 @@ public interface HotelMapper {
     }
 
     List<RoomInventory> roomInventories = rooms.stream()
-        .flatMap(room -> room.getInventories().stream())
-        .toList();
+      .flatMap(room -> room.getInventories().stream())
+      .toList();
     boolean hasInventories = !roomInventories.isEmpty();
     if (!hasInventories) {
       Room firstRoom = rooms.getFirst();
@@ -75,9 +81,9 @@ public interface HotelMapper {
     }
 
     Optional<RoomInventory> cheapestAvailableInventory = roomInventories.stream()
-        .filter(inventory -> !inventory.getId().getDate().isBefore(today))
-        .filter(inventory -> inventory.getAvailableRooms() > 0)
-        .min(Comparator.comparingDouble(RoomInventory::getPrice));
+      .filter(inventory -> !inventory.getId().getDate().isBefore(today))
+      .filter(inventory -> inventory.getAvailableRooms() > 0)
+      .min(Comparator.comparingDouble(RoomInventory::getPrice));
     boolean hasAvailableInventories = cheapestAvailableInventory.isPresent();
     if (hasAvailableInventories) {
       RoomInventory inventory = cheapestAvailableInventory.get();
@@ -88,21 +94,22 @@ public interface HotelMapper {
       responseBuilder.availableRooms(inventory.getAvailableRooms());
     } else {
       Optional<Room> roomWithLowestBasePrice = rooms.stream()
-          .min(Comparator.comparingDouble(Room::getBasePricePerNight));
+        .min(Comparator.comparingDouble(Room::getBasePricePerNight));
 
       Room room = roomWithLowestBasePrice.get();
       responseBuilder.rawPricePerNight(room.getBasePricePerNight());
       responseBuilder.currentPricePerNight(room.getBasePricePerNight());
 
       int totalAvailableRooms = roomInventories.stream()
-          .filter(inventory -> !inventory.getId().getDate().isBefore(today))
-          .mapToInt(RoomInventory::getAvailableRooms)
-          .sum();
+        .filter(inventory -> !inventory.getId().getDate().isBefore(today))
+        .mapToInt(RoomInventory::getAvailableRooms)
+        .sum();
 
       responseBuilder.availableRooms(totalAvailableRooms > 0 ? totalAvailableRooms : room.getQuantity());
     }
   }
 
+  @Mapping(source = "entertainmentVenues", target = "entertainmentVenues", qualifiedByName = "hotelEntertainmentVenuesToCategories")
   @Mapping(source = "photos", target = "photos", qualifiedByName = "hotelPhotosToCategories")
   @Mapping(source = "amenities", target = "amenities", qualifiedByName = "hotelAmenitiesToCategories")
   HotelDetailsResponse toHotelDetailsResponse(Hotel hotel);

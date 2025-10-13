@@ -3,6 +3,7 @@ package com.webapp.holidate.dto.response.acommodation.hotel;
 import com.webapp.holidate.dto.response.amenity.AmenityCategoryResponse;
 import com.webapp.holidate.dto.response.image.PhotoCategoryResponse;
 import com.webapp.holidate.dto.response.location.LocationResponse;
+import com.webapp.holidate.dto.response.location.entertainment_venue.EntertainmentVenueCategoryResponse;
 import com.webapp.holidate.dto.response.policy.HotelPolicyResponse;
 import com.webapp.holidate.dto.response.user.PartnerResponse;
 import lombok.*;
@@ -31,6 +32,7 @@ public class HotelDetailsResponse {
   LocationResponse district;
   LocationResponse ward;
   LocationResponse street;
+  List<EntertainmentVenueCategoryResponse> entertainmentVenues;
   List<PhotoCategoryResponse> photos;
   List<AmenityCategoryResponse> amenities;
   HotelPolicyResponse policy;

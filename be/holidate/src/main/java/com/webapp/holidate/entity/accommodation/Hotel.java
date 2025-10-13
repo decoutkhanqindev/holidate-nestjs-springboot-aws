@@ -8,6 +8,8 @@ import com.webapp.holidate.entity.booking.Review;
 import com.webapp.holidate.entity.booking.discount.HotelDiscount;
 import com.webapp.holidate.entity.image.HotelPhoto;
 import com.webapp.holidate.entity.location.*;
+import com.webapp.holidate.entity.location.entertainment_venue.EntertainmentVenue;
+import com.webapp.holidate.entity.location.entertainment_venue.HotelEntertainmentVenue;
 import com.webapp.holidate.entity.policy.HotelPolicy;
 import com.webapp.holidate.entity.user.User;
 import jakarta.persistence.*;
@@ -77,6 +79,11 @@ public class Hotel {
   @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   @ToString.Exclude
   @Builder.Default
+  Set<HotelEntertainmentVenue> entertainmentVenues = new HashSet<>();
+
+  @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @ToString.Exclude
+  @Builder.Default
   Set<HotelPhoto> photos = new HashSet<>();
 
   @Column(nullable = true)
@@ -115,7 +122,7 @@ public class Hotel {
   @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   @ToString.Exclude
   @Builder.Default
-  List<Review> reviews = new ArrayList<>();
+  Set<Review> reviews = new HashSet<>();
 
   @Column(nullable = true)
   @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)

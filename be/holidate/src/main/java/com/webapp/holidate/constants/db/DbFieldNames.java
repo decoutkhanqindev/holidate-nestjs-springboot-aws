@@ -30,6 +30,8 @@ public class DbFieldNames {
   public static final String DISTRICT_ID = "district_id";
   public static final String WARD_ID = "ward_id";
   public static final String STREET_ID = "street_id";
+  public static final String ENTERTAINMENT_VENUE_ID = "entertainment_venue_id";
+  public static final String ENTERTAINMENT_VENUE_CATEGORY_ID = "entertainment_venue_category_id";
 
   // booking related fields
   public static final String BOOKING_ID = "booking_id";

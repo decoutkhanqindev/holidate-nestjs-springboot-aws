@@ -20,8 +20,6 @@ public class DbTableNames {
   public static final String RESCHEDULE_RULES = "reschedule_rules";
   public static final String HOTEL_POLICIES = "hotel_policies";
   public static final String IDENTIFICATION_DOCUMENTS = "identification_documents";
-  public static final String CHILDREN_POLICY_RULES = "children_policy_rules";
-  public static final String PET_POLICY_RULES = "pet_policy_rules";
   public static final String HOTEL_POLICY_IDENTIFICATION_DOCUMENTS = "hotel_policy_identification_documents";
 
   // amenity related tables
@@ -37,6 +35,9 @@ public class DbTableNames {
   public static final String DISTRICTS = "districts";
   public static final String WARDS = "wards";
   public static final String STREETS = "streets";
+  public static final String ENTERTAINMENT_VENUES = "entertainment_venues";
+  public static final String ENTERTAINMENT_VENUE_CATEGORIES = "entertainment_venue_categories";
+  public static final String HOTEL_ENTERTAINMENT_VENUES = "hotel_entertainment_venues";
 
   // booking related tables
   public static final String BOOKINGS = "bookings";
