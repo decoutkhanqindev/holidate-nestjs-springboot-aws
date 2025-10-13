@@ -44,6 +44,9 @@ public class HolidateApplication {
     System.setProperty(EnvVariables.SERVICE_FEE_RATE, dotenv.get(EnvVariables.SERVICE_FEE_RATE));
     System.setProperty(EnvVariables.DYNAMIC_PRICING_LOOK_AHEAD_MILLIS, dotenv.get(EnvVariables.DYNAMIC_PRICING_LOOK_AHEAD_MILLIS));
     System.setProperty(EnvVariables.WEEKEND_PRICE_MULTIPLIER, dotenv.get(EnvVariables.WEEKEND_PRICE_MULTIPLIER));
+    System.setProperty(EnvVariables.VNPAY_TMN_CODE, dotenv.get(EnvVariables.VNPAY_TMN_CODE));
+    System.setProperty(EnvVariables.VNPAY_HASH_SECRET, dotenv.get(EnvVariables.VNPAY_HASH_SECRET));
+    System.setProperty(EnvVariables.VNPAY_API_URL, dotenv.get(EnvVariables.VNPAY_API_URL));
 
     SpringApplication.run(HolidateApplication.class, args);
   }

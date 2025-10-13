@@ -33,4 +33,7 @@ public class EnvVariables {
   public static final String SERVICE_FEE_RATE = "SERVICE_FEE_RATE";
   public static final String DYNAMIC_PRICING_LOOK_AHEAD_MILLIS = "DYNAMIC_PRICING_LOOK_AHEAD_MILLIS";
   public static final String WEEKEND_PRICE_MULTIPLIER = "WEEKEND_PRICE_MULTIPLIER";
+  public static final String VNPAY_TMN_CODE = "VNPAY_TMN_CODE";
+  public static final String VNPAY_HASH_SECRET = "VNPAY_HASH_SECRET";
+  public static final String VNPAY_API_URL = "VNPAY_API_URL";
 }

@@ -24,4 +24,7 @@ public class AppProperties {
   public static final String SERVICE_FEE_RATE = "${spring.pricing.service-fee-rate}";
   public static final String DYNAMIC_PRICING_LOOK_AHEAD_MILLIS = "${spring.pricing.dynamic-pricing-look-ahead-millis}";
   public static final String WEEKEND_PRICE_MULTIPLIER = "${spring.pricing.weekend-price-multiplier}";
+  public static final String VNPAY_TMN_CODE = "${spring.payment.vnpay.tmn-code}";
+  public static final String VNPAY_HASH_SECRET = "${spring.payment.vnpay.hash-secret}";
+  public static final String VNPAY_API_URL = "${spring.payment.vnpay.api-url}";
 }
