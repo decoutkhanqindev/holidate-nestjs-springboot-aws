@@ -16,6 +16,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -75,10 +76,11 @@ public class HotelController {
       .build();
   }
 
-  @PutMapping(path = CommonEndpoints.ID, consumes = "multipart/form-data")
-  public ApiResponse<HotelDetailsResponse> update(
+  @PutMapping(path = CommonEndpoints.ID, consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ApiResponse<HotelDetailsResponse> updateJson(
     @PathVariable String id,
-    @RequestBody @Valid HotelUpdateRequest request) throws IOException {
+    @RequestBody @Valid HotelUpdateRequest request
+  ) throws IOException {
     HotelDetailsResponse response = hotelService.update(id, request);
     return ApiResponse.<HotelDetailsResponse>builder()
       .data(response)

@@ -31,4 +31,7 @@ public class HotelEntertainmentVenue {
   @JoinColumn(name = DbFieldNames.ENTERTAINMENT_VENUE_ID, nullable = false)
   @ToString.Exclude
   EntertainmentVenue entertainmentVenue;
+
+  @Column(nullable = false)
+  double distance; // in meters
 }

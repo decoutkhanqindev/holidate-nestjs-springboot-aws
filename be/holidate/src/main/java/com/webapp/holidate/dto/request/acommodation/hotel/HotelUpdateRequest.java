@@ -2,6 +2,8 @@ package com.webapp.holidate.dto.request.acommodation.hotel;
 
 import com.webapp.holidate.constants.ValidationPatterns;
 import com.webapp.holidate.dto.request.image.PhotoCreationRequest;
+import com.webapp.holidate.dto.request.location.entertainment_venue.EntertainmentVenueCreationRequest;
+import com.webapp.holidate.dto.request.location.entertainment_venue.HotelEntertainmentVenueRequest;
 import com.webapp.holidate.dto.request.policy.HotelPolicyRequest;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -30,6 +32,11 @@ public class HotelUpdateRequest {
   String districtId;
   String wardId;
   String streetId;
+
+  List<EntertainmentVenueCreationRequest> entertainmentVenuesToAdd;
+  List<HotelEntertainmentVenueRequest> entertainmentVenuesWithDistanceToAdd;
+  List<HotelEntertainmentVenueRequest> entertainmentVenuesWithDistanceToUpdate;
+  List<String> entertainmentVenueIdsToRemove;
 
   @DecimalMin(value = ValidationPatterns.LATITUDE_MIN, message = "LATITUDE_INVALID")
   @DecimalMax(value = ValidationPatterns.LATITUDE_MAX, message = "LATITUDE_INVALID")

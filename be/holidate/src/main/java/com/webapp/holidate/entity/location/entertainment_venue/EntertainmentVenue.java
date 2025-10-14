@@ -25,9 +25,6 @@ public class EntertainmentVenue {
   @Column(nullable = false)
   String name;
 
-  @Column(nullable = false)
-  int distance; // in meters
-
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = DbFieldNames.CITY_ID, nullable = false)
   @ToString.Exclude

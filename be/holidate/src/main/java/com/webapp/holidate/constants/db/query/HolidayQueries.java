@@ -1,4 +1,4 @@
-package com.webapp.holidate.constants.db.query.holiday;
+package com.webapp.holidate.constants.db.query;
 
 public class HolidayQueries {
   public static final String FIND_ALL_BY_DATE_BETWEEN =

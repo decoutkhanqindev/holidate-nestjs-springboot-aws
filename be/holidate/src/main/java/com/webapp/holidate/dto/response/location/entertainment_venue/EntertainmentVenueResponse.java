@@ -16,5 +16,5 @@ import lombok.experimental.FieldDefaults;
 public class EntertainmentVenueResponse {
   String id;
   String name;
-  int distance;
+  double distance;
 }

@@ -84,6 +84,10 @@ public enum ErrorType {
   STREET_CODE_INVALID(400, "Street code must be 2 to 5 characters"),
   STREET_CODE_NOT_BLANK(400, "Street code is required"),
   STREET_EXISTS(409, "Street already exists in this ward"),
+  ENTERTAINMENT_VENUE_ID_NOT_BLANK(400, "Entertainment venue ID is required"),
+  ENTERTAINMENT_VENUE_NOT_FOUND(404, "Entertainment venue not found"),
+  ENTERTAINMENT_VENUE_CATEGORY_NOT_FOUND(404, "Entertainment venue category not found"),
+  DISTANCE_MUST_BE_POSITIVE(400, "Distance must be a positive number"),
 
   // accommodation errors
   LATITUDE_INVALID(400, "Latitude must be between -90.0 and 90.0"),

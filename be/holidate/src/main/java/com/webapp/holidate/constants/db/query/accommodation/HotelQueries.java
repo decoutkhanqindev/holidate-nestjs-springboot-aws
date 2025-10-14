@@ -54,6 +54,9 @@ public class HotelQueries {
 
   public static final String FIND_BY_ID_WITH_LOCATIONS_PHOTOS_AMENITIES_REVIEWS_PARTNER_POLICY =
     FIND_BASE +
+      "LEFT JOIN FETCH h.entertainmentVenues ev " +
+      "LEFT JOIN FETCH ev.entertainmentVenue eve " +
+      "LEFT JOIN FETCH eve.category " +
       "LEFT JOIN FETCH h.amenities ha " +
       "LEFT JOIN FETCH ha.amenity a " +
       "LEFT JOIN FETCH a.category " +

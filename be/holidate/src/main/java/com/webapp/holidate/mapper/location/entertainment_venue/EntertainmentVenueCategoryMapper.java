@@ -16,22 +16,19 @@ import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring")
 public interface EntertainmentVenueCategoryMapper {
-  @Mapping(target = "entertainmentVenues", ignore = true)
-  EntertainmentVenueCategoryResponse toEntertainmentVenueCategoryResponse(EntertainmentVenueCategory category);
-
-  @Mapping(target = "entertainmentVenues", ignore = true)
-  EntertainmentVenueCategoryResponse toEntertainmentVenuesCategoryResponseList(EntertainmentVenueCategory categories);
-
   @Named("hotelEntertainmentVenuesToCategories")
-  default List<EntertainmentVenueCategoryResponse> toEntertainmentVenuesCategoryResponseList(Set<HotelEntertainmentVenue> hotelEntertainmentVenues) {
+  default List<EntertainmentVenueCategoryResponse> toEntertainmentVenuesCategoryResponseList(
+    Set<HotelEntertainmentVenue> hotelEntertainmentVenues) {
     boolean hasEntertainmentVenues = hotelEntertainmentVenues != null && !hotelEntertainmentVenues.isEmpty();
     if (!hasEntertainmentVenues) {
       return List.of();
     }
 
     // group entertainment venues by category
-    Map<EntertainmentVenueCategory, List<HotelEntertainmentVenue>> entertainmentVenuesByCategory = hotelEntertainmentVenues.stream()
-      .collect(Collectors.groupingBy(hotelEntertainmentVenue -> hotelEntertainmentVenue.getEntertainmentVenue().getCategory()));
+    Map<EntertainmentVenueCategory, List<HotelEntertainmentVenue>> entertainmentVenuesByCategory = hotelEntertainmentVenues
+      .stream()
+      .collect(Collectors
+        .groupingBy(hotelEntertainmentVenue -> hotelEntertainmentVenue.getEntertainmentVenue().getCategory()));
 
     return entertainmentVenuesByCategory.entrySet().stream()
       .map(entry -> {
@@ -44,11 +41,11 @@ public interface EntertainmentVenueCategoryMapper {
                 return EntertainmentVenueResponse.builder()
                   .id(venue.getId())
                   .name(venue.getName())
-                  .distance(venue.getDistance())
+                  .distance(hotelEntertainmentVenue.getDistance())
                   .build();
               }
             )
-            .collect(Collectors.toList());
+            .toList();
 
           return EntertainmentVenueCategoryResponse.builder()
             .id(category.getId())

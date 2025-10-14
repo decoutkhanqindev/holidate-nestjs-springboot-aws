@@ -16,9 +16,6 @@ import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring")
 public interface PhotoCategoryMapper {
-  @Mapping(target = "photos", ignore = true)
-  PhotoCategoryResponse toPhotoCategoryResponse(PhotoCategory photoCategory);
-
   @Named("hotelPhotosToCategories")
   default List<PhotoCategoryResponse> toPhotoCategoryResponseList(Set<HotelPhoto> hotelPhotos) {
     boolean hasPhotos = hotelPhotos != null && !hotelPhotos.isEmpty();
