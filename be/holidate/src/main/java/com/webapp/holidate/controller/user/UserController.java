@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -46,7 +47,7 @@ public class UserController {
         .build();
   }
 
-  @PutMapping(CommonEndpoints.ID)
+  @PutMapping(path = CommonEndpoints.ID, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ApiResponse<UserResponse> update(@PathVariable String id, @RequestBody @Valid UserUpdateRequest request) {
     UserResponse response = service.update(id, request);
     return ApiResponse.<UserResponse>builder()

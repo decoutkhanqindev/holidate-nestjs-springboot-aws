@@ -76,8 +76,8 @@ public class HotelController {
       .build();
   }
 
-  @PutMapping(path = CommonEndpoints.ID, consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ApiResponse<HotelDetailsResponse> updateJson(
+  @PutMapping(path = CommonEndpoints.ID, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ApiResponse<HotelDetailsResponse> update(
     @PathVariable String id,
     @RequestBody @Valid HotelUpdateRequest request
   ) throws IOException {

@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -25,7 +26,7 @@ import java.util.List;
 public class RoomController {
   RoomService service;
 
-  @PostMapping(consumes = "multipart/form-data")
+  @PostMapping(MediaType.MULTIPART_FORM_DATA_VALUE)
   public ApiResponse<RoomDetailsResponse> create(@ModelAttribute @Valid RoomCreationRequest request) throws IOException {
     RoomDetailsResponse response = service.create(request);
     return ApiResponse.<RoomDetailsResponse>builder()
@@ -49,7 +50,7 @@ public class RoomController {
       .build();
   }
 
-  @PutMapping(path = CommonEndpoints.ID, consumes = "multipart/form-data")
+  @PutMapping(path = CommonEndpoints.ID, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ApiResponse<RoomDetailsResponse> update(
     @PathVariable String id,
     @ModelAttribute @Valid RoomUpdateRequest request
