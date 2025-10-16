@@ -28,13 +28,4 @@ public interface UserMapper {
   User toEntity(UserCreationRequest request);
 
   UserResponse toUserResponse(User user);
-
-  @Mapping(target = "id", ignore = true)
-  @Mapping(target = "email", ignore = true)
-  @Mapping(target = "password", ignore = true)
-  @Mapping(target = "role", ignore = true)
-  @Mapping(target = "authInfo", ignore = true)
-  @Mapping(target = "createdAt", ignore = true)
-  @Mapping(target = "updatedAt", expression = "java(java.time.LocalDateTime.now())")
-  void updateEntity(@MappingTarget User user, UserUpdateRequest request);
 }

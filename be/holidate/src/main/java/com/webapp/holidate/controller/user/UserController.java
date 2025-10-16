@@ -14,6 +14,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -48,7 +49,9 @@ public class UserController {
   }
 
   @PutMapping(path = CommonEndpoints.ID, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ApiResponse<UserResponse> update(@PathVariable String id, @RequestBody @Valid UserUpdateRequest request) {
+  public ApiResponse<UserResponse> update(
+      @PathVariable String id,
+      @ModelAttribute @Valid UserUpdateRequest request) throws IOException {
     UserResponse response = service.update(id, request);
     return ApiResponse.<UserResponse>builder()
         .data(response)

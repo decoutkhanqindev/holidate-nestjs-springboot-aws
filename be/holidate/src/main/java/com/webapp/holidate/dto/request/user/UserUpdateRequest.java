@@ -4,6 +4,7 @@ import com.webapp.holidate.constants.ValidationPatterns;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 
@@ -35,5 +36,5 @@ public class UserUpdateRequest {
 
   LocalDateTime dateOfBirth;
 
-  String avatarUrl;
+  MultipartFile avatarFile;
 }

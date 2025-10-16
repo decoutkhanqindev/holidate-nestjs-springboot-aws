@@ -30,8 +30,8 @@ import java.util.List;
 public class HotelController {
   HotelService hotelService;
 
-  @PostMapping(consumes = "multipart/form-data")
-  public ApiResponse<HotelDetailsResponse> create(@ModelAttribute @Valid HotelCreationRequest request)
+  @PostMapping
+  public ApiResponse<HotelDetailsResponse> create(@RequestBody @Valid HotelCreationRequest request)
     throws IOException {
     HotelDetailsResponse response = hotelService.create(request);
     return ApiResponse.<HotelDetailsResponse>builder()
@@ -79,7 +79,7 @@ public class HotelController {
   @PutMapping(path = CommonEndpoints.ID, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ApiResponse<HotelDetailsResponse> update(
     @PathVariable String id,
-    @RequestBody @Valid HotelUpdateRequest request
+    @ModelAttribute @Valid HotelUpdateRequest request
   ) throws IOException {
     HotelDetailsResponse response = hotelService.update(id, request);
     return ApiResponse.<HotelDetailsResponse>builder()
