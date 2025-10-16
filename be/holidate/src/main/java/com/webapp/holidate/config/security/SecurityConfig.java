@@ -88,6 +88,7 @@ public class SecurityConfig {
       .hasAuthority(RoleType.PARTNER.getValue())
       .requestMatchers(HttpMethod.DELETE, AccommodationEndpoints.ACCOMMODATION + CommonEndpoints.ID)
       .hasAuthority(RoleType.PARTNER.getValue())
+
       // III. admin role
       // 1. profile endpoints
       .requestMatchers(UserEndpoints.USERS + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())

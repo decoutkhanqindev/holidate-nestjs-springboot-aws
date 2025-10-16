@@ -1,4 +1,4 @@
-package com.webapp.holidate.dto.response.auth.email;
+package com.webapp.holidate.dto.response.auth;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -12,6 +12,6 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class SendEmailVerificationResponse {
+public class SendOtpResponse {
   boolean sent;
 }

@@ -1,4 +1,4 @@
-package com.webapp.holidate.dto.request.auth.email;
+package com.webapp.holidate.dto.request.auth.otp;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -14,7 +14,7 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class SendEmailVerificationRequest {
+public class SendOtpRequest {
   @NotBlank(message = "EMAIL_NOT_BLANK")
   @Email(message = "EMAIL_INVALID")
   String email;

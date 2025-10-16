@@ -58,11 +58,11 @@ public class AuthService {
 
   @NonFinal
   @Value(AppProperties.JWT_SECRET_KEY)
-  String SECRET_KEY;
+  String secretKey;
 
   @NonFinal
   @Value(AppProperties.JWT_ISSUER)
-  String ISSUER;
+  String issuer;
 
   @NonFinal
   @Value(AppProperties.JWT_ACCESS_TOKEN_EXPIRATION_MILLIS)
@@ -91,10 +91,10 @@ public class AuthService {
       String encodedPassword = passwordEncoder.encode(request.getPassword());
       user.setPassword(encodedPassword);
 
-      authInfo.setEmailVerificationOtp(null);
-      authInfo.setEmailVerificationAttempts(0);
-      authInfo.setEmailVerificationOtpExpirationTime(null);
-      authInfo.setEmailVerificationOtpBlockedUntil(null);
+      authInfo.setOtp(null);
+      authInfo.setOtpAttempts(0);
+      authInfo.setOtpExpirationTime(null);
+      authInfo.setOtpBlockedUntil(null);
       authInfo.setRefreshToken(null);
       authInfo.setActive(false);
     } else {
@@ -106,11 +106,11 @@ public class AuthService {
       user.setRole(role);
 
       UserAuthInfo newAuthInfo = UserAuthInfo.builder()
-        .authProvider(AuthProviderType.LOCAL.getValue())
-        .emailVerificationAttempts(0)
-        .active(false)
-        .user(user)
-        .build();
+          .authProvider(AuthProviderType.LOCAL.getValue())
+          .otpAttempts(0)
+          .active(false)
+          .user(user)
+          .build();
       user.setAuthInfo(newAuthInfo);
     }
 
@@ -121,7 +121,7 @@ public class AuthService {
   public TokenResponse login(LoginRequest loginRequest) throws JOSEException {
     String email = loginRequest.getEmail();
     UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email)
-      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
     User user = authInfo.getUser();
 
     String authProvider = authInfo.getAuthProvider();
@@ -155,22 +155,22 @@ public class AuthService {
     authInfoRepository.save(authInfo);
 
     return TokenResponse.builder()
-      .id(id)
-      .email(email)
-      .fullName(fullName)
-      .role(roleResponse)
-      .accessToken(accessToken)
-      .expiresAt(expiresAt)
-      .refreshToken(refreshToken)
-      .build();
+        .id(id)
+        .email(email)
+        .fullName(fullName)
+        .role(roleResponse)
+        .accessToken(accessToken)
+        .expiresAt(expiresAt)
+        .refreshToken(refreshToken)
+        .build();
   }
 
   public VerificationResponse verifyToken(VerifyTokenRequest verifyTokenRequest) throws JOSEException, ParseException {
     String token = verifyTokenRequest.getToken();
     getSignedJWT(token);
     return VerificationResponse.builder()
-      .verified(true)
-      .build();
+        .verified(true)
+        .build();
   }
 
   public TokenResponse refreshToken(TokenRequest tokenRequest) throws JOSEException, ParseException {
@@ -178,7 +178,7 @@ public class AuthService {
     SignedJWT signedJWT = getSignedJWT(token);
     String email = signedJWT.getJWTClaimsSet().getSubject();
     User user = userRepository.findByEmail(email)
-      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
     UserAuthInfo authInfo = user.getAuthInfo();
 
     String storedRefreshToken = authInfo.getRefreshToken();
@@ -203,14 +203,14 @@ public class AuthService {
     authInfoRepository.save(authInfo);
 
     return TokenResponse.builder()
-      .id(userId)
-      .email(email)
-      .fullName(fullName)
-      .role(roleResponse)
-      .accessToken(accessToken)
-      .expiresAt(expiresAt)
-      .refreshToken(refreshToken)
-      .build();
+        .id(userId)
+        .email(email)
+        .fullName(fullName)
+        .role(roleResponse)
+        .accessToken(accessToken)
+        .expiresAt(expiresAt)
+        .refreshToken(refreshToken)
+        .build();
   }
 
   public LogoutResponse logout(TokenRequest request) throws JOSEException, ParseException {
@@ -222,7 +222,7 @@ public class AuthService {
 
     String email = signedJWT.getJWTClaimsSet().getSubject();
     User user = userRepository.findByEmail(email)
-      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
     UserAuthInfo authInfo = user.getAuthInfo();
 
     String refreshToken = authInfo.getRefreshToken();
@@ -237,8 +237,8 @@ public class AuthService {
     authInfoRepository.save(authInfo);
 
     return LogoutResponse.builder()
-      .loggedOut(true)
-      .build();
+        .loggedOut(true)
+        .build();
   }
 
   public TokenResponse getMe(CustomAuthenticationToken authentication) {
@@ -247,7 +247,7 @@ public class AuthService {
     LocalDateTime expiresAt = authentication.getExpiresAt();
 
     User user = userRepository.findByEmail(email)
-      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
     String id = user.getId();
     String fullName = user.getFullName();
     Role roleEntity = user.getRole();
@@ -257,21 +257,21 @@ public class AuthService {
     String refreshToken = authInfo.getRefreshToken();
 
     return TokenResponse.builder()
-      .id(id)
-      .email(email)
-      .fullName(fullName)
-      .role(roleResponse)
-      .accessToken(accessToken)
-      .expiresAt(expiresAt)
-      .refreshToken(refreshToken)
-      .build();
+        .id(id)
+        .email(email)
+        .fullName(fullName)
+        .role(roleResponse)
+        .accessToken(accessToken)
+        .expiresAt(expiresAt)
+        .refreshToken(refreshToken)
+        .build();
   }
 
   private void createInvalidToken(String id, String token) {
     InvalidToken invalidToken = InvalidToken.builder()
-      .id(id)
-      .token(token)
-      .build();
+        .id(id)
+        .token(token)
+        .build();
     invalidTokenRepository.save(invalidToken);
   }
 
@@ -291,12 +291,12 @@ public class AuthService {
     }
 
     String issuer = signedJWT.getJWTClaimsSet().getIssuer();
-    boolean issuerInvalid = !ISSUER.equals(issuer);
+    boolean issuerInvalid = !this.issuer.equals(issuer);
     if (issuerInvalid) {
       throw new AppException(ErrorType.INVALID_TOKEN);
     }
 
-    JWSVerifier verifier = new MACVerifier(SECRET_KEY.getBytes());
+    JWSVerifier verifier = new MACVerifier(secretKey.getBytes());
     boolean tokenVerified = signedJWT.verify(verifier);
     if (!tokenVerified) {
       throw new AppException(ErrorType.INVALID_TOKEN);
@@ -311,18 +311,18 @@ public class AuthService {
 
     JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
     JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-      .jwtID(UUID.randomUUID().toString())
-      .subject(user.getEmail())
-      .claim("fullName", user.getFullName())
-      .claim("scope", user.getRole().getName())
-      .issuer(ISSUER)
-      .issueTime(now)
-      .expirationTime(expirationTime)
-      .build();
+        .jwtID(UUID.randomUUID().toString())
+        .subject(user.getEmail())
+        .claim("fullName", user.getFullName())
+        .claim("scope", user.getRole().getName())
+        .issuer(issuer)
+        .issueTime(now)
+        .expirationTime(expirationTime)
+        .build();
     Payload payload = new Payload(claimsSet.toJSONObject());
     JWSObject jwsObject = new JWSObject(jwsHeader, payload);
 
-    MACSigner signer = new MACSigner(SECRET_KEY);
+    MACSigner signer = new MACSigner(secretKey);
     jwsObject.sign(signer);
     return jwsObject.serialize();
   }

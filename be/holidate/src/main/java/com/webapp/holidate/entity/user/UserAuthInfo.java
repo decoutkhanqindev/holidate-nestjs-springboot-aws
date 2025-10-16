@@ -30,28 +30,16 @@ public class UserAuthInfo {
   String authProviderId;
 
   @Column(nullable = true)
-  String emailVerificationOtp;
+  String otp;
 
   @Column(nullable = false)
-  int emailVerificationAttempts;
+  int otpAttempts;
 
   @Column(nullable = true)
-  LocalDateTime emailVerificationOtpExpirationTime;
+  LocalDateTime otpExpirationTime;
 
   @Column(nullable = true)
-  LocalDateTime emailVerificationOtpBlockedUntil;
-
-  @Column(nullable = true)
-  String passwordResetOtp;
-
-  @Column(nullable = false)
-  int passwordResetAttempts;
-
-  @Column(nullable = true)
-  LocalDateTime passwordResetOtpExpirationTime;
-
-  @Column(nullable = true)
-  LocalDateTime passwordResetOtpBlockedUntil;
+  LocalDateTime otpBlockedUntil;
 
   @Column(nullable = true, columnDefinition = "TEXT")
   String refreshToken;

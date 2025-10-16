@@ -1,15 +1,18 @@
 package com.webapp.holidate.service.auth;
 
 import com.webapp.holidate.constants.AppProperties;
-import com.webapp.holidate.dto.request.auth.email.SendEmailVerificationRequest;
-import com.webapp.holidate.dto.request.auth.email.VerifyEmailRequest;
+import com.webapp.holidate.dto.request.auth.otp.VerifyPasswordResetOtpRequest;
+import com.webapp.holidate.dto.request.auth.otp.SendOtpRequest;
+import com.webapp.holidate.dto.request.auth.otp.VerifyEmailVerificationOtpRequest;
 import com.webapp.holidate.dto.response.auth.VerificationResponse;
-import com.webapp.holidate.dto.response.auth.email.SendEmailVerificationResponse;
+import com.webapp.holidate.dto.response.auth.SendOtpResponse;
 import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.entity.user.UserAuthInfo;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.repository.user.UserAuthInfoRepository;
+import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.type.ErrorType;
+import com.webapp.holidate.type.auth.OtpType;
 import com.webapp.holidate.type.user.AuthProviderType;
 import com.webapp.holidate.utils.DateTimeUtils;
 import jakarta.mail.MessagingException;
@@ -22,6 +25,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
@@ -35,8 +39,10 @@ import java.util.Random;
 @RequiredArgsConstructor
 public class EmailService {
   UserAuthInfoRepository authInfoRepository;
+  UserRepository userRepository;
   JavaMailSender mailSender;
   TemplateEngine templateEngine;
+  PasswordEncoder passwordEncoder;
 
   @NonFinal
   @Value(AppProperties.OTP_EXPIRATION_MILLIS)
@@ -50,8 +56,19 @@ public class EmailService {
   @Value(AppProperties.OTP_BLOCK_TIME_MILLIS)
   long otpBlockTimeMillis;
 
-  public SendEmailVerificationResponse sendVerificationEmail(SendEmailVerificationRequest request) {
-    UserAuthInfo authInfo = authInfoRepository.findByUserEmail(request.getEmail())
+  public SendOtpResponse sendEmailVerificationOtp(SendOtpRequest request) {
+    return sendOtp(request.getEmail(), OtpType.EMAIL_VERIFICATION, false);
+  }
+
+  public SendOtpResponse sendPasswordResetOtp(SendOtpRequest request) {
+    SendOtpResponse response = sendOtp(request.getEmail(), OtpType.PASSWORD_RESET, true);
+    return SendOtpResponse.builder()
+      .sent(response.isSent())
+      .build();
+  }
+
+  private SendOtpResponse sendOtp(String email, OtpType otpType, boolean requireActive) {
+    UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email)
       .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
 
     String authProvider = authInfo.getAuthProvider();
@@ -61,24 +78,27 @@ public class EmailService {
     }
 
     boolean active = authInfo.isActive();
-    if (active) {
+    if (requireActive && !active) {
+      throw new AppException(ErrorType.UNAUTHORIZED);
+    }
+    if (!requireActive && active) {
       throw new AppException(ErrorType.USER_EXISTS);
     }
 
-    LocalDateTime blockedUntil = authInfo.getEmailVerificationOtpBlockedUntil();
-    boolean blocked = isVerificationOtpBlockedUntil(blockedUntil);
+    LocalDateTime blockedUntil = authInfo.getOtpBlockedUntil();
+    boolean blocked = isOtpBlocked(blockedUntil);
     if (blocked) {
       throw new AppException(ErrorType.OTP_BLOCKED);
     }
 
     String otp = generateVerificationOtp();
-    authInfo.setEmailVerificationOtp(otp);
+    authInfo.setOtp(otp);
 
     LocalDateTime expirationTime = DateTimeUtils.millisToLocalDateTime(otpExpirationMillis);
-    authInfo.setEmailVerificationOtpExpirationTime(expirationTime);
+    authInfo.setOtpExpirationTime(expirationTime);
 
-    authInfo.setEmailVerificationAttempts(0);
-    authInfo.setEmailVerificationOtpBlockedUntil(null);
+    authInfo.setOtpAttempts(0);
+    authInfo.setOtpBlockedUntil(null);
 
     authInfoRepository.save(authInfo);
 
@@ -92,45 +112,34 @@ public class EmailService {
     context.setVariable("expiryMinutes", otpExpirationMinutes);
 
     // generate the HTML content
-    String htmlContent = templateEngine.process("email-verification", context);
+    String htmlContent = templateEngine.process(otpType.getTemplateName(), context);
 
     // send the email
     try {
       MimeMessage mimeMessage = mailSender.createMimeMessage();
       MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
       mimeMessageHelper.setTo(user.getEmail());
-      mimeMessageHelper.setSubject("Mã OTP xác thực Email - Holidate");
+      mimeMessageHelper.setSubject(otpType.getEmailSubject());
       mimeMessageHelper.setText(htmlContent, true);
       mailSender.send(mimeMessage);
     } catch (MessagingException e) {
       throw new AppException(ErrorType.SEND_EMAIL_FAILED);
     }
 
-    return SendEmailVerificationResponse.builder()
+    return SendOtpResponse.builder()
       .sent(true)
       .build();
   }
 
-  public SendEmailVerificationResponse resendVerificationEmail(SendEmailVerificationRequest request) {
-    String email = request.getEmail();
-    UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email)
-      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
-
-    LocalDateTime blockedUntil = authInfo.getEmailVerificationOtpBlockedUntil();
-    boolean blocked = isVerificationOtpBlockedUntil(blockedUntil);
-    if (blocked) {
-      throw new AppException(ErrorType.OTP_BLOCKED);
-    }
-
-    authInfo.setEmailVerificationOtp(null);
-    authInfo.setEmailVerificationOtpBlockedUntil(null);
-    authInfoRepository.save(authInfo);
-
-    return sendVerificationEmail(request);
+  public VerificationResponse verifyEmailVerificationOtp(VerifyEmailVerificationOtpRequest request) {
+    return verifyOtp(request.getEmail(), request.getOtp(), OtpType.EMAIL_VERIFICATION, null);
   }
 
-  public VerificationResponse verifyEmail(VerifyEmailRequest request) {
-    String email = request.getEmail();
+  public VerificationResponse verifyPasswordResetOtp(VerifyPasswordResetOtpRequest request) {
+    return verifyOtp(request.getEmail(), request.getOtp(), OtpType.PASSWORD_RESET, request.getNewPassword());
+  }
+
+  private VerificationResponse verifyOtp(String email, String inputOtp, OtpType otpType, String newPassword) {
     UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email)
       .orElseThrow(() -> new AppException(ErrorType.INVALID_OTP));
 
@@ -140,38 +149,54 @@ public class EmailService {
       throw new AppException(ErrorType.ONLY_LOCAL_AUTH);
     }
 
-    if (authInfo.isActive()) {
-      throw new AppException(ErrorType.USER_EXISTS);
+    if (otpType == OtpType.EMAIL_VERIFICATION) {
+      if (authInfo.isActive()) {
+        throw new AppException(ErrorType.USER_EXISTS);
+      }
+    } else if (otpType == OtpType.PASSWORD_RESET) {
+      if (!authInfo.isActive()) {
+        throw new AppException(ErrorType.UNAUTHORIZED);
+      }
     }
 
-    String storedOtp = authInfo.getEmailVerificationOtp();
+    String storedOtp = authInfo.getOtp();
     if (storedOtp == null) {
       throw new AppException(ErrorType.INVALID_OTP);
     }
 
-    LocalDateTime blockedUntil = authInfo.getEmailVerificationOtpBlockedUntil();
-    boolean blocked = isVerificationOtpBlockedUntil(blockedUntil);
+    LocalDateTime blockedUntil = authInfo.getOtpBlockedUntil();
+    boolean blocked = isOtpBlocked(blockedUntil);
     if (blocked) {
       throw new AppException(ErrorType.OTP_BLOCKED);
     }
 
-    LocalDateTime expirationTime = authInfo.getEmailVerificationOtpExpirationTime();
-    boolean expired = isVerificationOtpExpired(expirationTime);
+    LocalDateTime expirationTime = authInfo.getOtpExpirationTime();
+    boolean expired = isOtpExpired(expirationTime);
     if (expired) {
       throw new AppException(ErrorType.OTP_EXPIRED);
     }
 
-    boolean verified = request.getOtp().equals(storedOtp);
+    boolean verified = inputOtp.equals(storedOtp);
     if (!verified) {
-      incrementVerificationAttempts(authInfo);
+      incrementOtpAttempts(authInfo);
       throw new AppException(ErrorType.INVALID_OTP);
     }
 
-    authInfo.setEmailVerificationOtp(null);
-    authInfo.setEmailVerificationAttempts(0);
-    authInfo.setEmailVerificationOtpExpirationTime(null);
-    authInfo.setEmailVerificationOtpBlockedUntil(null);
-    authInfo.setActive(true);
+    if (otpType == OtpType.EMAIL_VERIFICATION) {
+      authInfo.setActive(true);
+    } else if (otpType == OtpType.PASSWORD_RESET) {
+      User user = authInfo.getUser();
+      String encodedPassword = passwordEncoder.encode(newPassword);
+      user.setPassword(encodedPassword);
+      user.setUpdatedAt(LocalDateTime.now());
+      authInfo.setRefreshToken(null);
+      userRepository.save(user);
+    }
+
+    authInfo.setOtp(null);
+    authInfo.setOtpAttempts(0);
+    authInfo.setOtpExpirationTime(null);
+    authInfo.setOtpBlockedUntil(null);
 
     authInfoRepository.save(authInfo);
 
@@ -186,23 +211,24 @@ public class EmailService {
     return String.valueOf(otp);
   }
 
-  private boolean isVerificationOtpExpired(LocalDateTime expirationTime) {
+  private boolean isOtpExpired(LocalDateTime expirationTime) {
     return expirationTime == null || expirationTime.isBefore(LocalDateTime.now());
   }
 
-  private boolean isVerificationOtpBlockedUntil(LocalDateTime expirationTime) {
+  private boolean isOtpBlocked(LocalDateTime expirationTime) {
     return expirationTime != null && expirationTime.isAfter(LocalDateTime.now());
   }
 
-  private void incrementVerificationAttempts(UserAuthInfo authInfo) {
-    int attempts = authInfo.getEmailVerificationAttempts() + 1;
-    authInfo.setEmailVerificationAttempts(attempts);
+  private void incrementOtpAttempts(UserAuthInfo authInfo) {
+    int attempts = authInfo.getOtpAttempts() + 1;
+    authInfo.setOtpAttempts(attempts);
 
-    if (attempts >= otpMaxAttempts) {
+    boolean maxAttemptsReached = attempts >= otpMaxAttempts;
+    if (maxAttemptsReached) {
       LocalDateTime blockUntil = DateTimeUtils.millisToLocalDateTime(otpBlockTimeMillis);
-      authInfo.setEmailVerificationOtpBlockedUntil(blockUntil);
-      authInfo.setEmailVerificationOtp(null);
-      authInfo.setEmailVerificationOtpExpirationTime(null);
+      authInfo.setOtpBlockedUntil(blockUntil);
+      authInfo.setOtp(null);
+      authInfo.setOtpExpirationTime(null);
     }
 
     authInfoRepository.save(authInfo);

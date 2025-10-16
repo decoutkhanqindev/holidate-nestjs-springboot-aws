@@ -105,11 +105,11 @@ public class UserService {
     }
 
     String authProvider = request.getAuthProvider();
-    boolean active = request.isActive();
 
     UserAuthInfo authInfo = UserAuthInfo.builder()
         .authProvider(authProvider)
-        .active(active)
+        .otpAttempts(0)
+        .active(false)
         .user(user)
         .build();
     user.setAuthInfo(authInfo);

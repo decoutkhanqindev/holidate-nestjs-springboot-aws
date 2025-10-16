@@ -1,7 +1,8 @@
-package com.webapp.holidate.dto.request.auth.email;
+package com.webapp.holidate.dto.request.auth.otp;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -15,7 +16,7 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class VerifyEmailRequest {
+public class VerifyPasswordResetOtpRequest {
   @NotBlank(message = "EMAIL_NOT_BLANK")
   @Email(message = "EMAIL_INVALID")
   String email;
@@ -23,4 +24,8 @@ public class VerifyEmailRequest {
   @NotBlank(message = "OTP_NOT_BLANK")
   @Size(min = 6, max = 6, message = "OTP_INVALID")
   String otp;
+
+  @NotBlank(message = "PASSWORD_NOT_BLANK")
+  @Size(min = 8, message = "PASSWORD_INVALID")
+  String newPassword;
 }

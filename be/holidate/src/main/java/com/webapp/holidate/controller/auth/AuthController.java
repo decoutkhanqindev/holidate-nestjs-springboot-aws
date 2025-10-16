@@ -4,16 +4,14 @@ import com.nimbusds.jose.JOSEException;
 import com.webapp.holidate.component.security.filter.CustomAuthenticationToken;
 import com.webapp.holidate.constants.AppProperties;
 import com.webapp.holidate.constants.api.endpoint.auth.AuthEndpoints;
-import com.webapp.holidate.dto.request.auth.LoginRequest;
-import com.webapp.holidate.dto.request.auth.RegisterRequest;
-import com.webapp.holidate.dto.request.auth.TokenRequest;
-import com.webapp.holidate.dto.request.auth.VerifyTokenRequest;
+import com.webapp.holidate.dto.request.auth.*;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.auth.LogoutResponse;
 import com.webapp.holidate.dto.response.auth.TokenResponse;
 import com.webapp.holidate.dto.response.auth.VerificationResponse;
 import com.webapp.holidate.dto.response.user.UserResponse;
 import com.webapp.holidate.service.auth.AuthService;
+import com.webapp.holidate.service.auth.EmailService;
 import com.webapp.holidate.utils.ResponseUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -32,6 +30,7 @@ import java.text.ParseException;
 @RequiredArgsConstructor
 public class AuthController {
   AuthService authService;
+  EmailService emailService;
 
   @NonFinal
   @Value(AppProperties.JWT_TOKEN_COOKIE_NAME)
@@ -54,7 +53,8 @@ public class AuthController {
   }
 
   @PostMapping(AuthEndpoints.VERIFY_TOKEN)
-  public ApiResponse<VerificationResponse> verifyToken(@RequestBody @Valid VerifyTokenRequest request) throws ParseException, JOSEException {
+  public ApiResponse<VerificationResponse> verifyToken(@RequestBody @Valid VerifyTokenRequest request)
+    throws ParseException, JOSEException {
     VerificationResponse response = authService.verifyToken(request);
     return ApiResponse.<VerificationResponse>builder()
       .data(response)
@@ -62,7 +62,8 @@ public class AuthController {
   }
 
   @PostMapping(AuthEndpoints.REFRESH_TOKEN)
-  public ApiResponse<TokenResponse> refreshToken(@RequestBody @Valid TokenRequest request) throws ParseException, JOSEException {
+  public ApiResponse<TokenResponse> refreshToken(@RequestBody @Valid TokenRequest request)
+    throws ParseException, JOSEException {
     TokenResponse response = authService.refreshToken(request);
     return ApiResponse.<TokenResponse>builder()
       .data(response)
@@ -72,8 +73,7 @@ public class AuthController {
   @PostMapping(AuthEndpoints.LOGOUT)
   public ApiResponse<LogoutResponse> logout(
     @RequestBody @Valid TokenRequest request,
-    HttpServletResponse httpServletResponse
-  ) throws ParseException, JOSEException {
+    HttpServletResponse httpServletResponse) throws ParseException, JOSEException {
     LogoutResponse response = authService.logout(request);
 
     // clear the token cookie

@@ -2,11 +2,12 @@ package com.webapp.holidate.controller.auth;
 
 import com.webapp.holidate.constants.api.endpoint.auth.AuthEndpoints;
 import com.webapp.holidate.constants.api.endpoint.auth.EmailEndpoints;
-import com.webapp.holidate.dto.request.auth.email.SendEmailVerificationRequest;
-import com.webapp.holidate.dto.request.auth.email.VerifyEmailRequest;
+import com.webapp.holidate.dto.request.auth.otp.SendOtpRequest;
+import com.webapp.holidate.dto.request.auth.otp.VerifyEmailVerificationOtpRequest;
+import com.webapp.holidate.dto.request.auth.otp.VerifyPasswordResetOtpRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.auth.VerificationResponse;
-import com.webapp.holidate.dto.response.auth.email.SendEmailVerificationResponse;
+import com.webapp.holidate.dto.response.auth.SendOtpResponse;
 import com.webapp.holidate.service.auth.EmailService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -24,25 +25,37 @@ import org.springframework.web.bind.annotation.RestController;
 public class EmailController {
   EmailService emailService;
 
-  @PostMapping(EmailEndpoints.SEND_VERIFICATION_EMAIL)
-  public ApiResponse<SendEmailVerificationResponse> sendVerificationEmail(@RequestBody @Valid SendEmailVerificationRequest request) {
-    SendEmailVerificationResponse response = emailService.sendVerificationEmail(request);
-    return ApiResponse.<SendEmailVerificationResponse>builder()
+  @PostMapping(EmailEndpoints.SEND_EMAIL_VERIFICATION_OTP)
+  public ApiResponse<SendOtpResponse> sendEmailVerificationOtp(@RequestBody @Valid SendOtpRequest request) {
+    SendOtpResponse response = emailService.sendEmailVerificationOtp(request);
+    return ApiResponse.<SendOtpResponse>builder()
       .data(response)
       .build();
   }
 
-  @PostMapping(EmailEndpoints.RESEND_VERIFICATION_EMAIL)
-  public ApiResponse<SendEmailVerificationResponse> resendVerificationEmail(@RequestBody @Valid SendEmailVerificationRequest request) {
-    SendEmailVerificationResponse response = emailService.resendVerificationEmail(request);
-    return ApiResponse.<SendEmailVerificationResponse>builder()
+  @PostMapping(EmailEndpoints.VERIFY_EMAIL_VERIFICATION_OTP)
+  public ApiResponse<VerificationResponse> verifyEmailVerificationOtp(@RequestBody @Valid VerifyEmailVerificationOtpRequest request) {
+    VerificationResponse response = emailService.verifyEmailVerificationOtp(request);
+    return ApiResponse.<VerificationResponse>builder()
       .data(response)
       .build();
   }
 
-  @PostMapping(EmailEndpoints.VERIFY_EMAIL)
-  public ApiResponse<VerificationResponse> verifyEmail(@RequestBody @Valid VerifyEmailRequest request) {
-    VerificationResponse response = emailService.verifyEmail(request);
+  @PostMapping(EmailEndpoints.SEND_PASSWORD_RESET_OTP)
+  public ApiResponse<SendOtpResponse> sendPasswordResetOtp(
+    @RequestBody @Valid SendOtpRequest request
+  ) {
+    SendOtpResponse response = emailService.sendPasswordResetOtp(request);
+    return ApiResponse.<SendOtpResponse>builder()
+      .data(response)
+      .build();
+  }
+
+  @PostMapping(EmailEndpoints.VERIFY_PASSWORD_RESET_OTP)
+  public ApiResponse<VerificationResponse> verifyPasswordResetOtp(
+    @RequestBody @Valid VerifyPasswordResetOtpRequest request
+  ) {
+    VerificationResponse response = emailService.verifyPasswordResetOtp(request);
     return ApiResponse.<VerificationResponse>builder()
       .data(response)
       .build();
