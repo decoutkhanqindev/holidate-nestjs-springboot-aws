@@ -61,10 +61,7 @@ public class EmailService {
   }
 
   public SendOtpResponse sendPasswordResetOtp(SendOtpRequest request) {
-    SendOtpResponse response = sendOtp(request.getEmail(), OtpType.PASSWORD_RESET, true);
-    return SendOtpResponse.builder()
-      .sent(response.isSent())
-      .build();
+    return sendOtp(request.getEmail(), OtpType.PASSWORD_RESET, true);
   }
 
   private SendOtpResponse sendOtp(String email, OtpType otpType, boolean requireActive) {
