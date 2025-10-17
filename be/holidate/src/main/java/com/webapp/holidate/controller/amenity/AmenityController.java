@@ -3,7 +3,7 @@ package com.webapp.holidate.controller.amenity;
 import com.webapp.holidate.constants.api.endpoint.AmenityEndpoints;
 import com.webapp.holidate.dto.request.amenity.AmenityCreationRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
-import com.webapp.holidate.dto.response.amenity.AmenityResponse;
+import com.webapp.holidate.dto.response.amenity.AmenityDetailsResponse;
 import com.webapp.holidate.service.amenity.AmenityService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -21,17 +21,26 @@ public class AmenityController {
   AmenityService service;
 
   @PostMapping
-  public ApiResponse<AmenityResponse> create(@RequestBody @Valid AmenityCreationRequest request) {
-    AmenityResponse response = service.create(request);
-    return ApiResponse.<AmenityResponse>builder()
+  public ApiResponse<AmenityDetailsResponse> create(@RequestBody @Valid AmenityCreationRequest request) {
+    AmenityDetailsResponse response = service.create(request);
+    return ApiResponse.<AmenityDetailsResponse>builder()
       .data(response)
       .build();
   }
 
-  @GetMapping
-  public ApiResponse<List<AmenityResponse>> getAll() {
-    List<AmenityResponse> responses = service.getAll();
-    return ApiResponse.<List<AmenityResponse>>builder()
+  @GetMapping()
+  public ApiResponse<List<AmenityDetailsResponse>> getAll() {
+    List<AmenityDetailsResponse> responses = service.getAll();
+    return ApiResponse.<List<AmenityDetailsResponse>>builder()
+      .data(responses)
+      .build();
+  }
+
+
+  @GetMapping(AmenityEndpoints.AMENITY_CATEGORY + AmenityEndpoints.AMENITY_CATEGORY_ID)
+  public ApiResponse<List<AmenityDetailsResponse>> getAllByCategoryId(@PathVariable String categoryId) {
+    List<AmenityDetailsResponse> responses = service.getAllByCategoryId(categoryId);
+    return ApiResponse.<List<AmenityDetailsResponse>>builder()
       .data(responses)
       .build();
   }

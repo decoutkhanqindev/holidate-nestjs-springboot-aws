@@ -1,6 +1,6 @@
 package com.webapp.holidate.dto.response.acommodation.hotel;
 
-import com.webapp.holidate.dto.response.amenity.AmenityCategoryResponse;
+import com.webapp.holidate.dto.response.amenity.AmenityCategoryDetailsResponse;
 import com.webapp.holidate.dto.response.image.PhotoCategoryResponse;
 import com.webapp.holidate.dto.response.location.LocationResponse;
 import com.webapp.holidate.dto.response.location.entertainment_venue.EntertainmentVenueCategoryResponse;
@@ -34,7 +34,7 @@ public class HotelDetailsResponse {
   LocationResponse street;
   List<EntertainmentVenueCategoryResponse> entertainmentVenues;
   List<PhotoCategoryResponse> photos;
-  List<AmenityCategoryResponse> amenities;
+  List<AmenityCategoryDetailsResponse> amenities;
   HotelPolicyResponse policy;
   PartnerResponse partner;
   double latitude;

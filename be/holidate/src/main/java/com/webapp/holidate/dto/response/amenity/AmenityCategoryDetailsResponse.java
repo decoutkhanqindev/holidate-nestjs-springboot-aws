@@ -14,7 +14,8 @@ import java.util.List;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class AmenityCategoryResponse {
+public class AmenityCategoryDetailsResponse {
   String id;
   String name;
+  List<AmenityResponse> amenities;
 }

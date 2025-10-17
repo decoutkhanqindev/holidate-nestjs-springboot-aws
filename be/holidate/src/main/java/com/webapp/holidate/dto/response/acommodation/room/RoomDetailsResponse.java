@@ -1,8 +1,7 @@
 package com.webapp.holidate.dto.response.acommodation.room;
 
 import com.webapp.holidate.dto.response.acommodation.hotel.HotelBriefResponse;
-import com.webapp.holidate.dto.response.acommodation.room.inventory.RoomInventoryResponse;
-import com.webapp.holidate.dto.response.amenity.AmenityCategoryResponse;
+import com.webapp.holidate.dto.response.amenity.AmenityCategoryDetailsResponse;
 import com.webapp.holidate.dto.response.image.PhotoCategoryResponse;
 import com.webapp.holidate.dto.response.policy.cancellation.CancellationPolicyResponse;
 import com.webapp.holidate.dto.response.policy.reschedule.ReschedulePolicyResponse;
@@ -39,7 +38,7 @@ public class RoomDetailsResponse {
   boolean breakfastIncluded;
   int quantity;
   String status;
-  List<AmenityCategoryResponse> amenities;
+  List<AmenityCategoryDetailsResponse> amenities;
   LocalDateTime createdAt;
   LocalDateTime updatedAt;
 }

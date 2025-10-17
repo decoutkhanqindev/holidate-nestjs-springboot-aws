@@ -1,6 +1,7 @@
 package com.webapp.holidate.mapper.amenity;
 
 import com.webapp.holidate.dto.request.amenity.AmenityCategoryCreationRequest;
+import com.webapp.holidate.dto.response.amenity.AmenityCategoryDetailsResponse;
 import com.webapp.holidate.dto.response.amenity.AmenityCategoryResponse;
 import com.webapp.holidate.dto.response.amenity.AmenityResponse;
 import com.webapp.holidate.entity.accommodation.amenity.AmenityCategory;
@@ -23,8 +24,10 @@ public interface AmenityCategoryMapper {
 
   AmenityCategoryResponse toAmenityCategoryResponse(AmenityCategory amenityCategory);
 
+  AmenityCategoryDetailsResponse toAmenityCategoryDetailsResponse(AmenityCategory amenityCategory);
+
   @Named("hotelAmenitiesToCategories")
-  default List<AmenityCategoryResponse> toAmenityCategoryResponse(Set<HotelAmenity> hotelAmenities) {
+  default List<AmenityCategoryDetailsResponse> toAmenityCategoryDetailsResponse(Set<HotelAmenity> hotelAmenities) {
     boolean hasAmenities = hotelAmenities != null && !hotelAmenities.isEmpty();
     if (!hasAmenities) {
       return List.of();
@@ -49,7 +52,7 @@ public interface AmenityCategoryMapper {
             )
             .collect(Collectors.toList());
 
-          return AmenityCategoryResponse.builder()
+          return AmenityCategoryDetailsResponse.builder()
             .id(category.getId())
             .name(category.getName())
             .amenities(amenityResponses)
@@ -60,7 +63,7 @@ public interface AmenityCategoryMapper {
   }
 
   @Named("roomAmenitiesToCategories")
-  default List<AmenityCategoryResponse> toRoomAmenityCategoryResponse(Set<RoomAmenity> roomAmenities) {
+  default List<AmenityCategoryDetailsResponse> toRoomAmenityCategoryResponse(Set<RoomAmenity> roomAmenities) {
     boolean hasAmenities = roomAmenities != null && !roomAmenities.isEmpty();
     if (!hasAmenities) {
       return List.of();
@@ -85,7 +88,7 @@ public interface AmenityCategoryMapper {
             )
             .collect(Collectors.toList());
 
-          return AmenityCategoryResponse.builder()
+          return AmenityCategoryDetailsResponse.builder()
             .id(category.getId())
             .name(category.getName())
             .amenities(amenityResponses)

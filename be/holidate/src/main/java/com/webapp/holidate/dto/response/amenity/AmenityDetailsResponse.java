@@ -3,8 +3,6 @@ package com.webapp.holidate.dto.response.amenity;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.util.List;
-
 @Data
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -14,7 +12,9 @@ import java.util.List;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class AmenityCategoryResponse {
+public class AmenityDetailsResponse {
   String id;
   String name;
+  boolean free;
+  String categoryId;
 }

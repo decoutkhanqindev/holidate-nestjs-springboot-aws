@@ -1,7 +1,7 @@
 package com.webapp.holidate.service.amenity;
 
 import com.webapp.holidate.dto.request.amenity.AmenityCreationRequest;
-import com.webapp.holidate.dto.response.amenity.AmenityResponse;
+import com.webapp.holidate.dto.response.amenity.AmenityDetailsResponse;
 import com.webapp.holidate.entity.accommodation.amenity.Amenity;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.amenity.AmenityMapper;
@@ -21,7 +21,7 @@ public class AmenityService {
   AmenityRepository repository;
   AmenityMapper mapper;
 
-  public AmenityResponse create(AmenityCreationRequest request) {
+  public AmenityDetailsResponse create(AmenityCreationRequest request) {
     String name = request.getName();
     boolean exists = repository.existsByName(name);
     if (exists) {
@@ -30,13 +30,20 @@ public class AmenityService {
 
     Amenity amenity = mapper.toEntity(request);
     repository.save(amenity);
-    return mapper.toAmenityResponse(amenity);
+    return mapper.toAmenityDetailsResponse(amenity);
   }
 
-  public List<AmenityResponse> getAll() {
-    return repository.findAll()
+  public List<AmenityDetailsResponse> getAll() {
+    return repository.findAllWithCategory()
       .stream()
-      .map(mapper::toAmenityResponse)
+      .map(mapper::toAmenityDetailsResponse)
+      .toList();
+  }
+
+  public List<AmenityDetailsResponse> getAllByCategoryId(String categoryId) {
+    return repository.findAllByCategoryId(categoryId)
+      .stream()
+      .map(mapper::toAmenityDetailsResponse)
       .toList();
   }
 }

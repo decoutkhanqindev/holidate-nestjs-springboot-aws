@@ -1,6 +1,7 @@
 package com.webapp.holidate.service.amenity;
 
 import com.webapp.holidate.dto.request.amenity.AmenityCategoryCreationRequest;
+import com.webapp.holidate.dto.response.amenity.AmenityCategoryDetailsResponse;
 import com.webapp.holidate.dto.response.amenity.AmenityCategoryResponse;
 import com.webapp.holidate.entity.accommodation.amenity.AmenityCategory;
 import com.webapp.holidate.exception.AppException;
@@ -21,7 +22,7 @@ public class AmenityCategoryService {
   AmenityCategoryRepository repository;
   AmenityCategoryMapper mapper;
 
-  public AmenityCategoryResponse create(AmenityCategoryCreationRequest request) {
+  public AmenityCategoryDetailsResponse create(AmenityCategoryCreationRequest request) {
     String name = request.getName();
     boolean exists = repository.existsByName(name);
     if (exists) {
@@ -30,7 +31,7 @@ public class AmenityCategoryService {
 
     AmenityCategory category = mapper.toEntity(request);
     repository.save(category);
-    return mapper.toAmenityCategoryResponse(category);
+    return mapper.toAmenityCategoryDetailsResponse(category);
   }
 
   public List<AmenityCategoryResponse> getAll() {
