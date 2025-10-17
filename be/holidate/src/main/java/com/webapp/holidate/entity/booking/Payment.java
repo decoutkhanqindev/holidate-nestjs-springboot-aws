@@ -3,20 +3,18 @@ package com.webapp.holidate.entity.booking;
 import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
 import com.webapp.holidate.entity.accommodation.Hotel;
-import com.webapp.holidate.entity.image.ReviewPhoto;
+import com.webapp.holidate.entity.accommodation.room.Room;
+import com.webapp.holidate.entity.booking.discount.Discount;
 import com.webapp.holidate.entity.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 @Entity
-@Table(name = DbTableNames.REVIEWS)
+@Table(name = DbTableNames.PAYMENTS)
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
@@ -24,21 +22,11 @@ import java.util.Set;
 @Getter
 @Setter
 @ToString
-public class Review {
+public class Payment {
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   @Column(nullable = false)
   String id;
-
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = DbFieldNames.HOTEL_ID, nullable = false)
-  @ToString.Exclude
-  Hotel hotel;
-
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = DbFieldNames.USER_ID, nullable = false)
-  @ToString.Exclude
-  User user;
 
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = DbFieldNames.BOOKING_ID, nullable = false)
@@ -46,20 +34,21 @@ public class Review {
   Booking booking;
 
   @Column(nullable = false)
-  int score; // 1-5 or 1-10 depending on your rating system
-
-  @Column(nullable = true, columnDefinition = "TEXT")
-  String comment;
-
-  @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-  @ToString.Exclude
-  @Builder.Default
-  Set<ReviewPhoto> photos = new HashSet<>();
+  double amount;
 
   @Column(nullable = false)
+  String paymentMethod; // only vnpay for now
+
+  @Column(nullable = false)
+  String status;
+
+  @Column(nullable = true, unique = true)
+  String transactionId;
+
   @Builder.Default
+  @Column(nullable = false)
   LocalDateTime createdAt = LocalDateTime.now();
 
-  @Column(nullable = true)
-  LocalDateTime updateAt;
+  @Column
+  LocalDateTime completedAt;
 }

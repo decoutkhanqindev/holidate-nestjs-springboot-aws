@@ -10,7 +10,9 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = DbTableNames.USERS)
@@ -85,14 +87,14 @@ public class User {
   @JoinColumn(name = DbFieldNames.ROLE_ID, nullable = false)
   Role role;
 
-  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+  @OneToOne(mappedBy = "user", fetch = FetchType.EAGER, orphanRemoval = true, cascade = CascadeType.ALL)
   @ToString.Exclude
   UserAuthInfo authInfo;
 
-  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
   @ToString.Exclude
   @Builder.Default
-  List<Review> reviews = new ArrayList<>();
+  Set<Review> reviews = new HashSet<>();
 
   @Builder.Default
   @Column(nullable = false)

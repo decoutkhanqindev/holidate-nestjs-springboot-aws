@@ -41,7 +41,7 @@ public class DbTableNames {
 
   // booking related tables
   public static final String BOOKINGS = "bookings";
-  public static final String BOOKING_ROOMS = "booking_rooms";
+  public static final String PAYMENTS = "payments";
   public static final String REVIEWS = "reviews";
   public static final String DISCOUNTS = "discounts";
   public static final String HOTEL_DISCOUNTS = "hotel_discounts";
