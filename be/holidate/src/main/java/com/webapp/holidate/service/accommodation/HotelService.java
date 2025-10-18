@@ -533,7 +533,7 @@ public class HotelService {
       .toList();
 
     // Step 2: Apply sorting if sort field is specified
-    if (sortBy != null) {
+    if (sortBy != null && !sortBy.isEmpty()) {
       hotelResponses = applySorting(hotelResponses, sortBy, sortDir);
     }
 

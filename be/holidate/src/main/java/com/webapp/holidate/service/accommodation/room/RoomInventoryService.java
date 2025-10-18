@@ -96,16 +96,38 @@ public class RoomInventoryService {
     String roomId, LocalDate startDate, LocalDate endDate,
     int page, int size, String sortBy, String sortDir
   ) {
+    // Clean up page and size values
+    page = Math.max(0, page);
+    size = Math.min(Math.max(1, size), 100);
+
+    // Check if sort direction is valid
+    boolean hasSortDir = sortDir != null && !sortDir.isEmpty()
+      && (PaginationParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir) ||
+      PaginationParams.SORT_DIR_DESC.equalsIgnoreCase(sortDir));
+    if (!hasSortDir) {
+      sortDir = PaginationParams.SORT_DIR_ASC;
+    }
+
+    // Check if sort field is valid
+    boolean hasSortBy = sortBy != null && !sortBy.isEmpty()
+      && (RoomInventoryParams.SORT_BY_DATE.equals(sortBy) ||
+      RoomInventoryParams.SORT_BY_PRICE.equals(sortBy) ||
+      RoomInventoryParams.SORT_BY_AVAILABLE_ROOMS.equals(sortBy) ||
+      RoomInventoryParams.SORT_BY_STATUS.equals(sortBy));
+    if (!hasSortBy) {
+      sortBy = null;
+    }
+
     // Step 1: Get all inventories for the date range
     List<RoomInventory> inventories = roomInventoryRepository.findAllByRoomIdAndDateBetween(roomId, startDate, endDate);
 
     // Step 2: Convert entities to response DTOs
     List<RoomInventoryResponse> inventoryResponses = inventories.stream()
       .map(roomInventoryMapper::toRoomInventoryResponse)
-      .toList();
+      .collect(Collectors.toList());
 
     // Step 3: Apply sorting if sort field is specified
-    if (sortBy != null && !sortBy.isEmpty()) {
+    if (sortBy != null) {
       inventoryResponses = applySorting(inventoryResponses, sortBy, sortDir);
     }
 
@@ -151,8 +173,7 @@ public class RoomInventoryService {
 
   // Apply pagination to inventory responses list
   private PagedResponse<RoomInventoryResponse> applyPagination(
-    List<RoomInventoryResponse> inventoryResponses, int page, int size
-  ) {
+    List<RoomInventoryResponse> inventoryResponses, int page, int size) {
     // Step 1: Calculate pagination metadata
     long totalElements = inventoryResponses.size();
     int totalPages = (int) Math.ceil((double) totalElements / size);
@@ -210,7 +231,6 @@ public class RoomInventoryService {
   // // Tương tự logic booking nhưng cộng lại số phòng
   // }
 
-
   @Transactional
   public void updatePriceForDateBetween(RoomInventoryPriceUpdateRequest request) {
     String roomId = request.getRoomId();
@@ -224,25 +244,25 @@ public class RoomInventoryService {
   }
 
   public List<RoomInventoryPriceDetailsResponse> getPriceDetails(
-    String roomId, LocalDate startDate, LocalDate endDate
-  ) {
+    String roomId, LocalDate startDate, LocalDate endDate) {
     return roomInventoryRepository.findAllByRoomIdAndDateBetween(roomId, startDate, endDate).stream()
       .map(inventory -> {
-        LocalDate date = inventory.getId().getDate();
-        double originalPrice = inventory.getPrice();
-        double vatFee = originalPrice * vatRate;
-        double serviceFee = originalPrice * serviceFeeRate;
-        double finalPrice = originalPrice + vatFee + serviceFee;
+          LocalDate date = inventory.getId().getDate();
+          double originalPrice = inventory.getPrice();
+          double vatFee = originalPrice * vatRate;
+          double serviceFee = originalPrice * serviceFeeRate;
+          double finalPrice = originalPrice + vatFee + serviceFee;
 
-        return RoomInventoryPriceDetailsResponse.builder()
-          .date(date)
-          .originalPrice(originalPrice)
-          .priceAfterDiscount(originalPrice)
-          .vatFee(vatFee)
-          .serviceFee(serviceFee)
-          .finalPrice(finalPrice)
-          .build();
-      })
+          return RoomInventoryPriceDetailsResponse.builder()
+            .date(date)
+            .originalPrice(originalPrice)
+            .priceAfterDiscount(originalPrice)
+            .vatFee(vatFee)
+            .serviceFee(serviceFee)
+            .finalPrice(finalPrice)
+            .build();
+        }
+      )
       .toList();
   }
 }
