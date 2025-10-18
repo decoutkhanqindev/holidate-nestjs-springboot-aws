@@ -210,12 +210,13 @@ public class HotelService {
       return getAllHotelsWithoutFilters(page, size, sortBy, sortDir);
     }
 
-    // If has filters, use complex filtering logic
+    // If it has filters, use complex filtering logic
     return getHotelsWithFilters(
       countryId, provinceId, cityId, districtId, wardId, streetId,
       amenityIds, starRating, checkinDate, checkoutDate,
       requiredAdults, requiredChildren, requiredRooms,
-      minPrice, maxPrice, page, size, sortBy, sortDir);
+      minPrice, maxPrice, page, size, sortBy, sortDir
+    );
   }
 
   // Get all hotels when no filters applied
@@ -251,13 +252,14 @@ public class HotelService {
     LocalDate checkinDate, LocalDate checkoutDate,
     Integer requiredAdults, Integer requiredChildren, Integer requiredRooms,
     Double minPrice, Double maxPrice,
-    int page, int size, String sortBy, String sortDir) {
-
+    int page, int size, String sortBy, String sortDir
+  ) {
     // Step 1: Filter hotels from database using basic filters
     int requiredAmenityCount = (amenityIds != null) ? amenityIds.size() : 0;
     List<String> filteredHotelIds = hotelRepository.findAllIdsByFilter(
       countryId, provinceId, cityId, districtId, wardId, streetId,
-      amenityIds, requiredAmenityCount, starRating, minPrice, maxPrice);
+      amenityIds, requiredAmenityCount, starRating, minPrice, maxPrice
+    );
 
     // Check if we found any hotels
     boolean hasMatchingHotels = filteredHotelIds != null && !filteredHotelIds.isEmpty();
@@ -283,15 +285,14 @@ public class HotelService {
     }
     // Case 2: Only guest filtering needed
     else if (!hasValidDateRange) {
-      finalFilteredHotels = filterByGuestRequirementsOnly(
-        candidateHotels, requiredAdults, requiredChildren, requiredRooms);
+      finalFilteredHotels = filterByGuestRequirementsOnly(candidateHotels, requiredAdults, requiredChildren, requiredRooms);
     }
     // Case 3: Date filtering needed (may include guest filtering too)
     else {
-      final LocalDate validatedCheckoutDate = checkoutDate.isAfter(checkinDate)
+      LocalDate validatedCheckoutDate = checkoutDate.isAfter(checkinDate)
         ? checkoutDate
         : checkinDate.plusDays(1);
-      final long totalNightsStay = ChronoUnit.DAYS.between(checkinDate, validatedCheckoutDate);
+      long totalNightsStay = ChronoUnit.DAYS.between(checkinDate, validatedCheckoutDate);
       boolean isInvalidStayDuration = totalNightsStay <= 0;
 
       if (isInvalidStayDuration) {
@@ -301,7 +302,8 @@ public class HotelService {
       // Filter based on room availability and capacity
       finalFilteredHotels = filterByAvailabilityAndCapacity(
         candidateHotels, checkinDate, validatedCheckoutDate, totalNightsStay,
-        requiredAdults, requiredChildren, requiredRooms, needsDateAndGuestValidation);
+        requiredAdults, requiredChildren, requiredRooms, needsDateAndGuestValidation
+      );
     }
 
     // Apply sorting and pagination to final results
@@ -311,26 +313,29 @@ public class HotelService {
   // Combine room data from separate query into main hotel list
   private void mergeRoomData(List<Hotel> hotels, List<Hotel> hotelsWithRooms) {
     hotels.forEach(hotel -> {
-      hotelsWithRooms.stream()
-        .filter(h -> h.getId().equals(hotel.getId()))
-        .findFirst()
-        .ifPresent(h -> hotel.setRooms(h.getRooms()));
-    });
+        hotelsWithRooms.stream()
+          .filter(h -> h.getId().equals(hotel.getId()))
+          .findFirst()
+          .ifPresent(h -> hotel.setRooms(h.getRooms()));
+      }
+    );
   }
 
   // Filter hotels based only on guest capacity requirements
   private List<Hotel> filterByGuestRequirementsOnly(
     List<Hotel> candidateHotels,
-    Integer requiredAdults, Integer requiredChildren, Integer requiredRooms) {
+    Integer requiredAdults, Integer requiredChildren, Integer requiredRooms
+  ) {
     return candidateHotels.stream()
       .filter(hotel -> {
-        Set<Room> rooms = hotel.getRooms();
-        boolean hasAvailableRooms = rooms != null && !rooms.isEmpty();
-        if (!hasAvailableRooms) {
-          return false;
+          Set<Room> rooms = hotel.getRooms();
+          boolean hasAvailableRooms = rooms != null && !rooms.isEmpty();
+          if (!hasAvailableRooms) {
+            return false;
+          }
+          return hasCapacityForRequirements(rooms, requiredAdults, requiredChildren, requiredRooms);
         }
-        return hasCapacityForRequirements(rooms, requiredAdults, requiredChildren, requiredRooms);
-      })
+      )
       .toList();
   }
 
@@ -339,12 +344,15 @@ public class HotelService {
     List<Hotel> candidateHotels,
     LocalDate checkinDate, LocalDate checkoutDate, long totalNightsStay,
     Integer requiredAdults, Integer requiredChildren, Integer requiredRooms,
-    boolean needsDateAndGuestValidation) {
+    boolean needsDateAndGuestValidation
+  ) {
     return candidateHotels.stream()
       .filter(hotel -> isHotelAvailable(
-        hotel, checkinDate, checkoutDate, totalNightsStay,
-        requiredAdults, requiredChildren, requiredRooms,
-        needsDateAndGuestValidation))
+          hotel, checkinDate, checkoutDate, totalNightsStay,
+          requiredAdults, requiredChildren, requiredRooms,
+          needsDateAndGuestValidation
+        )
+      )
       .toList();
   }
 
@@ -353,10 +361,12 @@ public class HotelService {
     Hotel hotel,
     LocalDate checkinDate, LocalDate checkoutDate, long totalNightsStay,
     Integer requiredAdults, Integer requiredChildren, Integer requiredRooms,
-    boolean needsDateAndGuestValidation) {
+    boolean needsDateAndGuestValidation
+  ) {
     // Step 1: Check if rooms are available for the date range
     List<RoomCandidate> availableRoomCandidates = roomRepository.findAvailableRoomCandidates(
-      hotel.getId(), checkinDate, checkoutDate, totalNightsStay);
+      hotel.getId(), checkinDate, checkoutDate, totalNightsStay
+    );
     boolean hasAvailableRooms = availableRoomCandidates != null && !availableRoomCandidates.isEmpty();
 
     if (!hasAvailableRooms) {
@@ -379,182 +389,243 @@ public class HotelService {
     }
   }
 
+  // Check if hotel rooms can accommodate the guest requirements
   private boolean hasCapacityForRequirements(
     Set<Room> hotelRooms,
     Integer requiredAdults,
     Integer requiredChildren,
-    Integer requiredRooms) {
+    Integer requiredRooms
+  ) {
+    // First check if hotel has any rooms at all
     boolean hasAvailableRooms = hotelRooms != null && !hotelRooms.isEmpty();
     if (!hasAvailableRooms) {
       return false;
     }
 
+    // If no guest requirements specified, any hotel with rooms is fine
     boolean hasNoGuestRequirements = requiredAdults == null && requiredChildren == null && requiredRooms == null;
     if (hasNoGuestRequirements) {
       return true;
     }
 
+    // Convert null values to 0 for calculations
     int adultsToAccommodate = requiredAdults != null ? requiredAdults : 0;
     int childrenToAccommodate = requiredChildren != null ? requiredChildren : 0;
     int roomsNeeded = requiredRooms != null ? requiredRooms : (adultsToAccommodate + childrenToAccommodate > 0 ? 1 : 0);
 
+    // If no guests and no rooms needed, accept any hotel
     boolean noGuestsNoRoomsRequired = adultsToAccommodate == 0 && childrenToAccommodate == 0 && roomsNeeded == 0;
     if (noGuestsNoRoomsRequired) {
       return true;
     }
 
+    // If only rooms needed but no guests, just check room count
     boolean onlyRoomsRequiredNoGuests = adultsToAccommodate == 0 && childrenToAccommodate == 0 && roomsNeeded > 0;
     if (onlyRoomsRequiredNoGuests) {
       return hotelRooms.size() >= roomsNeeded;
     }
 
+    // Invalid case: guests specified but no rooms
     boolean hasGuestsButNoRooms = (adultsToAccommodate > 0 || childrenToAccommodate > 0) && roomsNeeded == 0;
     if (hasGuestsButNoRooms) {
-      return false; // Có khách nhưng không yêu cầu phòng là không hợp lý
+      return false; // Having guests but no room requirements is invalid
     }
 
+    // Sort rooms by capacity (largest first) for optimal allocation
     List<Room> roomsSortedByCapacity = hotelRooms.stream()
       .sorted((room1, room2) -> Integer.compare(
-        room2.getMaxAdults() + room2.getMaxChildren(),
-        room1.getMaxAdults() + room1.getMaxChildren()))
+          room2.getMaxAdults() + room2.getMaxChildren(),
+          room1.getMaxAdults() + room1.getMaxChildren()
+        )
+      )
       .toList();
 
+    // Check if sorted rooms can accommodate all guests
     return canAccommodateGuests(roomsSortedByCapacity, adultsToAccommodate, childrenToAccommodate, roomsNeeded);
   }
 
+  // Check if available rooms can fit all required guests
   private boolean canAccommodateGuests(
     List<Room> availableRooms,
     int totalAdultsRequired,
     int totalChildrenRequired,
     int totalRoomsRequired) {
+    // First check if we have enough rooms available
     boolean hasSufficientRooms = availableRooms.size() >= totalRoomsRequired;
     if (!hasSufficientRooms) {
       return false;
     }
 
+    // Track remaining guests that need accommodation
     int adultsStillNeedAccommodation = totalAdultsRequired;
     int childrenStillNeedAccommodation = totalChildrenRequired;
     int roomsCurrentlyUsed = 0;
 
+    // Try to place guests room by room
     for (Room currentRoom : availableRooms) {
+      // Stop if we've used enough rooms
       if (roomsCurrentlyUsed >= totalRoomsRequired) {
         break;
       }
 
+      // Stop if all guests are accommodated
       if (adultsStillNeedAccommodation <= 0 && childrenStillNeedAccommodation <= 0) {
         break;
       }
 
+      // Calculate how many adults can fit in this room
       int adultsCanFitInThisRoom = Math.min(adultsStillNeedAccommodation, currentRoom.getMaxAdults());
+
+      // Calculate how many children can fit considering adults already placed
       int childrenCanFitInThisRoom = getChildrenCanFitInThisRoom(currentRoom, childrenStillNeedAccommodation,
         adultsCanFitInThisRoom);
 
+      // Update remaining guests and room count
       adultsStillNeedAccommodation -= adultsCanFitInThisRoom;
       childrenStillNeedAccommodation -= childrenCanFitInThisRoom;
       roomsCurrentlyUsed++;
     }
 
+    // Check if all requirements are met
     boolean allGuestsAccommodated = adultsStillNeedAccommodation <= 0 && childrenStillNeedAccommodation <= 0;
     boolean withinRoomLimit = roomsCurrentlyUsed <= totalRoomsRequired;
 
     return allGuestsAccommodated && withinRoomLimit;
   }
 
+  // Calculate how many children can fit in current room considering adults
+  // already placed
   private int getChildrenCanFitInThisRoom(
     Room currentRoom, int childrenStillNeedAccommodation, int adultsCanFitInThisRoom) {
+    // Step 1: Calculate initial children that can fit based on room max children
+    // limit
     int childrenCanFitInThisRoom = Math.min(childrenStillNeedAccommodation, currentRoom.getMaxChildren());
 
+    // Step 2: Check if total guests would exceed room capacity
     int totalGuestsInRoom = adultsCanFitInThisRoom + childrenCanFitInThisRoom;
     int maxRoomCapacity = currentRoom.getMaxAdults() + currentRoom.getMaxChildren();
 
+    // Step 3: If room would be overcrowded, recalculate children capacity
     if (totalGuestsInRoom > maxRoomCapacity) {
+      // Only adjust if adults fit within adult limit
       if (adultsCanFitInThisRoom <= currentRoom.getMaxAdults()) {
+        // Calculate remaining capacity after placing adults
         int remainingCapacity = maxRoomCapacity - adultsCanFitInThisRoom;
+        // Limit children to remaining capacity
         childrenCanFitInThisRoom = Math.min(childrenStillNeedAccommodation, remainingCapacity);
       }
     }
+
+    // Return final number of children that can fit
     return childrenCanFitInThisRoom;
   }
 
   // Apply sorting and pagination to hotel list in memory
-  private PagedResponse<HotelResponse> applyPaginationAndSorting(List<Hotel> hotels, int page, int size, String sortBy,
-                                                                 String sortDir) {
-    // Convert hotels to response format
+  private PagedResponse<HotelResponse> applyPaginationAndSorting(
+    List<Hotel> hotels, int page, int size, String sortBy, String sortDir
+  ) {
+    // Step 1: Convert entity objects to response DTOs
     List<HotelResponse> hotelResponses = hotels.stream()
       .map(hotelMapper::toHotelResponse)
       .collect(Collectors.toList());
 
-    // Sort the list if sorting field is provided
+    // Step 2: Apply sorting if sort field is specified
     if (sortBy != null) {
       hotelResponses = applySorting(hotelResponses, sortBy, sortDir);
     }
 
-    // Calculate total elements and pages
+    // Step 3: Calculate pagination metadata
     long totalElements = hotelResponses.size();
     int totalPages = (int) Math.ceil((double) totalElements / size);
 
+    // Step 4: Handle empty result case
     if (totalElements == 0) {
       return pagedMapper.createEmptyPagedResponse(page, size);
     }
 
-    // Calculate start and end indexes for current page
+    // Step 5: Calculate page boundaries for current page
     int startIndex = page * size;
     int endIndex = Math.min(startIndex + size, hotelResponses.size());
 
+    // Step 6: Handle page out of range case
     if (startIndex >= hotelResponses.size()) {
       return pagedMapper.createEmptyPagedResponse(page, size);
     }
 
+    // Step 7: Extract content for current page
     List<HotelResponse> content = hotelResponses.subList(startIndex, endIndex);
 
+    // Step 8: Create and return paged response with metadata
     return pagedMapper.createPagedResponse(content, page, size, totalElements, totalPages);
   }
 
   // Sort hotel responses by specified field and direction
   private List<HotelResponse> applySorting(List<HotelResponse> hotelResponses, String sortBy, String sortDir) {
+    // Step 1: Determine sort direction (ascending or descending)
     boolean isAscending = PaginationParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir);
 
+    // Step 2: Apply sorting using stream with custom comparator
     return hotelResponses.stream()
       .sorted((h1, h2) -> {
-        int comparison = switch (sortBy) {
-          case HotelParams.SORT_BY_PRICE -> Double.compare(h1.getCurrentPricePerNight(), h2.getCurrentPricePerNight());
-          case HotelParams.SORT_BY_STAR_RATING -> Integer.compare(h1.getStarRating(), h2.getStarRating());
-          case HotelParams.SORT_BY_CREATED_AT -> h1.getCreatedAt().compareTo(h2.getCreatedAt());
-          default -> 0;
-        };
+          // Step 3: Compare values based on sort field
+          int comparison = switch (sortBy) {
+            case HotelParams.SORT_BY_PRICE ->
+              // Compare price per night (double values)
+              Double.compare(h1.getCurrentPricePerNight(), h2.getCurrentPricePerNight());
+            case HotelParams.SORT_BY_STAR_RATING ->
+              // Compare star rating (integer values)
+              Integer.compare(h1.getStarRating(), h2.getStarRating());
+            case HotelParams.SORT_BY_CREATED_AT ->
+              // Compare creation date (LocalDateTime values)
+              h1.getCreatedAt().compareTo(h2.getCreatedAt());
+            default ->
+              // Return 0 for unknown sort fields (no sorting)
+              0;
+          };
 
-        return isAscending ? comparison : -comparison;
-      })
+          // Step 4: Reverse comparison for descending order
+          return isAscending ? comparison : -comparison;
+        }
+      )
       .collect(Collectors.toList());
   }
 
   // Create Pageable object with sorting configuration
   private Pageable createPageable(int page, int size, String sortBy, String sortDir) {
+    // Step 1: Check if sorting field is provided
     boolean hasSortBy = sortBy != null && !sortBy.isEmpty();
     if (!hasSortBy) {
+      // Default sort by creation date descending when no sort field specified
       return PageRequest.of(page, size, Sort.by("createdAt").descending());
     }
 
+    // Step 2: Determine sort direction from string parameter
     Sort.Direction direction = PaginationParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir)
       ? Sort.Direction.ASC
       : Sort.Direction.DESC;
 
+    // Step 3: Map sort field to actual database column name
     String sortField;
     switch (sortBy) {
       case HotelParams.SORT_BY_PRICE:
         // Price sorting needs to be done in memory since it requires room data
+        // Return default sort for database query, price will be sorted later
         return PageRequest.of(page, size, Sort.by("createdAt").descending());
       case HotelParams.SORT_BY_STAR_RATING:
+        // Map to starRating column in database
         sortField = "starRating";
         break;
       case HotelParams.SORT_BY_CREATED_AT:
+        // Map to createdAt column in database
         sortField = "createdAt";
         break;
       default:
+        // Fallback to creation date descending for unknown fields
         sortField = "createdAt";
         direction = Sort.Direction.DESC;
     }
 
+    // Step 4: Create PageRequest with configured sorting
     return PageRequest.of(page, size, Sort.by(direction, sortField));
   }
 

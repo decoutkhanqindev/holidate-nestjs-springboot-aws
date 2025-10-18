@@ -14,7 +14,7 @@ public class PagedResponse<T> {
   List<T> content;
   int page;
   int size;
-  long totalElements;
+  long totalItems;
   int totalPages;
   boolean first;
   boolean last;
