@@ -6,118 +6,94 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Component chịu trách nhiệm tìm kiếm các tổ hợp phòng (room combinations)
- * phù hợp với yêu cầu của người dùng.
- * <p>
- * Lớp này sử dụng thuật toán đệ quy quay lui (backtracking) để khám phá tất cả
- * các khả năng và trả về những tổ hợp hợp lệ.
- */
+// Component to find valid room combinations based on user requirements
+// Uses backtracking algorithm to explore all possible combinations
 @Component
 public class RoomCombinationFinder {
-
-  /**
-   * Phương thức chính để khởi động quá trình tìm kiếm tổ hợp.
-   *
-   * @param candidates     Danh sách các loại phòng có sẵn đã được lọc sơ bộ.
-   * @param targetAdults   Số người lớn yêu cầu.
-   * @param targetChildren Số trẻ em yêu cầu.
-   * @param targetRooms    Số lượng phòng mong muốn.
-   * @return Một danh sách chứa tất cả các tổ hợp phòng hợp lệ (mỗi tổ hợp là một
-   *         List<Room>).
-   */
+  // Find all valid room combinations for given requirements
   public List<List<Room>> findCombinations(
-      List<RoomCandidate> candidates,
-      int targetAdults,
-      int targetChildren,
-      int targetRooms) {
+    List<RoomCandidate> candidates,
+    int targetAdults,
+    int targetChildren,
+    int targetRooms
+  ) {
+    // Step 1: Initialize list to store all valid combinations
     List<List<Room>> allSolutions = new ArrayList<>();
+
+    // Step 2: Start recursive backtracking search
     findRecursive(candidates, targetAdults, targetChildren, targetRooms, new ArrayList<>(), 0, allSolutions);
+
+    // Step 3: Return all found valid combinations
     return allSolutions;
   }
 
-  /**
-   * Hàm đệ quy chính sử dụng thuật toán backtracking để xây dựng các tổ hợp.
-   *
-   * @param candidates         Danh sách các loại phòng ứng viên.
-   * @param targetAdults       Số người lớn mục tiêu.
-   * @param targetChildren     Số trẻ em mục tiêu.
-   * @param targetRooms        Số phòng mục tiêu.
-   * @param currentCombination Tổ hợp đang được xây dựng trong mỗi lần đệ quy.
-   * @param startIndex         Chỉ số bắt đầu trong danh sách candidates để tránh
-   *                           các tổ hợp trùng lặp.
-   * @param allSolutions       Danh sách tổng để lưu trữ tất cả các kết quả hợp
-   *                           lệ.
-   */
+  // Recursive method using backtracking algorithm to build combinations
   private void findRecursive(
-      List<RoomCandidate> candidates,
-      int targetAdults,
-      int targetChildren,
-      int targetRooms,
-      List<Room> currentCombination,
-      int startIndex,
-      List<List<Room>> allSolutions) {
-    // Điều kiện dừng 1: Nếu tổ hợp đã đủ số phòng yêu cầu.
+    List<RoomCandidate> candidates,
+    int targetAdults,
+    int targetChildren,
+    int targetRooms,
+    List<Room> currentCombination,
+    int startIndex,
+    List<List<Room>> allSolutions
+  ) {
+    // Step 1: Check if combination has enough rooms (base case)
     if (currentCombination.size() == targetRooms) {
-      // Kiểm tra xem tổ hợp này có đủ sức chứa không.
+      // Validate if this combination can accommodate all guests
       if (isCombinationValid(currentCombination, targetAdults, targetChildren)) {
-        // Nếu hợp lệ, thêm một bản sao của nó vào danh sách kết quả.
+        // Add a copy of valid combination to results
         allSolutions.add(new ArrayList<>(currentCombination));
       }
-      // Dừng nhánh này vì đã đủ số phòng.
+      // Stop this branch since we have enough rooms
       return;
     }
 
-    // Vòng lặp để thử thêm từng loại phòng vào tổ hợp.
+    // Step 2: Try adding each room type to current combination
     for (int i = startIndex; i < candidates.size(); i++) {
       RoomCandidate candidate = candidates.get(i);
 
-      // Đếm số lượng phòng của loại này đã có trong tổ hợp hiện tại.
+      // Step 3: Count how many rooms of this type are already in combination
       long countOfThisRoomTypeInCombination = currentCombination.stream()
-          .filter(room -> room.getId().equals(candidate.getRoom().getId()))
-          .count();
+        .filter(room -> room.getId().equals(candidate.getRoom().getId()))
+        .count();
 
-      // Nếu vẫn có thể thêm phòng loại này (số lượng chưa vượt quá số phòng có sẵn).
+      // Step 4: Check if we can still add more rooms of this type
       if (countOfThisRoomTypeInCombination < candidate.getAvailableCount()) {
-        // 1. Lựa chọn: Thêm phòng vào tổ hợp.
+        // Step 5a: Choose - Add room to combination
         currentCombination.add(candidate.getRoom());
 
-        // 2. Khám phá: Đệ quy để tìm các lựa chọn tiếp theo.
-        // Bắt đầu từ index 'i' để có thể chọn lại chính loại phòng này.
+        // Step 5b: Explore - Recursively find next choices
+        // Start from index 'i' to allow selecting same room type again
         findRecursive(candidates, targetAdults, targetChildren, targetRooms, currentCombination, i, allSolutions);
 
-        // 3. Quay lui (Backtrack): Gỡ bỏ lựa chọn vừa rồi để thử phương án khác.
+        // Step 5c: Backtrack - Remove last choice to try other options
         currentCombination.removeLast();
       }
     }
   }
 
-  /**
-   * Kiểm tra xem một tổ hợp phòng đã hoàn chỉnh có đáp ứng đủ sức chứa không.
-   *
-   * @param combination    Một tổ hợp phòng có đủ số lượng phòng yêu cầu.
-   * @param targetAdults   Số người lớn yêu cầu.
-   * @param targetChildren Số trẻ em yêu cầu.
-   * @return true nếu tổ hợp hợp lệ, ngược lại false.
-   */
+  // Check if room combination can accommodate all guests
   private boolean isCombinationValid(List<Room> combination, int targetAdults, int targetChildren) {
-    // Trường hợp đặc biệt: nếu không yêu cầu phòng nào (combination rỗng)
+    // Step 1: Handle empty combination case
     if (combination.isEmpty()) {
-      // Chỉ hợp lệ nếu cũng không yêu cầu khách nào
+      // Only valid if no guests are required
       return targetAdults == 0 && targetChildren == 0;
     }
 
+    // Step 2: Calculate total capacity of all rooms
     int totalAdultsCapacity = 0;
     int totalCapacity = 0;
 
     for (Room room : combination) {
+      // Add adult capacity from each room
       totalAdultsCapacity += room.getMaxAdults();
+      // Add total capacity (adults + children) from each room
       totalCapacity += room.getMaxAdults() + room.getMaxChildren();
     }
 
-    // Điều kiện hợp lệ:
-    // 1. Tổng sức chứa người lớn phải lớn hơn hoặc bằng số người lớn yêu cầu.
-    // 2. Tổng sức chứa (người lớn + trẻ em) phải lớn hơn hoặc bằng tổng số khách.
+    // Step 3: Check if combination meets requirements
+    // Condition 1: Adult capacity must be >= required adults
+    // Condition 2: Total capacity must be >= total guests
     return totalAdultsCapacity >= targetAdults && totalCapacity >= (targetAdults + targetChildren);
   }
 }

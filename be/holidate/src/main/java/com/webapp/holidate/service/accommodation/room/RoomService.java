@@ -3,10 +3,8 @@ package com.webapp.holidate.service.accommodation.room;
 import com.webapp.holidate.dto.request.acommodation.room.RoomCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.room.RoomUpdateRequest;
 import com.webapp.holidate.dto.request.image.PhotoCreationRequest;
-import com.webapp.holidate.dto.response.acommodation.hotel.HotelBriefResponse;
 import com.webapp.holidate.dto.response.acommodation.room.RoomDetailsResponse;
 import com.webapp.holidate.dto.response.acommodation.room.RoomResponse;
-import com.webapp.holidate.dto.response.acommodation.room.inventory.RoomInventoryResponse;
 import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.entity.accommodation.amenity.Amenity;
 import com.webapp.holidate.entity.accommodation.amenity.RoomAmenity;
@@ -18,7 +16,6 @@ import com.webapp.holidate.entity.image.RoomPhoto;
 import com.webapp.holidate.entity.policy.cancelation.CancellationPolicy;
 import com.webapp.holidate.entity.policy.reschedule.ReschedulePolicy;
 import com.webapp.holidate.exception.AppException;
-import com.webapp.holidate.mapper.acommodation.HotelMapper;
 import com.webapp.holidate.mapper.acommodation.room.RoomMapper;
 import com.webapp.holidate.repository.accommodation.HotelRepository;
 import com.webapp.holidate.repository.accommodation.room.BedTypeRepository;
@@ -42,7 +39,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -158,20 +154,20 @@ public class RoomService {
 
   public List<RoomResponse> getAllByHotelId(String hotelId) {
     return roomRepository
-      .findAllByHotelIdWithBedTypePhotosAmenitiesInventoriesCancellationPolicyReschedulePolicy(hotelId).stream()
+      .findAllByHotelIdWithDetails(hotelId).stream()
       .map(roomMapper::toRoomResponse)
       .toList();
   }
 
   public RoomDetailsResponse getById(String id) {
-    Room room = roomRepository.findByIdWithHotelBedTypePhotosAmenitiesInventoriesCancellationPolicyReschedulePolicy(id)
+    Room room = roomRepository.findByIdWithDetails(id)
       .orElseThrow(() -> new AppException(ErrorType.ROOM_NOT_FOUND));
     return roomMapper.toRoomDetailsResponse(room);
   }
 
   @Transactional
   public RoomDetailsResponse update(String id, RoomUpdateRequest request) throws IOException {
-    Room room = roomRepository.findByIdWithHotelBedTypePhotosAmenitiesInventoriesCancellationPolicyReschedulePolicy(id)
+    Room room = roomRepository.findByIdWithDetails(id)
       .orElseThrow(() -> new AppException(ErrorType.ROOM_NOT_FOUND));
 
     updateInfo(room, request);

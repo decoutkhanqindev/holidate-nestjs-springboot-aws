@@ -186,7 +186,8 @@ public class HotelService {
     }
 
     // Check if sort field is valid
-    boolean hasSortBy = sortBy != null && !sortBy.isEmpty() && (HotelParams.SORT_BY_PRICE.equals(sortBy) ||
+    boolean hasSortBy = sortBy != null && !sortBy.isEmpty()
+      && (HotelParams.SORT_BY_PRICE.equals(sortBy) ||
       HotelParams.SORT_BY_STAR_RATING.equals(sortBy) ||
       HotelParams.SORT_BY_CREATED_AT.equals(sortBy));
     if (!hasSortBy) {
@@ -449,7 +450,8 @@ public class HotelService {
     List<Room> availableRooms,
     int totalAdultsRequired,
     int totalChildrenRequired,
-    int totalRoomsRequired) {
+    int totalRoomsRequired
+  ) {
     // First check if we have enough rooms available
     boolean hasSufficientRooms = availableRooms.size() >= totalRoomsRequired;
     if (!hasSufficientRooms) {
@@ -496,7 +498,8 @@ public class HotelService {
   // Calculate how many children can fit in current room considering adults
   // already placed
   private int getChildrenCanFitInThisRoom(
-    Room currentRoom, int childrenStillNeedAccommodation, int adultsCanFitInThisRoom) {
+    Room currentRoom, int childrenStillNeedAccommodation, int adultsCanFitInThisRoom
+  ) {
     // Step 1: Calculate initial children that can fit based on room max children
     // limit
     int childrenCanFitInThisRoom = Math.min(childrenStillNeedAccommodation, currentRoom.getMaxChildren());
@@ -527,7 +530,7 @@ public class HotelService {
     // Step 1: Convert entity objects to response DTOs
     List<HotelResponse> hotelResponses = hotels.stream()
       .map(hotelMapper::toHotelResponse)
-      .collect(Collectors.toList());
+      .toList();
 
     // Step 2: Apply sorting if sort field is specified
     if (sortBy != null) {
@@ -587,7 +590,7 @@ public class HotelService {
           return isAscending ? comparison : -comparison;
         }
       )
-      .collect(Collectors.toList());
+      .toList();
   }
 
   // Create Pageable object with sorting configuration

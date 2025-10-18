@@ -1,7 +1,7 @@
 package com.webapp.holidate.constants.db.query.accommodation.room;
 
 public class RoomQueries {
-  private static final String FIND_BASE =
+  private static final String FIND_WITH_DETAILS_BASE =
     "SELECT DISTINCT r FROM Room r " +
       "LEFT JOIN FETCH r.bedType bt " +
       "LEFT JOIN FETCH r.photos rph " +
@@ -34,11 +34,9 @@ public class RoomQueries {
       "LEFT JOIN FETCH r.cancellationPolicy cp " +
       "LEFT JOIN FETCH r.reschedulePolicy rp ";
 
-  public static final String FIND_ALL_BY_HOTEL_ID_WITH_BED_TYPE_PHOTOS_AMENITIES_INVENTORIES_CANCELLATION_POLICY_RESCHEDULE_POLICY =
-    FIND_BASE + "WHERE r.hotel.id = :hotelId";
+  public static final String FIND_ALL_BY_HOTEL_ID_WITH_WITH_DETAILS = FIND_WITH_DETAILS_BASE + "WHERE r.hotel.id = :hotelId";
 
-  public static final String FIND_BY_ID_WITH_HOTEL_BED_TYPE_PHOTOS_AMENITIES_INVENTORIES_CANCELLATION_POLICY_RESCHEDULE_POLICY =
-    FIND_WITH_HOTEL_BASE + "WHERE r.id = :id";
+  public static final String FIND_BY_ID_WITH_DETAILS = FIND_WITH_HOTEL_BASE + "WHERE r.id = :id";
 
   public static final String FIND_AVAILABLE_ROOM_CANDIDATES = """
         SELECT new com.webapp.holidate.component.room.RoomCandidate(
