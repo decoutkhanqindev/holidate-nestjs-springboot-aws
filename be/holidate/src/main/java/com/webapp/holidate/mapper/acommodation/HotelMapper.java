@@ -8,7 +8,7 @@ import com.webapp.holidate.entity.accommodation.room.Room;
 import com.webapp.holidate.entity.accommodation.room.RoomInventory;
 import com.webapp.holidate.mapper.amenity.AmenityCategoryMapper;
 import com.webapp.holidate.mapper.image.PhotoCategoryMapper;
-import com.webapp.holidate.mapper.location.entertainment_venue.EntertainmentVenueCategoryMapper;
+import com.webapp.holidate.mapper.location.EntertainmentVenueCategoryMapper;
 import com.webapp.holidate.mapper.policy.HotelPolicyMapper;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;

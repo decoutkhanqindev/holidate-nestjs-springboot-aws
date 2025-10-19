@@ -39,7 +39,7 @@ public interface PhotoCategoryMapper {
                 .url(hotelPhoto.getPhoto().getUrl())
                 .build()
             )
-            .collect(Collectors.toList());
+            .toList();
 
           return PhotoCategoryResponse.builder()
             .id(category.getId())
@@ -48,7 +48,7 @@ public interface PhotoCategoryMapper {
             .build();
         }
       )
-      .collect(Collectors.toList());
+      .toList();
   }
 
   @Named("roomPhotosToCategories")
@@ -74,7 +74,7 @@ public interface PhotoCategoryMapper {
                 .url(hotelPhoto.getPhoto().getUrl())
                 .build()
             )
-            .collect(Collectors.toList());
+            .toList();
 
           return PhotoCategoryResponse.builder()
             .id(category.getId())
@@ -83,6 +83,6 @@ public interface PhotoCategoryMapper {
             .build();
         }
       )
-      .collect(Collectors.toList());
+      .toList();
   }
 }

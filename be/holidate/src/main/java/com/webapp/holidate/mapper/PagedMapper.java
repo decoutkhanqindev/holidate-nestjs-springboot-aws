@@ -13,34 +13,34 @@ public interface PagedMapper {
     boolean hasContent = page != null && page.hasContent();
     if (!hasContent) {
       return PagedResponse.<R>builder()
-          .content(List.of())
-          .page(0)
-          .size(0)
-          .totalItems(0)
-          .totalPages(0)
-          .first(true)
-          .last(true)
-          .hasNext(false)
-          .hasPrevious(false)
-          .build();
+        .content(List.of())
+        .page(0)
+        .size(0)
+        .totalItems(0)
+        .totalPages(0)
+        .first(true)
+        .last(true)
+        .hasNext(false)
+        .hasPrevious(false)
+        .build();
     }
 
     List<R> mappedContent = page.getContent()
-        .stream()
-        .map(contentMapper)
-        .toList();
+      .stream()
+      .map(contentMapper)
+      .toList();
 
     return PagedResponse.<R>builder()
-        .content(mappedContent)
-        .page(page.getNumber())
-        .size(page.getSize())
-        .totalItems(page.getTotalElements())
-        .totalPages(page.getTotalPages())
-        .first(page.isFirst())
-        .last(page.isLast())
-        .hasNext(page.hasNext())
-        .hasPrevious(page.hasPrevious())
-        .build();
+      .content(mappedContent)
+      .page(page.getNumber())
+      .size(page.getSize())
+      .totalItems(page.getTotalElements())
+      .totalPages(page.getTotalPages())
+      .first(page.isFirst())
+      .last(page.isLast())
+      .hasNext(page.hasNext())
+      .hasPrevious(page.hasPrevious())
+      .build();
   }
 
   default <T> PagedResponse<T> toPagedResponse(Page<T> page) {
@@ -49,31 +49,32 @@ public interface PagedMapper {
 
   default <T> PagedResponse<T> createEmptyPagedResponse(int page, int size) {
     return PagedResponse.<T>builder()
-        .content(List.of())
-        .page(page)
-        .size(size)
-        .totalItems(0)
-        .totalPages(0)
-        .first(page == 0)
-        .last(true)
-        .hasNext(false)
-        .hasPrevious(page > 0)
-        .build();
+      .content(List.of())
+      .page(page)
+      .size(size)
+      .totalItems(0)
+      .totalPages(0)
+      .first(page == 0)
+      .last(true)
+      .hasNext(false)
+      .hasPrevious(page > 0)
+      .build();
   }
 
   default <T> PagedResponse<T> createPagedResponse(
-      List<T> content, int page, int size,
-      long totalElements, int totalPages) {
+    List<T> content, int page, int size,
+    long totalElements, int totalPages
+  ) {
     return PagedResponse.<T>builder()
-        .content(content != null ? content : List.of())
-        .page(page)
-        .size(size)
-        .totalItems(totalElements)
-        .totalPages(totalPages)
-        .first(page == 0)
-        .last(page >= totalPages - 1)
-        .hasNext(page < totalPages - 1)
-        .hasPrevious(page > 0)
-        .build();
+      .content(content != null ? content : List.of())
+      .page(page)
+      .size(size)
+      .totalItems(totalElements)
+      .totalPages(totalPages)
+      .first(page == 0)
+      .last(page >= totalPages - 1)
+      .hasNext(page < totalPages - 1)
+      .hasPrevious(page > 0)
+      .build();
   }
 }

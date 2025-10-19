@@ -22,6 +22,6 @@ public interface RescheduleRuleMapper {
 
     return rules.stream()
         .map(this::toRescheduleRuleResponse)
-        .collect(Collectors.toList());
+        .toList();
   }
 }

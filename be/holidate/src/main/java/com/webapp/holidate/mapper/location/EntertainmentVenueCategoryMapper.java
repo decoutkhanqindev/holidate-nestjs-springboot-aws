@@ -1,4 +1,4 @@
-package com.webapp.holidate.mapper.location.entertainment_venue;
+package com.webapp.holidate.mapper.location;
 
 import com.webapp.holidate.dto.response.location.entertainment_venue.EntertainmentVenueCategoryResponse;
 import com.webapp.holidate.dto.response.location.entertainment_venue.EntertainmentVenueResponse;
@@ -6,7 +6,6 @@ import com.webapp.holidate.entity.location.entertainment_venue.EntertainmentVenu
 import com.webapp.holidate.entity.location.entertainment_venue.EntertainmentVenueCategory;
 import com.webapp.holidate.entity.location.entertainment_venue.HotelEntertainmentVenue;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
 import java.util.List;
@@ -18,7 +17,8 @@ import java.util.stream.Collectors;
 public interface EntertainmentVenueCategoryMapper {
   @Named("hotelEntertainmentVenuesToCategories")
   default List<EntertainmentVenueCategoryResponse> toEntertainmentVenuesCategoryResponseList(
-    Set<HotelEntertainmentVenue> hotelEntertainmentVenues) {
+    Set<HotelEntertainmentVenue> hotelEntertainmentVenues
+  ) {
     boolean hasEntertainmentVenues = hotelEntertainmentVenues != null && !hotelEntertainmentVenues.isEmpty();
     if (!hasEntertainmentVenues) {
       return List.of();
@@ -54,6 +54,6 @@ public interface EntertainmentVenueCategoryMapper {
             .build();
         }
       )
-      .collect(Collectors.toList());
+      .toList();
   }
 }

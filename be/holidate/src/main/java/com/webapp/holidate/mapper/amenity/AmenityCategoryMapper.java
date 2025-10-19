@@ -50,7 +50,7 @@ public interface AmenityCategoryMapper {
                 .free(hotelAmenity.getAmenity().isFree())
                 .build()
             )
-            .collect(Collectors.toList());
+            .toList();
 
           return AmenityCategoryDetailsResponse.builder()
             .id(category.getId())
@@ -59,7 +59,7 @@ public interface AmenityCategoryMapper {
             .build();
         }
       )
-      .collect(Collectors.toList());
+      .toList();
   }
 
   @Named("roomAmenitiesToCategories")
@@ -86,7 +86,7 @@ public interface AmenityCategoryMapper {
                 .free(roomAmenity.getAmenity().isFree())
                 .build()
             )
-            .collect(Collectors.toList());
+            .toList();
 
           return AmenityCategoryDetailsResponse.builder()
             .id(category.getId())
@@ -95,6 +95,6 @@ public interface AmenityCategoryMapper {
             .build();
         }
       )
-      .collect(Collectors.toList());
+      .toList();
   }
 }
