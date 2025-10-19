@@ -27,6 +27,8 @@ public class ReviewPhoto {
   @ToString.Exclude
   Review review;
 
-  @Column(nullable = false, columnDefinition = "TEXT")
-  String url;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = DbFieldNames.PHOTO_ID, nullable = false)
+  @ToString.Exclude
+  Photo photo;
 }
