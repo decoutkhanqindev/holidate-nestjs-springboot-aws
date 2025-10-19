@@ -41,4 +41,7 @@ public interface HotelRepository extends JpaRepository<Hotel, String>, JpaSpecif
 
   @Query(HotelQueries.FIND_WITH_DETAILS_BASE)
   Page<Hotel> findAllWithDetails(Pageable pageable);
+
+  @Query(HotelQueries.FIND_WITH_DETAILS_BASE)
+  List<Hotel> findAllWithDetails();
 }

@@ -55,6 +55,5 @@ public class DbTableNames {
   public static final String PHOTO_CATEGORIES = "photo_categories";
   public static final String HOTEL_PHOTOS = "hotel_photos";
   public static final String ROOM_PHOTOS = "room_photos";
-  public static final String ACCOMMODATION_PHOTOS = "accommodation_photos";
   public static final String REVIEW_PHOTOS = "review_photos";
 }

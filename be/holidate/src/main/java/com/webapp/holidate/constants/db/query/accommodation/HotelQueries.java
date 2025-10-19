@@ -1,7 +1,8 @@
 package com.webapp.holidate.constants.db.query.accommodation;
 
 public class HotelQueries {
-  public static final String FIND_WITH_DETAILS_BASE = "SELECT DISTINCT h FROM Hotel h " +
+  public static final String FIND_WITH_DETAILS_BASE =
+    "SELECT DISTINCT h FROM Hotel h " +
       "LEFT JOIN FETCH h.country " +
       "LEFT JOIN FETCH h.province " +
       "LEFT JOIN FETCH h.city " +
@@ -17,7 +18,8 @@ public class HotelQueries {
       "LEFT JOIN FETCH pol.cancellationPolicy " +
       "LEFT JOIN FETCH pol.reschedulePolicy ";
 
-  public static final String FIND_ALL_IDS_BY_FILTER = "SELECT DISTINCT h.id FROM Hotel h " +
+  public static final String FIND_ALL_IDS_BY_FILTER =
+    "SELECT DISTINCT h.id FROM Hotel h " +
       "LEFT JOIN h.amenities ha " +
       "WHERE " +
       "(:countryId IS NULL OR h.country.id = :countryId) " +
@@ -42,12 +44,14 @@ public class HotelQueries {
 
   public static final String FIND_ALL_BY_IDS = FIND_WITH_DETAILS_BASE + "WHERE h.id IN :hotelIds";
 
-  public static final String FIND_ALL_BY_IDS_WITH_ROOMS_AND_INVENTORIES = "SELECT DISTINCT h FROM Hotel h " +
+  public static final String FIND_ALL_BY_IDS_WITH_ROOMS_AND_INVENTORIES =
+    "SELECT DISTINCT h FROM Hotel h " +
       "LEFT JOIN FETCH h.rooms r " +
       "LEFT JOIN FETCH r.inventories ri " +
       "WHERE h.id IN :hotelIds";
 
-  public static final String FIND_BY_ID_WITH_DETAILS = FIND_WITH_DETAILS_BASE +
+  public static final String FIND_BY_ID_WITH_DETAILS =
+    FIND_WITH_DETAILS_BASE +
       "LEFT JOIN FETCH h.entertainmentVenues ev " +
       "LEFT JOIN FETCH ev.entertainmentVenue eve " +
       "LEFT JOIN FETCH eve.category " +

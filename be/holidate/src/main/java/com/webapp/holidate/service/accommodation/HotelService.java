@@ -55,10 +55,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -170,7 +167,8 @@ public class HotelService {
     LocalDate checkinDate, LocalDate checkoutDate,
     Integer requiredAdults, Integer requiredChildren, Integer requiredRooms,
     Double minPrice, Double maxPrice,
-    int page, int size, String sortBy, String sortDir) {
+    int page, int size, String sortBy, String sortDir
+  ) {
     // Clean up page and size values
     page = Math.max(0, page);
     size = Math.min(Math.max(1, size), 100);
@@ -220,28 +218,34 @@ public class HotelService {
 
   // Get all hotels when no filters applied
   private PagedResponse<HotelResponse> getAllHotelsWithoutFilters(int page, int size, String sortBy, String sortDir) {
-    // Set up pagination with sorting
-    Pageable pageable = createPageable(page, size, sortBy, sortDir);
-
-    // Fetch hotels from database
-    Page<Hotel> hotelPage = hotelRepository.findAllWithDetails(pageable);
+    // Fetch all hotels from database (without pagination for consistent pattern)
+    List<Hotel> allHotels = hotelRepository.findAllWithDetails();
 
     // Check if we have any hotels
-    boolean hasHotels = hotelPage != null && hotelPage.hasContent();
+    boolean hasHotels = !allHotels.isEmpty();
     if (!hasHotels) {
       return pagedMapper.createEmptyPagedResponse(page, size);
     }
 
-    // Get hotel list and their IDs
-    List<Hotel> allHotelsFromDb = hotelPage.getContent();
-    List<String> hotelIds = allHotelsFromDb.stream().map(Hotel::getId).toList();
+    // Get hotel IDs and fetch room data
+    List<String> hotelIds = allHotels.stream().map(Hotel::getId).toList();
     List<Hotel> hotelsWithRooms = hotelRepository.findAllByIdsWithRoomsAndInventories(hotelIds);
 
     // Add room data to hotels
-    mergeRoomData(allHotelsFromDb, hotelsWithRooms);
+    mergeRoomData(allHotels, hotelsWithRooms);
 
-    // Convert to response format
-    return pagedMapper.toPagedResponse(hotelPage, hotelMapper::toHotelResponse);
+    // Convert entities to response DTOs
+    List<HotelResponse> hotelResponses = allHotels.stream()
+      .map(hotelMapper::toHotelResponse)
+      .toList();
+
+    // Apply sorting if sort field is specified
+    if (sortBy != null) {
+      hotelResponses = applySorting(hotelResponses, sortBy, sortDir);
+    }
+
+    // Apply pagination and return paged response
+    return applyPagination(hotelResponses, page, size);
   }
 
   // Handle filtering logic when filters are provided
@@ -305,7 +309,18 @@ public class HotelService {
     }
 
     // Apply sorting and pagination to final results
-    return applyPaginationAndSorting(finalFilteredHotels, page, size, sortBy, sortDir);
+    // Step 1: Convert entity objects to response DTOs
+    List<HotelResponse> hotelResponses = finalFilteredHotels.stream()
+      .map(hotelMapper::toHotelResponse)
+      .toList();
+
+    // Step 2: Apply sorting if sort field is specified
+    if (sortBy != null) {
+      hotelResponses = applySorting(hotelResponses, sortBy, sortDir);
+    }
+
+    // Step 3: Apply pagination and return paged response
+    return applyPagination(hotelResponses, page, size);
   }
 
   // Combine room data from separate query into main hotel list
@@ -346,9 +361,10 @@ public class HotelService {
   ) {
     return candidateHotels.stream()
       .filter(hotel -> isHotelAvailable(
-        hotel, checkinDate, checkoutDate, totalNightsStay,
-        requiredAdults, requiredChildren, requiredRooms,
-        needsDateAndGuestValidation)
+          hotel, checkinDate, checkoutDate, totalNightsStay,
+          requiredAdults, requiredChildren, requiredRooms,
+          needsDateAndGuestValidation
+        )
       )
       .toList();
   }
@@ -430,8 +446,10 @@ public class HotelService {
     // Sort rooms by capacity (largest first) for optimal allocation
     List<Room> roomsSortedByCapacity = hotelRooms.stream()
       .sorted((room1, room2) -> Integer.compare(
-        room2.getMaxAdults() + room2.getMaxChildren(),
-        room1.getMaxAdults() + room1.getMaxChildren()))
+          room2.getMaxAdults() + room2.getMaxChildren(),
+          room1.getMaxAdults() + room1.getMaxChildren()
+        )
+      )
       .toList();
 
     // Check if sorted rooms can accommodate all guests
@@ -516,42 +534,30 @@ public class HotelService {
     return childrenCanFitInThisRoom;
   }
 
-  // Apply sorting and pagination to hotel list in memory
-  private PagedResponse<HotelResponse> applyPaginationAndSorting(
-    List<Hotel> hotels, int page, int size, String sortBy, String sortDir
-  ) {
-    // Step 1: Convert entity objects to response DTOs
-    List<HotelResponse> hotelResponses = hotels.stream()
-      .map(hotelMapper::toHotelResponse)
-      .toList();
-
-    // Step 2: Apply sorting if sort field is specified
-    if (sortBy != null && !sortBy.isEmpty()) {
-      hotelResponses = applySorting(hotelResponses, sortBy, sortDir);
-    }
-
-    // Step 3: Calculate pagination metadata
+  // Apply pagination to hotel responses list
+  private PagedResponse<HotelResponse> applyPagination(List<HotelResponse> hotelResponses, int page, int size) {
+    // Step 1: Calculate pagination metadata
     long totalElements = hotelResponses.size();
     int totalPages = (int) Math.ceil((double) totalElements / size);
 
-    // Step 4: Handle empty result case
+    // Step 2: Handle empty result case
     if (totalElements == 0) {
       return pagedMapper.createEmptyPagedResponse(page, size);
     }
 
-    // Step 5: Calculate page boundaries for current page
+    // Step 3: Calculate page boundaries for current page
     int startIndex = page * size;
     int endIndex = Math.min(startIndex + size, hotelResponses.size());
 
-    // Step 6: Handle page out of range case
+    // Step 4: Handle page out of range case
     if (startIndex >= hotelResponses.size()) {
       return pagedMapper.createEmptyPagedResponse(page, size);
     }
 
-    // Step 7: Extract content for current page
+    // Step 5: Extract content for current page
     List<HotelResponse> content = hotelResponses.subList(startIndex, endIndex);
 
-    // Step 8: Create and return paged response with metadata
+    // Step 6: Create and return paged response with metadata
     return pagedMapper.createPagedResponse(content, page, size, totalElements, totalPages);
   }
 
@@ -584,45 +590,6 @@ public class HotelService {
         }
       )
       .toList();
-  }
-
-  // Create Pageable object with sorting configuration
-  private Pageable createPageable(int page, int size, String sortBy, String sortDir) {
-    // Step 1: Check if sorting field is provided
-    boolean hasSortBy = sortBy != null && !sortBy.isEmpty();
-    if (!hasSortBy) {
-      // Default sort by creation date descending when no sort field specified
-      return PageRequest.of(page, size, Sort.by("createdAt").descending());
-    }
-
-    // Step 2: Determine sort direction from string parameter
-    Sort.Direction direction = SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir)
-      ? Sort.Direction.ASC
-      : Sort.Direction.DESC;
-
-    // Step 3: Map sort field to actual database column name
-    String sortField;
-    switch (sortBy) {
-      case SortingParams.SORT_BY_PRICE:
-        // Price sorting needs to be done in memory since it requires room data
-        // Return default sort for database query, price will be sorted later
-        return PageRequest.of(page, size, Sort.by("createdAt").descending());
-      case SortingParams.SORT_BY_STAR_RATING:
-        // Map to starRating column in database
-        sortField = "starRating";
-        break;
-      case SortingParams.SORT_BY_CREATED_AT:
-        // Map to createdAt column in database
-        sortField = "createdAt";
-        break;
-      default:
-        // Fallback to creation date descending for unknown fields
-        sortField = "createdAt";
-        direction = Sort.Direction.DESC;
-    }
-
-    // Step 4: Create PageRequest with configured sorting
-    return PageRequest.of(page, size, Sort.by(direction, sortField));
   }
 
   public HotelDetailsResponse getById(String id) {

@@ -5,6 +5,7 @@ import com.webapp.holidate.dto.request.acommodation.room.RoomUpdateRequest;
 import com.webapp.holidate.dto.request.image.PhotoCreationRequest;
 import com.webapp.holidate.dto.response.acommodation.room.RoomDetailsResponse;
 import com.webapp.holidate.dto.response.acommodation.room.RoomResponse;
+import com.webapp.holidate.dto.response.base.PagedResponse;
 import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.entity.accommodation.amenity.Amenity;
 import com.webapp.holidate.entity.accommodation.amenity.RoomAmenity;
@@ -17,6 +18,7 @@ import com.webapp.holidate.entity.policy.cancelation.CancellationPolicy;
 import com.webapp.holidate.entity.policy.reschedule.ReschedulePolicy;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.acommodation.room.RoomMapper;
+import com.webapp.holidate.mapper.PagedMapper;
 import com.webapp.holidate.repository.accommodation.HotelRepository;
 import com.webapp.holidate.repository.accommodation.room.BedTypeRepository;
 import com.webapp.holidate.repository.accommodation.room.RoomRepository;
@@ -63,9 +65,9 @@ public class RoomService {
   RoomPhotoRepository roomPhotoRepository;
 
   FileService fileService;
-  RoomInventoryService roomInventoryService;
 
   RoomMapper roomMapper;
+  PagedMapper pagedMapper;
 
   @Transactional
   public RoomDetailsResponse create(RoomCreationRequest request) throws IOException {
@@ -154,9 +156,12 @@ public class RoomService {
     return roomMapper.toRoomDetailsResponse(room);
   }
 
-  public List<RoomResponse> getAllByHotelId(String hotelId, String status, String sortBy, String sortDir) {
-    // Step 1: Clean up and validate pagination parameters (using List instead of
-    // PagedResponse for simplicity)
+  public PagedResponse<RoomResponse> getAllByHotelId(
+    String hotelId, String status, int page, int size, String sortBy, String sortDir
+  ) {
+    // Step 1: Clean up and validate pagination parameters
+    page = Math.max(0, page);
+    size = Math.min(Math.max(1, size), 100);
 
     // Step 2: Check if sort direction is valid
     boolean hasSortDir = sortDir != null && !sortDir.isEmpty()
@@ -189,12 +194,40 @@ public class RoomService {
       .map(roomMapper::toRoomResponse)
       .toList();
 
-    // Step 8: Apply sorting if specified
+    // Step 7: Apply sorting if sort field is specified
     if (sortBy != null) {
       roomResponses = applySorting(roomResponses, sortBy, sortDir);
     }
 
-    return roomResponses;
+    // Step 8: Apply pagination and return paged response
+    return applyPagination(roomResponses, page, size);
+  }
+
+  // Apply pagination to room responses list
+  private PagedResponse<RoomResponse> applyPagination(List<RoomResponse> roomResponses, int page, int size) {
+    // Step 1: Calculate pagination metadata
+    long totalElements = roomResponses.size();
+    int totalPages = (int) Math.ceil((double) totalElements / size);
+
+    // Step 2: Handle empty result case
+    if (totalElements == 0) {
+      return pagedMapper.createEmptyPagedResponse(page, size);
+    }
+
+    // Step 3: Calculate page boundaries
+    int startIndex = page * size;
+    int endIndex = Math.min(startIndex + size, roomResponses.size());
+
+    // Step 4: Handle page out of range case
+    if (startIndex >= roomResponses.size()) {
+      return pagedMapper.createEmptyPagedResponse(page, size);
+    }
+
+    // Step 5: Extract content for current page
+    List<RoomResponse> content = roomResponses.subList(startIndex, endIndex);
+
+    // Step 6: Create and return paged response
+    return pagedMapper.createPagedResponse(content, page, size, totalElements, totalPages);
   }
 
   // Apply sorting to room responses

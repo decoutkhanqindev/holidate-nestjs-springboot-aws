@@ -6,6 +6,5 @@ public class AmenityQueries {
     "LEFT JOIN FETCH a.category ";
 
   public static final String FIND_ALL_WITH_CATEGORY_BY_CATEGORY_ID =
-    FIND_ALL_WITH_CATEGORY +
-    "WHERE a.category.id = :categoryId ";
+    FIND_ALL_WITH_CATEGORY + "WHERE a.category.id = :categoryId ";
 }

@@ -4,12 +4,14 @@ import com.webapp.holidate.constants.api.endpoint.AccommodationEndpoints;
 import com.webapp.holidate.constants.api.endpoint.CommonEndpoints;
 import com.webapp.holidate.constants.api.param.CommonParams;
 import com.webapp.holidate.constants.api.param.HotelParams;
+import com.webapp.holidate.constants.api.param.PaginationParams;
 import com.webapp.holidate.constants.api.param.SortingParams;
 import com.webapp.holidate.dto.request.acommodation.room.RoomCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.room.RoomUpdateRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.acommodation.room.RoomDetailsResponse;
 import com.webapp.holidate.dto.response.acommodation.room.RoomResponse;
+import com.webapp.holidate.dto.response.base.PagedResponse;
 import com.webapp.holidate.service.accommodation.room.RoomService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -19,7 +21,6 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.List;
 
 @RestController
 @RequestMapping(AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS)
@@ -38,15 +39,17 @@ public class RoomController {
   }
 
   @GetMapping
-  public ApiResponse<List<RoomResponse>> getAllByHotelId(
+  public ApiResponse<PagedResponse<RoomResponse>> getAllByHotelId(
     @RequestParam(name = HotelParams.HOTEL_ID, required = false) String hotelId,
     @RequestParam(name = CommonParams.STATUS, required = false) String status,
+    @RequestParam(name = PaginationParams.PAGE, defaultValue = PaginationParams.DEFAULT_PAGE) int page,
+    @RequestParam(name = PaginationParams.SIZE, defaultValue = PaginationParams.DEFAULT_SIZE) int size,
     @RequestParam(name = SortingParams.SORT_BY, required = false) String sortBy,
     @RequestParam(name = SortingParams.SORT_DIR, defaultValue = SortingParams.SORT_DIR_ASC) String sortDir
   ) {
-    List<RoomResponse> responses = service.getAllByHotelId(hotelId, status, sortBy, sortDir);
-    return ApiResponse.<List<RoomResponse>>builder()
-      .data(responses)
+    PagedResponse<RoomResponse> response = service.getAllByHotelId(hotelId, status, page, size, sortBy, sortDir);
+    return ApiResponse.<PagedResponse<RoomResponse>>builder()
+      .data(response)
       .build();
   }
 
