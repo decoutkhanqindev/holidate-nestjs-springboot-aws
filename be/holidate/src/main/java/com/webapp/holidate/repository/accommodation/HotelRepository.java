@@ -23,6 +23,7 @@ public interface HotelRepository extends JpaRepository<Hotel, String>, JpaSpecif
       @Nullable String districtId,
       @Nullable String wardId,
       @Nullable String streetId,
+      @Nullable String status,
       @Nullable List<String> amenityIds,
       int amenityIdsCount,
       @Nullable Integer starRating,

@@ -2,8 +2,7 @@ package com.webapp.holidate.service.accommodation;
 
 import com.webapp.holidate.component.room.RoomCandidate;
 import com.webapp.holidate.component.room.RoomCombinationFinder;
-import com.webapp.holidate.constants.api.param.HotelParams;
-import com.webapp.holidate.constants.api.param.PaginationParams;
+import com.webapp.holidate.constants.api.param.SortingParams;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelUpdateRequest;
 import com.webapp.holidate.dto.request.location.entertainment_venue.HotelEntertainmentVenueRequest;
@@ -167,29 +166,28 @@ public class HotelService {
   // Get hotels list with pagination and sorting
   public PagedResponse<HotelResponse> getAll(
     String countryId, String provinceId, String cityId, String districtId,
-    String wardId, String streetId, List<String> amenityIds, Integer starRating,
+    String wardId, String streetId, List<String> amenityIds, Integer starRating, String status,
     LocalDate checkinDate, LocalDate checkoutDate,
     Integer requiredAdults, Integer requiredChildren, Integer requiredRooms,
     Double minPrice, Double maxPrice,
-    int page, int size, String sortBy, String sortDir
-  ) {
+    int page, int size, String sortBy, String sortDir) {
     // Clean up page and size values
     page = Math.max(0, page);
     size = Math.min(Math.max(1, size), 100);
 
     // Check if sort direction is valid
     boolean hasSortDir = sortDir != null && !sortDir.isEmpty()
-      && (PaginationParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir) ||
-      PaginationParams.SORT_DIR_DESC.equalsIgnoreCase(sortDir));
+      && (SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir) ||
+      SortingParams.SORT_DIR_DESC.equalsIgnoreCase(sortDir));
     if (!hasSortDir) {
-      sortDir = PaginationParams.SORT_DIR_DESC;
+      sortDir = SortingParams.SORT_DIR_DESC;
     }
 
     // Check if sort field is valid
     boolean hasSortBy = sortBy != null && !sortBy.isEmpty()
-      && (HotelParams.SORT_BY_PRICE.equals(sortBy) ||
-      HotelParams.SORT_BY_STAR_RATING.equals(sortBy) ||
-      HotelParams.SORT_BY_CREATED_AT.equals(sortBy));
+      && (SortingParams.SORT_BY_PRICE.equals(sortBy) ||
+      SortingParams.SORT_BY_STAR_RATING.equals(sortBy) ||
+      SortingParams.SORT_BY_CREATED_AT.equals(sortBy));
     if (!hasSortBy) {
       sortBy = null;
     }
@@ -199,11 +197,12 @@ public class HotelService {
       districtId != null || wardId != null || streetId != null;
     boolean hasAmenityFilter = amenityIds != null && !amenityIds.isEmpty();
     boolean hasStarRatingFilter = starRating != null;
+    boolean hasStatusFilter = status != null && !status.isEmpty();
     boolean hasDateFilter = checkinDate != null || checkoutDate != null;
     boolean hasGuestRequirementsFilter = requiredAdults != null || requiredChildren != null || requiredRooms != null;
     boolean hasPriceFilter = minPrice != null || maxPrice != null;
 
-    boolean hasAnyFilter = hasLocationFilter || hasAmenityFilter || hasStarRatingFilter ||
+    boolean hasAnyFilter = hasLocationFilter || hasAmenityFilter || hasStarRatingFilter || hasStatusFilter ||
       hasDateFilter || hasGuestRequirementsFilter || hasPriceFilter;
 
     // If no filters, get all hotels with simple pagination
@@ -214,10 +213,9 @@ public class HotelService {
     // If it has filters, use complex filtering logic
     return getHotelsWithFilters(
       countryId, provinceId, cityId, districtId, wardId, streetId,
-      amenityIds, starRating, checkinDate, checkoutDate,
+      amenityIds, starRating, status, checkinDate, checkoutDate,
       requiredAdults, requiredChildren, requiredRooms,
-      minPrice, maxPrice, page, size, sortBy, sortDir
-    );
+      minPrice, maxPrice, page, size, sortBy, sortDir);
   }
 
   // Get all hotels when no filters applied
@@ -249,7 +247,7 @@ public class HotelService {
   // Handle filtering logic when filters are provided
   private PagedResponse<HotelResponse> getHotelsWithFilters(
     String countryId, String provinceId, String cityId, String districtId,
-    String wardId, String streetId, List<String> amenityIds, Integer starRating,
+    String wardId, String streetId, List<String> amenityIds, Integer starRating, String status,
     LocalDate checkinDate, LocalDate checkoutDate,
     Integer requiredAdults, Integer requiredChildren, Integer requiredRooms,
     Double minPrice, Double maxPrice,
@@ -258,9 +256,8 @@ public class HotelService {
     // Step 1: Filter hotels from database using basic filters
     int requiredAmenityCount = (amenityIds != null) ? amenityIds.size() : 0;
     List<String> filteredHotelIds = hotelRepository.findAllIdsByFilter(
-      countryId, provinceId, cityId, districtId, wardId, streetId,
-      amenityIds, requiredAmenityCount, starRating, minPrice, maxPrice
-    );
+      countryId, provinceId, cityId, districtId, wardId, streetId, status,
+      amenityIds, requiredAmenityCount, starRating, minPrice, maxPrice);
 
     // Check if we found any hotels
     boolean hasMatchingHotels = filteredHotelIds != null && !filteredHotelIds.isEmpty();
@@ -286,7 +283,8 @@ public class HotelService {
     }
     // Case 2: Only guest filtering needed
     else if (!hasValidDateRange) {
-      finalFilteredHotels = filterByGuestRequirementsOnly(candidateHotels, requiredAdults, requiredChildren, requiredRooms);
+      finalFilteredHotels = filterByGuestRequirementsOnly(candidateHotels, requiredAdults, requiredChildren,
+        requiredRooms);
     }
     // Case 3: Date filtering needed (may include guest filtering too)
     else {
@@ -303,8 +301,7 @@ public class HotelService {
       // Filter based on room availability and capacity
       finalFilteredHotels = filterByAvailabilityAndCapacity(
         candidateHotels, checkinDate, validatedCheckoutDate, totalNightsStay,
-        requiredAdults, requiredChildren, requiredRooms, needsDateAndGuestValidation
-      );
+        requiredAdults, requiredChildren, requiredRooms, needsDateAndGuestValidation);
     }
 
     // Apply sorting and pagination to final results
@@ -349,10 +346,9 @@ public class HotelService {
   ) {
     return candidateHotels.stream()
       .filter(hotel -> isHotelAvailable(
-          hotel, checkinDate, checkoutDate, totalNightsStay,
-          requiredAdults, requiredChildren, requiredRooms,
-          needsDateAndGuestValidation
-        )
+        hotel, checkinDate, checkoutDate, totalNightsStay,
+        requiredAdults, requiredChildren, requiredRooms,
+        needsDateAndGuestValidation)
       )
       .toList();
   }
@@ -366,8 +362,7 @@ public class HotelService {
   ) {
     // Step 1: Check if rooms are available for the date range
     List<RoomCandidate> availableRoomCandidates = roomRepository.findAvailableRoomCandidates(
-      hotel.getId(), checkinDate, checkoutDate, totalNightsStay
-    );
+      hotel.getId(), checkinDate, checkoutDate, totalNightsStay);
     boolean hasAvailableRooms = availableRoomCandidates != null && !availableRoomCandidates.isEmpty();
 
     if (!hasAvailableRooms) {
@@ -435,10 +430,8 @@ public class HotelService {
     // Sort rooms by capacity (largest first) for optimal allocation
     List<Room> roomsSortedByCapacity = hotelRooms.stream()
       .sorted((room1, room2) -> Integer.compare(
-          room2.getMaxAdults() + room2.getMaxChildren(),
-          room1.getMaxAdults() + room1.getMaxChildren()
-        )
-      )
+        room2.getMaxAdults() + room2.getMaxChildren(),
+        room1.getMaxAdults() + room1.getMaxChildren()))
       .toList();
 
     // Check if sorted rooms can accommodate all guests
@@ -565,20 +558,20 @@ public class HotelService {
   // Sort hotel responses by specified field and direction
   private List<HotelResponse> applySorting(List<HotelResponse> hotelResponses, String sortBy, String sortDir) {
     // Step 1: Determine sort direction (ascending or descending)
-    boolean isAscending = PaginationParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir);
+    boolean isAscending = SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir);
 
     // Step 2: Apply sorting using stream with custom comparator
     return hotelResponses.stream()
       .sorted((h1, h2) -> {
           // Step 3: Compare values based on sort field
           int comparison = switch (sortBy) {
-            case HotelParams.SORT_BY_PRICE ->
+            case SortingParams.SORT_BY_PRICE ->
               // Compare price per night (double values)
               Double.compare(h1.getCurrentPricePerNight(), h2.getCurrentPricePerNight());
-            case HotelParams.SORT_BY_STAR_RATING ->
+            case SortingParams.SORT_BY_STAR_RATING ->
               // Compare star rating (integer values)
               Integer.compare(h1.getStarRating(), h2.getStarRating());
-            case HotelParams.SORT_BY_CREATED_AT ->
+            case SortingParams.SORT_BY_CREATED_AT ->
               // Compare creation date (LocalDateTime values)
               h1.getCreatedAt().compareTo(h2.getCreatedAt());
             default ->
@@ -603,22 +596,22 @@ public class HotelService {
     }
 
     // Step 2: Determine sort direction from string parameter
-    Sort.Direction direction = PaginationParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir)
+    Sort.Direction direction = SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir)
       ? Sort.Direction.ASC
       : Sort.Direction.DESC;
 
     // Step 3: Map sort field to actual database column name
     String sortField;
     switch (sortBy) {
-      case HotelParams.SORT_BY_PRICE:
+      case SortingParams.SORT_BY_PRICE:
         // Price sorting needs to be done in memory since it requires room data
         // Return default sort for database query, price will be sorted later
         return PageRequest.of(page, size, Sort.by("createdAt").descending());
-      case HotelParams.SORT_BY_STAR_RATING:
+      case SortingParams.SORT_BY_STAR_RATING:
         // Map to starRating column in database
         sortField = "starRating";
         break;
-      case HotelParams.SORT_BY_CREATED_AT:
+      case SortingParams.SORT_BY_CREATED_AT:
         // Map to createdAt column in database
         sortField = "createdAt";
         break;

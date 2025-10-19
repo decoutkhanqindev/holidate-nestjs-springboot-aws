@@ -2,6 +2,9 @@ package com.webapp.holidate.controller.accommodation.room;
 
 import com.webapp.holidate.constants.api.endpoint.AccommodationEndpoints;
 import com.webapp.holidate.constants.api.endpoint.CommonEndpoints;
+import com.webapp.holidate.constants.api.param.CommonParams;
+import com.webapp.holidate.constants.api.param.HotelParams;
+import com.webapp.holidate.constants.api.param.SortingParams;
 import com.webapp.holidate.dto.request.acommodation.room.RoomCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.room.RoomUpdateRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
@@ -16,7 +19,6 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -27,16 +29,22 @@ public class RoomController {
   RoomService service;
 
   @PostMapping(MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ApiResponse<RoomDetailsResponse> create(@ModelAttribute @Valid RoomCreationRequest request) throws IOException {
+  public ApiResponse<RoomDetailsResponse> create(@ModelAttribute @Valid RoomCreationRequest request)
+    throws IOException {
     RoomDetailsResponse response = service.create(request);
     return ApiResponse.<RoomDetailsResponse>builder()
       .data(response)
       .build();
   }
 
-  @GetMapping(AccommodationEndpoints.HOTEL + AccommodationEndpoints.HOTEL_ID)
-  public ApiResponse<List<RoomResponse>> getAllByHotelId(@PathVariable String hotelId) {
-    List<RoomResponse> responses = service.getAllByHotelId(hotelId);
+  @GetMapping
+  public ApiResponse<List<RoomResponse>> getAllByHotelId(
+    @RequestParam(name = HotelParams.HOTEL_ID, required = false) String hotelId,
+    @RequestParam(name = CommonParams.STATUS, required = false) String status,
+    @RequestParam(name = SortingParams.SORT_BY, required = false) String sortBy,
+    @RequestParam(name = SortingParams.SORT_DIR, defaultValue = SortingParams.SORT_DIR_ASC) String sortDir
+  ) {
+    List<RoomResponse> responses = service.getAllByHotelId(hotelId, status, sortBy, sortDir);
     return ApiResponse.<List<RoomResponse>>builder()
       .data(responses)
       .build();
@@ -53,8 +61,7 @@ public class RoomController {
   @PutMapping(path = CommonEndpoints.ID, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ApiResponse<RoomDetailsResponse> update(
     @PathVariable String id,
-    @ModelAttribute @Valid RoomUpdateRequest request
-  ) throws IOException {
+    @ModelAttribute @Valid RoomUpdateRequest request) throws IOException {
     RoomDetailsResponse response = service.update(id, request);
     return ApiResponse.<RoomDetailsResponse>builder()
       .data(response)

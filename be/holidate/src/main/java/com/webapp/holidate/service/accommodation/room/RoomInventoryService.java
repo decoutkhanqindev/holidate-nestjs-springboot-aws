@@ -1,8 +1,7 @@
 package com.webapp.holidate.service.accommodation.room;
 
 import com.webapp.holidate.constants.AppProperties;
-import com.webapp.holidate.constants.api.param.PaginationParams;
-import com.webapp.holidate.constants.api.param.RoomInventoryParams;
+import com.webapp.holidate.constants.api.param.SortingParams;
 import com.webapp.holidate.dto.request.acommodation.room.inventory.RoomInventoryCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.room.inventory.RoomInventoryPriceUpdateRequest;
 import com.webapp.holidate.dto.response.acommodation.room.RoomWithInventoriesResponse;
@@ -19,7 +18,7 @@ import com.webapp.holidate.mapper.acommodation.room.RoomMapper;
 import com.webapp.holidate.repository.accommodation.room.RoomInventoryRepository;
 import com.webapp.holidate.repository.accommodation.room.RoomRepository;
 import com.webapp.holidate.type.ErrorType;
-import com.webapp.holidate.type.accommodation.RoomStatusType;
+import com.webapp.holidate.type.accommodation.RoomInventoryStatusType;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -75,7 +74,7 @@ public class RoomInventoryService {
         .room(room)
         .price(basePrice)
         .availableRooms(quantity)
-        .status(RoomStatusType.AVAILABLE.getValue())
+        .status(RoomInventoryStatusType.AVAILABLE.getValue())
         .build();
       inventories.add(inventory);
     }
@@ -93,45 +92,53 @@ public class RoomInventoryService {
 
   // Get room inventories with pagination and sorting
   public PagedResponse<RoomInventoryResponse> getAllByRoomIdForDateBetween(
-    String roomId, LocalDate startDate, LocalDate endDate,
+    String roomId, LocalDate startDate, LocalDate endDate, String status,
     int page, int size, String sortBy, String sortDir
   ) {
-    // Clean up page and size values
+    // Step 1: Clean up page and size values
     page = Math.max(0, page);
     size = Math.min(Math.max(1, size), 100);
 
-    // Check if sort direction is valid
+    // Step 2: Check if sort direction is valid
     boolean hasSortDir = sortDir != null && !sortDir.isEmpty()
-      && (PaginationParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir) ||
-      PaginationParams.SORT_DIR_DESC.equalsIgnoreCase(sortDir));
+      && (SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir) ||
+      SortingParams.SORT_DIR_DESC.equalsIgnoreCase(sortDir));
     if (!hasSortDir) {
-      sortDir = PaginationParams.SORT_DIR_ASC;
+      sortDir = SortingParams.SORT_DIR_ASC;
     }
 
-    // Check if sort field is valid
+    // Step 3: Check if sort field is valid
     boolean hasSortBy = sortBy != null && !sortBy.isEmpty()
-      && (RoomInventoryParams.SORT_BY_DATE.equals(sortBy) ||
-      RoomInventoryParams.SORT_BY_PRICE.equals(sortBy) ||
-      RoomInventoryParams.SORT_BY_AVAILABLE_ROOMS.equals(sortBy) ||
-      RoomInventoryParams.SORT_BY_STATUS.equals(sortBy));
+      && (SortingParams.SORT_BY_DATE.equals(sortBy) ||
+      SortingParams.SORT_BY_PRICE.equals(sortBy) ||
+      SortingParams.SORT_BY_AVAILABLE_ROOMS.equals(sortBy));
     if (!hasSortBy) {
       sortBy = null;
     }
 
-    // Step 1: Get all inventories for the date range
-    List<RoomInventory> inventories = roomInventoryRepository.findAllByRoomIdAndDateBetween(roomId, startDate, endDate);
+    // Step 4: Check what filters are provided
+    boolean hasStatusFilter = status != null && !status.isEmpty();
 
-    // Step 2: Convert entities to response DTOs
+    // Step 5: Get data based on filters
+    List<RoomInventory> inventories;
+    if (hasStatusFilter) {
+      inventories = roomInventoryRepository.findAllByRoomIdAndDateBetweenWithFilters(roomId, startDate, endDate,
+        status);
+    } else {
+      inventories = roomInventoryRepository.findAllByRoomIdAndDateBetween(roomId, startDate, endDate);
+    }
+
+    // Step 6: Convert entities to response DTOs
     List<RoomInventoryResponse> inventoryResponses = inventories.stream()
       .map(roomInventoryMapper::toRoomInventoryResponse)
       .collect(Collectors.toList());
 
-    // Step 3: Apply sorting if sort field is specified
+    // Step 7: Apply sorting if sort field is specified
     if (sortBy != null) {
       inventoryResponses = applySorting(inventoryResponses, sortBy, sortDir);
     }
 
-    // Step 4: Apply pagination and return paged response
+    // Step 8: Apply pagination and return paged response
     return applyPagination(inventoryResponses, page, size);
   }
 
@@ -140,25 +147,22 @@ public class RoomInventoryService {
     List<RoomInventoryResponse> inventoryResponses, String sortBy, String sortDir
   ) {
     // Step 1: Determine sort direction
-    boolean isAscending = PaginationParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir);
+    boolean isAscending = SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir);
 
     // Step 2: Apply sorting using comparator
     return inventoryResponses.stream()
       .sorted((inv1, inv2) -> {
-          // Step 3: Compare values based on sort field
+          // Step 3: Compare values based on sort field (removed status sorting)
           int comparison = switch (sortBy) {
-            case RoomInventoryParams.SORT_BY_DATE ->
+            case SortingParams.SORT_BY_DATE ->
               // Compare dates
               inv1.getDate().compareTo(inv2.getDate());
-            case RoomInventoryParams.SORT_BY_PRICE ->
+            case SortingParams.SORT_BY_PRICE ->
               // Compare prices
               Double.compare(inv1.getPrice(), inv2.getPrice());
-            case RoomInventoryParams.SORT_BY_AVAILABLE_ROOMS ->
+            case SortingParams.SORT_BY_AVAILABLE_ROOMS ->
               // Compare available room counts
               Integer.compare(inv1.getAvailableRooms(), inv2.getAvailableRooms());
-            case RoomInventoryParams.SORT_BY_STATUS ->
-              // Compare status strings
-              inv1.getStatus().compareTo(inv2.getStatus());
             default ->
               // Default sort by date
               inv1.getDate().compareTo(inv2.getDate());
@@ -173,7 +177,8 @@ public class RoomInventoryService {
 
   // Apply pagination to inventory responses list
   private PagedResponse<RoomInventoryResponse> applyPagination(
-    List<RoomInventoryResponse> inventoryResponses, int page, int size) {
+    List<RoomInventoryResponse> inventoryResponses, int page, int size
+  ) {
     // Step 1: Calculate pagination metadata
     long totalElements = inventoryResponses.size();
     int totalPages = (int) Math.ceil((double) totalElements / size);

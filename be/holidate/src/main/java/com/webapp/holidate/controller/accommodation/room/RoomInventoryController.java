@@ -1,8 +1,10 @@
 package com.webapp.holidate.controller.accommodation.room;
 
 import com.webapp.holidate.constants.api.endpoint.AccommodationEndpoints;
+import com.webapp.holidate.constants.api.param.CommonParams;
 import com.webapp.holidate.constants.api.param.PaginationParams;
 import com.webapp.holidate.constants.api.param.RoomParams;
+import com.webapp.holidate.constants.api.param.SortingParams;
 import com.webapp.holidate.dto.request.acommodation.room.inventory.RoomInventoryCreationRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.acommodation.room.RoomWithInventoriesResponse;
@@ -39,18 +41,16 @@ public class RoomInventoryController {
   @GetMapping
   public ApiResponse<PagedResponse<RoomInventoryResponse>> getAllByRoomIdForDateBetween(
     @RequestParam(RoomParams.ROOM_ID) String roomId,
-    @RequestParam(RoomParams.START_DATE)
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-    @RequestParam(RoomParams.END_DATE)
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+    @RequestParam(RoomParams.START_DATE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+    @RequestParam(RoomParams.END_DATE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+    @RequestParam(value = CommonParams.STATUS, required = false) String status,
     @RequestParam(value = PaginationParams.PAGE, defaultValue = PaginationParams.DEFAULT_PAGE) int page,
     @RequestParam(value = PaginationParams.SIZE, defaultValue = PaginationParams.DEFAULT_SIZE) int size,
-    @RequestParam(value = PaginationParams.SORT_BY, required = false) String sortBy,
-    @RequestParam(value = PaginationParams.SORT_DIR, defaultValue = PaginationParams.SORT_DIR_ASC) String sortDir
+    @RequestParam(value = SortingParams.SORT_BY, required = false) String sortBy,
+    @RequestParam(value = SortingParams.SORT_DIR, defaultValue = SortingParams.SORT_DIR_ASC) String sortDir
   ) {
     PagedResponse<RoomInventoryResponse> response = service.getAllByRoomIdForDateBetween(
-      roomId, startDate, endDate, page, size, sortBy, sortDir
-    );
+      roomId, startDate, endDate, status, page, size, sortBy, sortDir);
     return ApiResponse.<PagedResponse<RoomInventoryResponse>>builder()
       .data(response)
       .build();

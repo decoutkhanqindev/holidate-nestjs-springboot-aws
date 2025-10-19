@@ -30,6 +30,7 @@ import com.webapp.holidate.repository.policy.resechedule.ReschedulePolicyReposit
 import com.webapp.holidate.service.storage.FileService;
 import com.webapp.holidate.type.ErrorType;
 import com.webapp.holidate.type.accommodation.AccommodationStatusType;
+import com.webapp.holidate.constants.api.param.SortingParams;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -39,6 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -152,10 +154,66 @@ public class RoomService {
     return roomMapper.toRoomDetailsResponse(room);
   }
 
-  public List<RoomResponse> getAllByHotelId(String hotelId) {
-    return roomRepository
-      .findAllByHotelIdWithDetails(hotelId).stream()
+  public List<RoomResponse> getAllByHotelId(String hotelId, String status, String sortBy, String sortDir) {
+    // Step 1: Clean up and validate pagination parameters (using List instead of
+    // PagedResponse for simplicity)
+
+    // Step 2: Check if sort direction is valid
+    boolean hasSortDir = sortDir != null && !sortDir.isEmpty()
+      && (SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir)
+      || SortingParams.SORT_DIR_DESC.equalsIgnoreCase(sortDir));
+    if (!hasSortDir) {
+      sortDir = SortingParams.SORT_DIR_ASC;
+    }
+
+    // Step 3: Check if sort field is valid (only price sorting allowed)
+    boolean hasSortBy = sortBy != null && !sortBy.isEmpty()
+      && SortingParams.SORT_BY_PRICE.equals(sortBy);
+    if (!hasSortBy) {
+      sortBy = null;
+    }
+
+    // Step 4: Check what filters are provided
+    boolean hasStatusFilter = status != null && !status.isEmpty();
+
+    // Step 5: Get data based on filters
+    List<Room> rooms;
+    if (hasStatusFilter) {
+      rooms = roomRepository.findAllByHotelIdWithFilters(hotelId, status);
+    } else {
+      rooms = roomRepository.findAllByHotelIdWithDetails(hotelId);
+    }
+
+    // Step 6: Convert entities to response DTOs
+    List<RoomResponse> roomResponses = rooms.stream()
       .map(roomMapper::toRoomResponse)
+      .toList();
+
+    // Step 8: Apply sorting if specified
+    if (sortBy != null) {
+      roomResponses = applySorting(roomResponses, sortBy, sortDir);
+    }
+
+    return roomResponses;
+  }
+
+  // Apply sorting to room responses
+  private List<RoomResponse> applySorting(List<RoomResponse> roomResponses, String sortBy, String sortDir) {
+    Comparator<RoomResponse> comparator;
+
+    if (SortingParams.SORT_BY_PRICE.equals(sortBy)) {
+      comparator = Comparator.comparing(RoomResponse::getBasePricePerNight,
+        Comparator.nullsLast(Comparator.naturalOrder()));
+    } else {
+      return roomResponses; // No sorting applied
+    }
+
+    if (SortingParams.SORT_DIR_DESC.equalsIgnoreCase(sortDir)) {
+      comparator = comparator.reversed();
+    }
+
+    return roomResponses.stream()
+      .sorted(comparator)
       .toList();
   }
 
