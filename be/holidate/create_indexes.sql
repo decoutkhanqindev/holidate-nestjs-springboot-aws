@@ -17,11 +17,20 @@ CREATE INDEX idx_users_phone_number ON users (phone_number);
 CREATE INDEX idx_users_role_id ON users (role_id);
 
 -- Index cho user location queries
-CREATE INDEX idx_users_country_province_city ON users (country_id, province_id, city_id);
+CREATE INDEX idx_users_country_province_city ON users (
+    country_id,
+    province_id,
+    city_id
+);
 
 -- Index cho user auth info queries
 CREATE INDEX idx_user_auth_info_user_id ON user_auth_info (user_id);
-CREATE INDEX idx_user_auth_info_auth_provider ON user_auth_info (auth_provider, auth_provider_id);
+
+CREATE INDEX idx_user_auth_info_auth_provider ON user_auth_info (
+    auth_provider,
+    auth_provider_id
+);
+
 CREATE INDEX idx_user_auth_info_active ON user_auth_info (active);
 
 -- Index cho invalid tokens cleanup
@@ -35,7 +44,12 @@ CREATE INDEX idx_invalid_tokens_user_id ON invalid_tokens (user_id);
 CREATE INDEX idx_hotels_name ON hotels (name);
 
 -- Index cho hotel location filtering (quan trọng cho search by location)
-CREATE INDEX idx_hotels_country_province_city ON hotels (country_id, province_id, city_id);
+CREATE INDEX idx_hotels_country_province_city ON hotels (
+    country_id,
+    province_id,
+    city_id
+);
+
 CREATE INDEX idx_hotels_district_ward ON hotels (district_id, ward_id);
 
 -- Index cho hotel geo-location queries
@@ -52,7 +66,9 @@ CREATE INDEX idx_hotels_star_rating ON hotels (star_rating);
 
 -- Composite index cho hotel search queries (reduced columns to avoid key length limit)
 CREATE INDEX idx_hotels_status_country ON hotels (status, country_id);
+
 CREATE INDEX idx_hotels_status_province ON hotels (status, province_id);
+
 CREATE INDEX idx_hotels_country_city ON hotels (country_id, city_id);
 
 -- ===================================================================
@@ -72,11 +88,19 @@ CREATE INDEX idx_rooms_base_price ON rooms (base_price_per_night);
 CREATE INDEX idx_rooms_status ON rooms (status);
 
 -- Index cho room amenities filtering
-CREATE INDEX idx_rooms_wifi_breakfast_smoking ON rooms (wifi_available, breakfast_included, smoking_allowed);
+CREATE INDEX idx_rooms_wifi_breakfast_smoking ON rooms (
+    wifi_available,
+    breakfast_included,
+    smoking_allowed
+);
 
 -- Composite index cho room availability queries
 CREATE INDEX idx_rooms_hotel_status ON rooms (hotel_id, status);
-CREATE INDEX idx_rooms_hotel_price ON rooms (hotel_id, base_price_per_night);
+
+CREATE INDEX idx_rooms_hotel_price ON rooms (
+    hotel_id,
+    base_price_per_night
+);
 
 -- ===================================================================
 -- ROOM INVENTORY INDEXES (Critical for availability checking)
@@ -93,6 +117,7 @@ CREATE INDEX idx_room_inventories_date_price ON room_inventories (date, price);
 
 -- Composite index cho availability queries
 CREATE INDEX idx_room_inventories_status_date ON room_inventories (status, date);
+
 CREATE INDEX idx_room_inventories_date_available ON room_inventories (date, available_rooms);
 
 -- ===================================================================
@@ -119,7 +144,9 @@ CREATE INDEX idx_bookings_created_at ON bookings (created_at);
 
 -- Composite index cho booking conflicts checking
 CREATE INDEX idx_bookings_room_status ON bookings (room_id, status);
+
 CREATE INDEX idx_bookings_room_checkin ON bookings (room_id, check_in_date);
+
 CREATE INDEX idx_bookings_room_checkout ON bookings (room_id, check_out_date);
 
 -- ===================================================================
@@ -184,9 +211,13 @@ CREATE INDEX idx_streets_ward_id ON streets (ward_id);
 
 -- Index cho location names (for search)
 CREATE INDEX idx_countries_name ON countries (name);
+
 CREATE INDEX idx_provinces_name ON provinces (name);
+
 CREATE INDEX idx_cities_name ON cities (name);
+
 CREATE INDEX idx_districts_name ON districts (name);
+
 CREATE INDEX idx_wards_name ON wards (name);
 
 -- ===================================================================
@@ -201,10 +232,12 @@ CREATE INDEX idx_amenities_free ON amenities (free);
 
 -- Index cho hotel amenities
 CREATE INDEX idx_hotel_amenities_hotel_id ON hotel_amenities (hotel_id);
+
 CREATE INDEX idx_hotel_amenities_amenity_id ON hotel_amenities (amenity_id);
 
 -- Index cho room amenities
 CREATE INDEX idx_room_amenities_room_id ON room_amenities (room_id);
+
 CREATE INDEX idx_room_amenities_amenity_id ON room_amenities (amenity_id);
 
 -- ===================================================================
@@ -225,6 +258,7 @@ CREATE INDEX idx_discounts_usage_limit_used ON discounts (usage_limit, times_use
 
 -- Index cho hotel discounts
 CREATE INDEX idx_hotel_discounts_hotel_id ON hotel_discounts (hotel_id);
+
 CREATE INDEX idx_hotel_discounts_discount_id ON hotel_discounts (discount_id);
 
 -- ===================================================================
@@ -233,14 +267,17 @@ CREATE INDEX idx_hotel_discounts_discount_id ON hotel_discounts (discount_id);
 
 -- Index cho hotel photos
 CREATE INDEX idx_hotel_photos_hotel_id ON hotel_photos (hotel_id);
+
 CREATE INDEX idx_hotel_photos_photo_id ON hotel_photos (photo_id);
 
--- Index cho room photos  
+-- Index cho room photos
 CREATE INDEX idx_room_photos_room_id ON room_photos (room_id);
+
 CREATE INDEX idx_room_photos_photo_id ON room_photos (photo_id);
 
 -- Index cho review photos
 CREATE INDEX idx_review_photos_review_id ON review_photos (review_id);
+
 CREATE INDEX idx_review_photos_photo_id ON review_photos (photo_id);
 
 -- Index cho photo categories
@@ -267,10 +304,13 @@ CREATE INDEX idx_rooms_reschedule_policy_id ON rooms (reschedule_policy_id);
 CREATE INDEX idx_special_days_date ON special_days (date);
 
 -- Index cho entertainment venues by category
-CREATE INDEX idx_entertainment_venues_category_id ON entertainment_venues (entertainment_venue_category_id);
+CREATE INDEX idx_entertainment_venues_category_id ON entertainment_venues (
+    entertainment_venue_category_id
+);
 
 -- Index cho hotel entertainment venues
 CREATE INDEX idx_hotel_entertainment_venues_hotel_id ON hotel_entertainment_venues (hotel_id);
+
 CREATE INDEX idx_hotel_entertainment_venues_venue_id ON hotel_entertainment_venues (entertainment_venue_id);
 
 -- ===================================================================
@@ -278,14 +318,27 @@ CREATE INDEX idx_hotel_entertainment_venues_venue_id ON hotel_entertainment_venu
 -- ===================================================================
 
 -- Hotel search với multiple criteria (split to avoid key length limit)
-CREATE INDEX idx_hotel_search_status_country ON hotels (status, country_id, star_rating);
-CREATE INDEX idx_hotel_search_location_rating ON hotels (province_id, city_id, star_rating);
+CREATE INDEX idx_hotel_search_status_country ON hotels (
+    status,
+    country_id,
+    star_rating
+);
+
+CREATE INDEX idx_hotel_search_location_rating ON hotels (
+    province_id,
+    city_id,
+    star_rating
+);
 
 -- Room availability search composite (optimized for key length)
 CREATE INDEX idx_room_availability_date_status ON room_inventories (date, status, available_rooms);
 
 -- Booking conflict detection composite (split for better performance)
-CREATE INDEX idx_booking_conflict_room_dates ON bookings (room_id, check_in_date, check_out_date);
+CREATE INDEX idx_booking_conflict_room_dates ON bookings (
+    room_id,
+    check_in_date,
+    check_out_date
+);
 
 -- User activity tracking composite
 CREATE INDEX idx_user_activity_composite ON bookings (user_id, status, created_at);
