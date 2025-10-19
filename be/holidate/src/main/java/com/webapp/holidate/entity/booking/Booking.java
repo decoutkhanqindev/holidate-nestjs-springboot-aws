@@ -90,8 +90,8 @@ public class Booking {
   @Column(nullable = false)
   String status;
 
-  @Builder.Default
   @Column(nullable = false)
+  @Builder.Default
   LocalDateTime createdAt = LocalDateTime.now();
 
   @Column

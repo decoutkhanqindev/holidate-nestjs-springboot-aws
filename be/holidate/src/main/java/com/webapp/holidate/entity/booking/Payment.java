@@ -45,8 +45,8 @@ public class Payment {
   @Column(nullable = true, unique = true)
   String transactionId;
 
-  @Builder.Default
   @Column(nullable = false)
+  @Builder.Default
   LocalDateTime createdAt = LocalDateTime.now();
 
   @Column
