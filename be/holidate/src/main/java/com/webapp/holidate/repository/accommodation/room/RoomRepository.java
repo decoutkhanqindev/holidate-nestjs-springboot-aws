@@ -3,6 +3,9 @@ package com.webapp.holidate.repository.accommodation.room;
 import com.webapp.holidate.component.room.RoomCandidate;
 import com.webapp.holidate.constants.db.query.accommodation.room.RoomQueries;
 import com.webapp.holidate.entity.accommodation.room.Room;
+import io.micrometer.common.lang.Nullable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -16,8 +19,14 @@ public interface RoomRepository extends JpaRepository<Room, String> {
   @Query(RoomQueries.FIND_ALL_BY_HOTEL_ID_WITH_WITH_DETAILS)
   List<Room> findAllByHotelIdWithDetails(String hotelId);
 
+  @Query(RoomQueries.FIND_ALL_BY_HOTEL_ID_WITH_WITH_DETAILS)
+  Page<Room> findAllByHotelIdWithDetailsPaged(String hotelId, Pageable pageable);
+
   @Query(RoomQueries.FIND_ALL_BY_HOTEL_ID_WITH_FILTERS)
-  List<Room> findAllByHotelIdWithFilters(String hotelId, @org.springframework.lang.Nullable String status);
+  List<Room> findAllByHotelIdWithFilters(String hotelId, @Nullable String status);
+
+  @Query(RoomQueries.FIND_ALL_BY_HOTEL_ID_WITH_FILTERS)
+  Page<Room> findAllByHotelIdWithFiltersPaged(String hotelId, @Nullable String status, Pageable pageable);
 
   @Query(RoomQueries.FIND_BY_ID_WITH_DETAILS)
   Optional<Room> findByIdWithDetails(String id);

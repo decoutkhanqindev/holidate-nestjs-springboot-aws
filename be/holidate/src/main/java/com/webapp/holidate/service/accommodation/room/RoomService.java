@@ -37,6 +37,10 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -73,7 +77,7 @@ public class RoomService {
   public RoomDetailsResponse create(RoomCreationRequest request) throws IOException {
     String hotelId = request.getHotelId().trim();
     Hotel hotel = hotelRepository.findById(hotelId)
-      .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
 
     String name = request.getName().trim();
     boolean roomExists = roomRepository.existsByNameAndHotelId(name, hotelId);
@@ -83,7 +87,7 @@ public class RoomService {
 
     String bedTypeId = request.getBedTypeId();
     BedType bedType = bedTypeRepository.findById(bedTypeId)
-      .orElseThrow(() -> new AppException(ErrorType.BED_TYPE_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.BED_TYPE_NOT_FOUND));
 
     Room room = roomMapper.toEntity(request);
     room.setHotel(hotel);
@@ -100,7 +104,7 @@ public class RoomService {
       for (PhotoCreationRequest photoRequest : photos) {
         String categoryId = photoRequest.getCategoryId();
         PhotoCategory category = photoCategoryRepository.findById(categoryId)
-          .orElseThrow(() -> new AppException(ErrorType.PHOTO_CATEGORY_NOT_FOUND));
+            .orElseThrow(() -> new AppException(ErrorType.PHOTO_CATEGORY_NOT_FOUND));
 
         List<MultipartFile> files = photoRequest.getFiles();
         boolean hasFiles = files != null && !files.isEmpty();
@@ -113,15 +117,15 @@ public class RoomService {
               String fileName = file.getOriginalFilename();
               String url = fileService.createFileUrl(fileName);
               Photo photo = Photo.builder()
-                .url(url)
-                .category(category)
-                .build();
+                  .url(url)
+                  .category(category)
+                  .build();
               photoRepository.save(photo);
 
               RoomPhoto roomPhoto = RoomPhoto.builder()
-                .room(room)
-                .photo(photo)
-                .build();
+                  .room(room)
+                  .photo(photo)
+                  .build();
               roomPhotoRepository.save(roomPhoto);
               roomPhotos.add(roomPhoto);
             }
@@ -139,12 +143,12 @@ public class RoomService {
 
       for (String amenityId : amenityIds) {
         Amenity amenity = amenityRepository.findById(amenityId)
-          .orElseThrow(() -> new AppException(ErrorType.AMENITY_NOT_FOUND));
+            .orElseThrow(() -> new AppException(ErrorType.AMENITY_NOT_FOUND));
 
         RoomAmenity roomAmenity = RoomAmenity.builder()
-          .room(room)
-          .amenity(amenity)
-          .build();
+            .room(room)
+            .amenity(amenity)
+            .build();
         roomAmenityRepository.save(roomAmenity);
         roomAmenities.add(roomAmenity);
       }
@@ -156,110 +160,102 @@ public class RoomService {
     return roomMapper.toRoomDetailsResponse(room);
   }
 
+  // Create Pageable object with sorting for rooms
+  private Pageable createPageable(int page, int size, String sortBy, String sortDir) {
+    if (sortBy == null) {
+      return PageRequest.of(page, size);
+    }
+
+    // Map sort field to entity field (only price sorting supported for rooms)
+    String entitySortField = mapRoomSortFieldToEntity(sortBy);
+    Sort.Direction direction = SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir)
+        ? Sort.Direction.ASC
+        : Sort.Direction.DESC;
+
+    Sort sort = Sort.by(direction, entitySortField);
+    return PageRequest.of(page, size, sort);
+  }
+
+  // Map API sort field to entity field name for rooms
+  private String mapRoomSortFieldToEntity(String sortBy) {
+    return switch (sortBy) {
+      case SortingParams.SORT_BY_PRICE -> "basePricePerNight";
+      default -> "createdAt"; // Default sorting by creation date
+    };
+  }
+
   public PagedResponse<RoomResponse> getAllByHotelId(
-    String hotelId, String status, int page, int size, String sortBy, String sortDir
-  ) {
-    // Step 1: Clean up and validate pagination parameters
+      String hotelId, String status, int page, int size, String sortBy, String sortDir) {
+    // Clean up and validate pagination parameters
     page = Math.max(0, page);
     size = Math.min(Math.max(1, size), 100);
 
-    // Step 2: Check if sort direction is valid
+    // Check if sort direction is valid
     boolean hasSortDir = sortDir != null && !sortDir.isEmpty()
-      && (SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir)
-      || SortingParams.SORT_DIR_DESC.equalsIgnoreCase(sortDir));
+        && (SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir)
+            || SortingParams.SORT_DIR_DESC.equalsIgnoreCase(sortDir));
     if (!hasSortDir) {
       sortDir = SortingParams.SORT_DIR_ASC;
     }
 
-    // Step 3: Check if sort field is valid (only price sorting allowed)
+    // Check if sort field is valid (only price sorting allowed)
     boolean hasSortBy = sortBy != null && !sortBy.isEmpty()
-      && SortingParams.SORT_BY_PRICE.equals(sortBy);
+        && SortingParams.SORT_BY_PRICE.equals(sortBy);
     if (!hasSortBy) {
       sortBy = null;
     }
 
-    // Step 4: Check what filters are provided
+    // Check what filters are provided
     boolean hasStatusFilter = status != null && !status.isEmpty();
 
-    // Step 5: Get data based on filters
-    List<Room> rooms;
+    // Use database-level pagination
+    return getRoomsWithPagination(hotelId, status, hasStatusFilter, page, size, sortBy, sortDir);
+  }
+
+  // Get rooms with database-level pagination
+  private PagedResponse<RoomResponse> getRoomsWithPagination(
+      String hotelId, String status, boolean hasStatusFilter,
+      int page, int size, String sortBy, String sortDir) {
+    // Create Pageable with sorting
+    Pageable pageable = createPageable(page, size, sortBy, sortDir);
+
+    // Get data from database with pagination
+    Page<Room> roomPage;
     if (hasStatusFilter) {
-      rooms = roomRepository.findAllByHotelIdWithFilters(hotelId, status);
+      roomPage = roomRepository.findAllByHotelIdWithFiltersPaged(hotelId, status, pageable);
     } else {
-      rooms = roomRepository.findAllByHotelIdWithDetails(hotelId);
+      roomPage = roomRepository.findAllByHotelIdWithDetailsPaged(hotelId, pageable);
     }
 
-    // Step 6: Convert entities to response DTOs
-    List<RoomResponse> roomResponses = rooms.stream()
-      .map(roomMapper::toRoomResponse)
-      .toList();
-
-    // Step 7: Apply sorting if sort field is specified
-    if (sortBy != null) {
-      roomResponses = applySorting(roomResponses, sortBy, sortDir);
-    }
-
-    // Step 8: Apply pagination and return paged response
-    return applyPagination(roomResponses, page, size);
-  }
-
-  // Apply pagination to room responses list
-  private PagedResponse<RoomResponse> applyPagination(List<RoomResponse> roomResponses, int page, int size) {
-    // Step 1: Calculate pagination metadata
-    long totalElements = roomResponses.size();
-    int totalPages = (int) Math.ceil((double) totalElements / size);
-
-    // Step 2: Handle empty result case
-    if (totalElements == 0) {
+    // Check if we have any rooms
+    if (roomPage.isEmpty()) {
       return pagedMapper.createEmptyPagedResponse(page, size);
     }
 
-    // Step 3: Calculate page boundaries
-    int startIndex = page * size;
-    int endIndex = Math.min(startIndex + size, roomResponses.size());
+    // Convert entities to response DTOs
+    List<RoomResponse> roomResponses = roomPage.getContent().stream()
+        .map(roomMapper::toRoomResponse)
+        .toList();
 
-    // Step 4: Handle page out of range case
-    if (startIndex >= roomResponses.size()) {
-      return pagedMapper.createEmptyPagedResponse(page, size);
-    }
-
-    // Step 5: Extract content for current page
-    List<RoomResponse> content = roomResponses.subList(startIndex, endIndex);
-
-    // Step 6: Create and return paged response
-    return pagedMapper.createPagedResponse(content, page, size, totalElements, totalPages);
-  }
-
-  // Apply sorting to room responses
-  private List<RoomResponse> applySorting(List<RoomResponse> roomResponses, String sortBy, String sortDir) {
-    Comparator<RoomResponse> comparator;
-
-    if (SortingParams.SORT_BY_PRICE.equals(sortBy)) {
-      comparator = Comparator.comparing(RoomResponse::getBasePricePerNight,
-        Comparator.nullsLast(Comparator.naturalOrder()));
-    } else {
-      return roomResponses; // No sorting applied
-    }
-
-    if (SortingParams.SORT_DIR_DESC.equalsIgnoreCase(sortDir)) {
-      comparator = comparator.reversed();
-    }
-
-    return roomResponses.stream()
-      .sorted(comparator)
-      .toList();
+    // Create and return paged response with database pagination metadata
+    return pagedMapper.createPagedResponse(
+        roomResponses,
+        page,
+        size,
+        roomPage.getTotalElements(),
+        roomPage.getTotalPages());
   }
 
   public RoomDetailsResponse getById(String id) {
     Room room = roomRepository.findByIdWithDetails(id)
-      .orElseThrow(() -> new AppException(ErrorType.ROOM_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.ROOM_NOT_FOUND));
     return roomMapper.toRoomDetailsResponse(room);
   }
 
   @Transactional
   public RoomDetailsResponse update(String id, RoomUpdateRequest request) throws IOException {
     Room room = roomRepository.findByIdWithDetails(id)
-      .orElseThrow(() -> new AppException(ErrorType.ROOM_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.ROOM_NOT_FOUND));
 
     updateInfo(room, request);
     updatePhotos(room, request);
@@ -308,7 +304,7 @@ public class RoomService {
 
     Double newBasePricePerNight = request.getBasePricePerNight();
     boolean basePriceChanged = newBasePricePerNight != null
-      && !newBasePricePerNight.equals(room.getBasePricePerNight());
+        && !newBasePricePerNight.equals(room.getBasePricePerNight());
     if (basePriceChanged) {
       room.setBasePricePerNight(newBasePricePerNight);
     }
@@ -317,7 +313,7 @@ public class RoomService {
     boolean bedTypeChanged = newBedTypeId != null && !newBedTypeId.equals(room.getBedType().getId());
     if (bedTypeChanged) {
       BedType bedType = bedTypeRepository.findById(newBedTypeId)
-        .orElseThrow(() -> new AppException(ErrorType.BED_TYPE_NOT_FOUND));
+          .orElseThrow(() -> new AppException(ErrorType.BED_TYPE_NOT_FOUND));
       room.setBedType(bedType);
     }
 
@@ -335,7 +331,7 @@ public class RoomService {
 
     Boolean newBreakfastIncluded = request.getBreakfastIncluded();
     boolean breakfastIncludedChanged = newBreakfastIncluded != null
-      && !newBreakfastIncluded.equals(room.isBreakfastIncluded());
+        && !newBreakfastIncluded.equals(room.isBreakfastIncluded());
     if (breakfastIncludedChanged) {
       room.setBreakfastIncluded(newBreakfastIncluded);
     }
@@ -361,8 +357,8 @@ public class RoomService {
     boolean hasPhotosToDelete = photoIdsToDelete != null && !photoIdsToDelete.isEmpty();
     if (hasPhotosToDelete) {
       List<RoomPhoto> photosToRemove = currentPhotos.stream()
-        .filter(roomPhoto -> photoIdsToDelete.contains(roomPhoto.getPhoto().getId()))
-        .toList();
+          .filter(roomPhoto -> photoIdsToDelete.contains(roomPhoto.getPhoto().getId()))
+          .toList();
 
       for (RoomPhoto photoToRemove : photosToRemove) {
         currentPhotos.remove(photoToRemove);
@@ -371,7 +367,7 @@ public class RoomService {
 
       for (String photoId : photoIdsToDelete) {
         Photo photo = photoRepository.findById(photoId)
-          .orElseThrow(() -> new AppException(ErrorType.PHOTO_NOT_FOUND));
+            .orElseThrow(() -> new AppException(ErrorType.PHOTO_NOT_FOUND));
         String fileUrl = photo.getUrl();
         fileService.delete(fileUrl);
         photoRepository.delete(photo);
@@ -385,7 +381,7 @@ public class RoomService {
       for (PhotoCreationRequest photoToAdd : photosToAdd) {
         String categoryId = photoToAdd.getCategoryId();
         PhotoCategory category = photoCategoryRepository.findById(categoryId)
-          .orElseThrow(() -> new AppException(ErrorType.PHOTO_CATEGORY_NOT_FOUND));
+            .orElseThrow(() -> new AppException(ErrorType.PHOTO_CATEGORY_NOT_FOUND));
 
         List<MultipartFile> files = photoToAdd.getFiles();
         boolean hasFiles = files != null && !files.isEmpty();
@@ -398,15 +394,15 @@ public class RoomService {
               String fileName = file.getOriginalFilename();
               String url = fileService.createFileUrl(fileName);
               Photo photo = Photo.builder()
-                .url(url)
-                .category(category)
-                .build();
+                  .url(url)
+                  .category(category)
+                  .build();
               photoRepository.save(photo);
 
               RoomPhoto roomPhoto = RoomPhoto.builder()
-                .room(room)
-                .photo(photo)
-                .build();
+                  .room(room)
+                  .photo(photo)
+                  .build();
               roomPhotoRepository.save(roomPhoto);
               currentPhotos.add(roomPhoto);
             }
@@ -431,19 +427,19 @@ public class RoomService {
     boolean hasAmenitiesToAdd = amenityIdsToAdd != null && !amenityIdsToAdd.isEmpty();
     if (hasAmenitiesToAdd) {
       Set<String> existingAmenityIds = currentAmenities.stream()
-        .map(roomAmenity -> roomAmenity.getAmenity().getId())
-        .collect(Collectors.toSet());
+          .map(roomAmenity -> roomAmenity.getAmenity().getId())
+          .collect(Collectors.toSet());
 
       for (String amenityId : amenityIdsToAdd) {
         boolean alreadyExists = existingAmenityIds.contains(amenityId);
         if (!alreadyExists) {
           Amenity amenity = amenityRepository.findById(amenityId)
-            .orElseThrow(() -> new AppException(ErrorType.AMENITY_NOT_FOUND));
+              .orElseThrow(() -> new AppException(ErrorType.AMENITY_NOT_FOUND));
 
           RoomAmenity roomAmenity = RoomAmenity.builder()
-            .room(room)
-            .amenity(amenity)
-            .build();
+              .room(room)
+              .amenity(amenity)
+              .build();
           roomAmenityRepository.save(roomAmenity);
           currentAmenities.add(roomAmenity);
         }
@@ -459,7 +455,7 @@ public class RoomService {
 
     if (hasCancellationPolicyUpdate) {
       CancellationPolicy cancellationPolicy = cancellationPolicyRepository.findById(newCancellationPolicyId)
-        .orElseThrow(() -> new AppException(ErrorType.CANCELLATION_POLICY_NOT_FOUND));
+          .orElseThrow(() -> new AppException(ErrorType.CANCELLATION_POLICY_NOT_FOUND));
       room.setCancellationPolicy(cancellationPolicy);
     }
 
@@ -468,7 +464,7 @@ public class RoomService {
 
     if (hasReschedulePolicyUpdate) {
       ReschedulePolicy reschedulePolicy = reschedulePolicyRepository.findById(newReschedulePolicyId)
-        .orElseThrow(() -> new AppException(ErrorType.RESCHEDULE_POLICY_NOT_FOUND));
+          .orElseThrow(() -> new AppException(ErrorType.RESCHEDULE_POLICY_NOT_FOUND));
       room.setReschedulePolicy(reschedulePolicy);
     }
   }
