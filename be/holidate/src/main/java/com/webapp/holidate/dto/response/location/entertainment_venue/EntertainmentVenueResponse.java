@@ -1,6 +1,5 @@
 package com.webapp.holidate.dto.response.location.entertainment_venue;
 
-import com.webapp.holidate.dto.response.location.LocationResponse;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

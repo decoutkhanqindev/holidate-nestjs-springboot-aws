@@ -4,9 +4,6 @@ import com.webapp.holidate.dto.response.acommodation.room.inventory.RoomInventor
 import com.webapp.holidate.entity.accommodation.room.RoomInventory;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.Named;
-
-import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface RoomInventoryMapper {

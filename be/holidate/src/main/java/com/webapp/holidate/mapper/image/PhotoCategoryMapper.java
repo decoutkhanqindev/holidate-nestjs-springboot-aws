@@ -6,7 +6,6 @@ import com.webapp.holidate.entity.image.HotelPhoto;
 import com.webapp.holidate.entity.image.PhotoCategory;
 import com.webapp.holidate.entity.image.RoomPhoto;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
 import java.util.List;

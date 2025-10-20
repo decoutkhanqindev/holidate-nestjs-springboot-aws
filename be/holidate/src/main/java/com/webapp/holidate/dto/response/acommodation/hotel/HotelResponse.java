@@ -3,7 +3,6 @@ package com.webapp.holidate.dto.response.acommodation.hotel;
 import com.webapp.holidate.dto.response.image.PhotoCategoryResponse;
 import com.webapp.holidate.dto.response.location.LocationResponse;
 import com.webapp.holidate.dto.response.policy.HotelPolicyResponse;
-import com.webapp.holidate.dto.response.user.PartnerResponse;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

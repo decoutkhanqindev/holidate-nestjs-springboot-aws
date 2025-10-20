@@ -8,7 +8,6 @@ import com.webapp.holidate.entity.booking.Review;
 import com.webapp.holidate.entity.booking.discount.HotelDiscount;
 import com.webapp.holidate.entity.image.HotelPhoto;
 import com.webapp.holidate.entity.location.*;
-import com.webapp.holidate.entity.location.entertainment_venue.EntertainmentVenue;
 import com.webapp.holidate.entity.location.entertainment_venue.HotelEntertainmentVenue;
 import com.webapp.holidate.entity.policy.HotelPolicy;
 import com.webapp.holidate.entity.user.User;
@@ -17,9 +16,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Entity

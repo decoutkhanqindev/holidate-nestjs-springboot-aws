@@ -1,11 +1,11 @@
 package com.webapp.holidate.service.auth;
 
 import com.webapp.holidate.constants.AppProperties;
-import com.webapp.holidate.dto.request.auth.otp.VerifyPasswordResetOtpRequest;
 import com.webapp.holidate.dto.request.auth.otp.SendOtpRequest;
 import com.webapp.holidate.dto.request.auth.otp.VerifyEmailVerificationOtpRequest;
-import com.webapp.holidate.dto.response.auth.VerificationResponse;
+import com.webapp.holidate.dto.request.auth.otp.VerifyPasswordResetOtpRequest;
 import com.webapp.holidate.dto.response.auth.SendOtpResponse;
+import com.webapp.holidate.dto.response.auth.VerificationResponse;
 import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.entity.user.UserAuthInfo;
 import com.webapp.holidate.exception.AppException;

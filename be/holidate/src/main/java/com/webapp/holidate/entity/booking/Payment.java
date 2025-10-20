@@ -2,15 +2,10 @@ package com.webapp.holidate.entity.booking;
 
 import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
-import com.webapp.holidate.entity.accommodation.Hotel;
-import com.webapp.holidate.entity.accommodation.room.Room;
-import com.webapp.holidate.entity.booking.discount.Discount;
-import com.webapp.holidate.entity.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
