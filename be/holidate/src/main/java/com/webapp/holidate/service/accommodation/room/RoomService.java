@@ -160,30 +160,6 @@ public class RoomService {
     return roomMapper.toRoomDetailsResponse(room);
   }
 
-  // Create Pageable object with sorting for rooms
-  private Pageable createPageable(int page, int size, String sortBy, String sortDir) {
-    if (sortBy == null) {
-      return PageRequest.of(page, size);
-    }
-
-    // Map sort field to entity field (only price sorting supported for rooms)
-    String entitySortField = mapRoomSortFieldToEntity(sortBy);
-    Sort.Direction direction = SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir)
-      ? Sort.Direction.ASC
-      : Sort.Direction.DESC;
-
-    Sort sort = Sort.by(direction, entitySortField);
-    return PageRequest.of(page, size, sort);
-  }
-
-  // Map API sort field to entity field name for rooms
-  private String mapRoomSortFieldToEntity(String sortBy) {
-    return switch (sortBy) {
-      case SortingParams.SORT_BY_PRICE -> "basePricePerNight";
-      default -> "createdAt"; // Default sorting by creation date
-    };
-  }
-
   public PagedResponse<RoomResponse> getAllByHotelId(
     String hotelId, String status, int page, int size, String sortBy, String sortDir) {
     // Clean up and validate pagination parameters
@@ -215,7 +191,8 @@ public class RoomService {
   // Get rooms with database-level pagination
   private PagedResponse<RoomResponse> getRoomsWithPagination(
     String hotelId, String status, boolean hasStatusFilter,
-    int page, int size, String sortBy, String sortDir) {
+    int page, int size, String sortBy, String sortDir
+  ) {
     // Create Pageable with sorting
     Pageable pageable = createPageable(page, size, sortBy, sortDir);
 
@@ -244,6 +221,30 @@ public class RoomService {
       size,
       roomPage.getTotalElements(),
       roomPage.getTotalPages());
+  }
+
+  // Create Pageable object with sorting for rooms
+  private Pageable createPageable(int page, int size, String sortBy, String sortDir) {
+    if (sortBy == null) {
+      return PageRequest.of(page, size);
+    }
+
+    // Map sort field to entity field (only price sorting supported for rooms)
+    String entitySortField = mapRoomSortFieldToEntity(sortBy);
+    Sort.Direction direction = SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir)
+      ? Sort.Direction.ASC
+      : Sort.Direction.DESC;
+
+    Sort sort = Sort.by(direction, entitySortField);
+    return PageRequest.of(page, size, sort);
+  }
+
+  // Map API sort field to entity field name for rooms
+  private String mapRoomSortFieldToEntity(String sortBy) {
+    return switch (sortBy) {
+      case SortingParams.SORT_BY_PRICE -> "basePricePerNight";
+      default -> "createdAt"; // Default sorting by creation date
+    };
   }
 
   public RoomDetailsResponse getById(String id) {

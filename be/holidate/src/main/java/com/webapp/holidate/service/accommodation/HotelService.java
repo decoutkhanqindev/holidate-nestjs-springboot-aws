@@ -163,50 +163,14 @@ public class HotelService {
     return hotelMapper.toHotelDetailsResponse(hotel);
   }
 
-  /**
-   * Get hotels list with pagination and sorting.
-   * <p>
-   * Performance Optimizations:
-   * 1. Database-level pagination: When only basic filters are applied (no
-   * date/guest requirements),
-   * pagination is performed at database level to reduce memory usage and improve
-   * response times.
-   * 2. Application-level pagination: Only used when complex filtering (date
-   * availability, guest capacity)
-   * is required, as these cannot be efficiently handled at database level.
-   * 3. Efficient data fetching: Room data is fetched separately and merged to
-   * avoid N+1 queries.
-   *
-   * @param name             Hotel name filter
-   * @param countryId        Country ID filter
-   * @param provinceId       Province ID filter
-   * @param cityId           City ID filter
-   * @param districtId       District ID filter
-   * @param wardId           Ward ID filter
-   * @param streetId         Street ID filter
-   * @param amenityIds       List of amenity IDs filter
-   * @param starRating       Star rating filter
-   * @param status           Hotel status filter
-   * @param checkinDate      Check-in date for availability
-   * @param checkoutDate     Check-out date for availability
-   * @param requiredAdults   Number of adults
-   * @param requiredChildren Number of children
-   * @param requiredRooms    Number of rooms needed
-   * @param minPrice         Minimum price filter
-   * @param maxPrice         Maximum price filter
-   * @param page             Page number (0-based)
-   * @param size             Page size
-   * @param sortBy           Sort field
-   * @param sortDir          Sort direction
-   * @return Paged response with hotel data
-   */
   public PagedResponse<HotelResponse> getAll(
     String name, String countryId, String provinceId, String cityId, String districtId,
     String wardId, String streetId, List<String> amenityIds, Integer starRating, String status,
     LocalDate checkinDate, LocalDate checkoutDate,
     Integer requiredAdults, Integer requiredChildren, Integer requiredRooms,
     Double minPrice, Double maxPrice,
-    int page, int size, String sortBy, String sortDir) {
+    int page, int size, String sortBy, String sortDir
+  ) {
     // Clean up page and size values
     page = Math.max(0, page);
     size = Math.min(Math.max(1, size), 100);
@@ -329,7 +293,8 @@ public class HotelService {
     LocalDate checkinDate, LocalDate checkoutDate,
     Integer requiredAdults, Integer requiredChildren, Integer requiredRooms,
     Double minPrice, Double maxPrice,
-    int page, int size, String sortBy, String sortDir) {
+    int page, int size, String sortBy, String sortDir
+  ) {
     // Check if we need complex filtering (date/guest requirements) or complex
     // sorting (price)
     boolean hasValidDateRange = checkinDate != null && checkoutDate != null;
@@ -359,7 +324,8 @@ public class HotelService {
     String name, String countryId, String provinceId, String cityId, String districtId,
     String wardId, String streetId, List<String> amenityIds, Integer starRating, String status,
     Double minPrice, Double maxPrice,
-    int page, int size, String sortBy, String sortDir) {
+    int page, int size, String sortBy, String sortDir
+  ) {
     // Create pageable with sorting
     Pageable pageable = createPageable(page, size, sortBy, sortDir);
 
@@ -403,7 +369,8 @@ public class HotelService {
     LocalDate checkinDate, LocalDate checkoutDate,
     Integer requiredAdults, Integer requiredChildren, Integer requiredRooms,
     Double minPrice, Double maxPrice,
-    int page, int size, String sortBy, String sortDir) {
+    int page, int size, String sortBy, String sortDir
+  ) {
     // Step 1: Filter hotels from database using basic filters (without pagination)
     int requiredAmenityCount = (amenityIds != null) ? amenityIds.size() : 0;
     List<String> filteredHotelIds = hotelRepository.findAllIdsByFilter(
@@ -482,7 +449,8 @@ public class HotelService {
   // Filter hotels based only on guest capacity requirements
   private List<Hotel> filterByGuestRequirementsOnly(
     List<Hotel> candidateHotels,
-    Integer requiredAdults, Integer requiredChildren, Integer requiredRooms) {
+    Integer requiredAdults, Integer requiredChildren, Integer requiredRooms
+  ) {
     return candidateHotels.stream()
       .filter(hotel -> {
         Set<Room> rooms = hotel.getRooms();
@@ -500,7 +468,8 @@ public class HotelService {
     List<Hotel> candidateHotels,
     LocalDate checkinDate, LocalDate checkoutDate, long totalNightsStay,
     Integer requiredAdults, Integer requiredChildren, Integer requiredRooms,
-    boolean needsDateAndGuestValidation) {
+    boolean needsDateAndGuestValidation
+  ) {
     return candidateHotels.stream()
       .filter(hotel -> isHotelAvailable(
         hotel, checkinDate, checkoutDate, totalNightsStay,
@@ -514,7 +483,8 @@ public class HotelService {
     Hotel hotel,
     LocalDate checkinDate, LocalDate checkoutDate, long totalNightsStay,
     Integer requiredAdults, Integer requiredChildren, Integer requiredRooms,
-    boolean needsDateAndGuestValidation) {
+    boolean needsDateAndGuestValidation
+  ) {
     // Step 1: Check if rooms are available for the date range
     List<RoomCandidate> availableRoomCandidates = roomRepository.findAvailableRoomCandidates(
       hotel.getId(), checkinDate, checkoutDate, totalNightsStay);
@@ -545,7 +515,8 @@ public class HotelService {
     Set<Room> hotelRooms,
     Integer requiredAdults,
     Integer requiredChildren,
-    Integer requiredRooms) {
+    Integer requiredRooms
+  ) {
     // First check if hotel has any rooms at all
     boolean hasAvailableRooms = hotelRooms != null && !hotelRooms.isEmpty();
     if (!hasAvailableRooms) {
@@ -597,7 +568,8 @@ public class HotelService {
     List<Room> availableRooms,
     int totalAdultsRequired,
     int totalChildrenRequired,
-    int totalRoomsRequired) {
+    int totalRoomsRequired
+  ) {
     // First check if we have enough rooms available
     boolean hasSufficientRooms = availableRooms.size() >= totalRoomsRequired;
     if (!hasSufficientRooms) {
@@ -644,7 +616,8 @@ public class HotelService {
   // Calculate how many children can fit in current room considering adults
   // already placed
   private int getChildrenCanFitInThisRoom(
-    Room currentRoom, int childrenStillNeedAccommodation, int adultsCanFitInThisRoom) {
+    Room currentRoom, int childrenStillNeedAccommodation, int adultsCanFitInThisRoom
+  ) {
     // Step 1: Calculate initial children that can fit based on room max children
     // limit
     int childrenCanFitInThisRoom = Math.min(childrenStillNeedAccommodation, currentRoom.getMaxChildren());

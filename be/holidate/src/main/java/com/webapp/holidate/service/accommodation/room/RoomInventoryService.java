@@ -130,8 +130,8 @@ public class RoomInventoryService {
   // Get inventories with 100% database-level pagination
   private PagedResponse<RoomInventoryResponse> getInventoriesWithDatabasePagination(
     String roomId, LocalDate startDate, LocalDate endDate, String status,
-    boolean hasStatusFilter, int page, int size, String sortBy, String sortDir) {
-
+    boolean hasStatusFilter, int page, int size, String sortBy, String sortDir
+  ) {
     // Get paginated data directly from database
     Page<RoomInventory> inventoryPage = getInventoriesWithPagination(
       roomId, startDate, endDate, status, hasStatusFilter, page, size, sortBy, sortDir);
