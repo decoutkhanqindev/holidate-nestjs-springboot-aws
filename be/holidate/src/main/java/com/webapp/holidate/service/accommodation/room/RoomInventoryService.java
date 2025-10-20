@@ -167,8 +167,8 @@ public class RoomInventoryService {
 
     // Determine sort direction
     Sort.Direction direction = SortingParams.SORT_DIR_DESC.equalsIgnoreCase(sortDir)
-      ? org.springframework.data.domain.Sort.Direction.DESC
-      : org.springframework.data.domain.Sort.Direction.ASC;
+      ? Sort.Direction.DESC
+      : Sort.Direction.ASC;
 
     return PageRequest.of(page, size,
       Sort.by(direction, entitySortField));
@@ -182,16 +182,6 @@ public class RoomInventoryService {
       case SortingParams.SORT_BY_AVAILABLE_ROOMS -> "availableRooms";
       default -> "id.date"; // Default sorting by date
     };
-  }
-
-  // Check if we can perform sorting at database level
-  private boolean canSortAtDatabaseLevel(String sortBy) {
-    // All inventory sorting can be done at database level
-    // since all fields (date, price, availableRooms) are direct entity properties
-    return sortBy == null || sortBy.isEmpty() ||
-      SortingParams.SORT_BY_DATE.equals(sortBy) ||
-      SortingParams.SORT_BY_PRICE.equals(sortBy) ||
-      SortingParams.SORT_BY_AVAILABLE_ROOMS.equals(sortBy);
   }
 
   // Get inventories with database-level pagination
