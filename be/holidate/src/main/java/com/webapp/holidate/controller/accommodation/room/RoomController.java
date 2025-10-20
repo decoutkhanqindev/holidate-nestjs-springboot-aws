@@ -40,7 +40,7 @@ public class RoomController {
 
   @GetMapping
   public ApiResponse<PagedResponse<RoomResponse>> getAllByHotelId(
-    @RequestParam(name = HotelParams.HOTEL_ID, required = false) String hotelId,
+    @RequestParam(name = HotelParams.HOTEL_ID) String hotelId,
     @RequestParam(name = CommonParams.STATUS, required = false) String status,
     @RequestParam(name = PaginationParams.PAGE, defaultValue = PaginationParams.DEFAULT_PAGE) int page,
     @RequestParam(name = PaginationParams.SIZE, defaultValue = PaginationParams.DEFAULT_SIZE) int size,
