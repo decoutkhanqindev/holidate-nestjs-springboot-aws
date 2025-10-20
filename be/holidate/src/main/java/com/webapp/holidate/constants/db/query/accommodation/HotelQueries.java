@@ -43,6 +43,7 @@ public class HotelQueries {
       "GROUP BY h.id " +
       "HAVING (:amenityIdsCount = 0 OR COUNT(DISTINCT ha.amenity.id) = :amenityIdsCount)";
 
+
   public static final String FIND_ALL_BY_IDS = FIND_WITH_DETAILS_BASE + "WHERE h.id IN :hotelIds";
 
   public static final String FIND_ALL_BY_IDS_WITH_ROOMS_AND_INVENTORIES =

@@ -32,18 +32,33 @@ public interface HotelRepository extends JpaRepository<Hotel, String>, JpaSpecif
     @Nullable Double maxPrice
   );
 
+  @Query(HotelQueries.FIND_ALL_IDS_BY_FILTER)
+  Page<String> findAllIdsByFilterPaged(
+    @Nullable String name,
+    @Nullable String countryId,
+    @Nullable String provinceId,
+    @Nullable String cityId,
+    @Nullable String districtId,
+    @Nullable String wardId,
+    @Nullable String streetId,
+    @Nullable String status,
+    @Nullable List<String> amenityIds,
+    int amenityIdsCount,
+    @Nullable Integer starRating,
+    @Nullable Double minPrice,
+    @Nullable Double maxPrice,
+    Pageable pageable
+  );
+
   @Query(HotelQueries.FIND_ALL_BY_IDS)
   List<Hotel> findAllByIds(List<String> hotelIds);
 
   @Query(HotelQueries.FIND_ALL_BY_IDS_WITH_ROOMS_AND_INVENTORIES)
   List<Hotel> findAllByIdsWithRoomsAndInventories(List<String> hotelIds);
 
-  @Query(HotelQueries.FIND_BY_ID_WITH_DETAILS)
-  Optional<Hotel> findByIdWithDetails(String id);
-
   @Query(HotelQueries.FIND_WITH_DETAILS_BASE)
   Page<Hotel> findAllWithDetails(Pageable pageable);
 
-  @Query(HotelQueries.FIND_WITH_DETAILS_BASE)
-  List<Hotel> findAllWithDetails();
+  @Query(HotelQueries.FIND_BY_ID_WITH_DETAILS)
+  Optional<Hotel> findByIdWithDetails(String id);
 }

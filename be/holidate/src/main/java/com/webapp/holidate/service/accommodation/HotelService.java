@@ -55,6 +55,10 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -159,7 +163,39 @@ public class HotelService {
     return hotelMapper.toHotelDetailsResponse(hotel);
   }
 
-  // Get hotels list with pagination and sorting
+  /**
+   * Get hotels list with pagination and sorting.
+   * 
+   * Performance Optimizations:
+   * 1. Database-level pagination: When only basic filters are applied (no date/guest requirements),
+   *    pagination is performed at database level to reduce memory usage and improve response times.
+   * 2. Application-level pagination: Only used when complex filtering (date availability, guest capacity)
+   *    is required, as these cannot be efficiently handled at database level.
+   * 3. Efficient data fetching: Room data is fetched separately and merged to avoid N+1 queries.
+   * 
+   * @param name Hotel name filter
+   * @param countryId Country ID filter  
+   * @param provinceId Province ID filter
+   * @param cityId City ID filter
+   * @param districtId District ID filter
+   * @param wardId Ward ID filter
+   * @param streetId Street ID filter
+   * @param amenityIds List of amenity IDs filter
+   * @param starRating Star rating filter
+   * @param status Hotel status filter
+   * @param checkinDate Check-in date for availability
+   * @param checkoutDate Check-out date for availability
+   * @param requiredAdults Number of adults
+   * @param requiredChildren Number of children  
+   * @param requiredRooms Number of rooms needed
+   * @param minPrice Minimum price filter
+   * @param maxPrice Maximum price filter
+   * @param page Page number (0-based)
+   * @param size Page size
+   * @param sortBy Sort field
+   * @param sortDir Sort direction
+   * @return Paged response with hotel data
+   */
   public PagedResponse<HotelResponse> getAll(
     String name, String countryId, String provinceId, String cityId, String districtId,
     String wardId, String streetId, List<String> amenityIds, Integer starRating, String status,
@@ -217,36 +253,65 @@ public class HotelService {
     );
   }
 
+  // Create Pageable object with sorting
+  private Pageable createPageable(int page, int size, String sortBy, String sortDir) {
+    if (sortBy == null) {
+      return PageRequest.of(page, size);
+    }
+    
+    // Map sort field to entity field
+    String entitySortField = mapSortFieldToEntity(sortBy);
+    Sort.Direction direction = SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir) 
+      ? Sort.Direction.ASC 
+      : Sort.Direction.DESC;
+    
+    Sort sort = Sort.by(direction, entitySortField);
+    return PageRequest.of(page, size, sort);
+  }
+  
+  // Map API sort field to entity field name
+  private String mapSortFieldToEntity(String sortBy) {
+    return switch (sortBy) {
+      case SortingParams.SORT_BY_PRICE -> "rooms.inventories.price"; // Will need complex sorting for this
+      case SortingParams.SORT_BY_STAR_RATING -> "starRating";
+      case SortingParams.SORT_BY_CREATED_AT -> "createdAt";
+      default -> "createdAt"; // Default sorting
+    };
+  }
+
   // Get all hotels when no filters applied
   private PagedResponse<HotelResponse> getAllHotelsWithoutFilters(int page, int size, String sortBy, String sortDir) {
-    // Fetch all hotels from database (without pagination for consistent pattern)
-    List<Hotel> allHotels = hotelRepository.findAllWithDetails();
+    // Create Pageable with sorting
+    Pageable pageable = createPageable(page, size, sortBy, sortDir);
+    
+    // Fetch hotels from database with pagination
+    Page<Hotel> hotelPage = hotelRepository.findAllWithDetails(pageable);
 
     // Check if we have any hotels
-    boolean hasHotels = !allHotels.isEmpty();
-    if (!hasHotels) {
+    if (hotelPage.isEmpty()) {
       return pagedMapper.createEmptyPagedResponse(page, size);
     }
 
     // Get hotel IDs and fetch room data
-    List<String> hotelIds = allHotels.stream().map(Hotel::getId).toList();
+    List<String> hotelIds = hotelPage.getContent().stream().map(Hotel::getId).toList();
     List<Hotel> hotelsWithRooms = hotelRepository.findAllByIdsWithRoomsAndInventories(hotelIds);
 
     // Add room data to hotels
-    mergeRoomData(allHotels, hotelsWithRooms);
+    mergeRoomData(hotelPage.getContent(), hotelsWithRooms);
 
     // Convert entities to response DTOs
-    List<HotelResponse> hotelResponses = allHotels.stream()
+    List<HotelResponse> hotelResponses = hotelPage.getContent().stream()
       .map(hotelMapper::toHotelResponse)
       .toList();
 
-    // Apply sorting if sort field is specified
-    if (sortBy != null) {
-      hotelResponses = applySorting(hotelResponses, sortBy, sortDir);
-    }
-
-    // Apply pagination and return paged response
-    return applyPagination(hotelResponses, page, size);
+    // Create and return paged response with database pagination metadata
+    return pagedMapper.createPagedResponse(
+      hotelResponses, 
+      page, 
+      size, 
+      hotelPage.getTotalElements(), 
+      hotelPage.getTotalPages()
+    );
   }
 
   // Handle filtering logic when filters are provided
@@ -258,7 +323,82 @@ public class HotelService {
     Double minPrice, Double maxPrice,
     int page, int size, String sortBy, String sortDir
   ) {
-    // Step 1: Filter hotels from database using basic filters
+    // Check if we need complex filtering (date/guest requirements)
+    boolean hasValidDateRange = checkinDate != null && checkoutDate != null;
+    boolean hasGuestRequirements = requiredAdults != null || requiredChildren != null || requiredRooms != null;
+    boolean needsComplexFiltering = hasValidDateRange || hasGuestRequirements;
+    
+    // If no complex filtering needed, we can use database pagination directly
+    if (!needsComplexFiltering) {
+      return getHotelsWithBasicFiltersOnly(
+        name, countryId, provinceId, cityId, districtId, wardId, streetId,
+        amenityIds, starRating, status, minPrice, maxPrice,
+        page, size, sortBy, sortDir
+      );
+    }
+    
+    // Complex filtering requires application-level processing
+    return getHotelsWithComplexFilters(
+      name, countryId, provinceId, cityId, districtId, wardId, streetId,
+      amenityIds, starRating, status, checkinDate, checkoutDate,
+      requiredAdults, requiredChildren, requiredRooms,
+      minPrice, maxPrice, page, size, sortBy, sortDir
+    );
+  }
+  
+  // Handle hotels filtering with only basic filters (can use database pagination)
+  private PagedResponse<HotelResponse> getHotelsWithBasicFiltersOnly(
+    String name, String countryId, String provinceId, String cityId, String districtId,
+    String wardId, String streetId, List<String> amenityIds, Integer starRating, String status,
+    Double minPrice, Double maxPrice,
+    int page, int size, String sortBy, String sortDir
+  ) {
+    // Create pageable with sorting
+    Pageable pageable = createPageable(page, size, sortBy, sortDir);
+    
+    // Step 1: Filter hotels from database with pagination
+    int requiredAmenityCount = (amenityIds != null) ? amenityIds.size() : 0;
+    Page<String> filteredHotelIdsPage = hotelRepository.findAllIdsByFilterPaged(
+      name, countryId, provinceId, cityId, districtId, wardId, streetId, status,
+      amenityIds, requiredAmenityCount, starRating, minPrice, maxPrice, pageable
+    );
+
+    // Check if we found any hotels
+    if (filteredHotelIdsPage.isEmpty()) {
+      return pagedMapper.createEmptyPagedResponse(page, size);
+    }
+
+    // Step 2: Get detailed hotel info including rooms for the current page
+    List<String> filteredHotelIds = filteredHotelIdsPage.getContent();
+    List<Hotel> candidateHotels = hotelRepository.findAllByIds(filteredHotelIds);
+    List<Hotel> hotelsWithRooms = hotelRepository.findAllByIdsWithRoomsAndInventories(filteredHotelIds);
+    mergeRoomData(candidateHotels, hotelsWithRooms);
+
+    // Step 3: Convert to response DTOs
+    List<HotelResponse> hotelResponses = candidateHotels.stream()
+      .map(hotelMapper::toHotelResponse)
+      .toList();
+
+    // Step 4: Return paged response with database pagination metadata
+    return pagedMapper.createPagedResponse(
+      hotelResponses,
+      page,
+      size,
+      filteredHotelIdsPage.getTotalElements(),
+      filteredHotelIdsPage.getTotalPages()
+    );
+  }
+  
+  // Handle hotels filtering with complex filters (requires application-level pagination)
+  private PagedResponse<HotelResponse> getHotelsWithComplexFilters(
+    String name, String countryId, String provinceId, String cityId, String districtId,
+    String wardId, String streetId, List<String> amenityIds, Integer starRating, String status,
+    LocalDate checkinDate, LocalDate checkoutDate,
+    Integer requiredAdults, Integer requiredChildren, Integer requiredRooms,
+    Double minPrice, Double maxPrice,
+    int page, int size, String sortBy, String sortDir
+  ) {
+    // Step 1: Filter hotels from database using basic filters (without pagination)
     int requiredAmenityCount = (amenityIds != null) ? amenityIds.size() : 0;
     List<String> filteredHotelIds = hotelRepository.findAllIdsByFilter(
       name, countryId, provinceId, cityId, districtId, wardId, streetId, status,
@@ -276,7 +416,7 @@ public class HotelService {
     List<Hotel> hotelsWithRooms = hotelRepository.findAllByIdsWithRoomsAndInventories(filteredHotelIds);
     mergeRoomData(candidateHotels, hotelsWithRooms);
 
-    // Step 3: Check if we need to do complex filtering
+    // Step 3: Apply complex filtering
     boolean hasValidDateRange = checkinDate != null && checkoutDate != null;
     boolean hasGuestRequirements = requiredAdults != null || requiredChildren != null || requiredRooms != null;
     boolean needsDateAndGuestValidation = hasValidDateRange && hasGuestRequirements;
@@ -310,18 +450,17 @@ public class HotelService {
         requiredAdults, requiredChildren, requiredRooms, needsDateAndGuestValidation);
     }
 
-    // Apply sorting and pagination to final results
-    // Step 1: Convert entity objects to response DTOs
+    // Step 4: Convert entity objects to response DTOs
     List<HotelResponse> hotelResponses = finalFilteredHotels.stream()
       .map(hotelMapper::toHotelResponse)
       .toList();
 
-    // Step 2: Apply sorting if sort field is specified
+    // Step 5: Apply sorting if sort field is specified
     if (sortBy != null) {
       hotelResponses = applySorting(hotelResponses, sortBy, sortDir);
     }
 
-    // Step 3: Apply pagination and return paged response
+    // Step 6: Apply pagination and return paged response
     return applyPagination(hotelResponses, page, size);
   }
 
