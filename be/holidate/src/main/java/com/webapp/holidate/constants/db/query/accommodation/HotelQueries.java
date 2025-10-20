@@ -22,7 +22,8 @@ public class HotelQueries {
     "SELECT DISTINCT h.id FROM Hotel h " +
       "LEFT JOIN h.amenities ha " +
       "WHERE " +
-      "(:countryId IS NULL OR h.country.id = :countryId) " +
+      "(:name IS NULL OR LOWER(h.name) LIKE LOWER(CONCAT('%', :name, '%'))) " +
+      "AND (:countryId IS NULL OR h.country.id = :countryId) " +
       "AND (:provinceId IS NULL OR h.province.id = :provinceId) " +
       "AND (:cityId IS NULL OR h.city.id = :cityId) " +
       "AND (:districtId IS NULL OR h.district.id = :districtId) " +

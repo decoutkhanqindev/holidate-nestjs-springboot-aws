@@ -122,8 +122,7 @@ public class RoomInventoryService {
     // Step 5: Get data based on filters
     List<RoomInventory> inventories;
     if (hasStatusFilter) {
-      inventories = roomInventoryRepository.findAllByRoomIdAndDateBetweenWithFilters(roomId, startDate, endDate,
-        status);
+      inventories = roomInventoryRepository.findAllByRoomIdAndDateBetweenWithFilters(roomId, startDate, endDate, status);
     } else {
       inventories = roomInventoryRepository.findAllByRoomIdAndDateBetween(roomId, startDate, endDate);
     }

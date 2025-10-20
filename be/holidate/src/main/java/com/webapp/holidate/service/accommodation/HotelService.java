@@ -162,7 +162,7 @@ public class HotelService {
 
   // Get hotels list with pagination and sorting
   public PagedResponse<HotelResponse> getAll(
-    String countryId, String provinceId, String cityId, String districtId,
+    String name, String countryId, String provinceId, String cityId, String districtId,
     String wardId, String streetId, List<String> amenityIds, Integer starRating, String status,
     LocalDate checkinDate, LocalDate checkoutDate,
     Integer requiredAdults, Integer requiredChildren, Integer requiredRooms,
@@ -191,6 +191,7 @@ public class HotelService {
     }
 
     // Check what filters are provided
+    boolean hasNameFilter = name != null && !name.isEmpty();
     boolean hasLocationFilter = countryId != null || provinceId != null || cityId != null ||
       districtId != null || wardId != null || streetId != null;
     boolean hasAmenityFilter = amenityIds != null && !amenityIds.isEmpty();
@@ -200,7 +201,7 @@ public class HotelService {
     boolean hasGuestRequirementsFilter = requiredAdults != null || requiredChildren != null || requiredRooms != null;
     boolean hasPriceFilter = minPrice != null || maxPrice != null;
 
-    boolean hasAnyFilter = hasLocationFilter || hasAmenityFilter || hasStarRatingFilter || hasStatusFilter ||
+    boolean hasAnyFilter = hasNameFilter || hasLocationFilter || hasAmenityFilter || hasStarRatingFilter || hasStatusFilter ||
       hasDateFilter || hasGuestRequirementsFilter || hasPriceFilter;
 
     // If no filters, get all hotels with simple pagination
@@ -210,10 +211,11 @@ public class HotelService {
 
     // If it has filters, use complex filtering logic
     return getHotelsWithFilters(
-      countryId, provinceId, cityId, districtId, wardId, streetId,
+      name, countryId, provinceId, cityId, districtId, wardId, streetId,
       amenityIds, starRating, status, checkinDate, checkoutDate,
       requiredAdults, requiredChildren, requiredRooms,
-      minPrice, maxPrice, page, size, sortBy, sortDir);
+      minPrice, maxPrice, page, size, sortBy, sortDir
+    );
   }
 
   // Get all hotels when no filters applied
@@ -250,7 +252,7 @@ public class HotelService {
 
   // Handle filtering logic when filters are provided
   private PagedResponse<HotelResponse> getHotelsWithFilters(
-    String countryId, String provinceId, String cityId, String districtId,
+    String name, String countryId, String provinceId, String cityId, String districtId,
     String wardId, String streetId, List<String> amenityIds, Integer starRating, String status,
     LocalDate checkinDate, LocalDate checkoutDate,
     Integer requiredAdults, Integer requiredChildren, Integer requiredRooms,
@@ -260,8 +262,9 @@ public class HotelService {
     // Step 1: Filter hotels from database using basic filters
     int requiredAmenityCount = (amenityIds != null) ? amenityIds.size() : 0;
     List<String> filteredHotelIds = hotelRepository.findAllIdsByFilter(
-      countryId, provinceId, cityId, districtId, wardId, streetId, status,
-      amenityIds, requiredAmenityCount, starRating, minPrice, maxPrice);
+      name, countryId, provinceId, cityId, districtId, wardId, streetId, status,
+      amenityIds, requiredAmenityCount, starRating, minPrice, maxPrice
+    );
 
     // Check if we found any hotels
     boolean hasMatchingHotels = filteredHotelIds != null && !filteredHotelIds.isEmpty();

@@ -40,6 +40,7 @@ public class HotelController {
 
   @GetMapping
   public ApiResponse<PagedResponse<HotelResponse>> getAll(
+    @RequestParam(name = CommonParams.NAME, required = false) String name,
     @RequestParam(name = LocationParams.COUNTRY_ID, required = false) String countryId,
     @RequestParam(name = LocationParams.PROVINCE_ID, required = false) String provinceId,
     @RequestParam(name = LocationParams.CITY_ID, required = false) String cityId,
@@ -58,13 +59,15 @@ public class HotelController {
     @RequestParam(name = RoomParams.MAX_PRICE, required = false) Double maxPrice,
     @RequestParam(name = PaginationParams.PAGE, defaultValue = PaginationParams.DEFAULT_PAGE) int page,
     @RequestParam(name = PaginationParams.SIZE, defaultValue = PaginationParams.DEFAULT_SIZE) int size,
-    @RequestParam(name = SortingParams.SORT_BY, required = false) String sortBy,
+    @RequestParam(name = SortingParams.SORT_BY, defaultValue = SortingParams.SORT_BY_CREATED_AT) String sortBy,
     @RequestParam(name = SortingParams.SORT_DIR, defaultValue = SortingParams.SORT_DIR_ASC) String sortDir
   ) {
     PagedResponse<HotelResponse> response = hotelService.getAll(
-      countryId, provinceId, cityId, districtId, wardId, streetId, amenityIds, starRating, status,
+      name, countryId, provinceId, cityId, districtId, wardId, streetId,
+      amenityIds, starRating, status,
       checkinDate, checkoutDate, requiredAdults, requiredChildren, requiredRooms, minPrice, maxPrice,
-      page, size, sortBy, sortDir);
+      page, size, sortBy, sortDir
+    );
     return ApiResponse.<PagedResponse<HotelResponse>>builder()
       .data(response)
       .build();

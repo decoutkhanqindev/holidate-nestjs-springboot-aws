@@ -17,18 +17,20 @@ public interface HotelRepository extends JpaRepository<Hotel, String>, JpaSpecif
 
   @Query(HotelQueries.FIND_ALL_IDS_BY_FILTER)
   List<String> findAllIdsByFilter(
-      @Nullable String countryId,
-      @Nullable String provinceId,
-      @Nullable String cityId,
-      @Nullable String districtId,
-      @Nullable String wardId,
-      @Nullable String streetId,
-      @Nullable String status,
-      @Nullable List<String> amenityIds,
-      int amenityIdsCount,
-      @Nullable Integer starRating,
-      @Nullable Double minPrice,
-      @Nullable Double maxPrice);
+    @Nullable String name,
+    @Nullable String countryId,
+    @Nullable String provinceId,
+    @Nullable String cityId,
+    @Nullable String districtId,
+    @Nullable String wardId,
+    @Nullable String streetId,
+    @Nullable String status,
+    @Nullable List<String> amenityIds,
+    int amenityIdsCount,
+    @Nullable Integer starRating,
+    @Nullable Double minPrice,
+    @Nullable Double maxPrice
+  );
 
   @Query(HotelQueries.FIND_ALL_BY_IDS)
   List<Hotel> findAllByIds(List<String> hotelIds);
