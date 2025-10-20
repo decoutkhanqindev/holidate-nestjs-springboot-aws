@@ -96,7 +96,8 @@ public class RoomInventoryService {
 
   public PagedResponse<RoomInventoryResponse> getAllByRoomIdForDateBetween(
     String roomId, LocalDate startDate, LocalDate endDate, String status,
-    int page, int size, String sortBy, String sortDir) {
+    int page, int size, String sortBy, String sortDir
+  ) {
     // Clean up and validate pagination parameters
     page = Math.max(0, page);
     size = Math.min(Math.max(1, size), 100);
@@ -187,7 +188,8 @@ public class RoomInventoryService {
   // Get inventories with database-level pagination
   private Page<RoomInventory> getInventoriesWithPagination(
     String roomId, LocalDate startDate, LocalDate endDate, String status,
-    boolean hasStatusFilter, int page, int size, String sortBy, String sortDir) {
+    boolean hasStatusFilter, int page, int size, String sortBy, String sortDir
+  ) {
 
     Pageable pageable = createPageable(page, size, sortBy, sortDir);
 

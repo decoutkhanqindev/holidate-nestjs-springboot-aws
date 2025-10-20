@@ -161,7 +161,8 @@ public class RoomService {
   }
 
   public PagedResponse<RoomResponse> getAllByHotelId(
-    String hotelId, String status, int page, int size, String sortBy, String sortDir) {
+    String hotelId, String status, int page, int size, String sortBy, String sortDir
+  ) {
     // Clean up and validate pagination parameters
     page = Math.max(0, page);
     size = Math.min(Math.max(1, size), 100);
@@ -231,9 +232,11 @@ public class RoomService {
 
     // Map sort field to entity field (only price sorting supported for rooms)
     String entitySortField = mapRoomSortFieldToEntity(sortBy);
-    Sort.Direction direction = SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir)
-      ? Sort.Direction.ASC
-      : Sort.Direction.DESC;
+
+    // Determine sort direction - fixed logic to match RoomInventoryService
+    Sort.Direction direction = SortingParams.SORT_DIR_DESC.equalsIgnoreCase(sortDir)
+      ? Sort.Direction.DESC
+      : Sort.Direction.ASC;
 
     Sort sort = Sort.by(direction, entitySortField);
     return PageRequest.of(page, size, sort);
