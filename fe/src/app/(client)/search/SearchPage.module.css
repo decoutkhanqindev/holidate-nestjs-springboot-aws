@@ -1,0 +1,379 @@
+/* === Global Styles & Checkbox === */
+.pageContainer {
+    background-color: #f8f9fa;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    padding-top: 80px;
+}
+
+.customCheckboxLabel {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+}
+
+.customCheckboxLabel input {
+    display: none;
+}
+
+.customCheckboxLabel .checkmark {
+    width: 18px;
+    height: 18px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-right: 10px;
+    display: inline-block;
+    position: relative;
+    background-color: #fff;
+}
+
+.customCheckboxLabel input:checked+.checkmark {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.customCheckboxLabel .checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 6px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.customCheckboxLabel input:checked+.checkmark:after {
+    display: block;
+}
+
+/* === Search Bar === */
+.searchBarWrapper {
+    padding: 24px 16px;
+    /* Thêm padding cho mobile */
+    background-color: #f8f9fa;
+}
+
+.searchBar {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.searchBarSection {
+    flex: 1.5;
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    gap: 12px;
+}
+
+.searchBarSection:not(:first-child) {
+    border-left: 1px solid #dee2e6;
+}
+
+.searchBarIcon {
+    color: #0d6efd;
+    flex-shrink: 0;
+}
+
+.searchBarInput {
+    border: none;
+    outline: none;
+    width: 100%;
+    font-size: 16px;
+    background: transparent;
+    color: black;
+}
+
+.searchBarText {
+    font-size: 16px;
+    color: #333;
+    white-space: nowrap;
+}
+
+.searchButton {
+    background: #0d6efd;
+    color: white;
+    border: none;
+    border-radius: 0 6px 6px 0;
+    padding: 12px 24px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* === Main Layout === */
+.mainContainer {
+    display: flex;
+    gap: 24px;
+    max-width: 1200px;
+    margin: 0 auto 24px auto;
+    align-items: flex-start;
+    padding: 0 16px;
+}
+
+/* === Sidebar / Filters === */
+.sidebar {
+    flex: 0 0 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.filterSectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    cursor: pointer;
+}
+
+.filterToggleButton {
+    background-color: #e7f1ff;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0d6efd;
+    font-weight: bold;
+    transition: transform 0.3s ease;
+}
+
+.filterToggleButton.collapsed {
+    transform: rotate(180deg);
+}
+
+.filterContent {
+    max-height: 500px;
+    overflow: hidden;
+    transition: max-height 0.4s ease-in-out;
+}
+
+.filterContent.collapsed {
+    max-height: 0;
+}
+
+.viewAllLink {
+    color: #0d6efd;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+/* === Main Content / Hotel List === */
+.mainContent {
+    flex: 1;
+}
+
+.listHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.hotelList {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* === Hotel Card === */
+.hotelCard {
+    display: flex;
+    gap: 24px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 16px;
+}
+
+.imageColumn {
+    flex: 0 0 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mainImageWrapper {
+    position: relative;
+    width: 100%;
+    padding-top: 50%;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.thumbnailGrid {
+    display: grid;
+    gap: 4px;
+}
+
+.thumbnailWrapper {
+    position: relative;
+    width: 100%;
+    padding-top: 100%;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.infoColumn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    color: #333;
+}
+
+.priceColumn {
+    flex: 0 0 200px;
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    border-left: 1px solid #eee;
+    padding-left: 24px;
+}
+
+/* === Responsive for Mobile === */
+@media (max-width: 992px) {
+    .hotelCard {
+        gap: 16px;
+    }
+
+    .imageColumn {
+        flex: 0 0 200px;
+    }
+
+    .priceColumn {
+        flex: 0 0 180px;
+        padding-left: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .pageContainer {
+        padding-top: 60px;
+    }
+
+    .searchBar {
+        flex-direction: column;
+        border-radius: 8px;
+    }
+
+    .searchBarSection {
+        border-left: none !important;
+        border-bottom: 1px solid #eee;
+    }
+
+    .searchButton {
+        border-radius: 0 0 8px 8px;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .mainContainer {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        flex: 1 1 100%;
+        width: 100%;
+    }
+
+    .listHeader {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .hotelCard {
+        flex-direction: column;
+    }
+
+    .imageColumn {
+        flex-basis: auto;
+        /* reset flex basis */
+        width: 100%;
+    }
+
+    .priceColumn {
+        border-left: none;
+        border-top: 1px solid #eee;
+        padding-left: 0;
+        padding-top: 16px;
+        width: 100%;
+        text-align: left;
+        align-items: stretch;
+        /* Căn nút và giá toàn chiều rộng */
+    }
+}
+
+/* Thêm vào file SearchPage.module.css của bạn */
+
+/* Chỉnh lại Card Khách Sạn */
+.hotelCard {
+    /* ... giữ nguyên các style cũ của bạn ... */
+    grid-template-columns: 250px 1fr 220px;
+    /* Phân chia cột: Ảnh | Thông tin | Giá */
+    gap: 24px;
+    align-items: flex-start;
+    /* Căn các cột theo chiều dọc */
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+.hotelCard:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+
+/* Cột thông tin ở giữa */
+.infoColumn {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    /* Giúp đẩy phần khuyến mãi xuống dưới cùng */
+}
+
+/* Cột giá bên phải */
+.priceColumn {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    /* Căn các item trong cột giá */
+    justify-content: flex-end;
+    /* Đẩy nội dung xuống dưới */
+    text-align: right;
+}
+
+/* Các màu badge tùy chỉnh */
+.bg-info-soft {
+    background-color: #e0f7fa !important;
+}
+
+.text-info {
+    color: #00796b !important;
+}
+
+.bg-primary-soft {
+    background-color: #e3f2fd !important;
+}
+
+.text-primary {
+    color: #0d6efd !important;
+}
