@@ -164,4 +164,6 @@ const searchLocations = async ({ query }: { query: string }): Promise<LocationSu
 export const locationService = {
     searchLocations,
     getHotelsByCity,
+    getCities,
+    getProvinces
 };

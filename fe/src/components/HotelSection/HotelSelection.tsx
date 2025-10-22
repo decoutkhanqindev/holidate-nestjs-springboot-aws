@@ -4,242 +4,44 @@
 // import Image from 'next/image';
 // import { hotelService, HotelResponse } from '@/service/hotelService';
 // import styles from './HotelSelection.module.css';
+// import { locationService } from '@/service/locationService';
 
-// const formatLocationNameForDisplay = (fullName: string) => {
-//     return fullName.replace('Thành phố ', '').replace('Tỉnh ', '');
-// };
+// // --- Các hàm tiện ích ---
+// const formatLocationNameForDisplay = (fullName: string) => fullName.replace(/^(Thành phố|Tỉnh|Thủ đô)\s/, '');
+// const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN').format(price) + ' VND';
+// const formatRating = (rating?: number) => rating && rating > 0 ? `${rating.toFixed(1)}/10` : 'Chưa có đánh giá';
+// const getFullAddress = (hotel: HotelResponse) =>
+//     [hotel.address, hotel.ward?.name, hotel.district?.name, hotel.city?.name].filter(Boolean).join(', ');
+// const getHotelImageUrl = (hotel: HotelResponse) => hotel.photos?.[0]?.photos?.[0]?.url || '/placeholder.svg';
 
-// export default function HotelSelection() {
-//     // STATE QUẢN LÝ
-//     const [allHotels, setAllHotels] = useState<HotelResponse[]>([]);
-//     const [displayedHotels, setDisplayedHotels] = useState<HotelResponse[]>([]);
-//     const [locations, setLocations] = useState<string[]>([]);
-//     const [activeLocation, setActiveLocation] = useState<string | null>(null);
-
-//     // State cho UI
-//     const [loading, setLoading] = useState(true);
-//     const [error, setError] = useState<string | null>(null);
-//     const scrollContainerRef = useRef<HTMLDivElement>(null);
-//     const [canScrollLeft, setCanScrollLeft] = useState(false);
-//     const [canScrollRight, setCanScrollRight] = useState(true);
-//     const router = useRouter();
-
-//     useEffect(() => {
-//         const fetchAllData = async () => {
-//             setLoading(true);
-//             setError(null);
-//             try {
-//                 // Gọi API để lấy TẤT CẢ khách sạn
-//                 const hotelsData = await hotelService.getAllHotels();
-//                 setAllHotels(hotelsData);
-
-//                 if (hotelsData.length > 0) {
-//                     const cityNames = hotelsData.map(hotel => hotel.city.name);
-//                     const uniqueCityNames = Array.from(new Set(cityNames));
-//                     setLocations(uniqueCityNames);
-
-//                     setActiveLocation(uniqueCityNames[0]);
-//                 } else {
-//                     setLocations([]);
-//                     setActiveLocation(null);
-//                 }
-
-//             } catch (err: any) {
-//                 let errorMessage = 'Có lỗi xảy ra khi tải dữ liệu';
-//                 if (err.code === 'ECONNREFUSED' || err.code === 'ERR_NETWORK') {
-//                     errorMessage = 'Không thể kết nối tới server. Vui lòng kiểm tra backend có đang chạy không.';
-//                 } else if (err.response) {
-//                     errorMessage = `Lỗi server: ${err.response.status} - ${err.response.data?.message || err.message}`;
-//                 } else {
-//                     errorMessage = err.message || errorMessage;
-//                 }
-//                 setError(errorMessage);
-//             } finally {
-//                 setLoading(false);
-//             }
-//         };
-//         fetchAllData();
-//     }, []);
-
-//     useEffect(() => {
-//         if (!activeLocation) {
-//             setDisplayedHotels([]);
-//             return;
-//         }
-
-//         const filtered = allHotels.filter(hotel => hotel.city.name === activeLocation);
-//         setDisplayedHotels(filtered);
-
-//     }, [activeLocation, allHotels]);
-
-
-//     const handleLocationClick = (location: string) => {
-//         setActiveLocation(location);
-//     };
-
-//     const checkScrollButtons = () => {
-//         if (scrollContainerRef.current) {
-//             const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-//             setCanScrollLeft(scrollLeft > 1);
-//             setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1);
-//         }
-//     };
-
-//     const handleScroll = (direction: 'left' | 'right') => {
-//         if (scrollContainerRef.current) {
-//             scrollContainerRef.current.scrollBy({
-//                 left: direction === 'right' ? scrollContainerRef.current.clientWidth : -scrollContainerRef.current.clientWidth,
-//                 behavior: 'smooth'
-//             });
-//         }
-//     };
-
-//     useEffect(() => {
-//         const container = scrollContainerRef.current;
-//         if (!container) return;
-//         container.scrollLeft = 0;
-//         const observer = new ResizeObserver(checkScrollButtons);
-//         observer.observe(container);
-//         container.addEventListener('scroll', checkScrollButtons, { passive: true });
-//         const timer = setTimeout(checkScrollButtons, 100);
-//         return () => {
-//             clearTimeout(timer);
-//             observer.disconnect();
-//             if (container) container.removeEventListener('scroll', checkScrollButtons);
-//         };
-//     }, [displayedHotels]);
-
-//     const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN').format(price) + ' VND';
-//     const formatRating = (rating?: number) => rating ? `${rating.toFixed(1)}/10` : 'Chưa có đánh giá';
-//     const getFullAddress = (hotel: HotelResponse) => [hotel.address, hotel.street?.name, hotel.ward?.name, hotel.district?.name, hotel.city?.name].filter(Boolean).join(', ');
-//     const getHotelImageUrl = (hotel: HotelResponse) => {
-//         if (hotel.photos && hotel.photos.length > 0) {
-//             const firstCategory = hotel.photos[0];
-//             if (Array.isArray(firstCategory.photos) && firstCategory.photos.length > 0) {
-//                 return firstCategory.photos[0].url;
-//             }
-//         }
-//         return '/placeholder.svg';
-//     };
-
-//     return (
-//         <div className="py-5">
-//             <div className="container">
-//                 <h2 className="fw-bold mb-4 text-black">🏨 Nhiều lựa chọn khách sạn</h2>
-
-//                 <div className="mb-4">
-//                     {locations.map((loc) => (
-//                         <button
-//                             key={loc}
-//                             className={`btn rounded-pill me-2 mb-2 fw-semibold ${activeLocation === loc ? 'btn-primary' : 'bg-light text-primary border-0'}`}
-//                             onClick={() => handleLocationClick(loc)}
-//                         >
-//                             {formatLocationNameForDisplay(loc)}
-//                         </button>
-//                     ))}
-//                 </div>
-
-//                 <div className="position-relative">
-//                     {canScrollLeft && (
-//                         <button className={`${styles.sliderNavButton} ${styles.prevButton}`} onClick={() => handleScroll('left')}>&lt;</button>
-//                     )}
-//                     {canScrollRight && (
-//                         <button className={`${styles.sliderNavButton} ${styles.nextButton}`} onClick={() => handleScroll('right')}>&gt;</button>
-//                     )}
-
-//                     <div ref={scrollContainerRef} className="row flex-nowrap g-4" style={{ overflowX: 'hidden' }}>
-//                         {loading ? (
-//                             <div className="col-12 text-center py-5">
-//                                 <div className="spinner-border text-primary" role="status"><span className="visually-hidden">Đang tải...</span></div>
-//                                 <p className="mt-3 text-muted">Đang tải danh sách khách sạn...</p>
-//                             </div>
-//                         ) : error ? (
-//                             <div className="col-12 text-center py-5">
-//                                 <div className="alert alert-danger" role="alert">{error}</div>
-//                             </div>
-//                         ) : displayedHotels.length === 0 ? (
-//                             <div className="col-12 text-center py-5">
-//                                 <div className="text-muted">
-//                                     <i className="bi bi-house-door mb-3" style={{ fontSize: '3rem' }}></i>
-//                                     <p>Không tìm thấy khách sạn nào tại {activeLocation ? formatLocationNameForDisplay(activeLocation) : ''}</p>
-//                                 </div>
-//                             </div>
-//                         ) : (
-//                             displayedHotels.map((hotel) => (
-//                                 <div
-//                                     key={hotel.id}
-//                                     className="col-lg-3 col-md-6 col-sm-8 col-10"
-//                                     style={{ flex: '0 0 auto', cursor: 'pointer' }}
-//                                     onClick={() => router.push(`/hotels/${hotel.id}`)}
-//                                 >
-//                                     <div className="card h-100 shadow-sm border-0">
-//                                         <div className="position-relative">
-//                                             <Image
-//                                                 src={getHotelImageUrl(hotel)}
-//                                                 width={400} height={300} alt={hotel.name}
-//                                                 className="card-img-top" style={{ objectFit: 'cover', height: '200px' }}
-//                                             />
-//                                             {hotel.rawPricePerNight > hotel.currentPricePerNight && (
-//                                                 <span className="badge bg-success position-absolute top-0 end-0 m-2">
-//                                                     -{Math.round((1 - hotel.currentPricePerNight / hotel.rawPricePerNight) * 100)}%
-//                                                 </span>
-//                                             )}
-//                                         </div>
-//                                         <div className="card-body d-flex flex-column">
-//                                             <h5 className="card-title fw-bold text-truncate">{hotel.name}</h5>
-//                                             <p className="card-text text-primary small fw-bold">⭐ {formatRating(hotel.averageScore)}</p>
-//                                             <p className="card-text text-muted small">📍 {getFullAddress(hotel)}</p>
-//                                             <div className="mt-auto pt-2">
-//                                                 <p className="card-text text-danger fw-bold fs-5 mb-0">{formatPrice(hotel.currentPricePerNight)}</p>
-//                                                 {hotel.rawPricePerNight > hotel.currentPricePerNight && (
-//                                                     <small className="text-muted text-decoration-line-through">{formatPrice(hotel.rawPricePerNight)}</small>
-//                                                 )}
-//                                                 <small className="text-muted d-block">Chưa bao gồm thuế và phí</small>
-//                                             </div>
-//                                         </div>
-//                                     </div>
-//                                 </div>
-//                             ))
-//                         )}
-//                     </div>
-//                 </div>
-
-//                 <div className="text-center mt-5">
-//                     <button className="btn btn-primary btn-lg">Xem thêm ưu đãi khách sạn</button>
-//                 </div>
-//             </div>
-//         </div>
-//     );
+// // --- Interface ---
+// interface City {
+//     id: string;
+//     name: string;
+// }
+// interface Province {
+//     id: string;
+//     name: string;
+// }
+// interface LocationData {
+//     hotels: HotelResponse[];
+//     page: number;
+//     totalPages: number;
 // }
 
-
-
-//new
-// 'use client';
-// import { useState, useEffect, useRef } from 'react';
-// import { useRouter } from 'next/navigation';
-// import Image from 'next/image';
-// import { hotelService, HotelResponse } from '@/service/hotelService';
-// import styles from './HotelSelection.module.css';
-
-// const formatLocationNameForDisplay = (fullName: string) => {
-//     return fullName.replace(/^(Thành phố|Tỉnh|Thủ đô)\s/, '');
-// };
-
 // export default function HotelSelection() {
-//     // --- STATE QUẢN LÝ ---
-//     const featuredLocations = [
-//         "Thành phố Hồ Chí Minh",
-//         "Thành phố Đà Nẵng",
-//         "Thủ đô Hà Nội",
-//         "Thành phố Vũng Tàu",
-//         "Thành phố Phan Thiết",
-//     ];
+//     // --- State ---
 
-//     const [hotelsByLocation, setHotelsByLocation] = useState<Map<string, HotelResponse[]>>(new Map());
-//     const [activeLocation, setActiveLocation] = useState<string>(featuredLocations[0]);
+//     // const [featuredLocations, setFeaturedLocations] = useState<Province[]>([]);
+//     // const [activeLocation, setActiveLocation] = useState<Province | null>(null);
+//     // const [locationData, setLocationData] = useState<Map<string, LocationData>>(new Map());
+//     const [featuredLocations, setFeaturedLocations] = useState<City[]>([]);
+//     const [activeLocation, setActiveLocation] = useState<City | null>(null);
+//     const [locationData, setLocationData] = useState<Map<string, LocationData>>(new Map());
 
-//     const [loading, setLoading] = useState(true);
+//     const [isLoadingInitial, setIsLoadingInitial] = useState(true);
+//     const [isLoadingTab, setIsLoadingTab] = useState(false);
+//     const [isLoadingMore, setIsLoadingMore] = useState(false);
 //     const [error, setError] = useState<string | null>(null);
 
 //     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -247,172 +49,214 @@
 //     const [canScrollRight, setCanScrollRight] = useState(true);
 //     const router = useRouter();
 
-//     // --- LOGIC FETCH DATA MỚI ---
+//     // Effect 1: Lấy danh sách các Thành phố
 //     useEffect(() => {
-//         const fetchHotelsForActiveLocation = async () => {
-//             // Nếu không có tab nào được chọn, hoặc dữ liệu cho tab đó đã có trong cache (Map), thì không cần làm gì
-//             if (!activeLocation || hotelsByLocation.has(activeLocation)) {
-//                 setLoading(false); // Đảm bảo tắt loading nếu không fetch
+//         const fetchAllProvinces = async () => { // Đổi tên hàm cho rõ nghĩa
+//             setIsLoadingInitial(true);
+//             setError(null);
+//             try {
+//                 // SỬA Ở ĐÂY: Gọi getProvinces thay vì getCities
+//                 const provinces = await locationService.getCities();
+//                 if (provinces && provinces.length > 0) {
+//                     // Lọc ra các tỉnh thành phố trực thuộc trung ương như Đà Nẵng, HCM
+//                     // và các tỉnh lớn như Khánh Hòa, Bình Thuận...
+//                     setFeaturedLocations(provinces);
+//                     setActiveLocation(provinces[0]);
+//                 } else {
+//                     setError("Không tìm thấy địa điểm nào.");
+//                 }
+//             } catch (err) {
+//                 setError("Lỗi tải danh sách địa điểm.");
+//             } finally {
+//                 setIsLoadingInitial(false);
+//             }
+//         };
+//         fetchAllProvinces();
+//     }, []);
+//     // Effect 2: Tải khách sạn cho Thành phố được chọn
+//     useEffect(() => {
+//         const fetchHotelsForTab = async () => {
+//             if (!activeLocation || locationData.has(activeLocation.id)) {
 //                 return;
 //             }
-
-//             setLoading(true);
+//             setIsLoadingTab(true);
 //             setError(null);
 //             try {
-//                 // Gọi hàm searchHotels mới, chỉ lấy 6 khách sạn đầu tiên (page: 0, size: 6) cho thành phố đang được chọn
-//                 const paginatedResponse = await hotelService.searchHotels({ city: activeLocation, size: 6 });
-
-//                 // Cập nhật Map với dữ liệu mới tải về
-//                 setHotelsByLocation(prevMap => new Map(prevMap).set(activeLocation, paginatedResponse.content));
-
-//             } catch (err: any) {
-//                 setError(`Không thể tải khách sạn tại ${activeLocation}.`);
-//                 console.error(err);
+//                 // SỬA Ở ĐÂY: Dùng 'city-id'
+//                 const response = await hotelService.searchHotels({ 'city-id': activeLocation.id, page: 0, size: 6 }); // Lấy 6 cái ban đầu
+//                 setLocationData(prev => new Map(prev).set(activeLocation.id, {
+//                     hotels: response.content,
+//                     page: response.page,
+//                     totalPages: response.totalPages,
+//                 }));
+//             } catch (err) {
+//                 setError(`Lỗi tải khách sạn tại ${activeLocation.name}.`);
 //             } finally {
-//                 setLoading(false);
+//                 setIsLoadingTab(false);
 //             }
 //         };
-
-//         fetchHotelsForActiveLocation();
-//     }, [activeLocation, hotelsByLocation]); // Effect này sẽ chạy lại mỗi khi người dùng click đổi tab (activeLocation thay đổi)
-
-//     // Lấy danh sách khách sạn để hiển thị từ trong Map, dựa trên tab đang active
-//     const displayedHotels = hotelsByLocation.get(activeLocation) || [];
-
-//     // --- CÁC HÀM XỬ LÝ GIAO DIỆN CỦA BẠN (GIỮ NGUYÊN) ---
-//     const handleLocationClick = (location: string) => {
-//         setActiveLocation(location);
-//     };
-
-//     const checkScrollButtons = () => {
-//         if (scrollContainerRef.current) {
-//             const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-//             setCanScrollLeft(scrollLeft > 5);
-//             setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 5);
+//         if (!isLoadingInitial && activeLocation) {
+//             fetchHotelsForTab();
 //         }
-//     };
+//     }, [activeLocation, isLoadingInitial]);
 
-//     const handleScroll = (direction: 'left' | 'right') => {
-//         if (scrollContainerRef.current) {
-//             const scrollAmount = scrollContainerRef.current.clientWidth * 0.8;
-//             scrollContainerRef.current.scrollBy({
-//                 left: direction === 'right' ? scrollAmount : -scrollAmount,
-//                 behavior: 'smooth'
+//     // Hàm load more
+//     const handleLoadMore = async () => {
+//         if (!activeLocation || isLoadingMore) return;
+//         const currentData = locationData.get(activeLocation.id);
+//         if (!currentData || currentData.page >= currentData.totalPages - 1) {
+//             return;
+//         }
+//         setIsLoadingMore(true);
+//         try {
+//             const nextPage = currentData.page + 1;
+//             // SỬA Ở ĐÂY: Dùng 'city-id'
+//             const response = await hotelService.searchHotels({ 'city-id': activeLocation.id, page: nextPage, size: 6 });
+//             setLocationData(prev => {
+//                 const existingData = prev.get(activeLocation.id)!;
+//                 const updatedData = {
+//                     hotels: [...existingData.hotels, ...response.content],
+//                     page: response.page,
+//                     totalPages: response.totalPages,
+//                 };
+//                 return new Map(prev).set(activeLocation.id, updatedData);
 //             });
+//         } catch (err) {
+//             console.error("Lỗi tải thêm khách sạn:", err);
+//         } finally {
+//             setIsLoadingMore(false);
 //         }
 //     };
 
+//     const handleLocationClick = (location: City) => {
+//         if (activeLocation?.id !== location.id) {
+//             setActiveLocation(location);
+//         }
+//     };
+
+//     // useEffect cho việc cuộn (Không cần sửa)
 //     useEffect(() => {
 //         const container = scrollContainerRef.current;
 //         if (!container) return;
 
-//         container.scrollLeft = 0;
-//         setTimeout(checkScrollButtons, 150);
-
-//         const observer = new ResizeObserver(checkScrollButtons);
-//         observer.observe(container);
-//         container.addEventListener('scroll', checkScrollButtons, { passive: true });
-
-//         return () => {
-//             observer.disconnect();
-//             if (container) {
-//                 container.removeEventListener('scroll', checkScrollButtons);
+//         const handleScroll = () => {
+//             if (isLoadingMore || !activeLocation) return;
+//             const { scrollLeft, scrollWidth, clientWidth } = container;
+//             setCanScrollLeft(scrollLeft > 10);
+//             const isAtEnd = scrollLeft + clientWidth >= scrollWidth - 10;
+//             const currentData = locationData.get(activeLocation.id);
+//             const hasMorePages = currentData ? currentData.page < currentData.totalPages - 1 : false;
+//             setCanScrollRight(!isAtEnd || hasMorePages);
+//             if (scrollLeft + clientWidth >= scrollWidth - 200 && hasMorePages) {
+//                 handleLoadMore();
 //             }
 //         };
-//     }, [displayedHotels]);
 
-//     const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN').format(price) + ' VND';
-//     const formatRating = (rating?: number) => rating && rating > 0 ? `${rating.toFixed(1)}/10` : 'Chưa có đánh giá';
-//     const getFullAddress = (hotel: HotelResponse) => [hotel.address, hotel.street?.name, hotel.ward?.name, hotel.district?.name, hotel.city?.name].filter(Boolean).join(', ');
-//     const getHotelImageUrl = (hotel: HotelResponse) => hotel.photos?.[0]?.photos?.[0]?.url || '/placeholder.svg';
+//         container.scrollLeft = 0;
+//         const timer = setTimeout(handleScroll, 150);
+//         container.addEventListener('scroll', handleScroll, { passive: true });
+//         const observer = new ResizeObserver(handleScroll);
+//         observer.observe(container);
 
+//         return () => {
+//             clearTimeout(timer);
+//             container.removeEventListener('scroll', handleScroll);
+//             observer.disconnect();
+//         };
+//     }, [activeLocation, locationData, isLoadingMore]);
+
+
+//     const handleScrollButton = (direction: 'left' | 'right') => {
+//         if (!scrollContainerRef.current || !activeLocation) return;
+//         const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+//         const scrollAmount = clientWidth * 0.8;
+//         if (direction === 'left') {
+//             scrollContainerRef.current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+//         } else {
+//             const isAtEnd = scrollLeft + clientWidth >= scrollWidth - 10;
+//             const currentData = locationData.get(activeLocation.id);
+//             const hasMorePages = currentData ? currentData.page < currentData.totalPages - 1 : false;
+//             if (isAtEnd && hasMorePages) {
+//                 handleLoadMore();
+//             } else {
+//                 scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+//             }
+//         }
+//     };
+
+//     const currentHotels = activeLocation ? (locationData.get(activeLocation.id)?.hotels || []) : [];
+//     const isLoading = isLoadingInitial || isLoadingTab;
+
+//     // --- JSX (Không cần sửa) ---
 //     return (
 //         <div className="py-5">
 //             <div className="container">
 //                 <h2 className="fw-bold mb-4 text-black">🏨 Nhiều lựa chọn khách sạn</h2>
-
-//                 <div className="mb-4">
-//                     {featuredLocations.map((loc) => (
-//                         <button
-//                             key={loc}
-//                             className={`btn rounded-pill me-2 mb-2 fw-semibold ${activeLocation === loc ? 'btn-primary' : 'bg-light text-primary border-0'}`}
-//                             onClick={() => handleLocationClick(loc)}
-//                         >
-//                             {formatLocationNameForDisplay(loc)}
-//                         </button>
-//                     ))}
-//                 </div>
-
+//                 {isLoadingInitial ? (
+//                     <div className="text-center p-3"><div className="spinner-border text-primary spinner-border-sm"></div></div>
+//                 ) : (
+//                     <div className="mb-4">
+//                         {featuredLocations.map(loc => (
+//                             <button key={loc.id} className={`btn rounded-pill me-2 mb-2 fw-semibold ${activeLocation?.id === loc.id ? 'btn-primary' : 'bg-light text-primary border-0'}`} onClick={() => handleLocationClick(loc)}>
+//                                 {formatLocationNameForDisplay(loc.name)}
+//                             </button>
+//                         ))}
+//                     </div>
+//                 )}
 //                 <div className="position-relative">
-//                     {canScrollLeft && <button className={`${styles.sliderNavButton} ${styles.prevButton}`} onClick={() => handleScroll('left')}>&lt;</button>}
-//                     {canScrollRight && <button className={`${styles.sliderNavButton} ${styles.nextButton}`} onClick={() => handleScroll('right')}>&gt;</button>}
+//                     {!isLoading && canScrollLeft && <button className={`${styles.sliderNavButton} ${styles.prevButton}`} onClick={() => handleScrollButton('left')}>&lt;</button>}
+//                     {!isLoading && canScrollRight && <button className={`${styles.sliderNavButton} ${styles.nextButton}`} onClick={() => handleScrollButton('right')}>&gt;</button>}
 
-//                     <div ref={scrollContainerRef} className="row flex-nowrap g-4" style={{ overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-//                         {loading ? (
-//                             <div className="col-12 text-center py-5">
-//                                 <div className="spinner-border text-primary" role="status"><span className="visually-hidden">Đang tải...</span></div>
-//                                 <p className="mt-3 text-muted">Đang tải danh sách khách sạn...</p>
-//                             </div>
-//                         ) : error ? (
-//                             <div className="col-12 text-center py-5">
-//                                 <div className="alert alert-danger" role="alert">{error}</div>
-//                             </div>
-//                         ) : displayedHotels.length === 0 ? (
-//                             <div className="col-12 text-center py-5">
-//                                 <div className="text-muted">
+//                     <div ref={scrollContainerRef} className="row flex-nowrap g-4 align-items-stretch" style={{ overflowX: 'auto', scrollbarWidth: 'none', minHeight: '300px' }}>
+//                         {isLoading ? (
+//                             <div className="col-12 text-center py-5 d-flex justify-content-center align-items-center"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Đang tải...</span></div></div>
+//                         ) : error && currentHotels.length === 0 ? (
+//                             <div className="col-12 text-center py-5"><div className="alert alert-danger">{error}</div></div>
+//                         ) : currentHotels.length === 0 && !isLoadingTab ? (
+//                             <div className="col-12 text-center py-5 text-muted d-flex justify-content-center align-items-center">
+//                                 <div>
 //                                     <i className="bi bi-house-door mb-3" style={{ fontSize: '3rem' }}></i>
-//                                     <p>Không tìm thấy khách sạn nào tại {activeLocation ? formatLocationNameForDisplay(activeLocation) : ''}</p>
+//                                     <p>Không tìm thấy khách sạn nào tại {activeLocation ? formatLocationNameForDisplay(activeLocation.name) : ''}</p>
 //                                 </div>
 //                             </div>
 //                         ) : (
-//                             displayedHotels.map((hotel) => (
-//                                 <div
-//                                     key={hotel.id}
-//                                     className="col-lg-3 col-md-6 col-sm-8 col-10"
-//                                     style={{ flex: '0 0 auto', cursor: 'pointer' }}
-//                                     onClick={() => router.push(`/hotels/${hotel.id}`)}
-//                                 >
-//                                     <div className="card h-100 shadow-sm border-0">
-//                                         <div className="position-relative">
-//                                             <Image
-//                                                 src={getHotelImageUrl(hotel)}
-//                                                 width={400} height={300} alt={hotel.name}
-//                                                 className="card-img-top" style={{ objectFit: 'cover', height: '200px' }}
-//                                             />
-//                                             {hotel.rawPricePerNight > hotel.currentPricePerNight && (
-//                                                 <span className="badge bg-success position-absolute top-0 end-0 m-2">
-//                                                     -{Math.round((1 - hotel.currentPricePerNight / hotel.rawPricePerNight) * 100)}%
-//                                                 </span>
-//                                             )}
-//                                         </div>
-//                                         <div className="card-body d-flex flex-column">
-//                                             <h5 className="card-title fw-bold text-truncate">{hotel.name}</h5>
-//                                             <p className="card-text text-primary small fw-bold">⭐ {formatRating(hotel.averageScore)}</p>
-//                                             <p className="card-text text-muted small text-truncate">📍 {getFullAddress(hotel)}</p>
-//                                             <div className="mt-auto pt-2">
-//                                                 <p className="card-text text-danger fw-bold fs-5 mb-0">{formatPrice(hotel.currentPricePerNight)}</p>
-//                                                 {hotel.rawPricePerNight > hotel.currentPricePerNight && (
-//                                                     <small className="text-muted text-decoration-line-through">{formatPrice(hotel.rawPricePerNight)}</small>
-//                                                 )}
-//                                                 <small className="text-muted d-block">Chưa bao gồm thuế và phí</small>
+//                             <>
+//                                 {currentHotels.map((hotel) => (
+//                                     <div key={hotel.id} className="col-lg-3 col-md-6 col-sm-8 col-10" style={{ flex: '0 0 auto' }} onClick={() => router.push(`/hotels/${hotel.id}`)}>
+//                                         <div className="card h-100 shadow-sm border-0" style={{ cursor: 'pointer' }}>
+//                                             <div className="position-relative">
+//                                                 <Image src={getHotelImageUrl(hotel)} width={400} height={300} alt={hotel.name} className="card-img-top" style={{ objectFit: 'cover', height: '200px' }} />
+//                                                 {hotel.rawPricePerNight > hotel.currentPricePerNight && (<span className="badge bg-success position-absolute top-0 end-0 m-2">-{Math.round((1 - hotel.currentPricePerNight / hotel.rawPricePerNight) * 100)}%</span>)}
+//                                             </div>
+//                                             <div className="card-body d-flex flex-column">
+//                                                 <h5 className="card-title fw-bold text-truncate">{hotel.name}</h5>
+//                                                 <p className="card-text text-primary small fw-bold">⭐ {formatRating(hotel.averageScore)}</p>
+//                                                 <p className="card-text text-muted small " title={getFullAddress(hotel)}>📍 {getFullAddress(hotel)}</p>
+//                                                 <div className="mt-auto pt-2">
+//                                                     <p className="card-text text-danger fw-bold fs-5 mb-0">{formatPrice(hotel.currentPricePerNight)}</p>
+//                                                     {hotel.rawPricePerNight > hotel.currentPricePerNight && (<small className="text-muted text-decoration-line-through">{formatPrice(hotel.rawPricePerNight)}</small>)}
+//                                                     <small className="text-muted d-block">Chưa bao gồm thuế và phí</small>
+//                                                 </div>
 //                                             </div>
 //                                         </div>
 //                                     </div>
-//                                 </div>
-//                             ))
+//                                 ))}
+//                                 {isLoadingMore && (
+//                                     <div className="col-auto d-flex align-items-center justify-content-center p-5" style={{ flex: '0 0 auto' }}>
+//                                         <div className="spinner-border text-primary spinner-border-sm" role="status"><span className="visually-hidden">Đang tải thêm...</span></div>
+//                                     </div>
+//                                 )}
+//                             </>
 //                         )}
 //                     </div>
 //                 </div>
-
 //                 <div className="text-center mt-5">
-//                     {/* onClick={() => router.push('/search')} */}
-//                     <button className="btn btn-primary btn-lg">Xem thêm ưu đãi khách sạn</button>
+//                     <button onClick={() => router.push('/search')} className="btn btn-primary btn-lg">Xem thêm ưu đãi khách sạn</button>
 //                 </div>
 //             </div>
 //         </div>
 //     );
 // }
-//end new
 
 
 
@@ -422,18 +266,21 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { hotelService, HotelResponse } from '@/service/hotelService';
 import styles from './HotelSelection.module.css';
+import { locationService } from '@/service/locationService';
 
+// --- Các hàm tiện ích (Không đổi) ---
 const formatLocationNameForDisplay = (fullName: string) => fullName.replace(/^(Thành phố|Tỉnh|Thủ đô)\s/, '');
 const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN').format(price) + ' VND';
 const formatRating = (rating?: number) => rating && rating > 0 ? `${rating.toFixed(1)}/10` : 'Chưa có đánh giá';
 const getFullAddress = (hotel: HotelResponse) =>
-    [hotel.address,
-    hotel.street?.name,
-    hotel.ward?.name,
-    hotel.district?.name,
-    hotel.city?.name].filter(Boolean).join(', ');
+    [hotel.address, hotel.ward?.name, hotel.district?.name, hotel.city?.name].filter(Boolean).join(', ');
 const getHotelImageUrl = (hotel: HotelResponse) => hotel.photos?.[0]?.photos?.[0]?.url || '/placeholder.svg';
 
+// --- Interface (Không đổi) ---
+interface City {
+    id: string;
+    name: string;
+}
 interface LocationData {
     hotels: HotelResponse[];
     page: number;
@@ -441,41 +288,35 @@ interface LocationData {
 }
 
 export default function HotelSelection() {
-    // --- STATE QUẢN LÝ ---
-    const [featuredLocations, setFeaturedLocations] = useState<string[]>([]);
-    const [cityIdMap, setCityIdMap] = useState<Map<string, string>>(new Map());
-    const [activeLocation, setActiveLocation] = useState<string>('');
+    // --- State (Không đổi) ---
+    const [featuredLocations, setFeaturedLocations] = useState<City[]>([]);
+    const [activeLocation, setActiveLocation] = useState<City | null>(null);
     const [locationData, setLocationData] = useState<Map<string, LocationData>>(new Map());
-
     const [isLoadingInitial, setIsLoadingInitial] = useState(true);
     const [isLoadingTab, setIsLoadingTab] = useState(false);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(true);
     const router = useRouter();
 
-
+    // Effect 1: Lấy danh sách các Thành phố
     useEffect(() => {
-        const fetchLocationsAndCreateIdMap = async () => {
+        const fetchAllCities = async () => {
+            setIsLoadingInitial(true);
+            setError(null);
             try {
-                const response = await hotelService.searchHotels({ page: 0, size: 50 });
-                if (response.content?.length > 0) {
-                    const uniqueCities = new Map<string, string>();
-                    response.content.forEach(hotel => {
-                        if (!uniqueCities.has(hotel.city.name)) {
-                            uniqueCities.set(hotel.city.name, hotel.city.id);
-                        }
-                    });
+                const cities = await locationService.getCities();
 
-                    const cityNames = Array.from(uniqueCities.keys());
-                    setFeaturedLocations(cityNames);
-                    setCityIdMap(uniqueCities); // << LƯU LẠI BẢN ĐỒ ID
-                    setActiveLocation(cityNames[0]);
+                // DEBUG 1: KIỂM TRA DANH SÁCH THÀNH PHỐ TỪ API
+                console.log('DEBUG 1: Tất cả thành phố đã tải:', cities);
+
+                if (cities && cities.length > 0) {
+                    setFeaturedLocations(cities);
+                    setActiveLocation(cities[0]);
                 } else {
-                    setError("Không tìm thấy khách sạn nào.");
+                    setError("Không tìm thấy địa điểm nào.");
                 }
             } catch (err) {
                 setError("Lỗi tải danh sách địa điểm.");
@@ -483,61 +324,68 @@ export default function HotelSelection() {
                 setIsLoadingInitial(false);
             }
         };
-        fetchLocationsAndCreateIdMap();
+        fetchAllCities();
     }, []);
 
+    // Effect 2: Tải khách sạn cho Thành phố được chọn
     useEffect(() => {
         const fetchHotelsForTab = async () => {
-            if (!activeLocation || locationData.has(activeLocation) || cityIdMap.size === 0) {
+            if (!activeLocation || locationData.has(activeLocation.id)) {
                 return;
             }
-
-            const cityId = cityIdMap.get(activeLocation);
-            if (!cityId) {
-                setError(`Không tìm thấy ID cho ${activeLocation}`);
-                return;
-            }
-
             setIsLoadingTab(true);
             setError(null);
+
+            // DEBUG 2: KIỂM TRA XEM ĐANG TẢI CHO THÀNH PHỐ NÀO VÀ ID LÀ GÌ
+            console.log(`DEBUG 2: Chuẩn bị tải khách sạn cho: "${activeLocation.name}" (ID: ${activeLocation.id})`);
+
             try {
-                const response = await hotelService.searchHotels({ 'city-id': cityId, page: 0, size: 6 });
-                setLocationData(prev => new Map(prev).set(activeLocation, {
-                    hotels: response.content,
+                const response = await hotelService.searchHotels({ 'city-id': activeLocation.id, page: 0, size: 6 });
+
+                // DEBUG 3: XEM KẾT QUẢ TRẢ VỀ TỪ BACKEND
+                console.log(`DEBUG 3: Phản hồi từ API cho "${activeLocation.name}":`, response);
+
+                // Cập nhật state ngay cả khi content rỗng để UI biết là đã tải xong
+                setLocationData(prev => new Map(prev).set(activeLocation.id, {
+                    hotels: response.content || [],
                     page: response.page,
                     totalPages: response.totalPages,
                 }));
+
             } catch (err) {
-                setError(`Lỗi tải khách sạn tại ${activeLocation}.`);
+                setError(`Lỗi tải khách sạn tại ${activeLocation.name}.`);
+                // Nếu lỗi, cũng set một giá trị rỗng để UI không bị treo
+                setLocationData(prev => new Map(prev).set(activeLocation.id, {
+                    hotels: [], page: 0, totalPages: 0,
+                }));
             } finally {
                 setIsLoadingTab(false);
             }
         };
-
-        if (!isLoadingInitial) {
+        if (!isLoadingInitial && activeLocation) {
             fetchHotelsForTab();
         }
-    }, [activeLocation, isLoadingInitial, cityIdMap]);
+    }, [activeLocation, isLoadingInitial]);
 
+    // Các hàm còn lại không cần thay đổi, giữ nguyên như code của bạn
     const handleLoadMore = async () => {
-        const currentData = locationData.get(activeLocation);
-        const cityId = cityIdMap.get(activeLocation);
-
-        if (!currentData || !cityId || currentData.page >= currentData.totalPages - 1 || isLoadingMore) {
+        if (!activeLocation || isLoadingMore) return;
+        const currentData = locationData.get(activeLocation.id);
+        if (!currentData || currentData.page >= currentData.totalPages - 1) {
             return;
         }
-
         setIsLoadingMore(true);
         try {
             const nextPage = currentData.page + 1;
-            const response = await hotelService.searchHotels({ 'city-id': cityId, page: nextPage, size: 6 });
+            const response = await hotelService.searchHotels({ 'city-id': activeLocation.id, page: nextPage, size: 6 });
             setLocationData(prev => {
+                const existingData = prev.get(activeLocation.id)!;
                 const updatedData = {
-                    hotels: [...currentData.hotels, ...response.content],
+                    hotels: [...existingData.hotels, ...response.content],
                     page: response.page,
                     totalPages: response.totalPages,
                 };
-                return new Map(prev).set(activeLocation, updatedData);
+                return new Map(prev).set(activeLocation.id, updatedData);
             });
         } catch (err) {
             console.error("Lỗi tải thêm khách sạn:", err);
@@ -545,63 +393,68 @@ export default function HotelSelection() {
             setIsLoadingMore(false);
         }
     };
-
-    const handleLocationClick = (location: string) => {
-        if (location !== activeLocation) setActiveLocation(location);
+    const handleLocationClick = (location: City) => {
+        if (activeLocation?.id !== location.id) {
+            setActiveLocation(location);
+        }
     };
-
+    useEffect(() => {
+        const container = scrollContainerRef.current;
+        if (!container) return;
+        const handleScroll = () => {
+            if (isLoadingMore || !activeLocation) return;
+            const { scrollLeft, scrollWidth, clientWidth } = container;
+            setCanScrollLeft(scrollLeft > 10);
+            const isAtEnd = scrollLeft + clientWidth >= scrollWidth - 10;
+            const currentData = locationData.get(activeLocation.id);
+            const hasMorePages = currentData ? currentData.page < currentData.totalPages - 1 : false;
+            setCanScrollRight(!isAtEnd || hasMorePages);
+            if (scrollLeft + clientWidth >= scrollWidth - 200 && hasMorePages) {
+                handleLoadMore();
+            }
+        };
+        container.scrollLeft = 0;
+        const timer = setTimeout(handleScroll, 150);
+        container.addEventListener('scroll', handleScroll, { passive: true });
+        const observer = new ResizeObserver(handleScroll);
+        observer.observe(container);
+        return () => {
+            clearTimeout(timer);
+            container.removeEventListener('scroll', handleScroll);
+            observer.disconnect();
+        };
+    }, [activeLocation, locationData, isLoadingMore]);
     const handleScrollButton = (direction: 'left' | 'right') => {
-        if (!scrollContainerRef.current) return;
+        if (!scrollContainerRef.current || !activeLocation) return;
         const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
         const scrollAmount = clientWidth * 0.8;
         if (direction === 'left') {
             scrollContainerRef.current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
         } else {
             const isAtEnd = scrollLeft + clientWidth >= scrollWidth - 10;
-            const currentData = locationData.get(activeLocation);
+            const currentData = locationData.get(activeLocation.id);
             const hasMorePages = currentData ? currentData.page < currentData.totalPages - 1 : false;
-            if (isAtEnd && hasMorePages) handleLoadMore();
-            else scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            if (isAtEnd && hasMorePages) {
+                handleLoadMore();
+            } else {
+                scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            }
         }
     };
-
-    useEffect(() => {
-        const container = scrollContainerRef.current;
-        const checkScroll = () => {
-            if (container) {
-                const { scrollLeft, scrollWidth, clientWidth } = container;
-                setCanScrollLeft(scrollLeft > 5);
-                const currentData = locationData.get(activeLocation);
-                const hasMorePages = currentData ? currentData.page < currentData.totalPages - 1 : false;
-                setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 5 || hasMorePages);
-            }
-        };
-        if (container) {
-            container.scrollLeft = 0;
-            const timer = setTimeout(checkScroll, 150);
-            const observer = new ResizeObserver(checkScroll);
-            observer.observe(container);
-            container.addEventListener('scroll', checkScroll, { passive: true });
-            return () => {
-                clearTimeout(timer);
-                container.removeEventListener('scroll', checkScroll);
-                observer.disconnect();
-            };
-        }
-    }, [locationData, activeLocation]);
-
-    const currentHotels = locationData.get(activeLocation)?.hotels || [];
+    const currentHotels = activeLocation ? (locationData.get(activeLocation.id)?.hotels || []) : [];
     const isLoading = isLoadingInitial || isLoadingTab;
 
     return (
         <div className="py-5">
             <div className="container">
                 <h2 className="fw-bold mb-4 text-black">🏨 Nhiều lựa chọn khách sạn</h2>
-                {!isLoadingInitial && (
+                {isLoadingInitial ? (
+                    <div className="text-center p-3"><div className="spinner-border text-primary spinner-border-sm"></div></div>
+                ) : (
                     <div className="mb-4">
                         {featuredLocations.map(loc => (
-                            <button key={loc} className={`btn rounded-pill me-2 mb-2 fw-semibold ${activeLocation === loc ? 'btn-primary' : 'bg-light text-primary border-0'}`} onClick={() => handleLocationClick(loc)}>
-                                {formatLocationNameForDisplay(loc)}
+                            <button key={loc.id} className={`btn rounded-pill me-2 mb-2 fw-semibold ${activeLocation?.id === loc.id ? 'btn-primary' : 'bg-light text-primary border-0'}`} onClick={() => handleLocationClick(loc)}>
+                                {formatLocationNameForDisplay(loc.name)}
                             </button>
                         ))}
                     </div>
@@ -609,15 +462,17 @@ export default function HotelSelection() {
                 <div className="position-relative">
                     {!isLoading && canScrollLeft && <button className={`${styles.sliderNavButton} ${styles.prevButton}`} onClick={() => handleScrollButton('left')}>&lt;</button>}
                     {!isLoading && canScrollRight && <button className={`${styles.sliderNavButton} ${styles.nextButton}`} onClick={() => handleScrollButton('right')}>&gt;</button>}
-                    <div ref={scrollContainerRef} className="row flex-nowrap g-4 align-items-stretch" style={{ overflowX: 'auto', scrollbarWidth: 'none' }}>
+                    <div ref={scrollContainerRef} className="row flex-nowrap g-4 align-items-stretch" style={{ overflowX: 'auto', scrollbarWidth: 'none', minHeight: '300px' }}>
                         {isLoading ? (
-                            <div className="col-12 text-center py-5 d-flex justify-content-center"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Đang tải...</span></div></div>
-                        ) : error ? (
+                            <div className="col-12 text-center py-5 d-flex justify-content-center align-items-center"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Đang tải...</span></div></div>
+                        ) : error && currentHotels.length === 0 ? (
                             <div className="col-12 text-center py-5"><div className="alert alert-danger">{error}</div></div>
                         ) : currentHotels.length === 0 && !isLoadingTab ? (
-                            <div className="col-12 text-center py-5 text-muted">
-                                <i className="bi bi-house-door mb-3" style={{ fontSize: '3rem' }}></i>
-                                <p>Không tìm thấy khách sạn nào tại {formatLocationNameForDisplay(activeLocation)}</p>
+                            <div className="col-12 text-center py-5 text-muted d-flex justify-content-center align-items-center">
+                                <div>
+                                    <i className="bi bi-house-door mb-3" style={{ fontSize: '3rem' }}></i>
+                                    <p>Không tìm thấy khách sạn nào tại {activeLocation ? formatLocationNameForDisplay(activeLocation.name) : ''}</p>
+                                </div>
                             </div>
                         ) : (
                             <>
@@ -631,7 +486,7 @@ export default function HotelSelection() {
                                             <div className="card-body d-flex flex-column">
                                                 <h5 className="card-title fw-bold text-truncate">{hotel.name}</h5>
                                                 <p className="card-text text-primary small fw-bold">⭐ {formatRating(hotel.averageScore)}</p>
-                                                <p className="card-text text-muted small ">📍 {getFullAddress(hotel)}</p>
+                                                <p className="card-text text-muted small " title={getFullAddress(hotel)}>📍 {getFullAddress(hotel)}</p>
                                                 <div className="mt-auto pt-2">
                                                     <p className="card-text text-danger fw-bold fs-5 mb-0">{formatPrice(hotel.currentPricePerNight)}</p>
                                                     {hotel.rawPricePerNight > hotel.currentPricePerNight && (<small className="text-muted text-decoration-line-through">{formatPrice(hotel.rawPricePerNight)}</small>)}
@@ -657,3 +512,296 @@ export default function HotelSelection() {
         </div>
     );
 }
+
+// 'use client';
+// import { useState, useEffect, useRef } from 'react';
+// import { useRouter } from 'next/navigation';
+// import Image from 'next/image';
+// import { hotelService, HotelResponse } from '@/service/hotelService';
+// import styles from './HotelSelection.module.css';
+// import { locationService } from '@/service/locationService';
+
+// // --- Các hàm tiện ích ---
+// const formatLocationNameForDisplay = (fullName: string) => fullName.replace(/^(Thành phố|Tỉnh|Thủ đô)\s/, '');
+// const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN').format(price) + ' VND';
+// const formatRating = (rating?: number) => rating && rating > 0 ? `${rating.toFixed(1)}/10` : 'Chưa có đánh giá';
+// const getFullAddress = (hotel: HotelResponse) =>
+//     [hotel.address, hotel.ward?.name, hotel.district?.name, hotel.city?.name].filter(Boolean).join(', ');
+// const getHotelImageUrl = (hotel: HotelResponse) => hotel.photos?.[0]?.photos?.[0]?.url || '/placeholder.svg';
+
+// // --- Interface mới để kết hợp dữ liệu ---
+// interface FeaturedLocation {
+//     id: string;          // ID của Tỉnh (dùng làm key và định danh)
+//     displayName: string; // Tên Thành phố chính (để hiển thị)
+//     filterId: string;    // ID của Tỉnh (dùng để lọc API)
+// }
+// interface LocationData {
+//     hotels: HotelResponse[];
+//     page: number;
+//     totalPages: number;
+// }
+// // Giả sử API /cities trả về cấu trúc này
+// interface CityFromAPI {
+//     id: string;
+//     name: string;
+//     provinceId: string;
+// }
+
+// export default function HotelSelection() {
+//     // --- State sử dụng interface mới ---
+//     const [featuredLocations, setFeaturedLocations] = useState<FeaturedLocation[]>([]);
+//     const [activeLocation, setActiveLocation] = useState<FeaturedLocation | null>(null);
+//     const [locationData, setLocationData] = useState<Map<string, LocationData>>(new Map());
+
+//     const [isLoadingInitial, setIsLoadingInitial] = useState(true);
+//     const [isLoadingTab, setIsLoadingTab] = useState(false);
+//     const [isLoadingMore, setIsLoadingMore] = useState(false);
+//     const [error, setError] = useState<string | null>(null);
+
+//     const scrollContainerRef = useRef<HTMLDivElement>(null);
+//     const [canScrollLeft, setCanScrollLeft] = useState(false);
+//     const [canScrollRight, setCanScrollRight] = useState(true);
+//     const router = useRouter();
+
+//     // Effect 1: Lấy cả Province và City để xử lý logic
+//     useEffect(() => {
+//         const fetchAndMapLocations = async () => {
+//             setIsLoadingInitial(true);
+//             setError(null);
+//             try {
+//                 // 1. Gọi song song cả hai API
+//                 const [provinces, cities] = await Promise.all([
+//                     locationService.getProvinces(),
+//                     locationService.getCities()
+//                 ]);
+
+//                 if (!provinces?.length) {
+//                     throw new Error("Không thể tải danh sách Tỉnh/Thành phố.");
+//                 }
+
+//                 // 2. Tạo một Map để tra cứu các thành phố theo provinceId
+//                 const citiesByProvince = new Map<string, CityFromAPI[]>();
+//                 cities.forEach((city: CityFromAPI) => {
+//                     if (!citiesByProvince.has(city.provinceId)) {
+//                         citiesByProvince.set(city.provinceId, []);
+//                     }
+//                     citiesByProvince.get(city.provinceId)!.push(city);
+//                 });
+
+//                 // 3. Xây dựng danh sách hiển thị cuối cùng
+//                 const finalLocations: FeaturedLocation[] = provinces.map(province => {
+//                     let displayName = province.name; // Mặc định là tên tỉnh
+
+//                     // Nếu là TP TTTW (ví dụ: 'Thành phố Đà Nẵng'), tên hiển thị là chính nó
+//                     if (province.name.startsWith('Thành phố')) {
+//                         displayName = province.name;
+//                     } else {
+//                         // Nếu là Tỉnh (ví dụ: 'Tỉnh Khánh Hòa'), tìm thành phố chính của nó
+//                         const mainCities = citiesByProvince.get(province.id);
+//                         if (mainCities && mainCities.length > 0) {
+//                             // Ưu tiên thành phố có tên gần giống tên tỉnh, hoặc lấy cái đầu tiên
+//                             displayName = mainCities[0].name; // Lấy 'Thành phố Nha Trang'
+//                         }
+//                     }
+
+//                     return {
+//                         id: province.id, // Dùng ID tỉnh làm key
+//                         displayName: displayName, // Tên để hiển thị
+//                         filterId: province.id, // Luôn dùng ID tỉnh để lọc
+//                     };
+//                 });
+
+//                 setFeaturedLocations(finalLocations);
+//                 setActiveLocation(finalLocations[0]);
+
+//             } catch (err: any) {
+//                 console.error("Lỗi khi xử lý địa điểm:", err);
+//                 setError(err.message || "Lỗi tải danh sách địa điểm.");
+//             } finally {
+//                 setIsLoadingInitial(false);
+//             }
+//         };
+
+//         fetchAndMapLocations();
+//     }, []);
+
+//     // Effect 2: Tải khách sạn DÙNG `filterId` (tức province-id)
+//     useEffect(() => {
+//         const fetchHotelsForTab = async () => {
+//             if (!activeLocation || locationData.has(activeLocation.id)) {
+//                 return;
+//             }
+//             setIsLoadingTab(true);
+//             setError(null);
+//             try {
+//                 const response = await hotelService.searchHotels({ 'province-id': activeLocation.filterId, page: 0, size: 6 });
+//                 setLocationData(prev => new Map(prev).set(activeLocation.id, {
+//                     hotels: response.content || [],
+//                     page: response.page,
+//                     totalPages: response.totalPages,
+//                 }));
+//             } catch (err) {
+//                 setError(`Lỗi tải khách sạn tại ${activeLocation.displayName}.`);
+//                 setLocationData(prev => new Map(prev).set(activeLocation.id, {
+//                     hotels: [], page: 0, totalPages: 0,
+//                 }));
+//             } finally {
+//                 setIsLoadingTab(false);
+//             }
+//         };
+//         if (!isLoadingInitial && activeLocation) {
+//             fetchHotelsForTab();
+//         }
+//     }, [activeLocation, isLoadingInitial]);
+
+//     // Hàm load more DÙNG `filterId`
+//     const handleLoadMore = async () => {
+//         if (!activeLocation || isLoadingMore) return;
+//         const currentData = locationData.get(activeLocation.id);
+//         if (!currentData || currentData.page >= currentData.totalPages - 1) {
+//             return;
+//         }
+//         setIsLoadingMore(true);
+//         try {
+//             const nextPage = currentData.page + 1;
+//             const response = await hotelService.searchHotels({ 'province-id': activeLocation.filterId, page: nextPage, size: 6 });
+//             setLocationData(prev => {
+//                 const existingData = prev.get(activeLocation.id)!;
+//                 const updatedData = {
+//                     hotels: [...existingData.hotels, ...response.content],
+//                     page: response.page,
+//                     totalPages: response.totalPages,
+//                 };
+//                 return new Map(prev).set(activeLocation.id, updatedData);
+//             });
+//         } catch (err) {
+//             console.error("Lỗi tải thêm khách sạn:", err);
+//         } finally {
+//             setIsLoadingMore(false);
+//         }
+//     };
+
+//     const handleLocationClick = (location: FeaturedLocation) => {
+//         if (activeLocation?.id !== location.id) {
+//             setActiveLocation(location);
+//         }
+//     };
+
+//     // (Phần còn lại của code không cần thay đổi)
+
+//     useEffect(() => {
+//         const container = scrollContainerRef.current;
+//         if (!container) return;
+//         const handleScroll = () => {
+//             if (isLoadingMore || !activeLocation) return;
+//             const { scrollLeft, scrollWidth, clientWidth } = container;
+//             setCanScrollLeft(scrollLeft > 10);
+//             const isAtEnd = scrollLeft + clientWidth >= scrollWidth - 10;
+//             const currentData = locationData.get(activeLocation.id);
+//             const hasMorePages = currentData ? currentData.page < currentData.totalPages - 1 : false;
+//             setCanScrollRight(!isAtEnd || hasMorePages);
+//             if (scrollLeft + clientWidth >= scrollWidth - 200 && hasMorePages) {
+//                 handleLoadMore();
+//             }
+//         };
+//         container.scrollLeft = 0;
+//         const timer = setTimeout(handleScroll, 150);
+//         container.addEventListener('scroll', handleScroll, { passive: true });
+//         const observer = new ResizeObserver(handleScroll);
+//         observer.observe(container);
+//         return () => {
+//             clearTimeout(timer);
+//             container.removeEventListener('scroll', handleScroll);
+//             observer.disconnect();
+//         };
+//     }, [activeLocation, locationData, isLoadingMore]);
+
+//     const handleScrollButton = (direction: 'left' | 'right') => {
+//         if (!scrollContainerRef.current || !activeLocation) return;
+//         const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+//         const scrollAmount = clientWidth * 0.8;
+//         if (direction === 'left') {
+//             scrollContainerRef.current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+//         } else {
+//             const isAtEnd = scrollLeft + clientWidth >= scrollWidth - 10;
+//             const currentData = locationData.get(activeLocation.id);
+//             const hasMorePages = currentData ? currentData.page < currentData.totalPages - 1 : false;
+//             if (isAtEnd && hasMorePages) {
+//                 handleLoadMore();
+//             } else {
+//                 scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+//             }
+//         }
+//     };
+
+//     const currentHotels = activeLocation ? (locationData.get(activeLocation.id)?.hotels || []) : [];
+//     const isLoading = isLoadingInitial || isLoadingTab;
+
+//     return (
+//         <div className="py-5">
+//             <div className="container">
+//                 <h2 className="fw-bold mb-4 text-black">🏨 Nhiều lựa chọn khách sạn</h2>
+//                 {isLoadingInitial ? (
+//                     <div className="text-center p-3"><div className="spinner-border text-primary spinner-border-sm"></div></div>
+//                 ) : (
+//                     <div className="mb-4">
+//                         {featuredLocations.map(loc => (
+//                             <button key={loc.id} className={`btn rounded-pill me-2 mb-2 fw-semibold ${activeLocation?.id === loc.id ? 'btn-primary' : 'bg-light text-primary border-0'}`} onClick={() => handleLocationClick(loc)}>
+//                                 {formatLocationNameForDisplay(loc.displayName)}
+//                             </button>
+//                         ))}
+//                     </div>
+//                 )}
+//                 <div className="position-relative">
+//                     {!isLoading && canScrollLeft && <button className={`${styles.sliderNavButton} ${styles.prevButton}`} onClick={() => handleScrollButton('left')}>&lt;</button>}
+//                     {!isLoading && canScrollRight && <button className={`${styles.sliderNavButton} ${styles.nextButton}`} onClick={() => handleScrollButton('right')}>&gt;</button>}
+//                     <div ref={scrollContainerRef} className="row flex-nowrap g-4 align-items-stretch" style={{ overflowX: 'auto', scrollbarWidth: 'none', minHeight: '300px' }}>
+//                         {isLoading ? (
+//                             <div className="col-12 text-center py-5 d-flex justify-content-center align-items-center"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Đang tải...</span></div></div>
+//                         ) : error && currentHotels.length === 0 ? (
+//                             <div className="col-12 text-center py-5"><div className="alert alert-danger">{error}</div></div>
+//                         ) : currentHotels.length === 0 && !isLoadingTab ? (
+//                             <div className="col-12 text-center py-5 text-muted d-flex justify-content-center align-items-center">
+//                                 <div>
+//                                     <i className="bi bi-house-door mb-3" style={{ fontSize: '3rem' }}></i>
+//                                     <p>Không tìm thấy khách sạn nào tại {activeLocation ? formatLocationNameForDisplay(activeLocation.displayName) : ''}</p>
+//                                 </div>
+//                             </div>
+//                         ) : (
+//                             <>
+//                                 {currentHotels.map((hotel) => (
+//                                     <div key={hotel.id} className="col-lg-3 col-md-6 col-sm-8 col-10" style={{ flex: '0 0 auto' }} onClick={() => router.push(`/hotels/${hotel.id}`)}>
+//                                         <div className="card h-100 shadow-sm border-0" style={{ cursor: 'pointer' }}>
+//                                             <div className="position-relative">
+//                                                 <Image src={getHotelImageUrl(hotel)} width={400} height={300} alt={hotel.name} className="card-img-top" style={{ objectFit: 'cover', height: '200px' }} />
+//                                                 {hotel.rawPricePerNight > hotel.currentPricePerNight && (<span className="badge bg-success position-absolute top-0 end-0 m-2">-{Math.round((1 - hotel.currentPricePerNight / hotel.rawPricePerNight) * 100)}%</span>)}
+//                                             </div>
+//                                             <div className="card-body d-flex flex-column">
+//                                                 <h5 className="card-title fw-bold text-truncate">{hotel.name}</h5>
+//                                                 <p className="card-text text-primary small fw-bold">⭐ {formatRating(hotel.averageScore)}</p>
+//                                                 <p className="card-text text-muted small " title={getFullAddress(hotel)}>📍 {getFullAddress(hotel)}</p>
+//                                                 <div className="mt-auto pt-2">
+//                                                     <p className="card-text text-danger fw-bold fs-5 mb-0">{formatPrice(hotel.currentPricePerNight)}</p>
+//                                                     {hotel.rawPricePerNight > hotel.currentPricePerNight && (<small className="text-muted text-decoration-line-through">{formatPrice(hotel.rawPricePerNight)}</small>)}
+//                                                     <small className="text-muted d-block">Chưa bao gồm thuế và phí</small>
+//                                                 </div>
+//                                             </div>
+//                                         </div>
+//                                     </div>
+//                                 ))}
+//                                 {isLoadingMore && (
+//                                     <div className="col-auto d-flex align-items-center justify-content-center p-5" style={{ flex: '0 0 auto' }}>
+//                                         <div className="spinner-border text-primary spinner-border-sm" role="status"><span className="visually-hidden">Đang tải thêm...</span></div>
+//                                     </div>
+//                                 )}
+//                             </>
+//                         )}
+//                     </div>
+//                 </div>
+//                 <div className="text-center mt-5">
+//                     <button onClick={() => router.push('/search')} className="btn btn-primary btn-lg">Xem thêm ưu đãi khách sạn</button>
+//                 </div>
+//             </div>
+//         </div>
+//     );
+// }

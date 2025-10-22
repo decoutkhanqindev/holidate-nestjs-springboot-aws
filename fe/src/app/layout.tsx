@@ -10,6 +10,7 @@ import PublicNavbar from "@/components/PublicNavbar";
 import AuthModal from "@/components/Auth/AuthModal";
 import BootstrapClient from "@/components/BootstrapClient";
 import Footer from "@/components/Footer";
+import ChatBubble from "@/components/ChatBot/ChatBubble";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -31,6 +32,7 @@ export default function RootLayout({
 
           <main style={{ paddingTop: '64px' }}>
             {children}
+            <ChatBubble />
           </main>
           <Footer />
           <AuthModal />

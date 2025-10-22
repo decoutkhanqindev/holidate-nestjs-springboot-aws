@@ -6,71 +6,49 @@ import { hotelService, HotelResponse } from '@/service/hotelService';
 import { locationService, LocationSuggestion, LocationType } from '@/service/locationService';
 import styles from './HotelsCard.module.css';
 
+// --- Các hàm tiện ích (Giữ nguyên) ---
+const formatLocationNameForDisplay = (fullName: string) => fullName.replace(/^(Thành phố|Tỉnh|Thủ đô)\s/, '');
+const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN').format(price) + ' VND';
+const formatRating = (rating?: number) => rating && rating > 0 ? `${rating.toFixed(1)}/10` : 'Chưa có đánh giá';
+const getHotelImageUrl = (hotel: HotelResponse) => hotel.photos?.[0]?.photos?.[0]?.url || '/placeholder.svg';
 const getTypeLabel = (type: LocationType) => {
     switch (type) {
         case 'HOTEL': return 'Khách sạn';
-        case 'PROVINCE': return 'Vùng';
-        case 'CITY_PROVINCE': return 'Vùng';
+        case 'PROVINCE': case 'CITY_PROVINCE': return 'Vùng';
         case 'CITY': return 'Thành phố';
         case 'DISTRICT': return 'Quận/Huyện';
         default: return '';
     }
-}; const formatLocationNameForDisplay = (fullName: string) => {
-    return fullName.replace(/^(Thành phố|Tỉnh|Thủ đô)\s/, '');
 };
-const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN').format(price) + ' VND';
-const formatRating = (rating?: number) => rating && rating > 0 ? `${rating.toFixed(1)}/10` : 'Chưa có đánh giá';
-const getHotelImageUrl = (hotel: HotelResponse) => hotel.photos?.[0]?.photos?.[0]?.url || '/placeholder.svg';
 
-
-// --- THAY THẾ TOÀN BỘ COMPONENT LocationSearchInput CŨ BẰNG CODE NÀY ---
+// --- Component LocationSearchInput (Giữ nguyên, không cần sửa) ---
 interface LocationSearchInputProps {
     value: string;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onLocationSelect: (location: LocationSuggestion) => void;
-    // allLocations không còn cần thiết nữa, nhưng giữ lại để không lỗi ở component cha
-    allLocations: string[];
 }
-
 const LocationSearchInput: React.FC<LocationSearchInputProps> = ({ value, onChange, onLocationSelect }) => {
     const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isSuggestionsVisible, setIsSuggestionsVisible] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
-
     useEffect(() => {
-        // Chỉ tìm kiếm khi người dùng nhập ít nhất 2 ký tự
-        if (value.trim().length < 2) {
-            setSuggestions([]);
-            setIsLoading(false);
-            return;
-        }
-
-        // Sử dụng debounce để tránh gọi API liên tục
+        if (value.trim().length < 2) { setSuggestions([]); return; }
         const debounceTimer = setTimeout(async () => {
             setIsLoading(true);
             try {
-                // Gọi hàm searchLocations đa năng từ service
                 const results = await locationService.searchLocations({ query: value });
                 setSuggestions(results);
-            } catch (error) {
-                console.error("Lỗi khi tìm kiếm địa điểm:", error);
-                setSuggestions([]); // Xóa gợi ý nếu có lỗi
-            } finally {
-                setIsLoading(false);
-            }
-        }, 350); // Đợi 350ms sau khi người dùng ngừng gõ
-
+            } catch (error) { console.error("Lỗi khi tìm kiếm địa điểm:", error); }
+            finally { setIsLoading(false); }
+        }, 350);
         return () => clearTimeout(debounceTimer);
     }, [value]);
-
     const handleSelectSuggestion = (location: LocationSuggestion) => {
         onLocationSelect(location);
         setSuggestions([]);
         setIsSuggestionsVisible(false);
     };
-
-    // Xử lý click ra ngoài để ẩn box gợi ý
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
@@ -80,50 +58,29 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({ value, onChan
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [wrapperRef]);
-
     return (
         <div className={styles.searchInputWrapper} ref={wrapperRef}>
-            <input
-                type="text"
-                className="form-control"
-                value={value}
-                onChange={onChange}
-                onFocus={() => setIsSuggestionsVisible(true)}
-                placeholder="Nhập tên khách sạn hoặc địa điểm"
-                autoComplete="off"
-            />
+            <input type="text" className="form-control" value={value} onChange={onChange} onFocus={() => setIsSuggestionsVisible(true)} placeholder="Nhập tên khách sạn hoặc địa điểm" autoComplete="off" />
             {isSuggestionsVisible && value.length > 1 && (
                 <ul className={styles.suggestionsList}>
-                    {isLoading ? (
-                        <li className={styles.suggestionInfo}>Đang tìm kiếm...</li>
-                    ) : suggestions.length > 0 ? (
-                        suggestions.map((suggestion) => (
+                    {isLoading ? <li className={styles.suggestionInfo}>Đang tìm kiếm...</li>
+                        : suggestions.length > 0 ? suggestions.map((suggestion) => (
                             <li key={suggestion.id} className={styles.suggestionItem} onClick={() => handleSelectSuggestion(suggestion)}>
-                                {/* Phần bên trái: Tên và mô tả */}
-                                <div className={styles.suggestionContent}>
-                                    <strong>{suggestion.name}</strong>
-                                    <div className={styles.suggestionDescription}>{suggestion.description}</div>
-                                </div>
-                                {/* Phần bên phải: Loại và số lượng khách sạn */}
-                                <div className={styles.suggestionMeta}>
-                                    <span className={styles.suggestionTypeLabel}>{getTypeLabel(suggestion.type)}</span>
-                                    {suggestion.hotelCount && suggestion.hotelCount > 0 && (
-                                        <span className={styles.suggestionHotelCount}>
-                                            {suggestion.hotelCount.toLocaleString('vi-VN')} khách sạn
-                                        </span>
-                                    )}
-                                </div>
+                                <div className={styles.suggestionContent}><strong>{suggestion.name}</strong><div className={styles.suggestionDescription}>{suggestion.description}</div></div>
+                                <div className={styles.suggestionMeta}><span className={styles.suggestionTypeLabel}>{getTypeLabel(suggestion.type)}</span>{suggestion.hotelCount && suggestion.hotelCount > 0 && (<span className={styles.suggestionHotelCount}>{suggestion.hotelCount.toLocaleString('vi-VN')} khách sạn</span>)}</div>
                             </li>
-                        ))
-                    ) : (
-                        <li className={styles.suggestionInfo}>Không tìm thấy kết quả phù hợp.</li>
-                    )}
+                        )) : <li className={styles.suggestionInfo}>Không tìm thấy kết quả phù hợp.</li>}
                 </ul>
             )}
         </div>
     );
 };
-// --- Cấu trúc dữ liệu cho state mới ---
+
+// --- Interfaces mới cho logic dữ liệu ---
+interface City {
+    id: string;
+    name: string;
+}
 interface LocationData {
     hotels: HotelResponse[];
     page: number;
@@ -131,9 +88,9 @@ interface LocationData {
 }
 
 
-// --- COMPONENT CHÍNH ĐÃ ĐƯỢC SỬA LỖI ---
+// --- COMPONENT CHÍNH ĐÃ ĐƯỢC NÂNG CẤP ---
 export default function HotelsCard() {
-    // --- STATE CHO PHẦN TÌM KIẾM (Giữ nguyên) ---
+    // --- STATE CHO PHẦN TÌM KIẾM ---
     const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const today = new Date().toISOString().split('T')[0];
@@ -142,12 +99,10 @@ export default function HotelsCard() {
     const [guests, setGuests] = useState('2 người lớn, 0 Trẻ em, 1 phòng');
     const router = useRouter();
 
-
-    // --- STATE MỚI CHO PHẦN HIỂN THỊ KHÁCH SẠN ---
-    const [locations, setLocations] = useState<string[]>([]);
-    const [cityIdMap, setCityIdMap] = useState<Map<string, string>>(new Map());
-    const [activeLocation, setActiveLocation] = useState<string>('');
-    const [hotelDataByCity, setHotelDataByCity] = useState<Map<string, LocationData>>(new Map());
+    // --- STATE ĐÃ ĐƯỢC NÂNG CẤP ---
+    const [featuredLocations, setFeaturedLocations] = useState<City[]>([]);
+    const [activeLocation, setActiveLocation] = useState<City | null>(null);
+    const [locationData, setLocationData] = useState<Map<string, LocationData>>(new Map());
 
     const [isLoadingInitial, setIsLoadingInitial] = useState(true);
     const [isLoadingTab, setIsLoadingTab] = useState(false);
@@ -160,97 +115,70 @@ export default function HotelsCard() {
 
     // --- LOGIC MỚI ĐỂ LẤY DỮ LIỆU ---
 
-    // Effect 1: Lấy danh sách thành phố ban đầu
+    // Effect 1: (ĐÃ SỬA) Lấy danh sách các Thành phố
     useEffect(() => {
-        const fetchInitialLocations = async () => {
+        const fetchAllCities = async () => {
             setIsLoadingInitial(true);
             setError(null);
             try {
-                // Lấy 50 khách sạn đầu tiên để có danh sách thành phố đa dạng
-                const response = await hotelService.searchHotels({ page: 0, size: 50 });
-                if (response.content?.length > 0) {
-                    const uniqueCities = new Map<string, string>();
-                    response.content.forEach(hotel => {
-                        if (hotel.city?.name && !uniqueCities.has(hotel.city.name)) {
-                            uniqueCities.set(hotel.city.name, hotel.city.id);
-                        }
-                    });
-
-                    const cityNames = Array.from(uniqueCities.keys());
-                    setLocations(cityNames);
-                    setCityIdMap(uniqueCities);
-                    if (cityNames.length > 0) {
-                        setActiveLocation(cityNames[0]);
-                    }
+                const cities = await locationService.getCities();
+                if (cities && cities.length > 0) {
+                    setFeaturedLocations(cities);
+                    setActiveLocation(cities[0]);
                 } else {
-                    setError("Không tìm thấy khách sạn nào.");
+                    setError("Không tìm thấy địa điểm nào.");
                 }
             } catch (err) {
-                setError("Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại.");
+                setError("Lỗi tải danh sách địa điểm.");
             } finally {
                 setIsLoadingInitial(false);
             }
         };
-        fetchInitialLocations();
+        fetchAllCities();
     }, []);
 
-    // Effect 2: Tải khách sạn khi người dùng đổi tab (thành phố)
+    // Effect 2: (ĐÃ SỬA) Tải khách sạn cho Thành phố được chọn bằng 'city-id'
     useEffect(() => {
         const fetchHotelsForTab = async () => {
-            // Chỉ chạy khi có thành phố được chọn và chưa có dữ liệu cho thành phố đó
-            if (!activeLocation || hotelDataByCity.has(activeLocation) || cityIdMap.size === 0) {
-                return;
-            }
-
-            const cityId = cityIdMap.get(activeLocation);
-            if (!cityId) {
-                setError(`Không tìm thấy ID cho ${activeLocation}`);
-                return;
-            }
-
+            if (!activeLocation || locationData.has(activeLocation.id)) return;
             setIsLoadingTab(true);
             setError(null);
             try {
-                // Lấy 8 khách sạn đầu tiên cho tab mới
-                const response = await hotelService.searchHotels({ 'city-id': cityId, page: 0, size: 8 });
-                setHotelDataByCity(prev => new Map(prev).set(activeLocation, {
-                    hotels: response.content,
+                const response = await hotelService.searchHotels({ 'city-id': activeLocation.id, page: 0, size: 8 });
+                setLocationData(prev => new Map(prev).set(activeLocation.id, {
+                    hotels: response.content || [],
                     page: response.page,
                     totalPages: response.totalPages,
                 }));
             } catch (err) {
-                setError(`Lỗi tải khách sạn tại ${activeLocation}.`);
+                setError(`Lỗi tải khách sạn tại ${activeLocation.name}.`);
+                setLocationData(prev => new Map(prev).set(activeLocation.id, { hotels: [], page: 0, totalPages: 0 }));
             } finally {
                 setIsLoadingTab(false);
             }
         };
-
-        if (!isLoadingInitial) {
+        if (!isLoadingInitial && activeLocation) {
             fetchHotelsForTab();
         }
-    }, [activeLocation, isLoadingInitial, cityIdMap, hotelDataByCity]);
+    }, [activeLocation, isLoadingInitial]);
 
-    // Hàm để tải thêm khách sạn
+    // Hàm để tải thêm khách sạn (ĐÃ SỬA)
     const handleLoadMore = async () => {
-        const currentData = hotelDataByCity.get(activeLocation);
-        const cityId = cityIdMap.get(activeLocation);
-
-        if (!currentData || !cityId || currentData.page >= currentData.totalPages - 1 || isLoadingMore) {
-            return;
-        }
+        if (!activeLocation || isLoadingMore) return;
+        const currentData = locationData.get(activeLocation.id);
+        if (!currentData || currentData.page >= currentData.totalPages - 1) return;
 
         setIsLoadingMore(true);
         try {
             const nextPage = currentData.page + 1;
-            const response = await hotelService.searchHotels({ 'city-id': cityId, page: nextPage, size: 4 });
-
-            setHotelDataByCity(prev => {
-                const updatedData = {
-                    hotels: [...currentData.hotels, ...response.content],
+            const response = await hotelService.searchHotels({ 'city-id': activeLocation.id, page: nextPage, size: 4 });
+            setLocationData(prev => {
+                const existingData = prev.get(activeLocation.id)!;
+                return new Map(prev).set(activeLocation.id, {
+                    hotels: [...existingData.hotels, ...response.content],
                     page: response.page,
                     totalPages: response.totalPages,
-                };
-                return new Map(prev).set(activeLocation, updatedData);
+                });
             });
         } catch (err) {
             console.error("Lỗi tải thêm khách sạn:", err);
@@ -262,67 +190,49 @@ export default function HotelsCard() {
     const handleLocationSelect = (location: LocationSuggestion) => {
         setSelectedLocation(location);
         setSearchQuery(location.name);
-
-        let cityToActivate: string | null = null;
-        if (location.type === 'CITY' || location.type === 'PROVINCE') {
-            cityToActivate = location.name;
-        } else if (location.type === 'HOTEL' && location.description) {
-            // Giả sử description chứa tên thành phố
-            cityToActivate = location.description;
-        }
-
-        // Nếu thành phố được chọn có trong danh sách tab, kích hoạt nó
-        if (cityToActivate && locations.includes(cityToActivate)) {
-            setActiveLocation(cityToActivate);
-        }
     };
 
     // Logic cuộn và kiểm tra nút
-    const checkScrollButtons = () => {
-        const container = scrollContainerRef.current;
-        if (container) {
-            const { scrollLeft, scrollWidth, clientWidth } = container;
-            setShowPrevButton(scrollLeft > 10);
-
-            const currentData = hotelDataByCity.get(activeLocation);
-            const hasMorePages = currentData ? currentData.page < currentData.totalPages - 1 : false;
-
-            // Hiển thị nút next nếu chưa cuộn hết HOẶC còn trang để tải
-            setShowNextButton(scrollLeft < scrollWidth - clientWidth - 10 || hasMorePages);
-        }
-    };
-
     useEffect(() => {
         const container = scrollContainerRef.current;
-        if (container) {
-            // Reset scroll về đầu khi đổi tab
-            container.scrollLeft = 0;
-            const timer = setTimeout(checkScrollButtons, 150);
-            container.addEventListener('scroll', checkScrollButtons);
-            window.addEventListener('resize', checkScrollButtons);
-
-            return () => {
-                clearTimeout(timer);
-                container.removeEventListener('scroll', checkScrollButtons);
-                window.removeEventListener('resize', checkScrollButtons);
-            };
-        }
-    }, [activeLocation, hotelDataByCity]);
-
-
-    const handleScroll = (direction: 'left' | 'right') => {
-        const container = scrollContainerRef.current;
         if (!container) return;
+
+        const handleScroll = () => {
+            if (isLoadingMore || !activeLocation) return;
+            const { scrollLeft, scrollWidth, clientWidth } = container;
+            setShowPrevButton(scrollLeft > 10);
+            const isAtEnd = scrollLeft + clientWidth >= scrollWidth - 10;
+            const currentData = locationData.get(activeLocation.id);
+            const hasMorePages = currentData ? currentData.page < currentData.totalPages - 1 : false;
+            setShowNextButton(!isAtEnd || hasMorePages);
+            if (scrollLeft + clientWidth >= scrollWidth - 200 && hasMorePages) {
+                handleLoadMore();
+            }
+        };
+
+        container.scrollLeft = 0;
+        const timer = setTimeout(handleScroll, 150);
+        container.addEventListener('scroll', handleScroll, { passive: true });
+        window.addEventListener('resize', handleScroll);
+
+        return () => {
+            clearTimeout(timer);
+            container.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('resize', handleScroll);
+        };
+    }, [activeLocation, locationData, isLoadingMore]);
+
+    const handleScrollButton = (direction: 'left' | 'right') => {
+        const container = scrollContainerRef.current;
+        if (!container || !activeLocation) return;
 
         if (direction === 'left') {
             container.scrollBy({ left: -container.clientWidth * 0.8, behavior: 'smooth' });
         } else {
             const { scrollLeft, scrollWidth, clientWidth } = container;
             const isAtEnd = scrollLeft + clientWidth >= scrollWidth - 20;
-            const currentData = hotelDataByCity.get(activeLocation);
+            const currentData = locationData.get(activeLocation.id);
             const hasMorePages = currentData ? currentData.page < currentData.totalPages - 1 : false;
-
-            // Nếu đang ở cuối và còn trang, tải thêm. Ngược lại, cuộn tiếp.
             if (isAtEnd && hasMorePages) {
                 handleLoadMore();
             } else {
@@ -331,20 +241,59 @@ export default function HotelsCard() {
         }
     };
 
+    // const handleMainSearch = () => {
+    //     const params = new URLSearchParams();
+    //     if (selectedLocation?.type === 'HOTEL') {
+    //         params.set('hotelId', selectedLocation.id.replace('hotel-', ''));
+    //     }
+    //     params.set('query', searchQuery);
+    //     if (checkInDate) params.set('checkin', checkInDate);
+    //     params.set('nights', numNights.toString());
+    //     params.set('guests', guests);
+    //     router.push(`/search?${params.toString()}`);
+    // };
+    // Trong file HotelsCard.tsx
+
     const handleMainSearch = () => {
-        // (Giữ nguyên logic tìm kiếm chính)
         const params = new URLSearchParams();
-        if (selectedLocation?.type === 'HOTEL') {
-            params.set('hotelId', selectedLocation.id.replace('hotel-', ''));
+
+        // --- LOGIC MỚI, THÔNG MINH HƠN ---
+        if (selectedLocation) {
+            // Nếu người dùng đã chọn một gợi ý, ưu tiên dùng ID để tìm kiếm chính xác
+            switch (selectedLocation.type) {
+                case 'PROVINCE':
+                case 'CITY_PROVINCE':
+                    // API của bạn dùng 'province-id' cho cả Tỉnh và TP TTTW
+                    params.set('province-id', selectedLocation.id.replace('province-', ''));
+                    break;
+                case 'CITY':
+                    params.set('city-id', selectedLocation.id.replace('city-', ''));
+                    break;
+                case 'DISTRICT':
+                    params.set('district-id', selectedLocation.id.replace('district-', ''));
+                    break;
+                case 'HOTEL':
+                    // Nếu là khách sạn, chuyển thẳng đến trang chi tiết khách sạn luôn cho nhanh
+                    router.push(`/hotels/${selectedLocation.id.replace('hotel-', '')}`);
+                    return; // Dừng hàm ở đây
+            }
+            // Vẫn set 'query' để hiển thị lại trên thanh search của trang kết quả
+            params.set('query', selectedLocation.name);
+
+        } else {
+            // Nếu người dùng không chọn gợi ý nào, chỉ gõ chữ rồi enter
+            params.set('query', searchQuery);
         }
-        params.set('query', searchQuery);
+
+        // Gắn các tham số còn lại
         if (checkInDate) params.set('checkin', checkInDate);
         params.set('nights', numNights.toString());
         params.set('guests', guests);
+
+        // Điều hướng đến trang search
         router.push(`/search?${params.toString()}`);
     };
-
-    const currentHotels = hotelDataByCity.get(activeLocation)?.hotels || [];
+    const currentHotels = activeLocation ? (locationData.get(activeLocation.id)?.hotels || []) : [];
     const isLoading = isLoadingInitial || isLoadingTab;
 
     return (
@@ -352,16 +301,8 @@ export default function HotelsCard() {
             {/* --- PHẦN HEADER VÀ FORM TÌM KIẾM (Không đổi) --- */}
             <div style={{ background: "linear-gradient(90deg,#1e90ff 0,#00bfff 100%)", padding: "40px 0 60px 0" }}>
                 <div className="container">
-                    <div className="row align-items-center">
-                        <div className="col-md-8">
-                            <h2 className="fw-bold text-white mb-3" style={{ fontSize: "2rem" }}>
-                                Tìm & đặt phòng khách sạn giá rẻ chỉ với 3 bước đơn giản!
-                            </h2>
-                            <p className="text-white fs-5 mb-4">
-                                Khám phá ngay những ưu đãi tốt nhất dành cho bạn tại Traveloka!
-                            </p>
-                        </div>
-                    </div>
+                    <h2 className="fw-bold text-white mb-3" style={{ fontSize: "2rem" }}>Tìm & đặt phòng khách sạn giá rẻ chỉ với 3 bước đơn giản!</h2>
+                    <p className="text-white fs-5 mb-4">Khám phá ngay những ưu đãi tốt nhất dành cho bạn tại Traveloka!</p>
                 </div>
             </div>
             <div className="container" style={{ marginTop: "-60px", marginBottom: "40px" }}>
@@ -369,12 +310,7 @@ export default function HotelsCard() {
                     <div className="row g-3 align-items-end">
                         <div className="col-md-6">
                             <label className="fw-semibold mb-2 text-dark">Thành phố, địa điểm hoặc tên khách sạn:</label>
-                            <LocationSearchInput
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                onLocationSelect={handleLocationSelect}
-                                allLocations={locations}
-                            />
+                            <LocationSearchInput value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onLocationSelect={handleLocationSelect} />
                         </div>
                         <div className="col-md-3">
                             <label className="fw-semibold mb-2 text-dark">Nhận phòng:</label>
@@ -383,7 +319,7 @@ export default function HotelsCard() {
                         <div className="col-md-3">
                             <label className="fw-semibold mb-2 text-dark">Số đêm:</label>
                             <select className="form-select" value={numNights} onChange={(e) => setNumNights(Number(e.target.value))}>
-                                {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n} đêm</option>)}
+                                {[...Array(5)].map((_, i) => <option key={i + 1} value={i + 1}>{i + 1} đêm</option>)}
                             </select>
                         </div>
                         <div className="col-md-6 mt-3">
@@ -402,39 +338,33 @@ export default function HotelsCard() {
                 </div>
             </div>
 
-            {/* --- PHẦN HIỂN THỊ KHÁCH SẠN (Đã được cập nhật) --- */}
+            {/* --- PHẦN HIỂN THỊ KHÁCH SẠN (Đã được nâng cấp) --- */}
             <div className="container">
                 <h2 className="fw-bold mb-4 text-black">🌴 Chơi cuối tuần gần nhà</h2>
-                {!isLoadingInitial && (
+                {isLoadingInitial ? (
+                    <div className="text-center p-3"><div className="spinner-border text-primary spinner-border-sm"></div></div>
+                ) : (
                     <div className="mb-4">
-                        {locations.map((loc) => (
-                            <button
-                                key={loc}
-                                className={`btn rounded-pill me-2 mb-2 fw-semibold ${activeLocation === loc ? 'btn-primary' : 'bg-light text-primary border-0'}`}
-                                onClick={() => setActiveLocation(loc)}
-                            >
-                                {formatLocationNameForDisplay(loc)}
+                        {featuredLocations.map((loc) => (
+                            <button key={loc.id} className={`btn rounded-pill me-2 mb-2 fw-semibold ${activeLocation?.id === loc.id ? 'btn-primary' : 'bg-light text-primary border-0'}`} onClick={() => setActiveLocation(loc)}>
+                                {formatLocationNameForDisplay(loc.name)}
                             </button>
                         ))}
                     </div>
                 )}
 
                 <div className={styles.hotelScrollWrapper}>
-                    {showPrevButton && <button className={`${styles.hotelNavButton} ${styles.hotelPrevButton}`} onClick={() => handleScroll('left')}>&lt;</button>}
-
-                    <div className={styles.hotelListContainer} ref={scrollContainerRef}>
+                    {showPrevButton && <button className={`${styles.hotelNavButton} ${styles.hotelPrevButton}`} onClick={() => handleScrollButton('left')}>&lt;</button>}
+                    <div ref={scrollContainerRef} className={styles.hotelListContainer} style={{ minHeight: '300px' }}>
                         {isLoading ? (
-                            <div className="w-100 text-center py-5 d-flex justify-content-center"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Đang tải...</span></div></div>
-                        ) : error ? (
-                            <div className="w-100 text-center py-5">
-                                <div className="alert alert-danger" role="alert">{error}</div>
-                                <button className="btn btn-primary" onClick={() => window.location.reload()}>Tải lại trang</button>
-                            </div>
+                            <div className="w-100 text-center py-5 d-flex justify-content-center align-items-center"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Đang tải...</span></div></div>
+                        ) : error && currentHotels.length === 0 ? (
+                            <div className="w-100 text-center py-5"><div className="alert alert-danger" role="alert">{error}</div></div>
                         ) : currentHotels.length === 0 && !isLoadingTab ? (
-                            <div className="w-100 text-center py-5">
-                                <div className="text-muted">
+                            <div className="w-100 text-center py-5 d-flex justify-content-center align-items-center">
+                                <div>
                                     <i className="bi bi-house-door mb-3" style={{ fontSize: '3rem' }}></i>
-                                    <p>Không tìm thấy khách sạn nào tại {activeLocation ? formatLocationNameForDisplay(activeLocation) : ''}</p>
+                                    <p>Không tìm thấy khách sạn nào tại {activeLocation ? formatLocationNameForDisplay(activeLocation.name) : ''}</p>
                                 </div>
                             </div>
                         ) : (
@@ -471,8 +401,7 @@ export default function HotelsCard() {
                             </>
                         )}
                     </div>
-
-                    {showNextButton && <button className={`${styles.hotelNavButton} ${styles.hotelNextButton}`} onClick={() => handleScroll('right')}>&gt;</button>}
+                    {showNextButton && <button className={`${styles.hotelNavButton} ${styles.hotelNextButton}`} onClick={() => handleScrollButton('right')}>&gt;</button>}
                 </div>
             </div>
         </div>
