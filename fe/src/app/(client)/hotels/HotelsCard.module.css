@@ -1,56 +1,52 @@
-/* HotelSelection.module.css */
+/* ================================================= */
+/* ============= CSS CHO SLIDER KHÁCH SẠN ============ */
+/* ================================================= */
 
 .hotelScrollWrapper {
     position: relative;
 }
 
-/* === THAY ĐỔI QUAN TRỌNG: CSS SCROLL SNAP === */
 .hotelListContainer {
     display: flex;
     overflow-x: auto;
     gap: 1.5rem;
-    /* Giữ nguyên khoảng cách giữa các card */
-
-    /* Bật tính năng scroll snap */
     scroll-snap-type: x mandatory;
-    /* 'x' là trục ngang, 'mandatory' là bắt buộc hít */
-
     scroll-behavior: smooth;
     -ms-overflow-style: none;
     scrollbar-width: none;
+    padding-bottom: 10px;
+    /* Thêm chút đệm để bóng đổ không bị cắt */
 }
 
 .hotelListContainer::-webkit-scrollbar {
     display: none;
 }
 
-
-/* === THAY ĐỔI QUAN TRỌNG: SIZING VÀ SNAP ALIGN === */
 .hotelCardWrapper {
-    /* Mỗi card sẽ là một điểm để "hít" vào */
     scroll-snap-align: start;
-    /* Căn lề trái của card với lề trái của container */
-
-    /* Tính toán chiều rộng để luôn hiển thị 4 card */
-    /* Công thức: (100% không gian - tổng khoảng trống) / số lượng card */
-    /* Khoảng trống: 3 khoảng trống * 1.5rem mỗi khoảng */
     flex: 0 0 calc((100% - 3 * 1.5rem) / 4);
-    width: calc((100% - 3 * 1.5rem) / 4);
-
+    min-width: calc((100% - 3 * 1.5rem) / 4);
     cursor: pointer;
-    transition: transform 0.2s ease-in-out;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
 .hotelCardWrapper:hover {
     transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 
-/* Style cho các nút điều hướng (giữ nguyên) */
+.loadingMoreSpinner {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 2rem;
+}
+
 .hotelNavButton {
     position: absolute;
     top: 50%;
-    transform: translateY(-calc(50% + 0.5rem));
-    /* Dịch nút lên trên một chút để không bị che bởi thanh cuộn ảo */
+    transform: translateY(-calc(50% + 1rem));
     z-index: 10;
     width: 48px;
     height: 48px;
@@ -64,14 +60,13 @@
     color: #0d6efd;
     font-size: 24px;
     font-weight: bold;
-    line-height: 1;
     cursor: pointer;
     transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .hotelNavButton:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    transform: translateY(-calc(50% + 0.5rem)) scale(1.05);
+    transform: translateY(-calc(50% + 1rem)) scale(1.05);
 }
 
 .hotelPrevButton {
@@ -82,57 +77,17 @@
     right: -24px;
 }
 
-/* Responsive: Điều chỉnh số lượng card trên màn hình nhỏ hơn */
-@media (max-width: 992px) {
-
-    /* Hiển thị 3 card trên tablet */
-    .hotelCardWrapper {
-        flex-basis: calc((100% - 2 * 1.5rem) / 3);
-        width: calc((100% - 2 * 1.5rem) / 3);
-    }
-}
-
-@media (max-width: 768px) {
-
-    /* Hiển thị 2 card trên mobile ngang */
-    .hotelCardWrapper {
-        flex-basis: calc((100% - 1 * 1.5rem) / 2);
-        width: calc((100% - 1 * 1.5rem) / 2);
-    }
-
-    .hotelNavButton {
-        display: none;
-        /* Ẩn nút trên mobile, người dùng sẽ vuốt */
-    }
-}
-
-@media (max-width: 576px) {
-
-    /* Hiển thị 1 card và một phần card thứ 2 */
-    .hotelCardWrapper {
-        flex-basis: 80%;
-        width: 80%;
-        /* Khi chỉ có 1 card, căn lề "center" thường đẹp hơn */
-        scroll-snap-align: center;
-    }
-}
-
-
-/* ... CSS hiện có của bạn cho slider ... */
-
 /* ============================================= */
 /* ======== CSS CHO Ô TÌM KIẾM ĐỘNG ============ */
 /* ============================================= */
 
 .searchInputWrapper {
     position: relative;
-    /* Quan trọng để định vị danh sách gợi ý */
 }
 
 .suggestionsList {
     position: absolute;
     top: 100%;
-    /* Hiển thị ngay bên dưới ô input */
     left: 0;
     right: 0;
     background-color: white;
@@ -142,17 +97,18 @@
     margin-top: 8px;
     padding: 0;
     z-index: 1000;
-    /* Đảm bảo nó nổi lên trên các phần tử khác */
-    max-height: 300px;
+    max-height: 350px;
     overflow-y: auto;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+/* --- BỘ QUY TẮC CSS ĐÚNG CHO GỢI Ý TÌM KIẾM --- */
 .suggestionItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding: 12px 16px;
     cursor: pointer;
-    display: flex;
-    flex-direction: column;
     border-bottom: 1px solid #f0f0f0;
 }
 
@@ -161,21 +117,93 @@
 }
 
 .suggestionItem:hover {
-    background-color: #f5f5f5;
+    background-color: #f8f9fa;
+    /* Màu xám nhạt hơn */
 }
 
-.suggestionItem strong {
+.suggestionContent {
+    flex-grow: 1;
+    margin-right: 16px;
+    overflow: hidden;
+}
+
+.suggestionContent strong {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     font-size: 1rem;
-    color: #333;
+    color: #212529;
+    /* Màu chữ chính */
+    font-weight: 600;
 }
 
-.suggestionItem small {
-    font-size: 0.85rem;
-    color: #888;
+.suggestionDescription {
+    font-size: 0.875em;
+    color: #6c757d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+}
+
+.suggestionMeta {
+    flex-shrink: 0;
+    text-align: right;
+    min-width: 110px;
+}
+
+.suggestionTypeLabel {
+    display: inline-block;
+    padding: 3px 10px;
+    font-size: 0.75em;
+    font-weight: 500;
+    border: 1px solid #ced4da;
+    border-radius: 12px;
+    color: #495057;
+    margin-bottom: 4px;
+    background-color: #f8f9fa;
+}
+
+.suggestionHotelCount {
+    display: block;
+    font-size: 0.8em;
+    color: #6c757d;
 }
 
 .suggestionInfo {
-    padding: 12px 16px;
-    color: #888;
-    font-style: italic;
+    padding: 16px;
+    color: #6c757d;
+    text-align: center;
+}
+
+
+/* ============================================= */
+/* ================== RESPONSIVE ================= */
+/* ============================================= */
+
+@media (max-width: 992px) {
+    .hotelCardWrapper {
+        flex-basis: calc((100% - 2 * 1.5rem) / 3);
+        min-width: calc((100% - 2 * 1.5rem) / 3);
+    }
+}
+
+@media (max-width: 768px) {
+    .hotelCardWrapper {
+        flex-basis: calc((100% - 1 * 1.5rem) / 2);
+        min-width: calc((100% - 1 * 1.5rem) / 2);
+    }
+
+    .hotelNavButton {
+        display: none;
+    }
+}
+
+@media (max-width: 576px) {
+    .hotelCardWrapper {
+        flex-basis: 80%;
+        min-width: 80%;
+        scroll-snap-align: center;
+    }
 }

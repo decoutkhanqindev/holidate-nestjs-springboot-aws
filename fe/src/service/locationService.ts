@@ -1,7 +1,7 @@
-// File: service/locationService.ts (PHIÊN BẢN HOÀN CHỈNH)
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-
+import axios from 'axios';
+import { hotelService, HotelResponse } from './hotelService';
 export type LocationType =
     | 'COUNTRY'
     | 'PROVINCE'
@@ -20,7 +20,6 @@ export interface LocationSuggestion {
     hotelCount?: number;
 }
 
-// --- CÁC HÀM GỌI API CƠ BẢN ---
 const getProvinces = async (name?: string): Promise<any[]> => {
     let url = `${API_BASE_URL}/location/provinces?`;
     if (name) url += `name=${encodeURIComponent(name)}&`;

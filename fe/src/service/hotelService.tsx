@@ -224,16 +224,29 @@ export interface HotelResponse {
     updatedAt?: string;
 }
 
+export interface Amenity { id: string; name: string; free: boolean; }
+export interface AmenityGroup { id: string; name: string; amenities: Amenity[]; }
+
 export interface Room {
     id: string | number;
     name: string;
+    view?: string;
     area: number;
     maxAdults: number;
+    maxChildren?: number;
     basePricePerNight: number;
-    bedType?: { name: string; };
-    photos?: {
-        photos: { url: string }[];
-    }[];
+    bedType?: { id: string; name: string; };
+    photos?: { id: string; name: string; photos: { id: string; url: string }[]; }[];
+    amenities?: AmenityGroup[];
+    quantity: number;
+    status: string;
+    cancellationPolicy?: any;
+    reschedulePolicy?: any;
+    smokingAllowed?: boolean;
+    wifiAvailable?: boolean;
+    breakfastIncluded?: boolean; // << Sửa lỗi báo đỏ
+    createdAt?: string;
+    updatedAt?: string | null;
 }
 
 export interface ApiResponse<T> {
@@ -321,12 +334,28 @@ class HotelService {
         }
     }
 
-    async getRoomsByHotelId(hotelId: string): Promise<Room[]> {
+    async getRoomsByHotelId(hotelId: string, page: number = 0, size: number = 5): Promise<PaginatedData<Room>> {
         try {
-            const response = await this.api.get<ApiResponse<Room[]>>(`/accommodation/rooms/hotel/${hotelId}`);
-            return response.data?.data || [];
+            const params = new URLSearchParams({
+                'hotel-id': hotelId,
+                page: page.toString(),
+                size: size.toString(),
+            });
+            const response = await this.api.get<ApiResponse<PaginatedData<Room>>>(`/accommodation/rooms?${params.toString()}`);
+            return response.data.data;
         } catch (error) {
             console.error(`Error fetching rooms for hotel id ${hotelId}:`, error);
+            return { content: [], page: 0, size, totalItems: 0, totalPages: 0, last: true, first: true, hasNext: false, hasPrevious: false };
+        }
+    }
+
+    // << HÀM NÀY ĐỂ LẤY TIỆN ÍCH >>
+    async getAmenitiesByHotelId(hotelId: string): Promise<AmenityGroup[]> {
+        try {
+            const response = await this.api.get<ApiResponse<AmenityGroup[]>>(`${this.baseURL}/${hotelId}/amenities`);
+            return response.data?.data || [];
+        } catch (error) {
+            console.error(`Error fetching amenities for hotel id ${hotelId}:`, error);
             return [];
         }
     }

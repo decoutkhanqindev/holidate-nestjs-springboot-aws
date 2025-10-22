@@ -1,8 +1,22 @@
+
+
+
 // "use client";
-// import { useEffect, useState, useRef } from "react";
-// import { useParams } from "next/navigation";
+// import { useEffect, useState, useRef, useCallback } from "react";
+// import { useParams, useRouter } from "next/navigation";
 // import Image from "next/image";
-// import { hotelService, HotelResponse } from "@/service/hotelService";
+// import { hotelService, HotelResponse, Room, AmenityGroup } from "@/service/hotelService";
+
+// // --- HÀM TIỆN ÍCH ---
+// const getFullAddress = (hotel: HotelResponse) => {
+//     return [
+//         hotel.address,
+//         hotel.street?.name,
+//         hotel.ward?.name,
+//         hotel.district?.name,
+//         hotel.city?.name
+//     ].filter(Boolean).join(', ');
+// };
 
 // const customStyles = `
 //     /* --- Checkbox --- */
@@ -93,16 +107,84 @@
 //     }
 // `;
 
+// // --- COMPONENT RIÊNG CHO MỘT CARD PHÒNG ---
+// function RoomCard({ room, handleSelectRoom, innerRef }: { room: Room; handleSelectRoom: (room: Room, price: number, includesBreakfast: boolean) => void; innerRef?: (node: HTMLDivElement | null) => void }) {
+//     const roomPhotos = room.photos?.flatMap(cat => cat.photos.map(p => p.url)) || [];
+//     const basePrice = room.basePricePerNight ?? 0;
+//     const originalPrice = basePrice * 1.25;
+//     const priceWithBreakfast = basePrice + 100000;
+
+//     return (
+//         <div ref={innerRef} className="bg-white rounded shadow-sm p-3 mb-3 text-dark">
+//             <div className="row g-3">
+//                 <div className="col-lg-4">
+//                     <h5 className="fw-bold d-block d-lg-none mb-2">{room.name}</h5>
+//                     <Image src={roomPhotos[0] || "/placeholder.svg"} width={400} height={250} alt={room.name} style={{ objectFit: "cover", borderRadius: "8px", width: "100%", height: "auto" }} />
+//                     <div className="mt-2 small text-muted">
+//                         {room.area > 0 && <div className="mb-1"><i className="bi bi-rulers me-2 text-primary"></i> {room.area} m²</div>}
+//                         {room.view && <div className="mb-1"><i className="bi bi-image me-2 text-primary"></i> {room.view}</div>}
+//                     </div>
+//                     <a href="#" className="text-primary small fw-bold mt-2 d-inline-block">Xem chi tiết phòng</a>
+//                 </div>
+//                 <div className="col-lg-8">
+//                     <h5 className="fw-bold d-none d-lg-block">{room.name}</h5>
+//                     <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center border rounded p-3 mt-2">
+//                         <div className="flex-grow-1">
+//                             <div className="fw-bold mb-2">Không bao gồm bữa sáng</div>
+//                             <div className="text-muted small mb-1">{room.bedType?.name || 'Giường phù hợp'}</div>
+//                             <div className="text-success small mb-1"><i className="bi bi-check-circle-fill me-1"></i> Không cần thanh toán ngay hôm nay</div>
+//                         </div>
+//                         <div className="mx-md-3 my-3 my-md-0 text-center">
+//                             <i className="bi bi-people-fill fs-4 text-primary"></i>
+//                             <div className="fw-bold">{room.maxAdults}</div>
+//                         </div>
+//                         <div className="text-md-end ms-md-auto" style={{ minWidth: '180px' }}>
+//                             <span className="badge bg-danger mb-1">Ưu đãi có hạn!</span>
+//                             <div className="text-muted text-decoration-line-through small">{originalPrice.toLocaleString("vi-VN")} VND</div>
+//                             <div className="fw-bold text-warning fs-5">{basePrice.toLocaleString("vi-VN")} VND</div>
+//                             <div className="text-muted small mb-2">Chưa bao gồm thuế và phí</div>
+//                             <button className="btn btn-primary fw-bold w-100" onClick={() => handleSelectRoom(room, basePrice, false)}>Chọn</button>
+//                         </div>
+//                     </div>
+//                     {room.breakfastIncluded && (
+//                         <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center border rounded p-3 mt-2">
+//                             <div className="flex-grow-1">
+//                                 <div className="fw-bold mb-2">Bao gồm bữa sáng</div>
+//                                 <div className="text-muted small mb-1">{room.bedType?.name || 'Giường phù hợp'}</div>
+//                             </div>
+//                             <div className="mx-md-3 my-3 my-md-0 text-center">
+//                                 <i className="bi bi-people-fill fs-4 text-primary"></i>
+//                                 <div className="fw-bold">{room.maxAdults}</div>
+//                             </div>
+//                             <div className="text-md-end ms-md-auto" style={{ minWidth: '180px' }}>
+//                                 <div className="fw-bold text-warning fs-5">{priceWithBreakfast.toLocaleString("vi-VN")} VND</div>
+//                                 <div className="text-muted small mb-2">Chưa bao gồm thuế và phí</div>
+//                                 <button className="btn btn-primary fw-bold w-100" onClick={() => handleSelectRoom(room, priceWithBreakfast, true)}>Chọn</button>
+//                             </div>
+//                         </div>
+//                     )}
+//                 </div>
+//             </div>
+//         </div>
+//     );
+// }
 
 // export default function HotelDetailPage() {
 //     const { hotelId } = useParams();
-//     const [hotel, setHotel] = useState<HotelResponse | null>(null);
-//     const [loading, setLoading] = useState(true);
-//     const [error, setError] = useState<string | null>(null);
-//     const [rooms, setRooms] = useState<any[]>([]);
-//     const [loadingRooms, setLoadingRooms] = useState(false);
+//     const router = useRouter();
 
-//     // Tab active logic
+//     const [hotel, setHotel] = useState<HotelResponse | null>(null);
+//     const [isPageLoading, setIsPageLoading] = useState(true);
+//     const [error, setError] = useState<string | null>(null);
+//     const [hotelAmenities, setHotelAmenities] = useState<AmenityGroup[]>([]);
+
+//     const [rooms, setRooms] = useState<Room[]>([]);
+//     const [page, setPage] = useState(0);
+//     const [hasMore, setHasMore] = useState(true);
+//     const [isFetchingMore, setIsFetchingMore] = useState(false);
+//     const [initialRoomsLoading, setInitialRoomsLoading] = useState(true);
+//     const [roomsError, setRoomsError] = useState<string | null>(null);
+
 //     const [activeTab, setActiveTab] = useState("overview");
 //     const overviewRef = useRef<HTMLDivElement>(null);
 //     const roomsSectionRef = useRef<HTMLDivElement>(null);
@@ -110,25 +192,104 @@
 //     const amenitiesRef = useRef<HTMLDivElement>(null);
 //     const policyRef = useRef<HTMLDivElement>(null);
 //     const reviewRef = useRef<HTMLDivElement>(null);
-
-//     // Dropdown hiển thị giá
-//     const priceDisplayOptions = [
-//         "Mỗi phòng mỗi đêm (chưa bao gồm thuế và phí)",
-//         "Mỗi phòng mỗi đêm (bao gồm thuế và phí)",
-//         "Tổng giá (chưa bao gồm thuế và phí)",
-//         "Tổng giá (bao gồm thuế và phí)",
-//     ];
-//     const [selectedPriceDisplay, setSelectedPriceDisplay] = useState(priceDisplayOptions[0]);
-//     const tabLabels = [
-//         { key: "overview", label: "Tổng quan" },
-//         { key: "rooms", label: "Phòng" },
-//         { key: "location", label: "Vị trí" },
-//         { key: "amenities", label: "Tiện ích" },
-//         { key: "policy", label: "Chính sách" },
-//         { key: "review", label: "Đánh giá" },
-//     ];
+//     const tabLabels = [{ key: "overview", label: "Tổng quan" }, { key: "rooms", label: "Phòng" }, { key: "location", label: "Vị trí" }, { key: "amenities", label: "Tiện ích" }, { key: "policy", label: "Chính sách" }, { key: "review", label: "Đánh giá" }];
 //     const tabRefs = tabLabels.map(() => useRef<HTMLButtonElement>(null));
 //     const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
+//     const priceDisplayOptions = ["Mỗi phòng mỗi đêm (chưa bao gồm thuế và phí)", "Mỗi phòng mỗi đêm (bao gồm thuế và phí)", "Tổng giá (chưa bao gồm thuế và phí)", "Tổng giá (bao gồm thuế và phí)"];
+//     const [selectedPriceDisplay, setSelectedPriceDisplay] = useState(priceDisplayOptions[0]);
+
+//     const loadMoreRooms = useCallback(async () => {
+//         if (!hotelId) return;
+//         setIsFetchingMore(true);
+//         try {
+//             const nextPage = page + 1;
+//             const response = await hotelService.getRoomsByHotelId(hotelId as string, nextPage, 5);
+//             setRooms(prev => [...prev, ...response.content]);
+//             setPage(response.page);
+//             setHasMore(!response.last);
+//         } catch (error) {
+//             console.error("Lỗi khi tải thêm phòng:", error);
+//             setRoomsError("Có lỗi xảy ra khi tải thêm phòng.");
+//         } finally {
+//             setIsFetchingMore(false);
+//         }
+//     }, [page, hasMore, hotelId]);
+
+//     const observer = useRef<IntersectionObserver | null>(null);
+//     const lastRoomElementRef = useCallback((node: HTMLDivElement | null) => {
+//         if (isFetchingMore) return;
+//         if (observer.current) observer.current.disconnect();
+//         if (typeof window !== 'undefined' && window.IntersectionObserver) {
+//             observer.current = new IntersectionObserver(entries => {
+//                 if (entries[0].isIntersecting && hasMore) {
+//                     loadMoreRooms();
+//                 }
+//             });
+//             if (node) observer.current.observe(node);
+//         }
+//     }, [isFetchingMore, hasMore, loadMoreRooms]);
+
+//     useEffect(() => {
+//         if (!hotelId) return;
+//         const hotelIdStr = hotelId as string;
+//         const fetchInitialData = async () => {
+//             setIsPageLoading(true);
+//             setInitialRoomsLoading(true);
+//             setError(null);
+//             setRoomsError(null);
+//             try {
+//                 const [hotelData, initialRoomsData] = await Promise.all([
+//                     hotelService.getHotelById(hotelIdStr),
+//                     hotelService.getRoomsByHotelId(hotelIdStr, 0, 5)
+//                 ]);
+//                 setHotel(hotelData);
+//                 setRooms(initialRoomsData.content);
+//                 setPage(initialRoomsData.page);
+//                 setHasMore(!initialRoomsData.last);
+//             } catch (err: any) {
+//                 console.error("Lỗi khi tải dữ liệu ban đầu:", err);
+//                 setError("Không thể tải thông tin khách sạn. Vui lòng thử lại sau.");
+//             } finally {
+//                 setIsPageLoading(false);
+//                 setInitialRoomsLoading(false);
+//             }
+//         };
+//         fetchInitialData();
+//     }, [hotelId]);
+
+//     const handleTabClick = (tab: string) => {
+//         setActiveTab(tab);
+//         const sectionRef = { overview: overviewRef, rooms: roomsSectionRef, location: locationRef, amenities: amenitiesRef, policy: policyRef, review: reviewRef }[tab] as React.RefObject<HTMLDivElement> | undefined;
+//         if (sectionRef?.current) {
+//             window.scrollTo({ top: sectionRef.current.offsetTop - 60, behavior: "smooth" });
+//         }
+//     };
+
+//     const handleSelectRoom = (room: Room, price: number, includesBreakfast: boolean) => {
+//         if (!hotelId) return;
+//         const checkin = new Date().toISOString().split('T')[0];
+//         const nights = 1;
+//         const guests = room.maxAdults;
+//         const params = new URLSearchParams({ hotelId: hotelId as string, roomId: room.id.toString(), roomName: room.name, price: price.toString(), checkin: checkin, nights: nights.toString(), guests: guests.toString(), breakfast: includesBreakfast.toString() });
+//         router.push(`/booking?${params.toString()}`);
+//     };
+
+//     useEffect(() => {
+//         const handleScroll = () => {
+//             const sections = [{ tab: "overview", ref: overviewRef }, { tab: "rooms", ref: roomsSectionRef }, { tab: "location", ref: locationRef }, { tab: "amenities", ref: amenitiesRef }, { tab: "policy", ref: policyRef }, { tab: "review", ref: reviewRef }];
+//             const scrollPosition = window.scrollY + 120;
+//             let currentTab = "overview";
+//             for (const section of sections) {
+//                 if (section.ref.current && section.ref.current.offsetTop <= scrollPosition) {
+//                     currentTab = section.tab;
+//                 }
+//             }
+//             setActiveTab(currentTab);
+//         };
+//         window.addEventListener("scroll", handleScroll, { passive: true });
+//         return () => window.removeEventListener("scroll", handleScroll);
+//     }, []);
+
 //     useEffect(() => {
 //         const idx = tabLabels.findIndex(tab => tab.key === activeTab);
 //         const btn = tabRefs[idx]?.current;
@@ -136,160 +297,16 @@
 //             const rect = btn.getBoundingClientRect();
 //             const parentRect = btn.parentElement?.getBoundingClientRect();
 //             if (parentRect) {
-//                 setUnderlineStyle({
-//                     left: rect.left - parentRect.left,
-//                     width: rect.width
-//                 });
+//                 setUnderlineStyle({ left: rect.left - parentRect.left, width: rect.width });
 //             }
 //         }
-//     }, [activeTab]);
-//     const handleTabClick = (tab: string) => {
-//         setActiveTab(tab);
-//         let ref = null;
-//         if (tab === "overview") ref = overviewRef;
-//         if (tab === "rooms") ref = roomsSectionRef;
-//         if (tab === "location") ref = locationRef;
-//         if (tab === "amenities") ref = amenitiesRef;
-//         if (tab === "policy") ref = policyRef;
-//         if (tab === "review") ref = reviewRef;
-//         if (ref && ref.current) {
-//             window.scrollTo({
-//                 top: ref.current.offsetTop - 60,
-//                 behavior: "smooth"
-//             });
-//         }
-//     };
-//     useEffect(() => {
-//         const handleScroll = () => {
-//             const sections = [
-//                 { tab: "overview", ref: overviewRef },
-//                 { tab: "rooms", ref: roomsSectionRef },
-//                 { tab: "location", ref: locationRef },
-//                 { tab: "amenities", ref: amenitiesRef },
-//                 { tab: "policy", ref: policyRef },
-//                 { tab: "review", ref: reviewRef },
-//             ];
-//             for (let i = sections.length - 1; i >= 0; i--) {
-//                 const section = sections[i];
-//                 if (section.ref.current) {
-//                     const rect = section.ref.current.getBoundingClientRect();
-//                     if (rect.top < 120) {
-//                         setActiveTab(section.tab);
-//                         break;
-//                     }
-//                 }
-//             }
-//         };
-//         window.addEventListener("scroll", handleScroll);
-//         return () => window.removeEventListener("scroll", handleScroll);
-//     }, []);
-//     useEffect(() => {
-//         async function fetchHotel() {
-//             try {
-//                 const data = await hotelService.getHotelById(hotelId as string);
-//                 setHotel(data);
-//             } catch (err: any) {
-//                 setError("Không tìm thấy khách sạn");
-//                 setHotel(null);
-//             } finally {
-//                 setLoading(false);
-//             }
-//         }
-//         fetchHotel();
-//     }, [hotelId]);
+//     }, [activeTab, tabRefs]);
 
-//     useEffect(() => {
-//         if (!hotelId) return;
-//         setLoadingRooms(true);
-//         fetch(`http://localhost:8080/accommodation/rooms/hotel/${hotelId}`)
-//             .then(res => res.json())
-//             .then(json => {
-//                 if (Array.isArray(json)) {
-//                     setRooms(json);
-//                 } else if (json.statusCode === 200 && Array.isArray(json.data)) {
-//                     setRooms(json.data);
-//                 } else {
-//                     setRooms([]);
-//                 }
-//             })
-//             .catch(() => setRooms([]))
-//             .finally(() => setLoadingRooms(false));
-//     }, [hotelId]);
+//     if (isPageLoading) return <div className="container py-5 text-center"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Đang tải...</span></div></div>;
+//     if (error || !hotel) return <div className="container py-5"><div className="alert alert-danger" role="alert">{error || "Không tìm thấy khách sạn"}</div></div>;
 
-//     // Scroll to section when tab click
-//     // const handleTabClick = (tab: string) => {
-//     //     setActiveTab(tab);
-//     //     let ref = null;
-//     //     if (tab === "overview") ref = overviewRef;
-//     //     if (tab === "rooms") ref = roomsSectionRef;
-//     //     if (tab === "location") ref = locationRef;
-//     //     if (tab === "amenities") ref = amenitiesRef;
-//     //     if (tab === "policy") ref = policyRef;
-//     //     if (tab === "review") ref = reviewRef;
-//     //     if (ref && ref.current) {
-//     //         window.scrollTo({
-//     //             top: ref.current.offsetTop - 60,
-//     //             behavior: "smooth"
-//     //         });
-//     //     }
-//     // };
-
-//     // Auto tab switch when scroll
-//     useEffect(() => {
-//         const handleScroll = () => {
-//             const sections = [
-//                 { tab: "overview", ref: overviewRef },
-//                 { tab: "rooms", ref: roomsSectionRef },
-//                 { tab: "location", ref: locationRef },
-//                 { tab: "amenities", ref: amenitiesRef },
-//                 { tab: "policy", ref: policyRef },
-//                 { tab: "review", ref: reviewRef },
-//             ];
-//             for (let i = sections.length - 1; i >= 0; i--) {
-//                 const section = sections[i];
-//                 if (section.ref.current) {
-//                     const rect = section.ref.current.getBoundingClientRect();
-//                     if (rect.top < 120) {
-//                         setActiveTab(section.tab);
-//                         break;
-//                     }
-//                 }
-//             }
-//         };
-//         window.addEventListener("scroll", handleScroll);
-//         return () => window.removeEventListener("scroll", handleScroll);
-//     }, []);
-
-//     if (loading) return <div className="container py-5">Đang tải...</div>;
-//     if (error || !hotel) return <div className="container py-5 text-danger">{error || "Không tìm thấy khách sạn"}</div>;
-
-//     const allPhotoUrls = hotel.photos
-//         ? hotel.photos.flatMap((cat) => Array.isArray(cat.photos) ? cat.photos.map((p) => p.url) : [])
-//         : [];
-
-//     const demoHotel = {
-//         name: hotel.name || "Davue Hotel Da Nang",
-//         address: hotel.address || "57-59 Đường Dương Đình Nghệ, Mỹ An, Ngũ Hành Sơn, Đà Nẵng",
-//         status: hotel.status || "active",
-//         averageScore: typeof hotel.averageScore === "number" ? hotel.averageScore : 8.7,
-//         currentPricePerNight: typeof hotel.currentPricePerNight === "number" ? hotel.currentPricePerNight : 229901,
-//         rawPricePerNight: typeof hotel.rawPricePerNight === "number" ? hotel.rawPricePerNight : 299000,
-//         availableRooms: typeof hotel.availableRooms === "number" ? hotel.availableRooms : 5,
-//         description: hotel.description ||
-//             "Khách sạn nằm gần biển Mỹ Khê, phòng đẹp, nhân viên thân thiện, tiện nghi đầy đủ, phù hợp nghỉ dưỡng và công tác.",
-//         photos: allPhotoUrls.length > 0
-//             ? allPhotoUrls
-//             : [
-//                 "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-b0698f733b24661b9d24b98b30019ca1.jpeg",
-//                 "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-8ca9569de0ab3f614019d698d56cc793.jpeg",
-//                 "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-c5671fb5232227e8d841abcbab94f24c.jpeg",
-//                 "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-aec1028c4f98d763a9ed14d005add27a.jpeg",
-//                 "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-1e7e2e2e2e2e2e2e2e2e2e2e2e2e2e2e.jpeg",
-//                 "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-2e7e2e2e2e2e2e2e2e2e2e2e2e2e2e2e.jpeg",
-//                 "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-3e7e2e2e2e2e2e2e2e2e2e2e2e2e2e2e.jpeg",
-//                 "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-4e7e2e2e2e2e2e2e2e2e2e2e2e2e2e2e.jpeg",
-//             ],
-//     };
+//     const allPhotoUrls = hotel.photos.flatMap(cat => Array.isArray(cat.photos) ? cat.photos.map(p => p.url) : []);
+//     const displayPhotos = allPhotoUrls.length > 0 ? allPhotoUrls : Array(5).fill("/placeholder.svg");
 
 //     const demoAmenities = [
 //         { icon: "bi bi-wifi", label: "WiFi" },
@@ -297,7 +314,7 @@
 //         { icon: "bi bi-building", label: "Nhà hàng" },
 //         { icon: "bi bi-clock", label: "Lễ tân 24h" },
 //         { icon: "bi bi-elevator", label: "Thang máy" },
-//         { icon: "bi bi-geo-alt", label: "Gần biển Mỹ Khê" },
+//         { icon: "bi bi-p-circle", label: "Chỗ đậu xe" },
 //     ];
 
 //     const demoNearby = [
@@ -309,7 +326,7 @@
 //     ];
 
 //     const demoReview = {
-//         score: 8.7,
+//         score: hotel.averageScore ?? 8.7,
 //         text: "Rất tốt",
 //         count: 1071,
 //         tags: [
@@ -323,48 +340,17 @@
 //         userScore: 8.4,
 //     };
 
-//     const mainPhoto = demoHotel.photos[0];
-//     const sidePhotos = demoHotel.photos.slice(1, 5);
-
 //     return (
 //         <div style={{ background: '#f7f9fb', minHeight: '100vh' }}>
 //             <style>{customStyles}</style>
-//             {/* ---  TAB ĐIỀU HƯỚNG  --- */}
-//             <div className="sticky-tab-bar">
-//                 <div className="container">
-//                     <div className="tab-list" style={{ position: "relative" }}>
-//                         {tabLabels.map((tab, idx) => (
-//                             <button
-//                                 key={tab.key}
-//                                 ref={tabRefs[idx]}
-//                                 className={`tab-item${activeTab === tab.key ? " active" : ""}`}
-//                                 onClick={() => handleTabClick(tab.key)}
-//                                 type="button"
-//                             >
-//                                 {tab.label}
-//                             </button>
-//                         ))}
-//                         <div
-//                             className="tab-underline"
-//                             style={{
-//                                 left: underlineStyle.left,
-//                                 width: underlineStyle.width,
-//                                 display: underlineStyle.width ? "block" : "none"
-//                             }}
-//                         />
-//                     </div>
-//                 </div>
-//             </div>
-//             <div style={{
-//                 background: 'linear-gradient(90deg,#1e3c72 0,#2a5298 100%)',
-//                 color: '#fff',
-//                 padding: '30px 0 8px 0'
-//             }}>
+
+//             {/* Thanh tìm kiếm màu xanh đậm */}
+//             <div style={{ background: 'linear-gradient(90deg,#1e3c72 0,#2a5298 100%)', color: '#fff', padding: '30px 0 8px 0' }}>
 //                 <div className="container d-flex align-items-center justify-content-between py-2">
 //                     <div className="d-flex align-items-center gap-3">
 //                         <div className="bg-primary bg-opacity-25 rounded-3 px-3 py-2 d-flex align-items-center">
 //                             <i className="bi bi-geo-alt-fill me-2"></i>
-//                             <span className="fw-bold">{demoHotel.name}</span>
+//                             <span className="fw-bold">{hotel.name}</span>
 //                         </div>
 //                         <div className="bg-primary bg-opacity-25 rounded-3 px-3 py-2 d-flex align-items-center">
 //                             <i className="bi bi-calendar-event me-2"></i>
@@ -383,80 +369,29 @@
 //                     </div>
 //                 </div>
 //             </div>
-//             {/*  điều hướng + thanh gạch xanh phía trên */}
-//             <div style={{ background: '#fff', borderBottom: '2px solid #e3e6ea', position: 'relative', zIndex: 10 }}>
-//                 <div style={{
-//                     height: '4px',
-//                     background: '#1565c0',
-//                     width: '100%',
-//                     position: 'absolute',
-//                     top: 0,
-//                     left: 0,
-//                     zIndex: 11
-//                 }} />
-
-//             </div>
-
 
 //             <div className="sticky-tab-bar">
-//                 <div className="container d-flex align-items-center gap-4" style={{ height: '48px', position: 'relative', zIndex: 12 }}>
-//                     <button
-//                         className={`tab-item${activeTab === "overview" ? " active" : ""}`}
-//                         onClick={() => handleTabClick("overview")}
-//                         type="button"
-//                     >
-//                         Tổng quan
-//                     </button>
-//                     <button
-//                         className={`tab-item${activeTab === "rooms" ? " active" : ""}`}
-//                         onClick={() => handleTabClick("rooms")}
-//                         type="button"
-//                     >
-//                         Phòng
-//                     </button>
-//                     <button
-//                         className={`tab-item${activeTab === "location" ? " active" : ""}`}
-//                         onClick={() => handleTabClick("location")}
-//                         type="button"
-//                     >
-//                         Vị trí
-//                     </button>
-//                     <button
-//                         className={`tab-item${activeTab === "amenities" ? " active" : ""}`}
-//                         onClick={() => handleTabClick("amenities")}
-//                         type="button"
-//                     >
-//                         Tiện ích
-//                     </button>
-//                     <button
-//                         className={`tab-item${activeTab === "policy" ? " active" : ""}`}
-//                         onClick={() => handleTabClick("policy")}
-//                         type="button"
-//                     >
-//                         Chính sách
-//                     </button>
-//                     <button
-//                         className={`tab-item${activeTab === "review" ? " active" : ""}`}
-//                         onClick={() => handleTabClick("review")}
-//                         type="button"
-//                     >
-//                         Đánh giá
-//                     </button>
+//                 <div className="container">
+//                     <div className="tab-list" style={{ position: "relative" }}>
+//                         {tabLabels.map((tab, idx) => (
+//                             <button key={tab.key} ref={tabRefs[idx]} className={`tab-item${activeTab === tab.key ? " active" : ""}`} onClick={() => handleTabClick(tab.key)} type="button">
+//                                 {tab.label}
+//                             </button>
+//                         ))}
+//                     </div>
 //                 </div>
 //             </div>
-//             {/* ---  NAV XANH ĐẬM   --- */}
 
-//             {/* Grid ảnh 1 lớn 4 nhỏ đều nhau */}
-//             <div className="container mt-4">
+//             <div ref={overviewRef} className="container mt-4">
 //                 <div className="row g-2">
 //                     <div className="col-md-7">
 //                         <div style={{ borderRadius: '16px', overflow: 'hidden', width: '100%', height: '320px' }}>
-//                             <Image src={mainPhoto} width={700} height={320} alt="Hotel main photo" style={{ objectFit: 'cover', width: '100%', height: '100%' }} />
+//                             <Image src={displayPhotos[0]} width={700} height={320} alt="Hotel main photo" style={{ objectFit: 'cover', width: '100%', height: '100%' }} priority />
 //                         </div>
 //                     </div>
 //                     <div className="col-md-5">
 //                         <div className="row g-2" style={{ minHeight: '320px' }}>
-//                             {sidePhotos.map((url, idx) => (
+//                             {displayPhotos.slice(1, 5).map((url, idx) => (
 //                                 <div key={idx} className="col-6">
 //                                     <div style={{ borderRadius: '10px', overflow: 'hidden', width: '100%', height: '154px' }}>
 //                                         <Image src={url} width={200} height={154} alt={`Hotel side photo ${idx + 1}`} style={{ objectFit: 'cover', width: '100%', height: '100%' }} />
@@ -467,40 +402,59 @@
 //                     </div>
 //                 </div>
 //             </div>
-//             {/* Card info nổi bo góc, đổ bóng */}
+
 //             <div className="container" style={{ marginTop: '32px', position: 'relative', zIndex: 2 }}>
 //                 <div className="row gx-4 gy-4">
 //                     <div className="col-lg-8">
 //                         <div className="card shadow-lg p-4 mb-4" style={{ borderRadius: '18px', background: '#fff' }}>
 //                             <div className="d-flex align-items-center mb-2">
 //                                 <span className="badge bg-primary me-2">Khách Sạn</span>
-//                                 <span className="text-warning fw-bold">★★★★★</span>
-//                                 <span className="ms-3 fw-bold fs-4 text-dark">{demoHotel.name}</span>
+//                                 {hotel.starRating > 0 && <span className="text-warning fw-bold">{'★'.repeat(hotel.starRating)}</span>}
+//                                 <span className="ms-3 fw-bold fs-4 text-dark">{hotel.name}</span>
 //                             </div>
 //                             <div className="mb-2">
-//                                 <span className="fw-bold">Địa chỉ:</span> {demoHotel.address}
+//                                 <span className="fw-bold">Địa chỉ:</span> {getFullAddress(hotel)}
 //                             </div>
 //                             <div className="mb-2 d-flex align-items-center flex-wrap">
 //                                 <span className="fw-bold">Giá phòng/đêm từ:</span>
-//                                 <span className="text-danger fw-bold ms-2">
-//                                     {typeof demoHotel.currentPricePerNight === "number" ? demoHotel.currentPricePerNight.toLocaleString("vi-VN") : "Liên hệ"} VND
-//                                 </span>
-//                                 {typeof demoHotel.rawPricePerNight === "number" && typeof demoHotel.currentPricePerNight === "number" && demoHotel.rawPricePerNight > demoHotel.currentPricePerNight && (
-//                                     <span className="text-muted text-decoration-line-through ms-2">{demoHotel.rawPricePerNight.toLocaleString("vi-VN")} VND</span>
-//                                 )}
-//                                 <button className="btn btn-warning btn-lg fw-bold px-4 ms-3 mt-2 mt-lg-0">Chọn phòng</button>
+//                                 <span className="text-danger fw-bold ms-2">{(hotel.currentPricePerNight ?? 0).toLocaleString("vi-VN")} VND</span>
+//                                 {(hotel.rawPricePerNight > hotel.currentPricePerNight) && (<span className="text-muted text-decoration-line-through ms-2">{(hotel.rawPricePerNight ?? 0).toLocaleString("vi-VN")} VND</span>)}
+//                                 <button className="btn btn-warning btn-lg fw-bold px-4 ms-3 mt-2 mt-lg-0" onClick={() => handleTabClick('rooms')}>Chọn phòng</button>
 //                             </div>
-//                             <div className="mb-2">
+//                             <div className="mb-2" ref={amenitiesRef}>
 //                                 <span className="fw-bold">Tiện ích chính:</span>
 //                                 <div className="d-flex flex-wrap mt-2">
 //                                     {demoAmenities.map((item, idx) => (
 //                                         <span key={idx} className="me-3 mb-2 d-flex align-items-center">
-//                                             <i className={item.icon + " text-primary me-1"} style={{ fontSize: "1.2rem" }}></i>
+//                                             <i className={`${item.icon} text-primary me-2`} style={{ fontSize: "1.1rem" }}></i>
 //                                             <span className="text-dark small fw-semibold">{item.label}</span>
 //                                         </span>
 //                                     ))}
 //                                 </div>
 //                             </div>
+//                         </div>
+//                         {/* Card Review */}
+//                         <div ref={reviewRef} className="card shadow p-4 mb-4" style={{ borderRadius: '16px', background: '#fff' }}>
+//                             <div className="d-flex align-items-center mb-2">
+//                                 <span className="fs-2 fw-bold text-primary">{demoReview.score}</span>
+//                                 <span className="ms-2 fw-bold">{demoReview.text}</span>
+//                                 <span className="ms-2 text-muted">{demoReview.count} đánh giá</span>
+//                             </div>
+//                             <div className="mb-2">
+//                                 {demoReview.tags.map((tag, idx) => (
+//                                     <span key={idx} className="badge bg-info text-dark me-2 mb-2">{tag.label} ({tag.count})</span>
+//                                 ))}
+//                             </div>
+//                             <div className="bg-light p-3 rounded">
+//                                 <span className="fw-bold">{demoReview.user}</span>
+//                                 <span className="badge bg-primary ms-2">{demoReview.userScore}/10</span>
+//                                 <p className="mb-0 mt-2 text-dark">{demoReview.comment}</p>
+//                             </div>
+//                         </div>
+//                         {/* Card Mô tả */}
+//                         <div className="card shadow p-4" style={{ borderRadius: '16px', background: '#fff' }}>
+//                             <h5 className="fw-bold mb-2">Mô tả khách sạn</h5>
+//                             <p className="mb-0 text-dark">{hotel.description}</p>
 //                         </div>
 //                     </div>
 //                     <div className="col-lg-4">
@@ -519,45 +473,9 @@
 //                     </div>
 //                 </div>
 //             </div>
-//             {/* Card review bo góc, spacing */}
-//             <div className="container mb-4">
-//                 <div className="row">
-//                     <div className="col-lg-8">
-//                         <div className="card shadow p-4" style={{ borderRadius: '16px', background: '#fff' }}>
-//                             <div className="d-flex align-items-center mb-2">
-//                                 <span className="fs-2 fw-bold text-primary">{demoReview.score}</span>
-//                                 <span className="ms-2 fw-bold">{demoReview.text}</span>
-//                                 <span className="ms-2 text-muted">{demoReview.count} đánh giá</span>
-//                             </div>
-//                             <div className="mb-2">
-//                                 {demoReview.tags.map((tag, idx) => (
-//                                     <span key={idx} className="badge bg-info text-dark me-2 mb-2">{tag.label} ({tag.count})</span>
-//                                 ))}
-//                             </div>
-//                             <div className="bg-light p-3 rounded">
-//                                 <span className="fw-bold">{demoReview.user}</span>
-//                                 <span className="badge bg-primary ms-2">{demoReview.userScore}/10</span>
-//                                 <p className="mb-0 mt-2 text-dark">{demoReview.comment}</p>
-//                             </div>
-//                         </div>
-//                     </div>
-//                 </div>
-//             </div>
-//             {/* Card mô tả bo góc */}
-//             <div className="container mb-4">
-//                 <div className="row">
-//                     <div className="col-lg-8">
-//                         <div className="card shadow p-4" style={{ borderRadius: '16px', background: '#fff' }}>
-//                             <h5 className="fw-bold mb-2">Mô tả khách sạn</h5>
-//                             <p className="mb-0 text-dark">{demoHotel.description}</p>
-//                         </div>
-//                     </div>
-//                 </div>
-//             </div>
 
-//             {/* --- PHẦN HIỂN THỊ PHÒNG --- */}
 //             <div ref={roomsSectionRef} className="container mb-5">
-//                 <h4 className="fw-bold mb-3 text-dark">Những phòng còn trống tại {demoHotel.name}</h4>
+//                 <h4 className="fw-bold mb-3 text-dark pt-4">Những phòng còn trống tại {hotel.name}</h4>
 //                 <div className="mb-3">
 //                     <div style={{ background: "#0070f3", color: "#fff", borderRadius: "8px", padding: "10px 18px", fontWeight: 500, fontSize: "16px" }}>
 //                         10. Travel Sale giảm đến 50% độc quyền trên App!
@@ -594,30 +512,14 @@
 //                         <div className="col-lg-4 col-md-12 mt-3 mt-lg-0">
 //                             <div className="fw-semibold text-dark small mb-1">Hiển thị giá</div>
 //                             <div className="dropdown">
-//                                 <a
-//                                     className="dropdown-toggle text-primary text-decoration-none fw-semibold small"
-//                                     href="#"
-//                                     role="button"
-//                                     id="priceDisplayDropdown"
-//                                     data-bs-toggle="dropdown"
-//                                     aria-expanded="false"
-//                                 >
+//                                 <a className="dropdown-toggle text-primary text-decoration-none fw-semibold small" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
 //                                     {selectedPriceDisplay}
 //                                 </a>
-//                                 <ul className="dropdown-menu dropdown-menu-end price-dropdown-menu" aria-labelledby="priceDisplayDropdown">
+//                                 <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="priceDisplayDropdown">
 //                                     {priceDisplayOptions.map((option, index) => (
 //                                         <li key={index}>
-//                                             <a
-//                                                 className={`dropdown-item ${selectedPriceDisplay === option ? 'active' : ''}`}
-//                                                 href="#"
-//                                                 onClick={(e) => {
-//                                                     e.preventDefault();
-//                                                     setSelectedPriceDisplay(option);
-//                                                 }}
-//                                             >
-//                                                 {selectedPriceDisplay === option
-//                                                     ? <i className="bi bi-check-circle-fill text-primary me-2"></i>
-//                                                     : <i className="bi bi-circle me-2" style={{ visibility: 'hidden' }}></i>}
+//                                             <a className={`dropdown-item ${selectedPriceDisplay === option ? 'active' : ''}`} href="#" onClick={(e) => { e.preventDefault(); setSelectedPriceDisplay(option); }}>
+//                                                 {selectedPriceDisplay === option ? <i className="bi bi-check-circle-fill text-primary me-2"></i> : <i className="bi bi-circle me-2" style={{ visibility: 'hidden' }}></i>}
 //                                                 {option}
 //                                             </a>
 //                                         </li>
@@ -627,97 +529,28 @@
 //                         </div>
 //                     </div>
 //                 </div>
-//                 {loadingRooms ? (
-//                     <div className="text-center p-5">
-//                         <div className="spinner-border text-primary" role="status">
-//                             <span className="visually-hidden">Đang tải phòng...</span>
-//                         </div>
-//                     </div>
+//                 {initialRoomsLoading ? (
+//                     <div className="text-center p-5"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Đang tải...</span></div></div>
+//                 ) : roomsError ? (
+//                     <div className="alert alert-danger text-center" role="alert">{roomsError}</div>
 //                 ) : rooms.length === 0 ? (
-//                     <div className="alert alert-secondary text-center">Không có phòng nào khả dụng.</div>
+//                     <div className="alert alert-info text-center" role="alert">Khách sạn này hiện không có phòng nào khả dụng.</div>
 //                 ) : (
 //                     <div>
-//                         {rooms.map(room => {
-//                             const roomPhotos = room.photos?.flatMap((cat: any) =>
-//                                 Array.isArray(cat.photos) ? cat.photos.map((p: any) => p.url) : []
-//                             ) || [];
-//                             const originalPrice = room.basePricePerNight * 1.25;
-//                             return (
-//                                 <div key={room.id} className="bg-white rounded shadow-sm p-3 mb-3 text-dark">
-//                                     <div className="row g-3">
-//                                         <div className="col-lg-4">
-//                                             <h5 className="fw-bold d-block d-lg-none mb-2">{room.name}</h5>
-//                                             <Image
-//                                                 src={roomPhotos[0] || "/placeholder.svg"}
-//                                                 width={400}
-//                                                 height={250}
-//                                                 alt={room.name}
-//                                                 style={{ objectFit: "cover", borderRadius: "8px", width: "100%", height: "auto" }}
-//                                             />
-//                                             <div className="mt-2 small text-muted">
-//                                                 <div className="mb-1"><i className="bi bi-rulers me-2 text-primary"></i> {room.area} m²</div>
-//                                                 <div className="mb-1"><i className="bi bi-water me-2 text-primary"></i> Vòi tắm đứng</div>
-//                                                 <div className="mb-1"><i className="bi bi-snow me-2 text-primary"></i> Máy lạnh</div>
-//                                             </div>
-//                                             <a href="#" className="text-primary small fw-bold mt-2 d-inline-block">Xem chi tiết phòng</a>
-//                                         </div>
-//                                         <div className="col-lg-8">
-//                                             <h5 className="fw-bold d-none d-lg-block">{room.name}</h5>
-//                                             <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center border rounded p-3 mt-2">
-//                                                 <div className="flex-grow-1">
-//                                                     <div className="fw-bold mb-2">Không bao gồm bữa sáng</div>
-//                                                     <div className="text-muted small mb-1">{room.bedType?.name || '1 giường đôi'}</div>
-//                                                     <div className="text-success small mb-1">
-//                                                         <i className="bi bi-check-circle-fill me-1"></i>
-//                                                         Không cần thanh toán ngay hôm nay
-//                                                     </div>
-//                                                     <div className="text-success small mb-1">
-//                                                         <i className="bi bi-check-circle-fill me-1"></i>
-//                                                         Miễn phí hủy phòng trước 19 thg 10 12:59
-//                                                         <i className="bi bi-info-circle ms-1"></i>
-//                                                     </div>
-//                                                 </div>
-//                                                 <div className="mx-md-3 my-3 my-md-0 text-center">
-//                                                     <i className="bi bi-people-fill fs-4 text-primary"></i>
-//                                                     <div className="fw-bold">{room.maxAdults}</div>
-//                                                 </div>
-//                                                 <div className="text-md-end ms-md-auto" style={{ minWidth: '180px' }}>
-//                                                     <span className="badge bg-danger mb-1">SALE 10.10</span>
-//                                                     <div className="text-muted text-decoration-line-through small">
-//                                                         {originalPrice.toLocaleString("vi-VN")} VND
-//                                                     </div>
-//                                                     <div className="fw-bold text-warning fs-5">
-//                                                         {room.basePricePerNight?.toLocaleString("vi-VN")} VND
-//                                                     </div>
-//                                                     <div className="text-muted small mb-2">Chưa bao gồm thuế và phí</div>
-//                                                     <button className="btn btn-primary fw-bold w-100">Chọn</button>
-//                                                     <div className="text-success small mt-1">
-//                                                         <i className="bi bi-gem me-1"></i> Earn 1.088 Points
-//                                                     </div>
-//                                                 </div>
-//                                             </div>
-//                                             <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center border rounded p-3 mt-2">
-//                                                 <div className="flex-grow-1">
-//                                                     <div className="fw-bold mb-2">Bao gồm bữa sáng</div>
-//                                                     <div className="text-muted small mb-1">{room.bedType?.name || '1 giường đôi'}</div>
-//                                                 </div>
-//                                                 <div className="mx-md-3 my-3 my-md-0 text-center">
-//                                                     <i className="bi bi-people-fill fs-4 text-primary"></i>
-//                                                     <div className="fw-bold">{room.maxAdults}</div>
-//                                                 </div>
-//                                                 <div className="text-md-end ms-md-auto" style={{ minWidth: '180px' }}>
-//                                                     <div className="fw-bold text-warning fs-5">
-//                                                         {(room.basePricePerNight + 100000).toLocaleString("vi-VN")} VND
-//                                                     </div>
-//                                                     <div className="text-muted small mb-2">Chưa bao gồm thuế và phí</div>
-//                                                     <button className="btn btn-primary fw-bold w-100">Chọn</button>
-//                                                 </div>
-//                                             </div>
-//                                         </div>
-//                                     </div>
-//                                 </div>
-//                             );
+//                         {rooms.map((room, index) => {
+//                             if (rooms.length === index + 1) {
+//                                 return <RoomCard key={room.id} room={room} handleSelectRoom={handleSelectRoom} innerRef={lastRoomElementRef} />
+//                             } else {
+//                                 return <RoomCard key={room.id} room={room} handleSelectRoom={handleSelectRoom} />
+//                             }
 //                         })}
+//                         {isFetchingMore && (
+//                             <div className="text-center p-4">
+//                                 <div className="spinner-border text-primary" role="status">
+//                                     <span className="visually-hidden">Đang tải thêm...</span>
+//                                 </div>
+//                             </div>
+//                         )}
 //                     </div>
 //                 )}
 //             </div>
@@ -727,12 +560,33 @@
 
 
 
+
+
+
+
 "use client";
-// THAY ĐỔI 1: Import thêm 'useRouter'
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { hotelService, HotelResponse, Room } from "@/service/hotelService";
+import { hotelService, HotelResponse, Room, AmenityGroup } from "@/service/hotelService";
+
+// --- HÀM TIỆN ÍCH ---
+const getFullAddress = (hotel: HotelResponse) => {
+    return [
+        hotel.address,
+        hotel.street?.name,
+        hotel.ward?.name,
+        hotel.district?.name,
+        hotel.city?.name
+    ].filter(Boolean).join(', ');
+};
+
+// << HÀM MỚI: ĐỂ ĐỊNH DẠNG NGÀY THÁNG >>
+const formatDateForDisplay = (date: Date): string => {
+    const day = date.getDate();
+    const month = date.getMonth() + 1; // JavaScript tháng bắt đầu từ 0
+    return `${day} thg ${month}`;
+};
 
 const customStyles = `
     /* --- Checkbox --- */
@@ -823,46 +677,194 @@ const customStyles = `
     }
 `;
 
+function RoomCard({ room, handleSelectRoom, innerRef }: { room: Room; handleSelectRoom: (room: Room, price: number, includesBreakfast: boolean) => void; innerRef?: (node: HTMLDivElement | null) => void }) {
+    const roomPhotos = room.photos?.flatMap(cat => cat.photos.map(p => p.url)) || [];
+    const basePrice = room.basePricePerNight ?? 0;
+    const originalPrice = basePrice * 1.25;
+    const priceWithBreakfast = basePrice + 100000;
+
+    return (
+        <div ref={innerRef} className="bg-white rounded shadow-sm p-3 mb-3 text-dark">
+            <div className="row g-3">
+                <div className="col-lg-4">
+                    <h5 className="fw-bold d-block d-lg-none mb-2">{room.name}</h5>
+                    <Image src={roomPhotos[0] || "/placeholder.svg"} width={400} height={250} alt={room.name} style={{ objectFit: "cover", borderRadius: "8px", width: "100%", height: "auto" }} />
+                    <div className="mt-2 small text-muted">
+                        {room.area > 0 && <div className="mb-1"><i className="bi bi-rulers me-2 text-primary"></i> {room.area} m²</div>}
+                        {room.view && <div className="mb-1"><i className="bi bi-image me-2 text-primary"></i> {room.view}</div>}
+                    </div>
+                    <a href="#" className="text-primary small fw-bold mt-2 d-inline-block">Xem chi tiết phòng</a>
+                </div>
+                <div className="col-lg-8">
+                    <h5 className="fw-bold d-none d-lg-block">{room.name}</h5>
+                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center border rounded p-3 mt-2">
+                        <div className="flex-grow-1">
+                            <div className="fw-bold mb-2">Không bao gồm bữa sáng</div>
+                            <div className="text-muted small mb-1">{room.bedType?.name || 'Giường phù hợp'}</div>
+                            <div className="text-success small mb-1"><i className="bi bi-check-circle-fill me-1"></i> Không cần thanh toán ngay hôm nay</div>
+                        </div>
+                        <div className="mx-md-3 my-3 my-md-0 text-center">
+                            <i className="bi bi-people-fill fs-4 text-primary"></i>
+                            <div className="fw-bold">{room.maxAdults}</div>
+                        </div>
+                        <div className="text-md-end ms-md-auto" style={{ minWidth: '180px' }}>
+                            <span className="badge bg-danger mb-1">Ưu đãi có hạn!</span>
+                            <div className="text-muted text-decoration-line-through small">{originalPrice.toLocaleString("vi-VN")} VND</div>
+                            <div className="fw-bold text-warning fs-5">{basePrice.toLocaleString("vi-VN")} VND</div>
+                            <div className="text-muted small mb-2">Chưa bao gồm thuế và phí</div>
+                            <button className="btn btn-primary fw-bold w-100" onClick={() => handleSelectRoom(room, basePrice, false)}>Chọn</button>
+                        </div>
+                    </div>
+                    {room.breakfastIncluded && (
+                        <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center border rounded p-3 mt-2">
+                            <div className="flex-grow-1">
+                                <div className="fw-bold mb-2">Bao gồm bữa sáng</div>
+                                <div className="text-muted small mb-1">{room.bedType?.name || 'Giường phù hợp'}</div>
+                            </div>
+                            <div className="mx-md-3 my-3 my-md-0 text-center">
+                                <i className="bi bi-people-fill fs-4 text-primary"></i>
+                                <div className="fw-bold">{room.maxAdults}</div>
+                            </div>
+                            <div className="text-md-end ms-md-auto" style={{ minWidth: '180px' }}>
+                                <div className="fw-bold text-warning fs-5">{priceWithBreakfast.toLocaleString("vi-VN")} VND</div>
+                                <div className="text-muted small mb-2">Chưa bao gồm thuế và phí</div>
+                                <button className="btn btn-primary fw-bold w-100" onClick={() => handleSelectRoom(room, priceWithBreakfast, true)}>Chọn</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 
 export default function HotelDetailPage() {
     const { hotelId } = useParams();
-    // THAY ĐỔI 2: Khởi tạo router
     const router = useRouter();
+
     const [hotel, setHotel] = useState<HotelResponse | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [isPageLoading, setIsPageLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     const [rooms, setRooms] = useState<Room[]>([]);
-    const [loadingRooms, setLoadingRooms] = useState(false);
+    const [page, setPage] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const [isFetchingMore, setIsFetchingMore] = useState(false);
+    const [initialRoomsLoading, setInitialRoomsLoading] = useState(true);
     const [roomsError, setRoomsError] = useState<string | null>(null);
 
     const [activeTab, setActiveTab] = useState("overview");
+    const isScrollingByClick = useRef(false);
     const overviewRef = useRef<HTMLDivElement>(null);
     const roomsSectionRef = useRef<HTMLDivElement>(null);
     const locationRef = useRef<HTMLDivElement>(null);
     const amenitiesRef = useRef<HTMLDivElement>(null);
     const policyRef = useRef<HTMLDivElement>(null);
     const reviewRef = useRef<HTMLDivElement>(null);
-
-    const priceDisplayOptions = [
-        "Mỗi phòng mỗi đêm (chưa bao gồm thuế và phí)",
-        "Mỗi phòng mỗi đêm (bao gồm thuế và phí)",
-        "Tổng giá (chưa bao gồm thuế và phí)",
-        "Tổng giá (bao gồm thuế và phí)",
-    ];
-    const [selectedPriceDisplay, setSelectedPriceDisplay] = useState(priceDisplayOptions[0]);
-    const tabLabels = [
-        { key: "overview", label: "Tổng quan" },
-        { key: "rooms", label: "Phòng" },
-        { key: "location", label: "Vị trí" },
-        { key: "amenities", label: "Tiện ích" },
-        { key: "policy", label: "Chính sách" },
-        { key: "review", label: "Đánh giá" },
-    ];
+    const tabLabels = [{ key: "overview", label: "Tổng quan" }, { key: "rooms", label: "Phòng" }, { key: "location", label: "Vị trí" }, { key: "amenities", label: "Tiện ích" }, { key: "policy", label: "Chính sách" }, { key: "review", label: "Đánh giá" }];
     const tabRefs = tabLabels.map(() => useRef<HTMLButtonElement>(null));
     const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
+    const priceDisplayOptions = ["Mỗi phòng mỗi đêm (chưa bao gồm thuế và phí)", "Mỗi phòng mỗi đêm (bao gồm thuế và phí)", "Tổng giá (chưa bao gồm thuế và phí)", "Tổng giá (bao gồm thuế và phí)"];
+    const [selectedPriceDisplay, setSelectedPriceDisplay] = useState(priceDisplayOptions[0]);
 
-    // ... (Toàn bộ các useEffect và hàm khác giữ nguyên) ...
+    const loadMoreRooms = useCallback(async () => {
+        if (!hotelId) return;
+        setIsFetchingMore(true);
+        try {
+            const nextPage = page + 1;
+            const response = await hotelService.getRoomsByHotelId(hotelId as string, nextPage, 5);
+            setRooms(prev => [...prev, ...response.content]);
+            setPage(response.page);
+            setHasMore(!response.last);
+        } catch (error) {
+            console.error("Lỗi khi tải thêm phòng:", error);
+            setRoomsError("Có lỗi xảy ra khi tải thêm phòng.");
+        } finally {
+            setIsFetchingMore(false);
+        }
+    }, [page, hasMore, hotelId]);
+
+    const observer = useRef<IntersectionObserver | null>(null);
+    const lastRoomElementRef = useCallback((node: HTMLDivElement | null) => {
+        if (isFetchingMore) return;
+        if (observer.current) observer.current.disconnect();
+        if (typeof window !== 'undefined' && window.IntersectionObserver) {
+            observer.current = new IntersectionObserver(entries => {
+                if (entries[0].isIntersecting && hasMore) {
+                    loadMoreRooms();
+                }
+            });
+            if (node) observer.current.observe(node);
+        }
+    }, [isFetchingMore, hasMore, loadMoreRooms]);
+
+    useEffect(() => {
+        if (!hotelId) return;
+        const hotelIdStr = hotelId as string;
+        const fetchInitialData = async () => {
+            setIsPageLoading(true);
+            setInitialRoomsLoading(true);
+            setError(null);
+            setRoomsError(null);
+            try {
+                const [hotelData, initialRoomsData] = await Promise.all([
+                    hotelService.getHotelById(hotelIdStr),
+                    hotelService.getRoomsByHotelId(hotelIdStr, 0, 5)
+                ]);
+                setHotel(hotelData);
+                setRooms(initialRoomsData.content);
+                setPage(initialRoomsData.page);
+                setHasMore(!initialRoomsData.last);
+            } catch (err: any) {
+                console.error("Lỗi khi tải dữ liệu ban đầu:", err);
+                setError("Không thể tải thông tin khách sạn. Vui lòng thử lại sau.");
+            } finally {
+                setIsPageLoading(false);
+                setInitialRoomsLoading(false);
+            }
+        };
+        fetchInitialData();
+    }, [hotelId]);
+
+    const handleTabClick = (tab: string) => {
+        isScrollingByClick.current = true;
+        setActiveTab(tab);
+        const sectionRef = { overview: overviewRef, rooms: roomsSectionRef, location: locationRef, amenities: amenitiesRef, policy: policyRef, review: reviewRef }[tab] as React.RefObject<HTMLDivElement> | undefined;
+        if (sectionRef?.current) {
+            window.scrollTo({ top: sectionRef.current.offsetTop - 60, behavior: "smooth" });
+            setTimeout(() => { isScrollingByClick.current = false; }, 1000);
+        }
+    };
+
+    const handleScrollSync = useCallback(() => {
+        if (isScrollingByClick.current) return;
+        const sections = [{ tab: "overview", ref: overviewRef }, { tab: "rooms", ref: roomsSectionRef }, { tab: "location", ref: locationRef }, { tab: "amenities", ref: amenitiesRef }, { tab: "policy", ref: policyRef }, { tab: "review", ref: reviewRef }];
+        const scrollPosition = window.scrollY + 120;
+        let currentActiveTab = "";
+        for (const section of sections) {
+            if (section.ref.current && section.ref.current.offsetTop <= scrollPosition) {
+                currentActiveTab = section.tab;
+            }
+        }
+        if (currentActiveTab) {
+            setActiveTab(currentActiveTab);
+        }
+    }, []);
+
+    const handleSelectRoom = (room: Room, price: number, includesBreakfast: boolean) => {
+        if (!hotelId) return;
+        const checkin = new Date().toISOString().split('T')[0];
+        const nights = 1;
+        const guests = room.maxAdults;
+        const params = new URLSearchParams({ hotelId: hotelId as string, roomId: room.id.toString(), roomName: room.name, price: price.toString(), checkin: checkin, nights: nights.toString(), guests: guests.toString(), breakfast: includesBreakfast.toString() });
+        router.push(`/booking?${params.toString()}`);
+    };
+
+    useEffect(() => {
+        window.addEventListener("scroll", handleScrollSync, { passive: true });
+        return () => { window.removeEventListener("scroll", handleScrollSync); };
+    }, [handleScrollSync]);
 
     useEffect(() => {
         const idx = tabLabels.findIndex(tab => tab.key === activeTab);
@@ -871,338 +873,79 @@ export default function HotelDetailPage() {
             const rect = btn.getBoundingClientRect();
             const parentRect = btn.parentElement?.getBoundingClientRect();
             if (parentRect) {
-                setUnderlineStyle({
-                    left: rect.left - parentRect.left,
-                    width: rect.width
-                });
+                setUnderlineStyle({ left: rect.left - parentRect.left, width: rect.width });
             }
         }
     }, [activeTab]);
-    const handleTabClick = (tab: string) => {
-        setActiveTab(tab);
-        let ref = null;
-        if (tab === "overview") ref = overviewRef;
-        if (tab === "rooms") ref = roomsSectionRef;
-        if (tab === "location") ref = locationRef;
-        if (tab === "amenities") ref = amenitiesRef;
-        if (tab === "policy") ref = policyRef;
-        if (tab === "review") ref = reviewRef;
-        if (ref && ref.current) {
-            window.scrollTo({
-                top: ref.current.offsetTop - 60,
-                behavior: "smooth"
-            });
-        }
-    };
-    useEffect(() => {
-        const handleScroll = () => {
-            const sections = [
-                { tab: "overview", ref: overviewRef },
-                { tab: "rooms", ref: roomsSectionRef },
-                { tab: "location", ref: locationRef },
-                { tab: "amenities", ref: amenitiesRef },
-                { tab: "policy", ref: policyRef },
-                { tab: "review", ref: reviewRef },
-            ];
-            for (let i = sections.length - 1; i >= 0; i--) {
-                const section = sections[i];
-                if (section.ref.current) {
-                    const rect = section.ref.current.getBoundingClientRect();
-                    if (rect.top < 120) {
-                        setActiveTab(section.tab);
-                        break;
-                    }
-                }
-            }
-        };
-        window.addEventListener("scroll", handleScroll);
-        return () => window.removeEventListener("scroll", handleScroll);
-    }, []);
-    useEffect(() => {
-        async function fetchHotel() {
-            try {
-                const data = await hotelService.getHotelById(hotelId as string);
-                setHotel(data);
-            } catch (err: any) {
-                setError("Không tìm thấy khách sạn");
-                setHotel(null);
-            } finally {
-                setLoading(false);
-            }
-        }
-        if (hotelId) {
-            fetchHotel();
-        }
-    }, [hotelId]);
 
-    useEffect(() => {
-        if (!hotelId) return;
+    if (isPageLoading) return <div className="container py-5 text-center"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Đang tải...</span></div></div>;
+    if (error || !hotel) return <div className="container py-5"><div className="alert alert-danger" role="alert">{error || "Không tìm thấy khách sạn"}</div></div>;
 
-        const fetchRooms = async () => {
-            setLoadingRooms(true);
-            setRoomsError(null);
-            try {
-                const fetchedRooms = await hotelService.getRoomsByHotelId(hotelId as string);
-                setRooms(fetchedRooms);
-            } catch (error) {
-                console.error("Failed to fetch rooms:", error);
-                setRoomsError("Không thể tải danh sách phòng. Vui lòng thử lại sau.");
-                setRooms([]);
-            } finally {
-                setLoadingRooms(false);
-            }
-        };
+    const allPhotoUrls = hotel.photos.flatMap(cat => Array.isArray(cat.photos) ? cat.photos.map(p => p.url) : []);
+    const displayPhotos = allPhotoUrls.length > 0 ? allPhotoUrls : Array(5).fill("/placeholder.svg");
 
-        fetchRooms();
-    }, [hotelId]);
+    const demoAmenities = [{ icon: "bi bi-wifi", label: "WiFi" }, { icon: "bi bi-snow", label: "Máy lạnh" }, { icon: "bi bi-building", label: "Nhà hàng" }, { icon: "bi bi-clock", label: "Lễ tân 24h" }, { icon: "bi bi-elevator", label: "Thang máy" }, { icon: "bi bi-p-circle", label: "Chỗ đậu xe" }];
+    const demoNearby = [{ name: "Biển Mỹ Khê", distance: "868 m" }, { name: "Four Points by Sheraton Danang", distance: "2.65 km" }, { name: "Số 294 Trưng Nữ Vương", distance: "2.96 km" }, { name: "Khách sạn Mường Thanh Đà Nẵng", distance: "92 m" }, { name: "Apple Hotel", distance: "86 m" }];
+    const demoReview = { score: hotel.averageScore ?? 8.7, text: "Rất tốt", count: 1071, tags: [{ label: "Khoảng Cách Đến Trung Tâm", count: 46 }, { label: "Khu Vực Xung Quanh", count: 46 }, { label: "Không Gian Phòng", count: 38 }, { label: "Nhân Viên Thân Thiện", count: 35 }], comment: "Nhân viên rất nhiệt tình...", user: "L***e", userScore: 8.4 };
 
-
-    // Auto tab switch when scroll
-    useEffect(() => {
-        const handleScroll = () => {
-            const sections = [
-                { tab: "overview", ref: overviewRef },
-                { tab: "rooms", ref: roomsSectionRef },
-                { tab: "location", ref: locationRef },
-                { tab: "amenities", ref: amenitiesRef },
-                { tab: "policy", ref: policyRef },
-                { tab: "review", ref: reviewRef },
-            ];
-            for (let i = sections.length - 1; i >= 0; i--) {
-                const section = sections[i];
-                if (section.ref.current) {
-                    const rect = section.ref.current.getBoundingClientRect();
-                    if (rect.top < 120) {
-                        setActiveTab(section.tab);
-                        break;
-                    }
-                }
-            }
-        };
-        window.addEventListener("scroll", handleScroll);
-        return () => window.removeEventListener("scroll", handleScroll);
-    }, []);
-
-    // THAY ĐỔI 3: Hàm xử lý điều hướng đến trang booking
-    const handleSelectRoom = (room: Room, price: number, includesBreakfast: boolean) => {
-        if (!hotelId) return;
-
-        // Giả sử các thông tin này sẽ được lấy từ form tìm kiếm
-        // Ở đây ta dùng giá trị mặc định để demo
-        const checkin = new Date().toISOString().split('T')[0]; // Lấy ngày hôm nay dạng YYYY-MM-DD
-        const nights = 1;
-        const guests = room.maxAdults;
-
-        const params = new URLSearchParams({
-            hotelId: hotelId as string,
-            roomId: room.id.toString(),
-            roomName: room.name,
-            price: price.toString(),
-            checkin: checkin,
-            nights: nights.toString(),
-            guests: guests.toString(),
-            breakfast: includesBreakfast.toString(),
-        });
-
-        router.push(`/booking?${params.toString()}`);
-    };
-
-    if (loading) return <div className="container py-5">Đang tải...</div>;
-    if (error || !hotel) return <div className="container py-5 text-danger">{error || "Không tìm thấy khách sạn"}</div>;
-
-    // ... (Toàn bộ phần demoHotel, demoAmenities... giữ nguyên) ...
-    const allPhotoUrls = hotel.photos
-        ? hotel.photos.flatMap((cat) => Array.isArray(cat.photos) ? cat.photos.map((p) => p.url) : [])
-        : [];
-
-    const demoHotel = {
-        name: hotel.name || "Davue Hotel Da Nang",
-        address: hotel.address || "57-59 Đường Dương Đình Nghệ, Mỹ An, Ngũ Hành Sơn, Đà Nẵng",
-        status: hotel.status || "active",
-        averageScore: typeof hotel.averageScore === "number" ? hotel.averageScore : 8.7,
-        currentPricePerNight: typeof hotel.currentPricePerNight === "number" ? hotel.currentPricePerNight : 229901,
-        rawPricePerNight: typeof hotel.rawPricePerNight === "number" ? hotel.rawPricePerNight : 299000,
-        availableRooms: typeof hotel.availableRooms === "number" ? hotel.availableRooms : 5,
-        description: hotel.description ||
-            "Khách sạn nằm gần biển Mỹ Khê, phòng đẹp, nhân viên thân thiện, tiện nghi đầy đủ, phù hợp nghỉ dưỡng và công tác.",
-        photos: allPhotoUrls.length > 0
-            ? allPhotoUrls
-            : [
-                "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-b0698f733b24661b9d24b98b30019ca1.jpeg",
-                "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-8ca9569de0ab3f614019d698d56cc793.jpeg",
-                "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-c5671fb5232227e8d841abcbab94f24c.jpeg",
-                "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-aec1028c4f98d763a9ed14d005add27a.jpeg",
-                "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-1e7e2e2e2e2e2e2e2e2e2e2e2e2e2e2e.jpeg",
-                "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-2e7e2e2e2e2e2e2e2e2e2e2e2e2e2e2e.jpeg",
-                "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-3e7e2e2e2e2e2e2e2e2e2e2e2e2e2e2e.jpeg",
-                "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-4e7e2e2e2e2e2e2e2e2e2e2e2e2e2e2e.jpeg",
-            ],
-    };
-
-    const demoAmenities = [
-        { icon: "bi bi-wifi", label: "WiFi" },
-        { icon: "bi bi-snow", label: "Máy lạnh" },
-        { icon: "bi bi-building", label: "Nhà hàng" },
-        { icon: "bi bi-clock", label: "Lễ tân 24h" },
-        { icon: "bi bi-elevator", label: "Thang máy" },
-        { icon: "bi bi-geo-alt", label: "Gần biển Mỹ Khê" },
-    ];
-
-    const demoNearby = [
-        { name: "Biển Mỹ Khê", distance: "868 m" },
-        { name: "Four Points by Sheraton Danang", distance: "2.65 km" },
-        { name: "Số 294 Trưng Nữ Vương", distance: "2.96 km" },
-        { name: "Khách sạn Mường Thanh Đà Nẵng", distance: "92 m" },
-        { name: "Apple Hotel", distance: "86 m" },
-    ];
-
-    const demoReview = {
-        score: 8.7,
-        text: "Rất tốt",
-        count: 1071,
-        tags: [
-            { label: "Khoảng Cách Đến Trung Tâm", count: 46 },
-            { label: "Khu Vực Xung Quanh", count: 46 },
-            { label: "Không Gian Phòng", count: 38 },
-            { label: "Nhân Viên Thân Thiện", count: 35 },
-        ],
-        comment: "Nhân viên rất nhiệt tình, từ nhân viên buồng giúp hành lý, nhân viên lễ tân. Giải thích dễ hiểu, thân thiện. Phòng cảm ơn tốt, dọn dẹp sạch sẽ. Phòng rộng rãi, thoáng mát, tiện nghi.",
-        user: "L***e",
-        userScore: 8.4,
-    };
+    // << LOGIC MỚI: TẠO CHUỖI NGÀY THÁNG ĐỘNG >>
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    const dateDisplayString = `${formatDateForDisplay(today)} - ${formatDateForDisplay(tomorrow)}, 1 đêm`;
 
     return (
-        // ... (Toàn bộ JSX từ <div> đến phần hiển thị phòng giữ nguyên) ...
         <div style={{ background: '#f7f9fb', minHeight: '100vh' }}>
             <style>{customStyles}</style>
-            {/* ---  TAB ĐIỀU HƯỚNG  --- */}
-            <div className="sticky-tab-bar">
-                <div className="container">
-                    <div className="tab-list" style={{ position: "relative" }}>
-                        {tabLabels.map((tab, idx) => (
-                            <button
-                                key={tab.key}
-                                ref={tabRefs[idx]}
-                                className={`tab-item${activeTab === tab.key ? " active" : ""}`}
-                                onClick={() => handleTabClick(tab.key)}
-                                type="button"
-                            >
-                                {tab.label}
-                            </button>
-                        ))}
-                        <div
-                            className="tab-underline"
-                            style={{
-                                left: underlineStyle.left,
-                                width: underlineStyle.width,
-                                display: underlineStyle.width ? "block" : "none"
-                            }}
-                        />
-                    </div>
-                </div>
-            </div>
-            <div style={{
-                background: 'linear-gradient(90deg,#1e3c72 0,#2a5298 100%)',
-                color: '#fff',
-                padding: '30px 0 8px 0'
-            }}>
+            <div style={{ background: 'linear-gradient(90deg,#1e3c72 0,#2a5298 100%)', color: '#fff', padding: '30px 0 8px 0' }}>
                 <div className="container d-flex align-items-center justify-content-between py-2">
                     <div className="d-flex align-items-center gap-3">
                         <div className="bg-primary bg-opacity-25 rounded-3 px-3 py-2 d-flex align-items-center">
                             <i className="bi bi-geo-alt-fill me-2"></i>
-                            <span className="fw-bold">{demoHotel.name}</span>
+                            <span className="fw-bold">{hotel.name}</span>
                         </div>
                         <div className="bg-primary bg-opacity-25 rounded-3 px-3 py-2 d-flex align-items-center">
                             <i className="bi bi-calendar-event me-2"></i>
-                            <span>20 thg 10 - 21 thg 10, 1 đêm</span>
+                            {/* << THAY THẾ CHUỖI TĨNH BẰNG BIẾN ĐỘNG >> */}
+                            <span>{dateDisplayString}</span>
                         </div>
-                        <div className="bg-primary bg-opacity-25 rounded-3 px-3 py-2 d-flex align-items-center">
+                        {/* <div className="bg-primary bg-opacity-25 rounded-3 px-3 py-2 d-flex align-items-center">
                             <i className="bi bi-person me-2"></i>
                             <span>2 người lớn, 1 phòng</span>
-                        </div>
+                        </div> */}
                     </div>
                     <div>
-                        <button className="btn btn-light fw-bold px-4">
+                        <button
+                            className="btn btn-light fw-bold px-4"
+                            onClick={() => router.push('/hotels')}
+                        >
                             <i className="bi bi-search me-2"></i>
                             Tìm khách sạn
                         </button>
                     </div>
                 </div>
             </div>
-            {/*  điều hướng + thanh gạch xanh phía trên */}
-            <div style={{ background: '#fff', borderBottom: '2px solid #e3e6ea', position: 'relative', zIndex: 10 }}>
-                <div style={{
-                    height: '4px',
-                    background: '#1565c0',
-                    width: '100%',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    zIndex: 11
-                }} />
-
-            </div>
-
-
             <div className="sticky-tab-bar">
-                <div className="container d-flex align-items-center gap-4" style={{ height: '48px', position: 'relative', zIndex: 12 }}>
-                    <button
-                        className={`tab-item${activeTab === "overview" ? " active" : ""}`}
-                        onClick={() => handleTabClick("overview")}
-                        type="button"
-                    >
-                        Tổng quan
-                    </button>
-                    <button
-                        className={`tab-item${activeTab === "rooms" ? " active" : ""}`}
-                        onClick={() => handleTabClick("rooms")}
-                        type="button"
-                    >
-                        Phòng
-                    </button>
-                    <button
-                        className={`tab-item${activeTab === "location" ? " active" : ""}`}
-                        onClick={() => handleTabClick("location")}
-                        type="button"
-                    >
-                        Vị trí
-                    </button>
-                    <button
-                        className={`tab-item${activeTab === "amenities" ? " active" : ""}`}
-                        onClick={() => handleTabClick("amenities")}
-                        type="button"
-                    >
-                        Tiện ích
-                    </button>
-                    <button
-                        className={`tab-item${activeTab === "policy" ? " active" : ""}`}
-                        onClick={() => handleTabClick("policy")}
-                        type="button"
-                    >
-                        Chính sách
-                    </button>
-                    <button
-                        className={`tab-item${activeTab === "review" ? " active" : ""}`}
-                        onClick={() => handleTabClick("review")}
-                        type="button"
-                    >
-                        Đánh giá
-                    </button>
+                <div className="container">
+                    <div className="tab-list" style={{ position: "relative" }}>
+                        {tabLabels.map((tab, idx) => (
+                            <button key={tab.key} ref={tabRefs[idx]} className={`tab-item${activeTab === tab.key ? " active" : ""}`} onClick={() => handleTabClick(tab.key)} type="button">
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
-            {/* ---  NAV XANH ĐẬM   --- */}
-
-            {/* Grid ảnh 1 lớn 4 nhỏ đều nhau */}
-            <div className="container mt-4">
+            <div ref={overviewRef} className="container mt-4">
                 <div className="row g-2">
                     <div className="col-md-7">
                         <div style={{ borderRadius: '16px', overflow: 'hidden', width: '100%', height: '320px' }}>
-                            <Image src={demoHotel.photos[0]} width={700} height={320} alt="Hotel main photo" style={{ objectFit: 'cover', width: '100%', height: '100%' }} />
+                            <Image src={displayPhotos[0]} width={700} height={320} alt="Hotel main photo" style={{ objectFit: 'cover', width: '100%', height: '100%' }} priority />
                         </div>
                     </div>
                     <div className="col-md-5">
                         <div className="row g-2" style={{ minHeight: '320px' }}>
-                            {demoHotel.photos.slice(1, 5).map((url, idx) => (
+                            {displayPhotos.slice(1, 5).map((url, idx) => (
                                 <div key={idx} className="col-6">
                                     <div style={{ borderRadius: '10px', overflow: 'hidden', width: '100%', height: '154px' }}>
                                         <Image src={url} width={200} height={154} alt={`Hotel side photo ${idx + 1}`} style={{ objectFit: 'cover', width: '100%', height: '100%' }} />
@@ -1213,40 +956,56 @@ export default function HotelDetailPage() {
                     </div>
                 </div>
             </div>
-            {/* Card info nổi bo góc, đổ bóng */}
             <div className="container" style={{ marginTop: '32px', position: 'relative', zIndex: 2 }}>
                 <div className="row gx-4 gy-4">
                     <div className="col-lg-8">
                         <div className="card shadow-lg p-4 mb-4" style={{ borderRadius: '18px', background: '#fff' }}>
                             <div className="d-flex align-items-center mb-2">
                                 <span className="badge bg-primary me-2">Khách Sạn</span>
-                                <span className="text-warning fw-bold">★★★★★</span>
-                                <span className="ms-3 fw-bold fs-4 text-dark">{demoHotel.name}</span>
+                                {hotel.starRating > 0 && <span className="text-warning fw-bold">{'★'.repeat(hotel.starRating)}</span>}
+                                <span className="ms-3 fw-bold fs-4 text-dark">{hotel.name}</span>
                             </div>
                             <div className="mb-2">
-                                <span className="fw-bold">Địa chỉ:</span> {demoHotel.address}
+                                <span className="fw-bold">Địa chỉ:</span> {getFullAddress(hotel)}
                             </div>
                             <div className="mb-2 d-flex align-items-center flex-wrap">
                                 <span className="fw-bold">Giá phòng/đêm từ:</span>
-                                <span className="text-danger fw-bold ms-2">
-                                    {typeof demoHotel.currentPricePerNight === "number" ? demoHotel.currentPricePerNight.toLocaleString("vi-VN") : "Liên hệ"} VND
-                                </span>
-                                {typeof demoHotel.rawPricePerNight === "number" && typeof demoHotel.currentPricePerNight === "number" && demoHotel.rawPricePerNight > demoHotel.currentPricePerNight && (
-                                    <span className="text-muted text-decoration-line-through ms-2">{demoHotel.rawPricePerNight.toLocaleString("vi-VN")} VND</span>
-                                )}
+                                <span className="text-danger fw-bold ms-2">{(hotel.currentPricePerNight ?? 0).toLocaleString("vi-VN")} VND</span>
+                                {(hotel.rawPricePerNight > hotel.currentPricePerNight) && (<span className="text-muted text-decoration-line-through ms-2">{(hotel.rawPricePerNight ?? 0).toLocaleString("vi-VN")} VND</span>)}
                                 <button className="btn btn-warning btn-lg fw-bold px-4 ms-3 mt-2 mt-lg-0" onClick={() => handleTabClick('rooms')}>Chọn phòng</button>
                             </div>
-                            <div className="mb-2">
+                            <div className="mb-2" ref={amenitiesRef}>
                                 <span className="fw-bold">Tiện ích chính:</span>
                                 <div className="d-flex flex-wrap mt-2">
                                     {demoAmenities.map((item, idx) => (
                                         <span key={idx} className="me-3 mb-2 d-flex align-items-center">
-                                            <i className={item.icon + " text-primary me-1"} style={{ fontSize: "1.2rem" }}></i>
+                                            <i className={`${item.icon} text-primary me-2`} style={{ fontSize: "1.1rem" }}></i>
                                             <span className="text-dark small fw-semibold">{item.label}</span>
                                         </span>
                                     ))}
                                 </div>
                             </div>
+                        </div>
+                        <div ref={reviewRef} className="card shadow p-4 mb-4" style={{ borderRadius: '16px', background: '#fff' }}>
+                            <div className="d-flex align-items-center mb-2">
+                                <span className="fs-2 fw-bold text-primary">{demoReview.score}</span>
+                                <span className="ms-2 fw-bold">{demoReview.text}</span>
+                                <span className="ms-2 text-muted">{demoReview.count} đánh giá</span>
+                            </div>
+                            <div className="mb-2">
+                                {demoReview.tags.map((tag, idx) => (
+                                    <span key={idx} className="badge bg-info text-dark me-2 mb-2">{tag.label} ({tag.count})</span>
+                                ))}
+                            </div>
+                            <div className="bg-light p-3 rounded">
+                                <span className="fw-bold">{demoReview.user}</span>
+                                <span className="badge bg-primary ms-2">{demoReview.userScore}/10</span>
+                                <p className="mb-0 mt-2 text-dark">{demoReview.comment}</p>
+                            </div>
+                        </div>
+                        <div className="card shadow p-4" style={{ borderRadius: '16px', background: '#fff' }}>
+                            <h5 className="fw-bold mb-2">Mô tả khách sạn</h5>
+                            <p className="mb-0 text-dark">{hotel.description}</p>
                         </div>
                     </div>
                     <div className="col-lg-4">
@@ -1265,47 +1024,8 @@ export default function HotelDetailPage() {
                     </div>
                 </div>
             </div>
-            {/* Card review bo góc, spacing */}
-            <div className="container mb-4">
-                <div className="row">
-                    <div className="col-lg-8">
-                        <div className="card shadow p-4" style={{ borderRadius: '16px', background: '#fff' }}>
-                            <div className="d-flex align-items-center mb-2">
-                                <span className="fs-2 fw-bold text-primary">{demoReview.score}</span>
-                                <span className="ms-2 fw-bold">{demoReview.text}</span>
-                                <span className="ms-2 text-muted">{demoReview.count} đánh giá</span>
-                            </div>
-                            <div className="mb-2">
-                                {demoReview.tags.map((tag, idx) => (
-                                    <span key={idx} className="badge bg-info text-dark me-2 mb-2">{tag.label} ({tag.count})</span>
-                                ))}
-                            </div>
-                            <div className="bg-light p-3 rounded">
-                                <span className="fw-bold">{demoReview.user}</span>
-                                <span className="badge bg-primary ms-2">{demoReview.userScore}/10</span>
-                                <p className="mb-0 mt-2 text-dark">{demoReview.comment}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {/* Card mô tả bo góc */}
-            <div className="container mb-4">
-                <div className="row">
-                    <div className="col-lg-8">
-                        <div className="card shadow p-4" style={{ borderRadius: '16px', background: '#fff' }}>
-                            <h5 className="fw-bold mb-2">Mô tả khách sạn</h5>
-                            <p className="mb-0 text-dark">{demoHotel.description}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* --- PHẦN HIỂN THỊ PHÒNG --- */}
             <div ref={roomsSectionRef} className="container mb-5">
-                {/* ... (Phần JSX của bộ lọc phòng giữ nguyên) ... */}
-
-                <h4 className="fw-bold mb-3 text-dark">Những phòng còn trống tại {demoHotel.name}</h4>
+                <h4 className="fw-bold mb-3 text-dark pt-4">Những phòng còn trống tại {hotel.name}</h4>
                 <div className="mb-3">
                     <div style={{ background: "#0070f3", color: "#fff", borderRadius: "8px", padding: "10px 18px", fontWeight: 500, fontSize: "16px" }}>
                         10. Travel Sale giảm đến 50% độc quyền trên App!
@@ -1342,30 +1062,14 @@ export default function HotelDetailPage() {
                         <div className="col-lg-4 col-md-12 mt-3 mt-lg-0">
                             <div className="fw-semibold text-dark small mb-1">Hiển thị giá</div>
                             <div className="dropdown">
-                                <a
-                                    className="dropdown-toggle text-primary text-decoration-none fw-semibold small"
-                                    href="#"
-                                    role="button"
-                                    id="priceDisplayDropdown"
-                                    data-bs-toggle="dropdown"
-                                    aria-expanded="false"
-                                >
+                                <a className="dropdown-toggle text-primary text-decoration-none fw-semibold small" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     {selectedPriceDisplay}
                                 </a>
-                                <ul className="dropdown-menu dropdown-menu-end price-dropdown-menu" aria-labelledby="priceDisplayDropdown">
+                                <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="priceDisplayDropdown">
                                     {priceDisplayOptions.map((option, index) => (
                                         <li key={index}>
-                                            <a
-                                                className={`dropdown-item ${selectedPriceDisplay === option ? 'active' : ''}`}
-                                                href="#"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    setSelectedPriceDisplay(option);
-                                                }}
-                                            >
-                                                {selectedPriceDisplay === option
-                                                    ? <i className="bi bi-check-circle-fill text-primary me-2"></i>
-                                                    : <i className="bi bi-circle me-2" style={{ visibility: 'hidden' }}></i>}
+                                            <a className={`dropdown-item ${selectedPriceDisplay === option ? 'active' : ''}`} href="#" onClick={(e) => { e.preventDefault(); setSelectedPriceDisplay(option); }}>
+                                                {selectedPriceDisplay === option ? <i className="bi bi-check-circle-fill text-primary me-2"></i> : <i className="bi bi-circle me-2" style={{ visibility: 'hidden' }}></i>}
                                                 {option}
                                             </a>
                                         </li>
@@ -1375,119 +1079,28 @@ export default function HotelDetailPage() {
                         </div>
                     </div>
                 </div>
-
-                {loadingRooms && (
-                    <div className="text-center p-5">
-                        <div className="spinner-border text-primary" role="status">
-                            <span className="visually-hidden">Đang tải phòng...</span>
-                        </div>
-                    </div>
-                )}
-
-                {roomsError && !loadingRooms && (
-                    <div className="alert alert-danger text-center">{roomsError}</div>
-                )}
-
-                {!loadingRooms && !roomsError && rooms.length === 0 && (
-                    <div className="alert alert-secondary text-center">Không có phòng nào khả dụng.</div>
-                )}
-
-                {!loadingRooms && !roomsError && rooms.length > 0 && (
+                {initialRoomsLoading ? (
+                    <div className="text-center p-5"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Đang tải...</span></div></div>
+                ) : roomsError ? (
+                    <div className="alert alert-danger text-center" role="alert">{roomsError}</div>
+                ) : rooms.length === 0 ? (
+                    <div className="alert alert-info text-center" role="alert">Khách sạn này hiện không có phòng nào khả dụng.</div>
+                ) : (
                     <div>
-                        {rooms.map(room => {
-                            const roomPhotos = room.photos?.flatMap((cat: any) =>
-                                Array.isArray(cat.photos) ? cat.photos.map((p: any) => p.url) : []
-                            ) || [];
-                            const originalPrice = room.basePricePerNight * 1.25;
-                            const priceWithBreakfast = room.basePricePerNight + 100000;
-                            return (
-                                <div key={room.id} className="bg-white rounded shadow-sm p-3 mb-3 text-dark">
-                                    <div className="row g-3">
-                                        <div className="col-lg-4">
-                                            {/* ... */}
-                                            <h5 className="fw-bold d-block d-lg-none mb-2">{room.name}</h5>
-                                            <Image
-                                                src={roomPhotos[0] || "/placeholder.svg"}
-                                                width={400}
-                                                height={250}
-                                                alt={room.name}
-                                                style={{ objectFit: "cover", borderRadius: "8px", width: "100%", height: "auto" }}
-                                            />
-                                            <div className="mt-2 small text-muted">
-                                                <div className="mb-1"><i className="bi bi-rulers me-2 text-primary"></i> {room.area} m²</div>
-                                                <div className="mb-1"><i className="bi bi-water me-2 text-primary"></i> Vòi tắm đứng</div>
-                                                <div className="mb-1"><i className="bi bi-snow me-2 text-primary"></i> Máy lạnh</div>
-                                            </div>
-                                            <a href="#" className="text-primary small fw-bold mt-2 d-inline-block">Xem chi tiết phòng</a>
-                                        </div>
-                                        <div className="col-lg-8">
-                                            <h5 className="fw-bold d-none d-lg-block">{room.name}</h5>
-                                            {/* THAY ĐỔI 4: Cập nhật onClick cho các nút "Chọn" */}
-                                            <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center border rounded p-3 mt-2">
-                                                <div className="flex-grow-1">
-                                                    <div className="fw-bold mb-2">Không bao gồm bữa sáng</div>
-                                                    <div className="text-muted small mb-1">{room.bedType?.name || '1 giường đôi'}</div>
-                                                    <div className="text-success small mb-1">
-                                                        <i className="bi bi-check-circle-fill me-1"></i>
-                                                        Không cần thanh toán ngay hôm nay
-                                                    </div>
-                                                    <div className="text-success small mb-1">
-                                                        <i className="bi bi-check-circle-fill me-1"></i>
-                                                        Miễn phí hủy phòng trước 19 thg 10 12:59
-                                                        <i className="bi bi-info-circle ms-1"></i>
-                                                    </div>
-                                                </div>
-                                                <div className="mx-md-3 my-3 my-md-0 text-center">
-                                                    <i className="bi bi-people-fill fs-4 text-primary"></i>
-                                                    <div className="fw-bold">{room.maxAdults}</div>
-                                                </div>
-                                                <div className="text-md-end ms-md-auto" style={{ minWidth: '180px' }}>
-                                                    <span className="badge bg-danger mb-1">SALE 10.10</span>
-                                                    <div className="text-muted text-decoration-line-through small">
-                                                        {originalPrice.toLocaleString("vi-VN")} VND
-                                                    </div>
-                                                    <div className="fw-bold text-warning fs-5">
-                                                        {room.basePricePerNight?.toLocaleString("vi-VN")} VND
-                                                    </div>
-                                                    <div className="text-muted small mb-2">Chưa bao gồm thuế và phí</div>
-                                                    <button
-                                                        className="btn btn-primary fw-bold w-100"
-                                                        onClick={() => handleSelectRoom(room, room.basePricePerNight, false)}
-                                                    >
-                                                        Chọn
-                                                    </button>
-                                                    <div className="text-success small mt-1">
-                                                        <i className="bi bi-gem me-1"></i> Earn 1.088 Points
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center border rounded p-3 mt-2">
-                                                <div className="flex-grow-1">
-                                                    <div className="fw-bold mb-2">Bao gồm bữa sáng</div>
-                                                    <div className="text-muted small mb-1">{room.bedType?.name || '1 giường đôi'}</div>
-                                                </div>
-                                                <div className="mx-md-3 my-3 my-md-0 text-center">
-                                                    <i className="bi bi-people-fill fs-4 text-primary"></i>
-                                                    <div className="fw-bold">{room.maxAdults}</div>
-                                                </div>
-                                                <div className="text-md-end ms-md-auto" style={{ minWidth: '180px' }}>
-                                                    <div className="fw-bold text-warning fs-5">
-                                                        {priceWithBreakfast.toLocaleString("vi-VN")} VND
-                                                    </div>
-                                                    <div className="text-muted small mb-2">Chưa bao gồm thuế và phí</div>
-                                                    <button
-                                                        className="btn btn-primary fw-bold w-100"
-                                                        onClick={() => handleSelectRoom(room, priceWithBreakfast, true)}
-                                                    >
-                                                        Chọn
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
+                        {rooms.map((room, index) => {
+                            if (rooms.length === index + 1) {
+                                return <RoomCard key={room.id} room={room} handleSelectRoom={handleSelectRoom} innerRef={lastRoomElementRef} />
+                            } else {
+                                return <RoomCard key={room.id} room={room} handleSelectRoom={handleSelectRoom} />
+                            }
                         })}
+                        {isFetchingMore && (
+                            <div className="text-center p-4">
+                                <div className="spinner-border text-primary" role="status">
+                                    <span className="visually-hidden">Đang tải thêm...</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
