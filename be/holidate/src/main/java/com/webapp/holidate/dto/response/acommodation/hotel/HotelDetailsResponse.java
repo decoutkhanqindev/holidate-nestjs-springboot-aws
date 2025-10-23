@@ -40,7 +40,6 @@ public class HotelDetailsResponse {
   double latitude;
   double longitude;
   int starRating;
-  double averageScore;
   String status;
   LocalDateTime createdAt;
   LocalDateTime updatedAt;
