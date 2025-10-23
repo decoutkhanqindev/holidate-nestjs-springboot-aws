@@ -57,60 +57,103 @@ public interface HotelMapper {
 
   @AfterMapping
   default void addPriceAndAvailability(Hotel hotel, @MappingTarget HotelResponse.HotelResponseBuilder responseBuilder) {
-    LocalDate today = LocalDate.now();
+    double rawPrice = getRawPricePerNight(hotel);
+    double currentPrice = getCurrentPricePerNight(hotel);
+    int availableRooms = getAvailableRoomsToday(hotel);
 
-    List<Room> rooms = hotel.getRooms().stream().toList();
-    boolean hasRooms = !rooms.isEmpty();
-    if (!hasRooms) {
-      responseBuilder.rawPricePerNight(0.0);
-      responseBuilder.currentPricePerNight(0.0);
-      responseBuilder.availableRooms(0);
-      return;
-    }
-
-    List<RoomInventory> roomInventories = rooms.stream()
-      .flatMap(room -> room.getInventories().stream())
-      .toList();
-    boolean hasInventories = !roomInventories.isEmpty();
-    if (!hasInventories) {
-      Room firstRoom = rooms.getFirst();
-      responseBuilder.rawPricePerNight(firstRoom.getBasePricePerNight());
-      responseBuilder.currentPricePerNight(firstRoom.getBasePricePerNight());
-      responseBuilder.availableRooms(firstRoom.getQuantity());
-      return;
-    }
-
-    Optional<RoomInventory> cheapestAvailableInventory = roomInventories.stream()
-      .filter(inventory -> !inventory.getId().getDate().isBefore(today))
-      .filter(inventory -> inventory.getAvailableRooms() > 0)
-      .min(Comparator.comparingDouble(RoomInventory::getPrice));
-    boolean hasAvailableInventories = cheapestAvailableInventory.isPresent();
-    if (hasAvailableInventories) {
-      RoomInventory inventory = cheapestAvailableInventory.get();
-      Room room = inventory.getRoom();
-
-      responseBuilder.rawPricePerNight(room.getBasePricePerNight());
-      responseBuilder.currentPricePerNight(inventory.getPrice());
-      responseBuilder.availableRooms(inventory.getAvailableRooms());
-    } else {
-      Optional<Room> roomWithLowestBasePrice = rooms.stream()
-        .min(Comparator.comparingDouble(Room::getBasePricePerNight));
-
-      Room room = roomWithLowestBasePrice.get();
-      responseBuilder.rawPricePerNight(room.getBasePricePerNight());
-      responseBuilder.currentPricePerNight(room.getBasePricePerNight());
-
-      int totalAvailableRooms = roomInventories.stream()
-        .filter(inventory -> !inventory.getId().getDate().isBefore(today))
-        .mapToInt(RoomInventory::getAvailableRooms)
-        .sum();
-
-      responseBuilder.availableRooms(totalAvailableRooms > 0 ? totalAvailableRooms : room.getQuantity());
-    }
+    responseBuilder.rawPricePerNight(rawPrice);
+    responseBuilder.currentPricePerNight(currentPrice);
+    responseBuilder.availableRooms(availableRooms);
   }
 
   @Mapping(source = "entertainmentVenues", target = "entertainmentVenues", qualifiedByName = "hotelEntertainmentVenuesToCategories")
   @Mapping(source = "photos", target = "photos", qualifiedByName = "hotelPhotosToCategories")
   @Mapping(source = "amenities", target = "amenities", qualifiedByName = "hotelAmenitiesToCategories")
   HotelDetailsResponse toHotelDetailsResponse(Hotel hotel);
+
+  /**
+   * Lấy giá gốc thấp nhất của hotel dựa trên base price của các phòng
+   */
+  default double getRawPricePerNight(Hotel hotel) {
+    List<Room> rooms = hotel.getRooms().stream().toList();
+    if (rooms.isEmpty()) {
+      return 0.0;
+    }
+
+    return rooms.stream()
+      .mapToDouble(Room::getBasePricePerNight)
+      .min()
+      .orElse(0.0);
+  }
+
+  /**
+   * Tính giá hiện tại thấp nhất của hotel dựa trên RoomInventory
+   * Logic tương tự như RoomMapper.getCurrentPricePerNight() nhưng cho toàn hotel
+   */
+  default double getCurrentPricePerNight(Hotel hotel) {
+    LocalDate today = LocalDate.now();
+
+    List<Room> rooms = hotel.getRooms().stream().toList();
+    if (rooms.isEmpty()) {
+      return 0.0;
+    }
+
+    List<RoomInventory> roomInventories = rooms.stream()
+      .flatMap(room -> room.getInventories().stream())
+      .toList();
+
+    if (roomInventories.isEmpty()) {
+      // Không có inventory, return base price thấp nhất
+      return getRawPricePerNight(hotel);
+    }
+
+    // Tìm inventory có giá thấp nhất và vẫn còn phòng available
+    Optional<RoomInventory> cheapestAvailableInventory = roomInventories.stream()
+      .filter(inventory -> !inventory.getId().getDate().isBefore(today))
+      .filter(inventory -> inventory.getAvailableRooms() > 0)
+      .min(Comparator.comparingDouble(RoomInventory::getPrice));
+
+    return cheapestAvailableInventory.map(RoomInventory::getPrice).orElseGet(() -> getRawPricePerNight(hotel));
+  }
+
+  /**
+   * Lấy tổng số phòng available của hotel vào ngày hiện tại
+   * Logic tương tự như RoomMapper.getAvailableRoomsToday() nhưng tổng hợp cho
+   * toàn hotel
+   */
+  default int getAvailableRoomsToday(Hotel hotel) {
+    LocalDate today = LocalDate.now();
+
+    List<Room> rooms = hotel.getRooms().stream().toList();
+    if (rooms.isEmpty()) {
+      return 0;
+    }
+
+    List<RoomInventory> roomInventories = rooms.stream()
+      .flatMap(room -> room.getInventories().stream())
+      .toList();
+
+    if (roomInventories.isEmpty()) {
+      // Không có inventory, return tổng quantity của tất cả rooms
+      return rooms.stream()
+        .mapToInt(Room::getQuantity)
+        .sum();
+    }
+
+    // Tính tổng available rooms từ inventories của ngày hiện tại hoặc tương lai gần
+    // nhất
+    int totalAvailableRooms = roomInventories.stream()
+      .filter(inventory -> !inventory.getId().getDate().isBefore(today))
+      .mapToInt(RoomInventory::getAvailableRooms)
+      .sum();
+
+    // Nếu không có inventory nào available, fallback về total quantity
+    if (totalAvailableRooms <= 0) {
+      return rooms.stream()
+        .mapToInt(Room::getQuantity)
+        .sum();
+    }
+
+    return totalAvailableRooms;
+  }
 }

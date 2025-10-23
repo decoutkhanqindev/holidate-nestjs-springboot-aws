@@ -28,13 +28,15 @@ public class RoomResponse {
   int maxAdults;
   int maxChildren;
   double basePricePerNight;
+  double currentPricePerNight;
+  int availableRooms;
+  int totalRooms;
   BedTypeResponse bedType;
   CancellationPolicyResponse cancellationPolicy;
   ReschedulePolicyResponse reschedulePolicy;
   boolean smokingAllowed;
   boolean wifiAvailable;
   boolean breakfastIncluded;
-  int quantity;
   String status;
   List<AmenityCategoryDetailsResponse> amenities;
   LocalDateTime createdAt;
