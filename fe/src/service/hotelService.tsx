@@ -144,7 +144,6 @@
 //     }
 // }
 
-// export const hotelService = new HotelService();
 
 
 import axios, { AxiosInstance, AxiosError } from 'axios';
@@ -154,7 +153,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 const createAxiosInstance = (): AxiosInstance => {
     const instance = axios.create({
         baseURL: API_BASE_URL,
-        timeout: 15000,
+        timeout: 35000,
         headers: {
             'Content-Type': 'application/json',
         },
@@ -190,7 +189,7 @@ const createAxiosInstance = (): AxiosInstance => {
 };
 
 
-// --- CÁC INTERFACE ĐỊNH NGHĨA CẤU TRÚC DỮ LIỆU ---
+// ---  INTERFACE   CẤU TRÚC DỮ LIỆU ---
 
 export interface HotelPhoto {
     id: string;
@@ -209,6 +208,8 @@ export interface HotelResponse {
     district: { id: string; name: string; code: string; };
     ward: { id: string; name: string; code: string; };
     street: { id: string; name: string; code: string; };
+    entertainmentVenues?: EntertainmentVenueGroup[];
+    amenities?: AmenityGroup[];
     photos: HotelPhoto[];
     latitude: number;
     longitude: number;
@@ -226,7 +227,19 @@ export interface HotelResponse {
 
 export interface Amenity { id: string; name: string; free: boolean; }
 export interface AmenityGroup { id: string; name: string; amenities: Amenity[]; }
+// Interface   địa điểm giải trí
+export interface EntertainmentVenue {
+    id: string;
+    name: string;
+    distance: number;
+}
 
+// Interface  nhóm địa điểm giải trí
+export interface EntertainmentVenueGroup {
+    id: string;
+    name: string;
+    entertainmentVenues: EntertainmentVenue[];
+}
 export interface Room {
     id: string | number;
     name: string;
@@ -244,7 +257,7 @@ export interface Room {
     reschedulePolicy?: any;
     smokingAllowed?: boolean;
     wifiAvailable?: boolean;
-    breakfastIncluded?: boolean; // << Sửa lỗi báo đỏ
+    breakfastIncluded?: boolean;
     createdAt?: string;
     updatedAt?: string | null;
 }
@@ -255,7 +268,7 @@ export interface ApiResponse<T> {
     data: T;
 }
 
-// Interface mới cho dữ liệu có phân trang
+// Interface  cho dữ liệu có phân trang
 export interface PaginatedData<T> {
     content: T[];
     page: number;
@@ -268,7 +281,7 @@ export interface PaginatedData<T> {
     hasPrevious: boolean;
 }
 
-// Interface mới cho các tham số tìm kiếm
+// Interface  cho các tham số tìm kiếm
 export interface SearchParams {
     name?: string;
     city?: string;
@@ -284,10 +297,14 @@ export interface SearchParams {
 }
 
 
+export interface RoomDetailResponse extends Room {
+    hotel: Omit<HotelResponse, 'photos' | 'description' | 'rawPricePerNight' | 'currentPricePerNight' | 'availableRooms'>;
 
+}
 class HotelService {
     private api: AxiosInstance;
     private baseURL = '/accommodation/hotels';
+    private roomsURL = '/accommodation/rooms';
 
     constructor() {
         this.api = createAxiosInstance();
@@ -335,6 +352,8 @@ class HotelService {
     }
 
     async getRoomsByHotelId(hotelId: string, page: number = 0, size: number = 5): Promise<PaginatedData<Room>> {
+        const requestUrl = `/accommodation/rooms?hotel-id=${hotelId}&page=${page}&size=${size}`;
+        console.log(`[hotelService] Bắt đầu gọi API lấy phòng: ${requestUrl}`); // << THÊM LOG
         try {
             const params = new URLSearchParams({
                 'hotel-id': hotelId,
@@ -349,7 +368,6 @@ class HotelService {
         }
     }
 
-    // << HÀM NÀY ĐỂ LẤY TIỆN ÍCH >>
     async getAmenitiesByHotelId(hotelId: string): Promise<AmenityGroup[]> {
         try {
             const response = await this.api.get<ApiResponse<AmenityGroup[]>>(`${this.baseURL}/${hotelId}/amenities`);
@@ -357,6 +375,15 @@ class HotelService {
         } catch (error) {
             console.error(`Error fetching amenities for hotel id ${hotelId}:`, error);
             return [];
+        }
+    }
+    async getRoomById(roomId: string): Promise<RoomDetailResponse> {
+        try {
+            const response = await this.api.get<ApiResponse<RoomDetailResponse>>(`${this.roomsURL}/${roomId}`);
+            return response.data.data;
+        } catch (error) {
+            console.error(`Error fetching room by id: ${roomId}`, error);
+            throw new Error('Không thể tải thông tin chi tiết phòng');
         }
     }
 }

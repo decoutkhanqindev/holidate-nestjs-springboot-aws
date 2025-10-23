@@ -6,7 +6,7 @@ import { hotelService, HotelResponse } from '@/service/hotelService';
 import { locationService, LocationSuggestion, LocationType } from '@/service/locationService';
 import styles from './HotelsCard.module.css';
 
-// --- Các hàm tiện ích (Giữ nguyên) ---
+// ---  hàm tiện ích  ---
 const formatLocationNameForDisplay = (fullName: string) => fullName.replace(/^(Thành phố|Tỉnh|Thủ đô)\s/, '');
 const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN').format(price) + ' VND';
 const formatRating = (rating?: number) => rating && rating > 0 ? `${rating.toFixed(1)}/10` : 'Chưa có đánh giá';
@@ -21,7 +21,7 @@ const getTypeLabel = (type: LocationType) => {
     }
 };
 
-// --- Component LocationSearchInput (Giữ nguyên, không cần sửa) ---
+// ---  LocationSearchInput ---
 interface LocationSearchInputProps {
     value: string;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -76,7 +76,7 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({ value, onChan
     );
 };
 
-// --- Interfaces mới cho logic dữ liệu ---
+// --- Interfaces      ---
 interface City {
     id: string;
     name: string;
@@ -88,9 +88,7 @@ interface LocationData {
 }
 
 
-// --- COMPONENT CHÍNH ĐÃ ĐƯỢC NÂNG CẤP ---
 export default function HotelsCard() {
-    // --- STATE CHO PHẦN TÌM KIẾM ---
     const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const today = new Date().toISOString().split('T')[0];
@@ -99,7 +97,6 @@ export default function HotelsCard() {
     const [guests, setGuests] = useState('2 người lớn, 0 Trẻ em, 1 phòng');
     const router = useRouter();
 
-    // --- STATE ĐÃ ĐƯỢC NÂNG CẤP ---
     const [featuredLocations, setFeaturedLocations] = useState<City[]>([]);
     const [activeLocation, setActiveLocation] = useState<City | null>(null);
     const [locationData, setLocationData] = useState<Map<string, LocationData>>(new Map());
@@ -113,9 +110,7 @@ export default function HotelsCard() {
     const [showPrevButton, setShowPrevButton] = useState(false);
     const [showNextButton, setShowNextButton] = useState(true);
 
-    // --- LOGIC MỚI ĐỂ LẤY DỮ LIỆU ---
 
-    // Effect 1: (ĐÃ SỬA) Lấy danh sách các Thành phố
     useEffect(() => {
         const fetchAllCities = async () => {
             setIsLoadingInitial(true);
@@ -137,7 +132,6 @@ export default function HotelsCard() {
         fetchAllCities();
     }, []);
 
-    // Effect 2: (ĐÃ SỬA) Tải khách sạn cho Thành phố được chọn bằng 'city-id'
     useEffect(() => {
         const fetchHotelsForTab = async () => {
             if (!activeLocation || locationData.has(activeLocation.id)) return;
@@ -162,7 +156,6 @@ export default function HotelsCard() {
         }
     }, [activeLocation, isLoadingInitial]);
 
-    // Hàm để tải thêm khách sạn (ĐÃ SỬA)
     const handleLoadMore = async () => {
         if (!activeLocation || isLoadingMore) return;
         const currentData = locationData.get(activeLocation.id);
@@ -192,7 +185,6 @@ export default function HotelsCard() {
         setSearchQuery(location.name);
     };
 
-    // Logic cuộn và kiểm tra nút
     useEffect(() => {
         const container = scrollContainerRef.current;
         if (!container) return;
@@ -257,13 +249,10 @@ export default function HotelsCard() {
     const handleMainSearch = () => {
         const params = new URLSearchParams();
 
-        // --- LOGIC MỚI, THÔNG MINH HƠN ---
         if (selectedLocation) {
-            // Nếu người dùng đã chọn một gợi ý, ưu tiên dùng ID để tìm kiếm chính xác
             switch (selectedLocation.type) {
                 case 'PROVINCE':
                 case 'CITY_PROVINCE':
-                    // API của bạn dùng 'province-id' cho cả Tỉnh và TP TTTW
                     params.set('province-id', selectedLocation.id.replace('province-', ''));
                     break;
                 case 'CITY':
@@ -273,24 +262,19 @@ export default function HotelsCard() {
                     params.set('district-id', selectedLocation.id.replace('district-', ''));
                     break;
                 case 'HOTEL':
-                    // Nếu là khách sạn, chuyển thẳng đến trang chi tiết khách sạn luôn cho nhanh
                     router.push(`/hotels/${selectedLocation.id.replace('hotel-', '')}`);
-                    return; // Dừng hàm ở đây
+                    return;
             }
-            // Vẫn set 'query' để hiển thị lại trên thanh search của trang kết quả
             params.set('query', selectedLocation.name);
 
         } else {
-            // Nếu người dùng không chọn gợi ý nào, chỉ gõ chữ rồi enter
             params.set('query', searchQuery);
         }
 
-        // Gắn các tham số còn lại
         if (checkInDate) params.set('checkin', checkInDate);
         params.set('nights', numNights.toString());
         params.set('guests', guests);
 
-        // Điều hướng đến trang search
         router.push(`/search?${params.toString()}`);
     };
     const currentHotels = activeLocation ? (locationData.get(activeLocation.id)?.hotels || []) : [];
@@ -298,7 +282,6 @@ export default function HotelsCard() {
 
     return (
         <div className="bg-light min-vh-100">
-            {/* --- PHẦN HEADER VÀ FORM TÌM KIẾM (Không đổi) --- */}
             <div style={{ background: "linear-gradient(90deg,#1e90ff 0,#00bfff 100%)", padding: "40px 0 60px 0" }}>
                 <div className="container">
                     <h2 className="fw-bold text-white mb-3" style={{ fontSize: "2rem" }}>Tìm & đặt phòng khách sạn giá rẻ chỉ với 3 bước đơn giản!</h2>
@@ -338,7 +321,6 @@ export default function HotelsCard() {
                 </div>
             </div>
 
-            {/* --- PHẦN HIỂN THỊ KHÁCH SẠN (Đã được nâng cấp) --- */}
             <div className="container">
                 <h2 className="fw-bold mb-4 text-black">🌴 Chơi cuối tuần gần nhà</h2>
                 {isLoadingInitial ? (

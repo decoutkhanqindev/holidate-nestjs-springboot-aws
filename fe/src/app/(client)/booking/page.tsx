@@ -1,16 +1,15 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import { hotelService, HotelResponse } from '@/service/hotelService';
 import styles from './BookingPage.module.css';
 
-// Component con để xử lý logic
+// Component con để xử lý logic, không gọi API
 function BookingComponent() {
     const searchParams = useSearchParams();
 
-    // THAY ĐỔI 1: Lấy tất cả các tham số từ URL
+    // Lấy tất cả các tham số từ URL
     const hotelId = searchParams.get('hotelId');
     const roomId = searchParams.get('roomId');
     const roomName = searchParams.get('roomName');
@@ -19,38 +18,22 @@ function BookingComponent() {
     const nights = searchParams.get('nights');
     const guests = searchParams.get('guests');
     const includesBreakfast = searchParams.get('breakfast') === 'true';
+    const hotelName = searchParams.get('hotelName');
+    const hotelImageUrl = searchParams.get('hotelImageUrl');
 
+    // Kiểm tra các tham số cần thiết
+    if (!hotelId || !roomId || !price || !checkin || !nights || !guests || !hotelName) {
+        return <div className={styles.centered}>Thiếu thông tin để đặt phòng. Vui lòng quay lại và thử lại.</div>;
+    }
 
-    const [hotel, setHotel] = useState<HotelResponse | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        // THAY ĐỔI 2: Kiểm tra tất cả các tham số cần thiết
-        if (hotelId && roomId && price && checkin && nights && guests) {
-            setLoading(true);
-            hotelService.getHotelById(hotelId)
-                .then(data => setHotel(data))
-                .catch(() => setError('Không thể tải thông tin khách sạn.'))
-                .finally(() => setLoading(false));
-        } else {
-            setError('Thiếu thông tin để đặt phòng. Vui lòng thử lại.');
-            setLoading(false);
-        }
-    }, [hotelId, roomId, price, checkin, nights, guests]);
-
-    if (loading) return <div className={styles.centered}>Đang tải thông tin đặt phòng...</div>;
-    if (error) return <div className={styles.centered}>{error}</div>;
-    if (!hotel) return <div className={styles.centered}>Không tìm thấy thông tin khách sạn.</div>;
-
-    // THAY ĐỔI 3: Sử dụng dữ liệu từ URL để tính toán và hiển thị
-    const numNights = parseInt(nights || '1', 10);
-    const numGuests = parseInt(guests || '2', 10);
-    const checkinDate = new Date(checkin || new Date());
+    // Sử dụng dữ liệu từ URL để tính toán và hiển thị
+    const numNights = parseInt(nights, 10);
+    const numGuests = parseInt(guests, 10);
+    const checkinDate = new Date(checkin);
     const checkoutDate = new Date(checkinDate);
     checkoutDate.setDate(checkoutDate.getDate() + numNights);
 
-    const pricePerNight = parseFloat(price || '0');
+    const pricePerNight = parseFloat(price);
     const totalPriceForNights = pricePerNight * numNights;
     const taxAndFee = totalPriceForNights * 0.1; // Giả sử thuế và phí là 10%
     const finalPrice = totalPriceForNights + taxAndFee;
@@ -59,7 +42,6 @@ function BookingComponent() {
 
     return (
         <div className={styles.pageContainer}>
-            {/* ... (Phần stepper và tiêu đề giữ nguyên) ... */}
             <div className={styles.stepper}>
                 <span><span className={styles.stepNumberActive}>1</span> Đặt</span>
                 <span className={styles.stepSeparator}>&gt;</span>
@@ -72,7 +54,7 @@ function BookingComponent() {
             <p className={styles.pageSubtitle}>Hãy đảm bảo tất cả thông tin chi tiết trên trang này đã chính xác trước khi tiến hành thanh toán.</p>
 
             <div className={styles.mainLayout}>
-                {/* === CỘT TRÁI: FORM THÔNG TIN (Giữ nguyên) === */}
+                {/* === CỘT TRÁI: FORM THÔNG TIN === */}
                 <div className={styles.leftColumn}>
                     <div className={styles.infoBox}>
                         <div className={styles.userInfo}>
@@ -137,14 +119,12 @@ function BookingComponent() {
                         </div>
                     </div>
 
-                    {/* === KHỐI CHI TIẾT GIÁ & NÚT BẤM === */}
                     <div className={styles.finalPriceSection}>
                         <h2 className={styles.sectionTitle}>Chi tiết giá</h2>
                         <div className={styles.priceDetailsContainer}>
                             <div className={styles.priceRow}>
                                 <div>
                                     <p style={{ margin: 0, fontWeight: 'bold' }}>Giá phòng</p>
-                                    {/* THAY ĐỔI 4: Hiển thị tên phòng và số đêm chính xác */}
                                     <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>(1x) {roomName} ({numNights} đêm)</p>
                                 </div>
                                 <span>{totalPriceForNights.toLocaleString('vi-VN')} VND</span>
@@ -173,10 +153,10 @@ function BookingComponent() {
                 <div className={styles.rightColumn}>
                     <div className={styles.summaryCard}>
                         <div className={styles.hotelInfo}>
-                            <h3 className={styles.hotelName}>{hotel.name}</h3>
-                            <div className={styles.hotelRating}>⭐ {hotel.averageScore?.toFixed(1) || '0.0'} ({hotel.totalReviews || 0})</div>
+                            <h3 className={styles.hotelName}>{hotelName}</h3>
+                            {/* Bỏ đi phần rating vì không có trong URL */}
                             <div className={styles.hotelImage}>
-                                <Image src={hotel.photos?.[0]?.photos?.[0]?.url || '/placeholder.svg'} alt={hotel.name} layout="fill" objectFit="cover" />
+                                <Image src={hotelImageUrl || '/placeholder.svg'} alt={hotelName} layout="fill" objectFit="cover" />
                             </div>
                         </div>
 
@@ -186,7 +166,6 @@ function BookingComponent() {
                             <div><strong>Trả phòng</strong><p>{formatDate(checkoutDate)}</p><p>Trước 12:00</p></div>
                         </div>
 
-                        {/* THAY ĐỔI 5: Hiển thị thông tin phòng đã chọn chính xác */}
                         <div className={styles.roomDetails}>
                             <p className={styles.roomName}>(1x) {roomName || 'Phòng đã chọn'}</p>
                             <p>👤 {numGuests} khách</p>
@@ -205,7 +184,6 @@ function BookingComponent() {
                                 <p>1 phòng, {numNights} đêm</p>
                             </div>
                             <div className={styles.priceValues}>
-                                {/* Bỏ giá gạch ngang vì không có dữ liệu này từ URL */}
                                 <span className={styles.finalPrice}>
                                     {finalPrice.toLocaleString('vi-VN')} VND
                                 </span>
@@ -219,7 +197,7 @@ function BookingComponent() {
     );
 }
 
-// Bọc component trong Suspense (giữ nguyên)
+// Bọc component trong Suspense để đọc searchParams
 export default function BookingPage() {
     return (
         <Suspense fallback={<div className={styles.centered}>Đang tải trang đặt phòng...</div>}>
