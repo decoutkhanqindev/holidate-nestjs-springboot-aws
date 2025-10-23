@@ -18,6 +18,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 
+@Slf4j
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
@@ -77,16 +79,22 @@ public class DynamicPricingService {
           SpecialDayDiscount specialDayDiscount = specialDayDiscountRepository.findByHolidayIdWithDiscount(specialDay.getId())
             .orElseThrow(() -> new AppException(ErrorType.HOLIDAY_DISCOUNT_NOT_FOUND));
           Discount discount = specialDayDiscount.getDiscount();
+          log.info("Applying special day discount of {}% for date {}", discount.getPercentage(), currentDate);
           newPrice = basePrice * (1 - discount.getPercentage() / 100);
         } else if (isWeekend) {
+          log.info("Applying weekend price multiplier of {} for date {}", weekendPriceMultiplier, currentDate);
           newPrice = basePrice * weekendPriceMultiplier;
         } else {
+          log.info("No special pricing for date {}, setting base price {}", currentDate, basePrice);
           newPrice = basePrice;
         }
 
         boolean priceChanged = Double.compare(inventory.getPrice(), newPrice) != 0;
         if (priceChanged) {
+          log.info("Updating price for room {} on date {}: old price = {}, new price = {}",
+            room.getId(), currentDate, inventory.getPrice(), newPrice);
           inventory.setPrice(newPrice);
+          log.info("Updated inventory: {}", inventory);
           inventoriesToUpdate.add(inventory);
         }
       }
@@ -94,6 +102,7 @@ public class DynamicPricingService {
 
     boolean hasInventoriesToUpdate = !inventoriesToUpdate.isEmpty();
     if (hasInventoriesToUpdate) {
+      log.info("Saving {} updated inventories", inventoriesToUpdate.size());
       inventoryRepository.saveAll(inventoriesToUpdate);
     }
   }
