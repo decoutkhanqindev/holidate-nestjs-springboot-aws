@@ -1,4 +1,4 @@
-package com.webapp.holidate.constants.db.query.accommodation;
+package com.webapp.holidate.constants.db.query;
 
 public class EntertainmentVenueQueries {
   public static final String FIND_ALL_BY_CITY_ID =

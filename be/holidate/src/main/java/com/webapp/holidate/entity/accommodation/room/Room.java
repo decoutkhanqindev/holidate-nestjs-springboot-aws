@@ -3,7 +3,7 @@ package com.webapp.holidate.entity.accommodation.room;
 import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
 import com.webapp.holidate.entity.accommodation.Hotel;
-import com.webapp.holidate.entity.accommodation.amenity.RoomAmenity;
+import com.webapp.holidate.entity.amenity.RoomAmenity;
 import com.webapp.holidate.entity.image.RoomPhoto;
 import com.webapp.holidate.entity.policy.cancelation.CancellationPolicy;
 import com.webapp.holidate.entity.policy.reschedule.ReschedulePolicy;

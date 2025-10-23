@@ -1,4 +1,4 @@
-package com.webapp.holidate.service.pricing;
+package com.webapp.holidate.service.accommodation.room;
 
 import com.webapp.holidate.constants.AppProperties;
 import com.webapp.holidate.entity.accommodation.room.Room;

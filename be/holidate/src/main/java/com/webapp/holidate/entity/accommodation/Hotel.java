@@ -2,7 +2,7 @@ package com.webapp.holidate.entity.accommodation;
 
 import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
-import com.webapp.holidate.entity.accommodation.amenity.HotelAmenity;
+import com.webapp.holidate.entity.amenity.HotelAmenity;
 import com.webapp.holidate.entity.accommodation.room.Room;
 import com.webapp.holidate.entity.booking.Review;
 import com.webapp.holidate.entity.booking.discount.HotelDiscount;

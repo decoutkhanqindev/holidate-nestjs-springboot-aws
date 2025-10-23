@@ -8,8 +8,8 @@ import com.webapp.holidate.dto.response.acommodation.room.RoomDetailsResponse;
 import com.webapp.holidate.dto.response.acommodation.room.RoomResponse;
 import com.webapp.holidate.dto.response.base.PagedResponse;
 import com.webapp.holidate.entity.accommodation.Hotel;
-import com.webapp.holidate.entity.accommodation.amenity.Amenity;
-import com.webapp.holidate.entity.accommodation.amenity.RoomAmenity;
+import com.webapp.holidate.entity.amenity.Amenity;
+import com.webapp.holidate.entity.amenity.RoomAmenity;
 import com.webapp.holidate.entity.accommodation.room.BedType;
 import com.webapp.holidate.entity.accommodation.room.Room;
 import com.webapp.holidate.entity.image.Photo;
@@ -46,7 +46,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;

@@ -1,7 +1,7 @@
 package com.webapp.holidate.repository.amenity;
 
 import com.webapp.holidate.constants.db.query.AmenityQueries;
-import com.webapp.holidate.entity.accommodation.amenity.Amenity;
+import com.webapp.holidate.entity.amenity.Amenity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
