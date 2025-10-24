@@ -7,7 +7,6 @@ import com.webapp.holidate.constants.api.endpoint.auth.AuthEndpoints;
 import com.webapp.holidate.dto.request.auth.LoginRequest;
 import com.webapp.holidate.dto.request.auth.RegisterRequest;
 import com.webapp.holidate.dto.request.auth.TokenRequest;
-import com.webapp.holidate.dto.request.auth.VerifyTokenRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.auth.LogoutResponse;
 import com.webapp.holidate.dto.response.auth.TokenResponse;
@@ -56,7 +55,7 @@ public class AuthController {
   }
 
   @PostMapping(AuthEndpoints.VERIFY_TOKEN)
-  public ApiResponse<VerificationResponse> verifyToken(@RequestBody @Valid VerifyTokenRequest request)
+  public ApiResponse<VerificationResponse> verifyToken(@RequestBody @Valid TokenRequest request)
     throws ParseException, JOSEException {
     VerificationResponse response = authService.verifyToken(request);
     return ApiResponse.<VerificationResponse>builder()

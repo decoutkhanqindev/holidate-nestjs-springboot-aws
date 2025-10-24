@@ -18,13 +18,13 @@ public interface RoomInventoryRepository extends JpaRepository<RoomInventory, Ro
 
   @Query(RoomInventoryQueries.FIND_ALL_BY_ROOM_ID_AND_DATE_BETWEEN_WITH_FILTERS)
   List<RoomInventory> findAllByRoomIdAndDateBetweenWithFilters(String roomId, LocalDate startDate, LocalDate endDate,
-      @Nullable String status);
+                                                               @Nullable String status);
 
   @Query(RoomInventoryQueries.FIND_ALL_BY_ROOM_ID_AND_DATE_BETWEEN_PAGED)
   Page<RoomInventory> findAllByRoomIdAndDateBetweenPaged(String roomId, LocalDate startDate, LocalDate endDate,
-      Pageable pageable);
+                                                         Pageable pageable);
 
   @Query(RoomInventoryQueries.FIND_ALL_BY_ROOM_ID_AND_DATE_BETWEEN_WITH_FILTERS_PAGED)
   Page<RoomInventory> findAllByRoomIdAndDateBetweenWithFiltersPaged(String roomId, LocalDate startDate,
-      LocalDate endDate, @Nullable String status, Pageable pageable);
+                                                                    LocalDate endDate, @Nullable String status, Pageable pageable);
 }

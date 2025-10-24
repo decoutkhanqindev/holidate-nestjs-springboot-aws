@@ -29,18 +29,22 @@ public class RoomCreationRequest {
   @NotBlank(message = "VIEW_NOT_BLANK")
   String view;
 
+  @NotBlank(message = "ARE_NOT_BLANK")
   @Positive(message = "AREA_MUST_BE_POSITIVE")
   double area;
 
   @NotEmpty(message = "PHOTOS_NOT_EMPTY")
   List<PhotoCreationRequest> photos;
 
+  @NotBlank(message = "MAX_ADULTS_NOT_BLANK")
   @Positive(message = "MAX_ADULTS_MUST_BE_POSITIVE")
   int maxAdults;
 
+  @NotBlank(message = "MAX_CHILDREN_NOT_BLANK")
   @PositiveOrZero(message = "MAX_CHILDREN_MUST_BE_POSITIVE_OR_ZERO")
   int maxChildren;
 
+  @NotBlank(message = "PRICE_NOT_BLANK")
   @Positive(message = "PRICE_MUST_BE_POSITIVE")
   double basePricePerNight;
 
@@ -51,6 +55,7 @@ public class RoomCreationRequest {
   boolean wifiAvailable;
   boolean breakfastIncluded;
 
+  @NotBlank(message = "QUANTITY_NOT_BLANK")
   @Positive(message = "QUANTITY_MUST_BE_POSITIVE")
   int quantity;
 

@@ -32,7 +32,8 @@ public class Discount {
   int usageLimit;
 
   @Column(nullable = false)
-  int timesUsed;
+  @Builder.Default
+  int timesUsed = 0;
 
   @Column(nullable = false)
   int minBookingPrice;
@@ -47,5 +48,6 @@ public class Discount {
   LocalDate validTo;
 
   @Column(nullable = false)
-  boolean active;
+  @Builder.Default
+  boolean active = true;
 }

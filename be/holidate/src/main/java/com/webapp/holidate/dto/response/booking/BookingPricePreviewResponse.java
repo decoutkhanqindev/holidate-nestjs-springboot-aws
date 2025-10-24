@@ -17,6 +17,7 @@ public class BookingPricePreviewResponse {
   double discountAmount;
   String appliedDiscountCode;
   double netPriceAfterDiscount;
-  double taxesAndFees; // vat + service fee
+  double tax;
+  double serviceFee;
   double finalTotalPrice;
 }

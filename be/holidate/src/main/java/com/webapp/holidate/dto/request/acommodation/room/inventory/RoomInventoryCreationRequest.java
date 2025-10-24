@@ -18,6 +18,7 @@ public class RoomInventoryCreationRequest {
   @NotBlank(message = "ROOM_ID_NOT_BLANK")
   String roomId;
 
+  @NotBlank(message = "DAYS_NOT_BLANK")
   @Positive(message = "DAYS_MUST_BE_POSITIVE")
   int days;
 }

@@ -26,6 +26,7 @@ public class RoomInventoryPriceUpdateRequest {
   @NotBlank(message = "END_DATE_NOT_BLANK")
   LocalDate endDate;
 
+  @NotBlank(message = "PRICE_NOT_BLANK")
   @Positive(message = "PRICE_MUST_BE_POSITIVE")
   Double price;
 }

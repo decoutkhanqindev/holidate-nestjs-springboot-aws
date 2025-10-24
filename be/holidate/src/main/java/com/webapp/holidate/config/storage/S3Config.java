@@ -1,4 +1,4 @@
-package com.webapp.holidate.config.aws;
+package com.webapp.holidate.config.storage;
 
 import com.webapp.holidate.constants.AppProperties;
 import lombok.experimental.FieldDefaults;

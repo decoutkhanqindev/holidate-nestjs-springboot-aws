@@ -20,8 +20,10 @@ import java.util.List;
 public class HotelPolicyRequest {
   @Pattern(regexp = ValidationPatterns.CHECK_IN_OUT_TIME, message = "CHECK_IN_OUT_TIME_INVALID")
   LocalTime checkInTime;
+
   @Pattern(regexp = ValidationPatterns.CHECK_IN_OUT_TIME, message = "CHECK_IN_OUT_TIME_INVALID")
   LocalTime checkOutTime;
+
   Boolean allowsPayAtHotel;
   List<String> requiredIdentificationDocumentIdsToAdd;
   List<String> requiredIdentificationDocumentIdsToRemove;

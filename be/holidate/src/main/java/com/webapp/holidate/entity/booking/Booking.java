@@ -50,6 +50,12 @@ public class Booking {
   LocalDate checkOutDate;
 
   @Column(nullable = false)
+  int numberOfNights;
+
+  @Column(nullable = false)
+  int numberOfRooms;
+
+  @Column(nullable = false)
   int numberOfAdults;
 
   @Column(nullable = false)
