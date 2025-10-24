@@ -382,3 +382,50 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Thêm vào file BookingPage.module.css */
+
+.amenitiesList {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 14px;
+}
+
+.amenityItem {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.amenityItem i {
+    font-size: 18px;
+    margin-right: 10px;
+    color: #0d6efd;
+    /* Màu primary của Bootstrap */
+}
+
+.amenityTag {
+    background-color: #e9ecef;
+    color: #495057;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 13px;
+    margin-right: 8px;
+    margin-bottom: 8px;
+    display: inline-block;
+}
+
+.divider {
+    border: none;
+    border-top: 1px solid #dee2e6;
+    margin: 16px 0;
+}
+
+/* Trong file BookingPage.module.css */
+
+.roomName {
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 8px;
+}

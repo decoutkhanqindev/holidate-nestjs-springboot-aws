@@ -7,7 +7,7 @@ import { jwtDecode } from 'jwt-decode';
 import { loginUser, logoutUser, getMyProfile } from '@/service/authService';
 
 // Interfaces
-interface User { id?: string; fullName: string; email: string; role?: string; score?: number; }
+interface User { id?: string; fullName: string; email: string; role?: string; score?: number; phone?: string; }
 interface JwtPayload { sub: string; fullName: string; role?: string; id?: string; exp?: number; }
 interface AuthContextType { isLoggedIn: boolean; user: User | null; isLoading: boolean; isModalOpen: boolean; openModal: () => void; closeModal: () => void; login: (email: string, password: string) => Promise<void>; logout: () => Promise<void>; }
 
@@ -113,7 +113,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             window.location.reload();
         }
     };
+    // const logout = async () => {
+    //     try {
+    //         // Gửi yêu cầu đăng xuất đến server
+    //         await logoutUser();
+    //         console.log(" [Logout] Yêu cầu đăng xuất tới server thành công.");
 
+    //         // CHỈ DỌN DẸP CLIENT KHI SERVER ĐÃ XÁC NHẬN
+    //         localStorage.removeItem('accessToken');
+    //         localStorage.removeItem('refreshToken');
+    //         setUser(null);
+    //         setIsLoggedIn(false);
+
+    //         // Chuyển hướng về trang chủ để làm mới triệt để
+    //         window.location.href = '/';
+
+    //     } catch (error) {
+    //         console.error(" [Logout] Đăng xuất trên server THẤT BẠI:", error);
+    //         // Thông báo cho người dùng biết để họ không bị bối rối
+    //         alert("Đã xảy ra lỗi khi đăng xuất. Vui lòng kiểm tra console và liên hệ quản trị viên.");
+    //     }
+    // };
     return (
         <AuthContext.Provider value={{ isLoggedIn, user, isLoading, isModalOpen, openModal, closeModal, login, logout }}>
             {children}

@@ -806,45 +806,47 @@ export default function HotelDetailPage() {
     }, []);
 
     // const handleSelectRoom = (room: Room, price: number, includesBreakfast: boolean) => {
-    //     if (!hotelId) return;
+    //     if (!hotelId || !hotel) return; // Đảm bảo hotel đã được tải
+
     //     const checkin = new Date().toISOString().split('T')[0];
     //     const nights = 1;
     //     const guests = room.maxAdults;
-    //     const params = new URLSearchParams({ 
-    //         hotelId: hotelId as string, 
+
+    //     // Lấy URL ảnh đầu tiên của khách sạn
+    //     const hotelImageUrl = hotel.photos?.[0]?.photos?.[0]?.url || '';
+
+    //     const params = new URLSearchParams({
+    //         hotelId: hotelId as string,
     //         roomId: room.id.toString(),
-    //          roomName: room.name, 
-    //          price: price.toString(), 
-    //          checkin: checkin, 
-    //          hotelName: hotel.name,
-    //          nights: nights.toString(),
-    //          guests: guests.toString(), 
-    //          breakfast: includesBreakfast.toString() });
+    //         roomName: room.name,
+    //         price: price.toString(),
+    //         checkin: checkin,
+    //         nights: nights.toString(),
+    //         guests: guests.toString(),
+    //         breakfast: includesBreakfast.toString(),
+    //         hotelName: hotel.name,
+    //         hotelImageUrl: hotelImageUrl
+    //     });
+
     //     router.push(`/booking?${params.toString()}`);
     // };
-    // Trong file HotelDetailPage.tsx
 
     const handleSelectRoom = (room: Room, price: number, includesBreakfast: boolean) => {
-        if (!hotelId || !hotel) return; // Đảm bảo hotel đã được tải
+        if (!hotel || !hotel.name) return;
 
         const checkin = new Date().toISOString().split('T')[0];
         const nights = 1;
-        const guests = room.maxAdults;
-
-        // Lấy URL ảnh đầu tiên của khách sạn
         const hotelImageUrl = hotel.photos?.[0]?.photos?.[0]?.url || '';
 
+        // URL bây giờ rất gọn gàng, chỉ chứa các ID và thông tin cơ bản
         const params = new URLSearchParams({
-            hotelId: hotelId as string,
             roomId: room.id.toString(),
-            roomName: room.name,
             price: price.toString(),
             checkin: checkin,
             nights: nights.toString(),
-            guests: guests.toString(),
-            breakfast: includesBreakfast.toString(),
             hotelName: hotel.name,
-            hotelImageUrl: hotelImageUrl
+            hotelImageUrl: hotelImageUrl,
+            breakfast: includesBreakfast.toString()
         });
 
         router.push(`/booking?${params.toString()}`);

@@ -233,23 +233,49 @@ export default function HotelsCard() {
         }
     };
 
+
+
     // const handleMainSearch = () => {
     //     const params = new URLSearchParams();
-    //     if (selectedLocation?.type === 'HOTEL') {
-    //         params.set('hotelId', selectedLocation.id.replace('hotel-', ''));
+
+    //     if (selectedLocation) {
+    //         switch (selectedLocation.type) {
+    //             case 'PROVINCE':
+    //             case 'CITY_PROVINCE':
+    //                 params.set('province-id', selectedLocation.id.replace('province-', ''));
+    //                 break;
+    //             case 'CITY':
+    //                 params.set('city-id', selectedLocation.id.replace('city-', ''));
+    //                 break;
+    //             case 'DISTRICT':
+    //                 params.set('district-id', selectedLocation.id.replace('district-', ''));
+    //                 break;
+    //             case 'HOTEL':
+    //                 router.push(`/hotels/${selectedLocation.id.replace('hotel-', '')}`);
+    //                 return;
+    //         }
+    //         params.set('query', selectedLocation.name);
+
+    //     } else {
+    //         params.set('query', searchQuery);
     //     }
-    //     params.set('query', searchQuery);
+
     //     if (checkInDate) params.set('checkin', checkInDate);
     //     params.set('nights', numNights.toString());
     //     params.set('guests', guests);
+
     //     router.push(`/search?${params.toString()}`);
     // };
+
     // Trong file HotelsCard.tsx
+
+    // ... (các import và state giữ nguyên)
 
     const handleMainSearch = () => {
         const params = new URLSearchParams();
 
-        if (selectedLocation) {
+        // 1. Xử lý địa điểm
+        if (selectedLocation) { // Ưu tiên địa điểm đã chọn từ gợi ý
             switch (selectedLocation.type) {
                 case 'PROVINCE':
                 case 'CITY_PROVINCE':
@@ -262,21 +288,35 @@ export default function HotelsCard() {
                     params.set('district-id', selectedLocation.id.replace('district-', ''));
                     break;
                 case 'HOTEL':
+                    // Nếu là khách sạn, chuyển thẳng đến trang chi tiết
                     router.push(`/hotels/${selectedLocation.id.replace('hotel-', '')}`);
-                    return;
+                    return; // Dừng hàm
             }
+            // Luôn gửi `query` để hiển thị lại tên trong ô input ở trang sau
             params.set('query', selectedLocation.name);
-
-        } else {
+        } else if (searchQuery.trim()) {
+            // Nếu không chọn từ gợi ý, gửi đi chuỗi người dùng đã gõ
             params.set('query', searchQuery);
         }
 
-        if (checkInDate) params.set('checkin', checkInDate);
+        // 2. Xử lý ngày tháng và số đêm
+        if (checkInDate) {
+            params.set('checkin', checkInDate);
+        }
         params.set('nights', numNights.toString());
-        params.set('guests', guests);
 
+        // 3. Xử lý số lượng khách (cần sửa lại thành các state riêng)
+        // Tạm thời, chúng ta sẽ gửi đi chuỗi text và xử lý nó ở SearchPage
+        params.set('guestsText', guests); // Gửi chuỗi text để hiển thị
+        // Giả sử bạn có các state riêng:
+        // params.set('adults', adults.toString());
+        // params.set('children', children.toString());
+        // params.set('rooms', rooms.toString());
+
+        // 4. Chuyển hướng
         router.push(`/search?${params.toString()}`);
     };
+
     const currentHotels = activeLocation ? (locationData.get(activeLocation.id)?.hotels || []) : [];
     const isLoading = isLoadingInitial || isLoadingTab;
 

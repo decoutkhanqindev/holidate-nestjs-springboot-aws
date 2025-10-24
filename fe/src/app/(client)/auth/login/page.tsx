@@ -41,9 +41,17 @@ export default function ClientLoginPage() {
                     <button type="submit" className="w-full rounded-md bg-indigo-600 py-3 text-lg font-semibold text-white hover:bg-indigo-700">Đăng nhập</button>
                 </form>
                 <div className="my-8 flex items-center"><div className="flex-grow border-t"></div><span className="mx-4 text-gray-500">Hoặc</span><div className="flex-grow border-t"></div></div>
-                <button onClick={handleGoogleLogin} className="flex w-full items-center justify-center space-x-3 rounded-md border bg-white py-3 text-lg font-semibold text-gray-700 hover:bg-gray-50">
+                {/* <button onClick={handleGoogleLogin} className="flex w-full items-center justify-center space-x-3 rounded-md border bg-white py-3 text-lg font-semibold text-gray-700 hover:bg-gray-50">
                     <span>Đăng nhập với Google</span>
-                </button>
+                </button> */}
+                {/* THAY ĐỔI Ở ĐÂY */}
+                <a
+                    href="http://localhost:8080/oauth2/authorization/google"
+                    className="flex w-full items-center justify-center space-x-3 rounded-md border bg-white py-3 text-lg font-semibold text-gray-700 hover:bg-gray-50 no-underline"
+                >
+                    {/* Có thể thêm icon Google vào đây nếu muốn */}
+                    <span>Đăng nhập với Google</span>
+                </a>
                 <p className="mt-8 text-center text-sm text-gray-600">
                     Chưa có tài khoản?{' '}
                     <Link href="/auth/register" className="font-medium text-indigo-600 hover:underline">Đăng ký ngay</Link>

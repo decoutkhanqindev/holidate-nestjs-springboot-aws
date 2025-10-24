@@ -16,7 +16,10 @@ export const logoutUser = (data: any) => {
 
     return apiClient.post('/auth/logout', data);
 };
+// export const logoutUser = () => {
 
+//     return apiClient.post('/auth/logout');
+// };
 // 4 Gửi email xác thực (bước đầu tiên của OTP)
 // export const sendVerificationEmail = (data: any) => {
 //     return apiClient.post('/auth/email/send-verification-email', data);

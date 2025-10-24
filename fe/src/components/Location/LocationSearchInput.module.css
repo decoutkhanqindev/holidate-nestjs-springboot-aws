@@ -1,0 +1,78 @@
+.searchInputWrapper {
+    position: relative;
+    width: 100%;
+}
+
+.suggestionsList {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.suggestionItem {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.suggestionItem:last-child {
+    border-bottom: none;
+}
+
+.suggestionItem:hover {
+    background-color: #f8f9fa;
+}
+
+.suggestionContent {
+    flex-grow: 1;
+}
+
+.suggestionDescription {
+    font-size: 13px;
+    color: #6c757d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.suggestionMeta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    font-size: 13px;
+    margin-left: 16px;
+    white-space: nowrap;
+}
+
+.suggestionTypeLabel {
+    background-color: #e9ecef;
+    color: #495057;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.suggestionHotelCount {
+    color: #6c757d;
+    margin-top: 4px;
+}
+
+.suggestionInfo {
+    padding: 12px 16px;
+    color: #6c757d;
+}

@@ -145,56 +145,40 @@
 // }
 
 
+// src/service/hotelService.ts
 
-import axios, { AxiosInstance, AxiosError } from 'axios';
+import apiClient, { ApiResponse } from './apiClient';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-
-const createAxiosInstance = (): AxiosInstance => {
-    const instance = axios.create({
-        baseURL: API_BASE_URL,
-        timeout: 35000,
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    });
-
-    instance.interceptors.request.use(
-        (config) => {
-            if (typeof window !== 'undefined') {
-                const token = localStorage.getItem('token');
-                if (token) {
-                    config.headers.Authorization = `Bearer ${token}`;
-                }
-            }
-            return config;
-        },
-        (error) => Promise.reject(error)
-    );
-
-    instance.interceptors.response.use(
-        (response) => response,
-        (error: AxiosError) => {
-            if (error.response?.status === 401) {
-                console.error("Unauthorized access - 401. Clearing token.");
-                if (typeof window !== 'undefined') {
-                    localStorage.removeItem('token');
-                }
-            }
-            return Promise.reject(error);
-        }
-    );
-
-    return instance;
-};
-
-
-// ---  INTERFACE   CẤU TRÚC DỮ LIỆU ---
+// --- INTERFACES ---
 
 export interface HotelPhoto {
     id: string;
     name: string;
     photos: { id: string; url: string }[];
+}
+
+export interface Amenity {
+    id: string;
+    name: string;
+    free: boolean;
+}
+
+export interface AmenityGroup {
+    id: string;
+    name: string;
+    amenities: Amenity[];
+}
+
+export interface EntertainmentVenue {
+    id: string;
+    name: string;
+    distance: number;
+}
+
+export interface EntertainmentVenueGroup {
+    id: string;
+    name: string;
+    entertainmentVenues: EntertainmentVenue[];
 }
 
 export interface HotelResponse {
@@ -225,21 +209,6 @@ export interface HotelResponse {
     updatedAt?: string;
 }
 
-export interface Amenity { id: string; name: string; free: boolean; }
-export interface AmenityGroup { id: string; name: string; amenities: Amenity[]; }
-// Interface   địa điểm giải trí
-export interface EntertainmentVenue {
-    id: string;
-    name: string;
-    distance: number;
-}
-
-// Interface  nhóm địa điểm giải trí
-export interface EntertainmentVenueGroup {
-    id: string;
-    name: string;
-    entertainmentVenues: EntertainmentVenue[];
-}
 export interface Room {
     id: string | number;
     name: string;
@@ -262,13 +231,10 @@ export interface Room {
     updatedAt?: string | null;
 }
 
-export interface ApiResponse<T> {
-    statusCode: number;
-    message: string;
-    data: T;
+export interface RoomDetailResponse extends Room {
+    hotel: Omit<HotelResponse, 'photos' | 'description' | 'rawPricePerNight' | 'currentPricePerNight' | 'availableRooms'>;
 }
 
-// Interface  cho dữ liệu có phân trang
 export interface PaginatedData<T> {
     content: T[];
     page: number;
@@ -281,7 +247,6 @@ export interface PaginatedData<T> {
     hasPrevious: boolean;
 }
 
-// Interface  cho các tham số tìm kiếm
 export interface SearchParams {
     name?: string;
     city?: string;
@@ -296,51 +261,24 @@ export interface SearchParams {
     sortDir?: 'asc' | 'desc';
 }
 
+// --- CLASS SERVICE ---
 
-export interface RoomDetailResponse extends Room {
-    hotel: Omit<HotelResponse, 'photos' | 'description' | 'rawPricePerNight' | 'currentPricePerNight' | 'availableRooms'>;
-
-}
 class HotelService {
-    private api: AxiosInstance;
+    private api = apiClient;
     private baseURL = '/accommodation/hotels';
     private roomsURL = '/accommodation/rooms';
 
-    constructor() {
-        this.api = createAxiosInstance();
-    }
-
     async searchHotels(params: SearchParams): Promise<PaginatedData<HotelResponse>> {
         try {
-            const queryParams = new URLSearchParams();
-            const typedParams = params as { [key: string]: any };
-
-            for (const key in typedParams) {
-                const value = typedParams[key];
-                if (value !== undefined && value !== null && value !== '') {
-                    queryParams.set(key, value.toString());
-                }
-            }
-
+            const queryParams = new URLSearchParams(params as any);
             const response = await this.api.get<ApiResponse<PaginatedData<HotelResponse>>>(`${this.baseURL}?${queryParams.toString()}`);
             return response.data.data;
-
         } catch (error) {
             console.error('Error in searchHotels:', error);
-            return { content: [], page: 0, size: 10, totalItems: 0, totalPages: 0, last: true, first: true, hasNext: false, hasPrevious: false };
+            throw new Error('Không thể tìm kiếm khách sạn.');
         }
     }
-
-    async getAllHotels(): Promise<HotelResponse[]> {
-        try {
-            const response = await this.api.get<ApiResponse<PaginatedData<HotelResponse>>>(this.baseURL);
-            return response.data.data.content;
-        } catch (error) {
-            console.error('Error fetching hotels:', error);
-            return [];
-        }
-    }
-
+    //;ấy khacsh sạn
     async getHotelById(id: string): Promise<HotelResponse> {
         try {
             const response = await this.api.get<ApiResponse<HotelResponse>>(`${this.baseURL}/${id}`);
@@ -350,33 +288,23 @@ class HotelService {
             throw new Error('Không thể tải thông tin khách sạn');
         }
     }
-
-    async getRoomsByHotelId(hotelId: string, page: number = 0, size: number = 5): Promise<PaginatedData<Room>> {
-        const requestUrl = `/accommodation/rooms?hotel-id=${hotelId}&page=${page}&size=${size}`;
-        console.log(`[hotelService] Bắt đầu gọi API lấy phòng: ${requestUrl}`); // << THÊM LOG
+    // lấy phòng
+    async getRoomsByHotelId(hotelId: string, page: number = 0, size: number = 10): Promise<PaginatedData<Room>> {
         try {
             const params = new URLSearchParams({
                 'hotel-id': hotelId,
                 page: page.toString(),
                 size: size.toString(),
             });
-            const response = await this.api.get<ApiResponse<PaginatedData<Room>>>(`/accommodation/rooms?${params.toString()}`);
+            const response = await this.api.get<ApiResponse<PaginatedData<Room>>>(`${this.roomsURL}?${params.toString()}`);
             return response.data.data;
         } catch (error) {
             console.error(`Error fetching rooms for hotel id ${hotelId}:`, error);
-            return { content: [], page: 0, size, totalItems: 0, totalPages: 0, last: true, first: true, hasNext: false, hasPrevious: false };
+            throw new Error('Không thể tải danh sách phòng.');
         }
     }
 
-    async getAmenitiesByHotelId(hotelId: string): Promise<AmenityGroup[]> {
-        try {
-            const response = await this.api.get<ApiResponse<AmenityGroup[]>>(`${this.baseURL}/${hotelId}/amenities`);
-            return response.data?.data || [];
-        } catch (error) {
-            console.error(`Error fetching amenities for hotel id ${hotelId}:`, error);
-            return [];
-        }
-    }
+    // detail room
     async getRoomById(roomId: string): Promise<RoomDetailResponse> {
         try {
             const response = await this.api.get<ApiResponse<RoomDetailResponse>>(`${this.roomsURL}/${roomId}`);
