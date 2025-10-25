@@ -11,6 +11,7 @@ import com.webapp.holidate.entity.discount.SpecialDayDiscount;
 import com.webapp.holidate.entity.special_day.SpecialDay;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface DiscountMapper {
@@ -23,6 +24,11 @@ public interface DiscountMapper {
   Discount toEntity(DiscountUpdateRequest request);
 
   @Mapping(target = "id", ignore = true)
+  @Mapping(target = "createdAt", ignore = true)
+  @Mapping(target = "updatedAt", expression = "java(java.time.LocalDateTime.now())")
+  void updateEntity(DiscountUpdateRequest request, @MappingTarget Discount entity);
+
+  @Mapping(target = "id", ignore = true)
   HotelDiscount toEntity(Discount discount, Hotel hotel);
 
   @Mapping(target = "id", ignore = true)
@@ -31,5 +37,4 @@ public interface DiscountMapper {
   DiscountResponse toDiscountResponse(Discount discount);
 
   DiscountDetailsResponse toDiscountDetailsResponse(Discount discount);
-
 }

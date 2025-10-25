@@ -282,38 +282,8 @@ public class DiscountService {
       throw new AppException(ErrorType.DISCOUNT_EXISTS);
     }
 
-    // Update discount fields only if provided
-    if (request.getCode() != null) {
-      existingDiscount.setCode(request.getCode());
-    }
-    if (request.getDescription() != null) {
-      existingDiscount.setDescription(request.getDescription());
-    }
-    if (request.getPercentage() != null) {
-      existingDiscount.setPercentage(request.getPercentage());
-    }
-    if (request.getUsageLimit() != null) {
-      existingDiscount.setUsageLimit(request.getUsageLimit());
-    }
-    if (request.getTimesUsed() != null) {
-      existingDiscount.setTimesUsed(request.getTimesUsed());
-    }
-    if (request.getMinBookingPrice() != null) {
-      existingDiscount.setMinBookingPrice(request.getMinBookingPrice());
-    }
-    if (request.getMinBookingCount() != null) {
-      existingDiscount.setMinBookingCount(request.getMinBookingCount());
-    }
-    if (request.getValidFrom() != null) {
-      existingDiscount.setValidFrom(request.getValidFrom());
-    }
-    if (request.getValidTo() != null) {
-      existingDiscount.setValidTo(request.getValidTo());
-    }
-    if (request.getActive() != null) {
-      existingDiscount.setActive(request.getActive());
-    }
-    existingDiscount.setUpdatedAt(java.time.LocalDateTime.now());
+    // Update discount fields using mapper
+    mapper.updateEntity(request, existingDiscount);
 
     discountRepository.save(existingDiscount);
 
