@@ -5,6 +5,10 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
 @Data
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -15,9 +19,30 @@ import java.time.LocalDate;
 @ToString
 @EqualsAndHashCode
 public class BookingPricePreviewRequest {
+  @NotBlank(message = "ROOM_ID_NOT_BLANK")
   String roomId;
+  
+  @NotNull(message = "START_DATE_NOT_BLANK")
   LocalDate startDate;
+
+  @NotNull(message = "END_DATE_NOT_BLANK")
   LocalDate endDate;
-  Integer roomCount;
+  
+  @NotNull(message = "NUMBER_OF_ROOMS_NOT_BLANK")
+  @Positive(message = "NUMBER_OF_ROOMS_MUST_BE_POSITIVE")
+  Integer numberOfRooms;
+
+  @NotNull(message = "NUMBER_OF_NIGHTS_NOT_BLANK")
+  @Positive(message = "NUMBER_OF_NIGHTS_MUST_BE_POSITIVE")
+  Integer numberOfNights;
+
+  @NotNull(message = "NUMBER_OF_ADULTS_NOT_BLANK")
+  @Positive(message = "NUMBER_OF_ADULTS_MUST_BE_POSITIVE")
+  Integer numberOfAdults;
+  
+  @NotNull(message = "NUMBER_OF_CHILDREN_NOT_BLANK")
+  @Positive(message = "NUMBER_OF_CHILDREN_MUST_BE_POSITIVE")
+  Integer numberOfChildren;
+
   String discountCode;
 }
