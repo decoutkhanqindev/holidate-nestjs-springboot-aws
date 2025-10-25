@@ -8,6 +8,7 @@ import com.webapp.holidate.constants.api.param.PaginationParams;
 import com.webapp.holidate.constants.api.param.SortingParams;
 import com.webapp.holidate.constants.api.param.SpecialDayParams;
 import com.webapp.holidate.dto.request.discount.DiscountCreationRequest;
+import com.webapp.holidate.dto.request.discount.DiscountUpdateRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.base.PagedResponse;
 import com.webapp.holidate.dto.response.discount.DiscountDetailsResponse;
@@ -30,12 +31,12 @@ public class DiscountController {
   DiscountService service;
 
   @PostMapping
-  public ApiResponse<DiscountResponse> create(
+  public ApiResponse<DiscountDetailsResponse> create(
       @RequestBody @Valid DiscountCreationRequest request,
       @RequestParam(value = HotelParams.HOTEL_ID, required = false) String hotelId,
       @RequestParam(value = SpecialDayParams.SPECIAL_DAY_ID, required = false) String specialDayId) {
-    DiscountResponse response = service.create(request, hotelId, specialDayId);
-    return ApiResponse.<DiscountResponse>builder()
+    DiscountDetailsResponse response = service.create(request, hotelId, specialDayId);
+    return ApiResponse.<DiscountDetailsResponse>builder()
         .data(response)
         .build();
   }
@@ -79,6 +80,23 @@ public class DiscountController {
     DiscountDetailsResponse response = service.getById(id);
     return ApiResponse.<DiscountDetailsResponse>builder()
         .data(response)
+        .build();
+  }
+
+  @PutMapping(CommonEndpoints.ID)
+  public ApiResponse<DiscountDetailsResponse> update(
+      @PathVariable String id,
+      @RequestBody @Valid DiscountUpdateRequest request) {
+    DiscountDetailsResponse response = service.update(id, request);
+    return ApiResponse.<DiscountDetailsResponse>builder()
+        .data(response)
+        .build();
+  }
+
+  @DeleteMapping(CommonEndpoints.ID)
+  public ApiResponse<Void> delete(@PathVariable String id) {
+    service.delete(id);
+    return ApiResponse.<Void>builder()
         .build();
   }
 }

@@ -1,6 +1,7 @@
 package com.webapp.holidate.mapper.discount;
 
 import com.webapp.holidate.dto.request.discount.DiscountCreationRequest;
+import com.webapp.holidate.dto.request.discount.DiscountUpdateRequest;
 import com.webapp.holidate.dto.response.discount.DiscountDetailsResponse;
 import com.webapp.holidate.dto.response.discount.DiscountResponse;
 import com.webapp.holidate.entity.accommodation.Hotel;
@@ -15,6 +16,11 @@ import org.mapstruct.Mapping;
 public interface DiscountMapper {
   @Mapping(target = "id", ignore = true)
   Discount toEntity(DiscountCreationRequest request);
+
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "createdAt", ignore = true)
+  @Mapping(target = "updatedAt", expression = "java(java.time.LocalDateTime.now())")
+  Discount toEntity(DiscountUpdateRequest request);
 
   @Mapping(target = "id", ignore = true)
   HotelDiscount toEntity(Discount discount, Hotel hotel);

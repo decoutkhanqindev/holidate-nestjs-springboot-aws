@@ -3,6 +3,7 @@ package com.webapp.holidate.service.discount;
 import com.webapp.holidate.constants.api.param.SortingParams;
 import com.webapp.holidate.constants.api.param.DiscountParams;
 import com.webapp.holidate.dto.request.discount.DiscountCreationRequest;
+import com.webapp.holidate.dto.request.discount.DiscountUpdateRequest;
 import com.webapp.holidate.dto.response.base.PagedResponse;
 import com.webapp.holidate.dto.response.discount.DiscountDetailsResponse;
 import com.webapp.holidate.dto.response.discount.DiscountResponse;
@@ -54,7 +55,8 @@ public class DiscountService {
   SpecialDayMapper specialDayMapper;
   PagedMapper pagedMapper;
 
-  public DiscountResponse create(DiscountCreationRequest request, String hotelId, String specialDayId) {
+  @Transactional
+  public DiscountDetailsResponse create(DiscountCreationRequest request, String hotelId, String specialDayId) {
     if (discountRepository.existsByCode(request.getCode())) {
       throw new AppException(ErrorType.DISCOUNT_EXISTS);
     }
@@ -76,7 +78,8 @@ public class DiscountService {
       specialDayDiscountRepository.save(specialDayDiscount);
     }
 
-    return mapper.toDiscountResponse(discount);
+    // Return detailed response with hotel and special day information
+    return getById(discount.getId());
   }
 
   public PagedResponse<DiscountResponse> getAll(
@@ -242,12 +245,6 @@ public class DiscountService {
         discountPage.getTotalPages());
   }
 
-  public DiscountResponse getByCode(String code) {
-    return discountRepository.findByCode(code)
-        .map(mapper::toDiscountResponse)
-        .orElse(null);
-  }
-
   @Transactional
   public DiscountDetailsResponse getById(String id) {
     Discount discount = discountRepository.findByIdWithDetails(id)
@@ -271,5 +268,127 @@ public class DiscountService {
     }
 
     return response;
+  }
+
+  @Transactional
+  public DiscountDetailsResponse update(String id, DiscountUpdateRequest request) {
+    Discount existingDiscount = discountRepository.findByIdWithDetails(id)
+        .orElseThrow(() -> new AppException(ErrorType.DISCOUNT_NOT_FOUND));
+
+    // Check if code is being changed and if new code already exists
+    if (request.getCode() != null &&
+        !existingDiscount.getCode().equals(request.getCode()) &&
+        discountRepository.existsByCode(request.getCode())) {
+      throw new AppException(ErrorType.DISCOUNT_EXISTS);
+    }
+
+    // Update discount fields only if provided
+    if (request.getCode() != null) {
+      existingDiscount.setCode(request.getCode());
+    }
+    if (request.getDescription() != null) {
+      existingDiscount.setDescription(request.getDescription());
+    }
+    if (request.getPercentage() != null) {
+      existingDiscount.setPercentage(request.getPercentage());
+    }
+    if (request.getUsageLimit() != null) {
+      existingDiscount.setUsageLimit(request.getUsageLimit());
+    }
+    if (request.getTimesUsed() != null) {
+      existingDiscount.setTimesUsed(request.getTimesUsed());
+    }
+    if (request.getMinBookingPrice() != null) {
+      existingDiscount.setMinBookingPrice(request.getMinBookingPrice());
+    }
+    if (request.getMinBookingCount() != null) {
+      existingDiscount.setMinBookingCount(request.getMinBookingCount());
+    }
+    if (request.getValidFrom() != null) {
+      existingDiscount.setValidFrom(request.getValidFrom());
+    }
+    if (request.getValidTo() != null) {
+      existingDiscount.setValidTo(request.getValidTo());
+    }
+    if (request.getActive() != null) {
+      existingDiscount.setActive(request.getActive());
+    }
+    existingDiscount.setUpdatedAt(java.time.LocalDateTime.now());
+
+    discountRepository.save(existingDiscount);
+
+    // Handle hotel relationship changes
+    updateHotel(id, request.getHotelId());
+
+    // Handle special day relationship changes
+    updateSpecialDay(id, request.getSpecialDayId());
+
+    // Return detailed response with hotel and special day information
+    return getById(id);
+  }
+
+  private void updateHotel(String discountId, String hotelId) {
+    // Get current hotel relationship
+    var currentHotelDiscount = hotelDiscountRepository.findByDiscountId(discountId);
+    String currentHotelId = currentHotelDiscount.map(hd -> hd.getHotel().getId()).orElse(null);
+
+    // If hotel relationship is being changed
+    if (!java.util.Objects.equals(currentHotelId, hotelId)) {
+      // Remove current hotel relationship if exists
+      currentHotelDiscount.ifPresent(hotelDiscountRepository::delete);
+
+      // Add new hotel relationship if newHotelId is provided
+      if (hotelId != null && !hotelId.trim().isEmpty()) {
+        Hotel hotel = hotelRepository.findById(hotelId)
+            .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
+
+        Discount discount = discountRepository.findById(discountId)
+            .orElseThrow(() -> new AppException(ErrorType.DISCOUNT_NOT_FOUND));
+
+        HotelDiscount hotelDiscount = mapper.toEntity(discount, hotel);
+        hotelDiscountRepository.save(hotelDiscount);
+      }
+    }
+  }
+
+  private void updateSpecialDay(String discountId, String specialDayId) {
+    // Get current special day relationship
+    var currentSpecialDayDiscount = specialDayDiscountRepository.findByDiscountId(discountId);
+    String currentSpecialDayId = currentSpecialDayDiscount.map(sdd -> sdd.getSpecialDay().getId()).orElse(null);
+
+    // If special day relationship is being changed
+    if (!java.util.Objects.equals(currentSpecialDayId, specialDayId)) {
+      // Remove current special day relationship if exists
+      currentSpecialDayDiscount.ifPresent(specialDayDiscountRepository::delete);
+
+      // Add new special day relationship if newSpecialDayId is provided
+      if (specialDayId != null && !specialDayId.trim().isEmpty()) {
+        SpecialDay specialDay = specialDayRepository.findById(specialDayId)
+            .orElseThrow(() -> new AppException(ErrorType.SPECIAL_DAY_NOT_FOUND));
+
+        Discount discount = discountRepository.findById(discountId)
+            .orElseThrow(() -> new AppException(ErrorType.DISCOUNT_NOT_FOUND));
+
+        SpecialDayDiscount specialDayDiscount = mapper.toEntity(discount, specialDay);
+        specialDayDiscountRepository.save(specialDayDiscount);
+      }
+    }
+  }
+
+  @Transactional
+  public void delete(String id) {
+    Discount discount = discountRepository.findByIdWithDetails(id)
+        .orElseThrow(() -> new AppException(ErrorType.DISCOUNT_NOT_FOUND));
+
+    // Delete hotel discount relationships
+    var hotelDiscount = hotelDiscountRepository.findByDiscountId(id);
+    hotelDiscount.ifPresent(hotelDiscountRepository::delete);
+
+    // Delete special day discount relationships
+    var specialDayDiscount = specialDayDiscountRepository.findByDiscountId(id);
+    specialDayDiscount.ifPresent(specialDayDiscountRepository::delete);
+
+    // Delete the discount
+    discountRepository.delete(discount);
   }
 }
