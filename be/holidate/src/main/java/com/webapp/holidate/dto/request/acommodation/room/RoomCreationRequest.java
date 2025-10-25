@@ -32,33 +32,33 @@ public class RoomCreationRequest {
 
   @NotNull(message = "AREA_NOT_BLANK")
   @Positive(message = "AREA_MUST_BE_POSITIVE")
-  double area;
+  Double area;
 
   @NotEmpty(message = "PHOTOS_NOT_EMPTY")
   List<PhotoCreationRequest> photos;
 
   @NotNull(message = "MAX_ADULTS_NOT_BLANK")
   @Positive(message = "MAX_ADULTS_MUST_BE_POSITIVE")
-  int maxAdults;
+  Integer maxAdults;
 
   @NotNull(message = "MAX_CHILDREN_NOT_BLANK")
   @PositiveOrZero(message = "MAX_CHILDREN_MUST_BE_POSITIVE_OR_ZERO")
-  int maxChildren;
+  Integer maxChildren;
 
   @NotNull(message = "PRICE_NOT_BLANK")
   @Positive(message = "PRICE_MUST_BE_POSITIVE")
-  double basePricePerNight;
+  Double basePricePerNight;
 
   @NotBlank(message = "BED_TYPE_ID_NOT_BLANK")
   String bedTypeId;
 
-  boolean smokingAllowed;
-  boolean wifiAvailable;
-  boolean breakfastIncluded;
+  Boolean smokingAllowed;
+  Boolean wifiAvailable;
+  Boolean breakfastIncluded;
 
   @NotNull(message = "QUANTITY_NOT_BLANK")
   @Positive(message = "QUANTITY_MUST_BE_POSITIVE")
-  int quantity;
+  Integer quantity;
 
   @NotEmpty(message = "AMENITY_IDS_NOT_EMPTY")
   List<String> amenityIds;

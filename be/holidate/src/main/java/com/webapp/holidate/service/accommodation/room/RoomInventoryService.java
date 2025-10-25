@@ -61,25 +61,28 @@ public class RoomInventoryService {
 
     String roomId = request.getRoomId();
     Room room = roomRepository.findById(roomId)
-      .orElseThrow(() -> new AppException(ErrorType.ROOM_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.ROOM_NOT_FOUND));
     int quantity = room.getQuantity();
     double basePrice = room.getBasePricePerNight();
     LocalDate today = LocalDate.now();
 
-    int days = request.getDays();
+    Integer days = request.getDays();
+    if (days == null || days <= 0) {
+      throw new AppException(ErrorType.INVALID_DAYS_VALUE);
+    }
     for (int i = 0; i < days; i++) {
       LocalDate date = today.plusDays(i);
       RoomInventoryId id = RoomInventoryId.builder()
-        .roomId(roomId)
-        .date(date)
-        .build();
+          .roomId(roomId)
+          .date(date)
+          .build();
       RoomInventory inventory = RoomInventory.builder()
-        .id(id)
-        .room(room)
-        .price(basePrice)
-        .availableRooms(quantity)
-        .status(RoomInventoryStatusType.AVAILABLE.getValue())
-        .build();
+          .id(id)
+          .room(room)
+          .price(basePrice)
+          .availableRooms(quantity)
+          .status(RoomInventoryStatusType.AVAILABLE.getValue())
+          .build();
       inventories.add(inventory);
     }
 
@@ -87,34 +90,33 @@ public class RoomInventoryService {
 
     RoomWithInventoriesResponse response = roomMapper.toRoomWithInventoriesResponse(room);
     List<RoomInventoryResponse> inventoryResponses = inventories.stream()
-      .map(roomInventoryMapper::toRoomInventoryResponse)
-      .toList();
+        .map(roomInventoryMapper::toRoomInventoryResponse)
+        .toList();
     response.setInventories(inventoryResponses);
 
     return response;
   }
 
   public PagedResponse<RoomInventoryResponse> getAllByRoomIdForDateBetween(
-    String roomId, LocalDate startDate, LocalDate endDate, String status,
-    int page, int size, String sortBy, String sortDir
-  ) {
+      String roomId, LocalDate startDate, LocalDate endDate, String status,
+      int page, int size, String sortBy, String sortDir) {
     // Clean up and validate pagination parameters
     page = Math.max(0, page);
     size = Math.min(Math.max(1, size), 100);
 
     // Check if sort direction is valid
     boolean hasSortDir = sortDir != null && !sortDir.isEmpty()
-      && (SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir)
-      || SortingParams.SORT_DIR_DESC.equalsIgnoreCase(sortDir));
+        && (SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir)
+            || SortingParams.SORT_DIR_DESC.equalsIgnoreCase(sortDir));
     if (!hasSortDir) {
       sortDir = SortingParams.SORT_DIR_ASC;
     }
 
     // Check if sort field is valid
     boolean hasSortBy = sortBy != null && !sortBy.isEmpty()
-      && (SortingParams.SORT_BY_DATE.equals(sortBy)
-      || SortingParams.SORT_BY_PRICE.equals(sortBy)
-      || SortingParams.SORT_BY_AVAILABLE_ROOMS.equals(sortBy));
+        && (SortingParams.SORT_BY_DATE.equals(sortBy)
+            || SortingParams.SORT_BY_PRICE.equals(sortBy)
+            || SortingParams.SORT_BY_AVAILABLE_ROOMS.equals(sortBy));
     if (!hasSortBy) {
       sortBy = null;
     }
@@ -125,17 +127,16 @@ public class RoomInventoryService {
     // Use 100% database-level pagination - all inventory fields can be sorted at DB
     // level
     return getInventoriesWithDatabasePagination(
-      roomId, startDate, endDate, status, hasStatusFilter, page, size, sortBy, sortDir);
+        roomId, startDate, endDate, status, hasStatusFilter, page, size, sortBy, sortDir);
   }
 
   // Get inventories with 100% database-level pagination
   private PagedResponse<RoomInventoryResponse> getInventoriesWithDatabasePagination(
-    String roomId, LocalDate startDate, LocalDate endDate, String status,
-    boolean hasStatusFilter, int page, int size, String sortBy, String sortDir
-  ) {
+      String roomId, LocalDate startDate, LocalDate endDate, String status,
+      boolean hasStatusFilter, int page, int size, String sortBy, String sortDir) {
     // Get paginated data directly from database
     Page<RoomInventory> inventoryPage = getInventoriesWithPagination(
-      roomId, startDate, endDate, status, hasStatusFilter, page, size, sortBy, sortDir);
+        roomId, startDate, endDate, status, hasStatusFilter, page, size, sortBy, sortDir);
 
     // Check if we have any inventories
     if (inventoryPage.isEmpty()) {
@@ -144,16 +145,16 @@ public class RoomInventoryService {
 
     // Convert entities to response DTOs
     List<RoomInventoryResponse> inventoryResponses = inventoryPage.getContent().stream()
-      .map(roomInventoryMapper::toRoomInventoryResponse)
-      .toList();
+        .map(roomInventoryMapper::toRoomInventoryResponse)
+        .toList();
 
     // Create and return paged response with database pagination metadata
     return pagedMapper.createPagedResponse(
-      inventoryResponses,
-      page,
-      size,
-      inventoryPage.getTotalElements(),
-      inventoryPage.getTotalPages());
+        inventoryResponses,
+        page,
+        size,
+        inventoryPage.getTotalElements(),
+        inventoryPage.getTotalPages());
   }
 
   // Create Pageable object for database-level pagination
@@ -168,11 +169,11 @@ public class RoomInventoryService {
 
     // Determine sort direction
     Sort.Direction direction = SortingParams.SORT_DIR_DESC.equalsIgnoreCase(sortDir)
-      ? Sort.Direction.DESC
-      : Sort.Direction.ASC;
+        ? Sort.Direction.DESC
+        : Sort.Direction.ASC;
 
     return PageRequest.of(page, size,
-      Sort.by(direction, entitySortField));
+        Sort.by(direction, entitySortField));
   }
 
   // Map sort field from API to entity field name
@@ -187,19 +188,18 @@ public class RoomInventoryService {
 
   // Get inventories with database-level pagination
   private Page<RoomInventory> getInventoriesWithPagination(
-    String roomId, LocalDate startDate, LocalDate endDate, String status,
-    boolean hasStatusFilter, int page, int size, String sortBy, String sortDir
-  ) {
+      String roomId, LocalDate startDate, LocalDate endDate, String status,
+      boolean hasStatusFilter, int page, int size, String sortBy, String sortDir) {
 
     Pageable pageable = createPageable(page, size, sortBy, sortDir);
 
     // Get data from database with pagination
     if (hasStatusFilter) {
       return roomInventoryRepository.findAllByRoomIdAndDateBetweenWithFiltersPaged(
-        roomId, startDate, endDate, status, pageable);
+          roomId, startDate, endDate, status, pageable);
     } else {
       return roomInventoryRepository.findAllByRoomIdAndDateBetweenPaged(
-        roomId, startDate, endDate, pageable);
+          roomId, startDate, endDate, pageable);
     }
   }
 
@@ -248,24 +248,24 @@ public class RoomInventoryService {
   }
 
   public List<RoomInventoryPriceDetailsResponse> getPriceDetails(
-    String roomId, LocalDate startDate, LocalDate endDate) {
+      String roomId, LocalDate startDate, LocalDate endDate) {
     return roomInventoryRepository.findAllByRoomIdAndDateBetween(roomId, startDate, endDate).stream()
-      .map(inventory -> {
-        LocalDate date = inventory.getId().getDate();
-        double originalPrice = inventory.getPrice();
-        double vatFee = originalPrice * vatRate;
-        double serviceFee = originalPrice * serviceFeeRate;
-        double finalPrice = originalPrice + vatFee + serviceFee;
+        .map(inventory -> {
+          LocalDate date = inventory.getId().getDate();
+          double originalPrice = inventory.getPrice();
+          double vatFee = originalPrice * vatRate;
+          double serviceFee = originalPrice * serviceFeeRate;
+          double finalPrice = originalPrice + vatFee + serviceFee;
 
-        return RoomInventoryPriceDetailsResponse.builder()
-          .date(date)
-          .originalPrice(originalPrice)
-          .priceAfterDiscount(originalPrice)
-          .vatFee(vatFee)
-          .serviceFee(serviceFee)
-          .finalPrice(finalPrice)
-          .build();
-      })
-      .toList();
+          return RoomInventoryPriceDetailsResponse.builder()
+              .date(date)
+              .originalPrice(originalPrice)
+              .priceAfterDiscount(originalPrice)
+              .vatFee(vatFee)
+              .serviceFee(serviceFee)
+              .finalPrice(finalPrice)
+              .build();
+        })
+        .toList();
   }
 }

@@ -1,6 +1,5 @@
 package com.webapp.holidate.service.booking;
 
-import com.webapp.holidate.dto.request.booking.DiscountCreationRequest;
 import com.webapp.holidate.dto.response.booking.DiscountResponse;
 import com.webapp.holidate.mapper.booking.DiscountMapper;
 import com.webapp.holidate.repository.booking.discount.DiscountRepository;

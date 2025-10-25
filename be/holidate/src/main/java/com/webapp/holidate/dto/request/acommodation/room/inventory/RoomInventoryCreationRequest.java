@@ -21,5 +21,5 @@ public class RoomInventoryCreationRequest {
 
   @NotNull(message = "DAYS_NOT_BLANK")
   @Positive(message = "DAYS_MUST_BE_POSITIVE")
-  int days;
+  Integer days;
 }

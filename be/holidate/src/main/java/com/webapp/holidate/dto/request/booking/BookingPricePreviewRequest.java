@@ -18,6 +18,6 @@ public class BookingPricePreviewRequest {
   String roomId;
   LocalDate startDate;
   LocalDate endDate;
-  int roomCount;
+  Integer roomCount;
   String discountCode;
 }

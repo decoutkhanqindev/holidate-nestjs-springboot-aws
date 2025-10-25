@@ -1,4 +1,4 @@
-package com.webapp.holidate.dto.request.booking;
+package com.webapp.holidate.dto.request.booking.discount;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -7,7 +7,6 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 
 @Data
 @Builder
@@ -24,21 +23,21 @@ public class DiscountCreationRequest {
 
   @NotNull(message = "DISCOUNT_PERCENTAGE_NOT_BLANK")
   @Positive(message = "DISCOUNT_PERCENTAGE_POSITIVE")
-  double percentage; // e.g., 10.0 for a 10% discount
+  Double percentage; // e.g., 10.0 for a 10% discount
 
   @NotNull(message = "USAGE_LIMIT_NOT_BLANK")
   @Positive(message = "USAGE_LIMIT_POSITIVE")
-  int usageLimit;
+  Integer usageLimit;
 
   @NotNull(message = "TIMES_USED_NOT_BLANK")
   @Positive(message = "TIMES_USED_POSITIVE")
-  int timesUsed;
+  Integer timesUsed;
 
   @Positive(message = "MIN_BOOKING_PRICE_POSITIVE")
-  int minBookingPrice;
+  Integer minBookingPrice;
 
   @Positive(message = "MIN_BOOKING_COUNT_POSITIVE")
-  int minBookingCount;
+  Integer minBookingCount;
 
   @NotNull(message = "VALID_FROM_TO_DATE_NOT_BLANK")
   LocalDate validFrom;

@@ -19,7 +19,7 @@ public class EntertainmentVenueCreationRequest {
   String name;
 
   @Positive(message = "DISTANCE_MUST_BE_POSITIVE")
-  double distance;
+  Double distance;
 
   @NotBlank(message = "CITY_ID_NOT_BLANK")
   String cityId;

@@ -35,19 +35,19 @@ public class BookingCreationRequest {
 
   @NotNull(message = "NUMBER_OF_NIGHTS_NOT_BLANK")
   @Positive(message = "NUMBER_OF_NIGHTS_MUST_BE_POSITIVE")
-  int numberOfNights;
+  Integer numberOfNights;
 
   @NotNull(message = "NUMBER_OF_ROOMS_NOT_BLANK")
   @Positive(message = "NUMBER_OF_ROOMS_MUST_BE_POSITIVE")
-  int numberOfRooms;
+  Integer numberOfRooms;
 
   @NotNull(message = "NUMBER_OF_ADULTS_NOT_BLANK")
   @Positive(message = "NUMBER_OF_ADULTS_MUST_BE_POSITIVE")
-  int numberOfAdults;
+  Integer numberOfAdults;
 
   @NotNull(message = "NUMBER_OF_CHILDREN_NOT_BLANK")
   @Positive(message = "NUMBER_OF_CHILDREN_MUST_BE_POSITIVE")
-  int numberOfChildren;
+  Integer numberOfChildren;
 
   String discountCode;
 

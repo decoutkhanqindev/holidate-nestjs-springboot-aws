@@ -189,8 +189,9 @@ public enum ErrorType {
   // special day errors
   SPECIAL_DAY_NOT_FOUND(404, "Special day not found"),
   SPECIAL_DAY_EXISTS(409, "Special day already exists"),
-  SPECIAL_DATE_NOT_BLANK(400, "Special day date is required")
-  ;
+  SPECIAL_DATE_NOT_BLANK(400, "Special day date is required"),
+  INVALID_DAYS_VALUE(400, "Days value must be positive"),
+  INVALID_DISTANCE_VALUE(400, "Distance value must be positive");
 
   int statusCode;
   String message;

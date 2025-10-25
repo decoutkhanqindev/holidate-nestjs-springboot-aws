@@ -20,5 +20,5 @@ public class HotelEntertainmentVenueRequest {
   String entertainmentVenueId;
   @NotNull(message = "DISTANCE_MUST_BE_POSITIVE")
   @Positive(message = "DISTANCE_MUST_BE_POSITIVE")
-  int distance;
+  Integer distance;
 }
