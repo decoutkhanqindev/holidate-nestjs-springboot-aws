@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import 'bootstrap/dist/css/bootstrap.min.css';
-
+import 'react-datepicker/dist/react-datepicker.css';
 import { AuthProvider } from "@/contexts/AuthContext";
 import PublicNavbar from "@/components/PublicNavbar";
 import AuthModal from "@/components/Auth/AuthModal";

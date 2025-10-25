@@ -1,68 +1,79 @@
-// src/components/LocationSearchInput.tsx
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { locationService, LocationSuggestion, LocationType } from '@/service/locationService';
-import styles from './LocationSearchInput.module.css'; // Chúng ta sẽ tạo file CSS này ở bước sau
+import styles from './LocationSearchInput.module.css';
 
-// --- Hàm tiện ích chỉ dùng cho component này ---
+// --- CÁC HÀM TIỆN ÍCH ---
 const getTypeLabel = (type: LocationType) => {
+    // ... (hàm này giữ nguyên)
     switch (type) {
         case 'HOTEL': return 'Khách sạn';
-        case 'PROVINCE': case 'CITY_PROVINCE': return 'Vùng';
+        case 'PROVINCE': case 'CITY_PROVINCE': return 'Khu vực';
         case 'CITY': return 'Thành phố';
-        case 'DISTRICT': return 'Quận/Huyện';
-        default: return '';
+        case 'DISTRICT': return 'Khu vực';
+        default: return 'Địa điểm';
     }
 };
 
-// --- Định nghĩa props cho component ---
+/**
+ * << HÀM MỚI ĐỂ XỬ LÝ HIỂN THỊ ĐỊA CHỈ >>
+ * Hàm này sẽ nhận vào chuỗi description gốc và loại bỏ phần số đường ở đầu.
+ * Ví dụ: "15-16, Phường Mân Thái, Quận Sơn Trà" -> "Phường Mân Thái, Quận Sơn Trà"
+ */
+const formatSuggestionDescription = (description: string, type: LocationType): string => {
+    if (type !== 'HOTEL') {
+        // Nếu không phải là khách sạn (là thành phố, quận...), giữ nguyên mô tả
+        return description;
+    }
+
+    // Nếu là khách sạn, tìm dấu phẩy đầu tiên và cắt bỏ phần đứng trước nó
+    const firstCommaIndex = description.indexOf(',');
+    if (firstCommaIndex !== -1) {
+        // Cắt chuỗi từ vị trí sau dấu phẩy và xóa khoảng trắng thừa
+        return description.substring(firstCommaIndex + 1).trim();
+    }
+
+    // Nếu không có dấu phẩy, trả về chuỗi gốc để tránh lỗi
+    return description;
+};
+
+
 interface LocationSearchInputProps {
     initialValue?: string;
     onLocationSelect: (location: LocationSuggestion) => void;
+    onQueryChange: (query: string) => void;
 }
 
-const LocationSearchInput: React.FC<LocationSearchInputProps> = ({ initialValue = '', onLocationSelect }) => {
-    const [inputValue, setInputValue] = useState(initialValue);
+const LocationSearchInput: React.FC<LocationSearchInputProps> = ({ initialValue = '', onLocationSelect, onQueryChange }) => {
     const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isSuggestionsVisible, setIsSuggestionsVisible] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
 
-    // Cập nhật giá trị input nếu prop initialValue thay đổi (ví dụ khi người dùng điều hướng)
-    useEffect(() => {
-        setInputValue(initialValue);
-    }, [initialValue]);
-
-    // Logic Debounce để gọi API
+    // ... (toàn bộ logic useEffect và các hàm handler giữ nguyên) ...
     useEffect(() => {
         const debounceTimer = setTimeout(async () => {
-            if (inputValue.trim().length < 2) {
+            if (initialValue.trim().length === 0) {
                 setSuggestions([]);
+                setIsSuggestionsVisible(true);
                 return;
             }
-            setIsLoading(true);
-            try {
-                const results = await locationService.searchLocations({ query: inputValue });
+            if (initialValue.trim().length >= 1) {
+                setIsLoading(true);
+                const results = await locationService.searchLocations({ query: initialValue });
                 setSuggestions(results);
-            } catch (error) {
-                console.error("Lỗi khi tìm kiếm địa điểm:", error);
-            } finally {
                 setIsLoading(false);
             }
-        }, 350);
+        }, 300);
         return () => clearTimeout(debounceTimer);
-    }, [inputValue]);
+    }, [initialValue]);
 
-    // Xử lý khi người dùng chọn một gợi ý
     const handleSelectSuggestion = (location: LocationSuggestion) => {
-        setInputValue(location.name); // Cập nhật input với tên đã chọn
-        onLocationSelect(location);   // Gửi thông tin location đã chọn ra ngoài cho component cha
-        setIsSuggestionsVisible(false); // Đóng danh sách gợi ý
+        onLocationSelect(location);
+        setIsSuggestionsVisible(false);
     };
 
-    // Đóng danh sách gợi ý khi click ra ngoài
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
@@ -73,25 +84,34 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({ initialValue 
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [wrapperRef]);
 
+
     return (
         <div className={styles.searchInputWrapper} ref={wrapperRef}>
             <input
                 type="text"
-                className="form-control"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
+                className={styles.locationInput}
+                value={initialValue}
+                onChange={(e) => onQueryChange(e.target.value)}
                 onFocus={() => setIsSuggestionsVisible(true)}
-                placeholder="Nhập tên khách sạn hoặc địa điểm"
+                placeholder="Tìm thành phố, khách sạn..."
                 autoComplete="off"
             />
-            {isSuggestionsVisible && inputValue.length > 1 && (
+            {isSuggestionsVisible && (
                 <ul className={styles.suggestionsList}>
+                    {initialValue && (
+                        <li className={styles.suggestionInfo}>
+                            Nhập thêm ký tự để nhận kết quả chính xác hơn
+                        </li>
+                    )}
                     {isLoading ? <li className={styles.suggestionInfo}>Đang tìm kiếm...</li>
-                        : suggestions.length > 0 ? suggestions.map((suggestion) => (
+                        : suggestions.map((suggestion) => (
                             <li key={suggestion.id} className={styles.suggestionItem} onClick={() => handleSelectSuggestion(suggestion)}>
                                 <div className={styles.suggestionContent}>
-                                    <strong>{suggestion.name}</strong>
-                                    <div className={styles.suggestionDescription}>{suggestion.description}</div>
+                                    <span className={styles.suggestionName}>{suggestion.name}</span>
+                                    {/* << SỬ DỤNG HÀM MỚI KHI RENDER >> */}
+                                    <span className={styles.suggestionDescription}>
+                                        {formatSuggestionDescription(suggestion.description, suggestion.type)}
+                                    </span>
                                 </div>
                                 <div className={styles.suggestionMeta}>
                                     <span className={styles.suggestionTypeLabel}>{getTypeLabel(suggestion.type)}</span>
@@ -100,7 +120,11 @@ const LocationSearchInput: React.FC<LocationSearchInputProps> = ({ initialValue 
                                     )}
                                 </div>
                             </li>
-                        )) : <li className={styles.suggestionInfo}>Không tìm thấy kết quả phù hợp.</li>}
+                        ))
+                    }
+                    {!isLoading && suggestions.length === 0 && initialValue && (
+                        <li className={styles.suggestionInfo}>Không tìm thấy kết quả phù hợp.</li>
+                    )}
                 </ul>
             )}
         </div>
