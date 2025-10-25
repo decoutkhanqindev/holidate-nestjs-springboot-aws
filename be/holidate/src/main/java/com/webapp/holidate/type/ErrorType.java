@@ -105,6 +105,7 @@ public enum ErrorType {
   ROOM_STATUS_NOT_BLANK(400, "Room status is required"),
   ROOM_STATUS_INVALID(400, "Room status must be available, booked, maintenance, or closed"),
   VIEW_NOT_BLANK(400, "View is required"),
+  AREA_NOT_BLANK(400, "Area is required"),
   AREA_MUST_BE_POSITIVE(400, "Area must be a positive number"),
   MAX_ADULTS_MUST_BE_POSITIVE(400, "Max adults must be a positive number"),
   MAX_CHILDREN_MUST_BE_POSITIVE_OR_ZERO(400, "Max children must be zero or a positive number"),
@@ -143,6 +144,7 @@ public enum ErrorType {
   // image errors
   PHOTOS_NOT_BLANK(400, "Photos are required"),
   PHOTO_FILES_NOT_EMPTY(400, "At least one photo file is required"),
+  PHOTOS_NOT_EMPTY(400, "Photos are required"),
   PHOTO_IDS_NOT_EMPTY(400, "At least one photo ID is required"),
   PHOTO_NOT_FOUND(404, "Photo not found"),
   PHOTO_CATEGORY_ID_NOT_BLANK(400, "Photo category ID is required"),
@@ -172,6 +174,17 @@ public enum ErrorType {
   // check-in check-out errors
   CHECK_IN_OUT_TIME_INVALID(400, "Check-in and check-out time must be in HH:mm format"),
   CHECK_IN_OUT_DATE_NOT_BLANK(400, "Check-in and check-out date is required"),
+
+  // discount errors
+  DISCOUNT_CODE_NOT_BLANK(400, "Discount code is required"),
+  DISCOUNT_PERCENTAGE_NOT_BLANK(400, "Discount percentage is required"),
+  DISCOUNT_PERCENTAGE_POSITIVE(400, "Discount percentage must be positive"),
+  USAGE_LIMIT_NOT_BLANK(400, "Usage limit is required"),
+  USAGE_LIMIT_POSITIVE(400, "Usage limit must be positive"),
+  TIMES_USED_NOT_BLANK(400, "Times used is required"),
+  TIMES_USED_POSITIVE(400, "Times used must be positive"),
+  MIN_BOOKING_PRICE_POSITIVE(400, "Minimum booking price must be positive"),
+  MIN_BOOKING_COUNT_POSITIVE(400, "Minimum booking count must be positive"),
   ;
 
   int statusCode;

@@ -1,9 +1,7 @@
 package com.webapp.holidate.dto.request.booking;
 
-import com.webapp.holidate.constants.ValidationPatterns;
-import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -29,27 +27,25 @@ public class BookingCreationRequest {
   @NotBlank(message = "HOTEL_ID_NOT_BLANK")
   String hotelId;
 
-  @NotBlank(message = "CHECK_IN_OUT_DATE_NOT_BLANK")
-  @Pattern(regexp = ValidationPatterns.CHECK_IN_OUT_TIME, message = "CHECK_IN_OUT_TIME_INVALID")
+  @NotNull(message = "CHECK_IN_OUT_DATE_NOT_BLANK")
   LocalDate checkInDate;
 
-  @NotBlank(message = "CHECK_IN_OUT_DATE_NOT_BLANK")
-  @Pattern(regexp = ValidationPatterns.CHECK_IN_OUT_TIME, message = "CHECK_IN_OUT_TIME_INVALID")
+  @NotNull(message = "CHECK_IN_OUT_DATE_NOT_BLANK")
   LocalDate checkOutDate;
 
-  @NotBlank(message = "NUMBER_OF_NIGHTS_NOT_BLANK")
+  @NotNull(message = "NUMBER_OF_NIGHTS_NOT_BLANK")
   @Positive(message = "NUMBER_OF_NIGHTS_MUST_BE_POSITIVE")
   int numberOfNights;
 
-  @NotBlank(message = "NUMBER_OF_ROOMS_NOT_BLANK")
+  @NotNull(message = "NUMBER_OF_ROOMS_NOT_BLANK")
   @Positive(message = "NUMBER_OF_ROOMS_MUST_BE_POSITIVE")
   int numberOfRooms;
 
-  @NotBlank(message = "NUMBER_OF_ADULTS_NOT_BLANK")
+  @NotNull(message = "NUMBER_OF_ADULTS_NOT_BLANK")
   @Positive(message = "NUMBER_OF_ADULTS_MUST_BE_POSITIVE")
   int numberOfAdults;
 
-  @NotBlank(message = "NUMBER_OF_CHILDREN_NOT_BLANK")
+  @NotNull(message = "NUMBER_OF_CHILDREN_NOT_BLANK")
   @Positive(message = "NUMBER_OF_CHILDREN_MUST_BE_POSITIVE")
   int numberOfChildren;
 
