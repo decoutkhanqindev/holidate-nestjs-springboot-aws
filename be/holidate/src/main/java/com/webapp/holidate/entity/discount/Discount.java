@@ -22,8 +22,11 @@ public class Discount {
   @Column(nullable = false)
   String id;
 
-  @Column(nullable = false)
+  @Column(nullable = false, unique = true)
   String code;
+
+  @Column(nullable = false, columnDefinition = "TEXT")
+  String description;
 
   @Column(nullable = false)
   double percentage; // e.g., 10.0 for a 10% discount

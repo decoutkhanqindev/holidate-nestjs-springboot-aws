@@ -176,6 +176,8 @@ public enum ErrorType {
   CHECK_IN_OUT_DATE_NOT_BLANK(400, "Check-in and check-out date is required"),
 
   // discount errors
+  DISCOUNT_NOT_FOUND(404, "Discount not found"),
+  DISCOUNT_EXISTS(409, "Discount already exists"),
   DISCOUNT_CODE_NOT_BLANK(400, "Discount code is required"),
   DISCOUNT_PERCENTAGE_NOT_BLANK(400, "Discount percentage is required"),
   DISCOUNT_PERCENTAGE_POSITIVE(400, "Discount percentage must be positive"),
@@ -187,6 +189,7 @@ public enum ErrorType {
   MIN_BOOKING_COUNT_POSITIVE(400, "Minimum booking count must be positive"),
 
   // special day errors
+  SPECIAL_DAY_ID_NOT_BLANK(400, "Special day ID is required"),
   SPECIAL_DAY_NOT_FOUND(404, "Special day not found"),
   SPECIAL_DAY_EXISTS(409, "Special day already exists"),
   SPECIAL_DAY_DATE_NOT_BLANK(400, "Special day date is required"),

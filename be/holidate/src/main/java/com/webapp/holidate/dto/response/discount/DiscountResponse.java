@@ -1,4 +1,4 @@
-package com.webapp.holidate.dto.response.booking;
+package com.webapp.holidate.dto.response.discount;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -17,6 +17,7 @@ import java.time.LocalDate;
 public class DiscountResponse {
   String id;
   String code;
+  String description;
   double percentage; // e.g., 10.0 for a 10% discount
   int usageLimit;
   int timesUsed;
