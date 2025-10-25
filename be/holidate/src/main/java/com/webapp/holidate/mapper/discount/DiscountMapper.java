@@ -1,6 +1,7 @@
 package com.webapp.holidate.mapper.discount;
 
 import com.webapp.holidate.dto.request.discount.DiscountCreationRequest;
+import com.webapp.holidate.dto.response.discount.DiscountDetailsResponse;
 import com.webapp.holidate.dto.response.discount.DiscountResponse;
 import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.entity.discount.Discount;
@@ -22,4 +23,7 @@ public interface DiscountMapper {
   SpecialDayDiscount toEntity(Discount discount, SpecialDay specialDay);
 
   DiscountResponse toDiscountResponse(Discount discount);
+
+  DiscountDetailsResponse toDiscountDetailsResponse(Discount discount);
+
 }

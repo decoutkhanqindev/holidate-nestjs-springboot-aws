@@ -12,4 +12,7 @@ import java.util.Optional;
 public interface SpecialDayDiscountRepository extends JpaRepository<SpecialDayDiscount, String> {
   @Query(DiscountQueries.FIND_BY_SPECIAL_DAY_ID_WITH_DISCOUNT)
   Optional<SpecialDayDiscount> findBySpecialDayIdWithDiscount(String specialDayId);
+
+  @Query(DiscountQueries.FIND_BY_DISCOUNT_ID_WITH_SPECIAL_DAY)
+  Optional<SpecialDayDiscount> findByDiscountId(String discountId);
 }

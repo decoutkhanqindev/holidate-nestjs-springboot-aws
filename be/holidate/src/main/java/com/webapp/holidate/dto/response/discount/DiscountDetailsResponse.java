@@ -1,5 +1,7 @@
 package com.webapp.holidate.dto.response.discount;
 
+import com.webapp.holidate.dto.response.acommodation.hotel.HotelBriefResponse;
+import com.webapp.holidate.dto.response.special_day.SpecialDayResponse;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -15,7 +17,7 @@ import java.time.LocalDateTime;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class DiscountResponse {
+public class DiscountDetailsResponse {
   String id;
   String code;
   String description;
@@ -27,6 +29,8 @@ public class DiscountResponse {
   LocalDate validFrom;
   LocalDate validTo;
   boolean active;
+  HotelBriefResponse hotel;
+  SpecialDayResponse specialDay;
   LocalDateTime createdAt;
   LocalDateTime updatedAt;
 }

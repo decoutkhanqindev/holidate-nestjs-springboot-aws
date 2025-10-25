@@ -1,6 +1,7 @@
 package com.webapp.holidate.service.accommodation.room;
 
 import com.webapp.holidate.constants.api.param.SortingParams;
+import com.webapp.holidate.constants.api.param.RoomParams;
 import com.webapp.holidate.dto.request.acommodation.room.RoomCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.room.RoomUpdateRequest;
 import com.webapp.holidate.dto.request.image.PhotoCreationRequest;
@@ -175,7 +176,7 @@ public class RoomService {
 
     // Check if sort field is valid (only price sorting allowed)
     boolean hasSortBy = sortBy != null && !sortBy.isEmpty()
-        && SortingParams.SORT_BY_PRICE.equals(sortBy);
+        && RoomParams.PRICE.equals(sortBy);
     if (!hasSortBy) {
       sortBy = null;
     }
@@ -242,7 +243,7 @@ public class RoomService {
   // Map API sort field to entity field name for rooms
   private String mapRoomSortFieldToEntity(String sortBy) {
     return switch (sortBy) {
-      case SortingParams.SORT_BY_PRICE -> "basePricePerNight";
+      case RoomParams.PRICE -> "basePricePerNight";
       default -> "createdAt"; // Default sorting by creation date
     };
   }

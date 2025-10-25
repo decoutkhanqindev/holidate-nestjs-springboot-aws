@@ -3,6 +3,7 @@ package com.webapp.holidate.service.accommodation;
 import com.webapp.holidate.component.room.RoomCandidate;
 import com.webapp.holidate.component.room.RoomCombinationFinder;
 import com.webapp.holidate.constants.api.param.SortingParams;
+import com.webapp.holidate.constants.api.param.HotelParams;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelUpdateRequest;
 import com.webapp.holidate.dto.request.image.PhotoCreationRequest;
@@ -184,9 +185,9 @@ public class HotelService {
 
     // Check if sort field is valid
     boolean hasSortBy = sortBy != null && !sortBy.isEmpty()
-        && (SortingParams.SORT_BY_PRICE.equals(sortBy) ||
-            SortingParams.SORT_BY_STAR_RATING.equals(sortBy) ||
-            SortingParams.SORT_BY_CREATED_AT.equals(sortBy));
+        && (HotelParams.PRICE.equals(sortBy) ||
+            HotelParams.STAR_RATING.equals(sortBy) ||
+            HotelParams.CREATED_AT.equals(sortBy));
     if (!hasSortBy) {
       sortBy = null;
     }
@@ -238,8 +239,8 @@ public class HotelService {
   // Map API sort field to entity field name (only for database-sortable fields)
   private String mapSortFieldToEntity(String sortBy) {
     return switch (sortBy) {
-      case SortingParams.SORT_BY_STAR_RATING -> "starRating";
-      case SortingParams.SORT_BY_CREATED_AT -> "createdAt";
+      case HotelParams.STAR_RATING -> "starRating";
+      case HotelParams.CREATED_AT -> "createdAt";
       default -> "createdAt"; // Default sorting
     };
   }
@@ -247,8 +248,8 @@ public class HotelService {
   // Check if sort field can be handled at database level
   private boolean canSortAtDatabaseLevel(String sortBy) {
     return sortBy == null ||
-        SortingParams.SORT_BY_STAR_RATING.equals(sortBy) ||
-        SortingParams.SORT_BY_CREATED_AT.equals(sortBy);
+        HotelParams.STAR_RATING.equals(sortBy) ||
+        HotelParams.CREATED_AT.equals(sortBy);
   }
 
   // Get all hotels when no filters applied
@@ -668,13 +669,13 @@ public class HotelService {
         .sorted((h1, h2) -> {
           // Step 3: Compare values based on sort field
           int comparison = switch (sortBy) {
-            case SortingParams.SORT_BY_PRICE ->
+            case HotelParams.PRICE ->
               // Compare price per night (double values)
               Double.compare(h1.getCurrentPricePerNight(), h2.getCurrentPricePerNight());
-            case SortingParams.SORT_BY_STAR_RATING ->
+            case HotelParams.STAR_RATING ->
               // Compare star rating (integer values)
               Integer.compare(h1.getStarRating(), h2.getStarRating());
-            case SortingParams.SORT_BY_CREATED_AT ->
+            case HotelParams.CREATED_AT ->
               // Compare creation date (LocalDateTime values)
               h1.getCreatedAt().compareTo(h2.getCreatedAt());
             default ->

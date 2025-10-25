@@ -6,6 +6,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = DbTableNames.DISCOUNTS)
@@ -53,4 +54,11 @@ public class Discount {
   @Column(nullable = false)
   @Builder.Default
   boolean active = true;
+
+  @Column(nullable = false)
+  @Builder.Default
+  LocalDateTime createdAt = LocalDateTime.now();
+
+  @Column(nullable = true)
+  LocalDateTime updatedAt;
 }

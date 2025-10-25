@@ -2,6 +2,7 @@ package com.webapp.holidate.service.accommodation.room;
 
 import com.webapp.holidate.constants.AppProperties;
 import com.webapp.holidate.constants.api.param.SortingParams;
+import com.webapp.holidate.constants.api.param.RoomInventoryParams;
 import com.webapp.holidate.dto.request.acommodation.room.inventory.RoomInventoryCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.room.inventory.RoomInventoryPriceUpdateRequest;
 import com.webapp.holidate.dto.response.acommodation.room.RoomWithInventoriesResponse;
@@ -34,7 +35,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -114,9 +114,9 @@ public class RoomInventoryService {
 
     // Check if sort field is valid
     boolean hasSortBy = sortBy != null && !sortBy.isEmpty()
-        && (SortingParams.SORT_BY_DATE.equals(sortBy)
-            || SortingParams.SORT_BY_PRICE.equals(sortBy)
-            || SortingParams.SORT_BY_AVAILABLE_ROOMS.equals(sortBy));
+        && (RoomInventoryParams.DATE.equals(sortBy)
+            || RoomInventoryParams.PRICE.equals(sortBy)
+            || RoomInventoryParams.AVAILABLE_ROOMS.equals(sortBy));
     if (!hasSortBy) {
       sortBy = null;
     }
@@ -179,9 +179,9 @@ public class RoomInventoryService {
   // Map sort field from API to entity field name
   private String mapInventorySortFieldToEntity(String sortBy) {
     return switch (sortBy) {
-      case SortingParams.SORT_BY_DATE -> "id.date";
-      case SortingParams.SORT_BY_PRICE -> "price";
-      case SortingParams.SORT_BY_AVAILABLE_ROOMS -> "availableRooms";
+      case RoomInventoryParams.DATE -> "id.date";
+      case RoomInventoryParams.PRICE -> "price";
+      case RoomInventoryParams.AVAILABLE_ROOMS -> "availableRooms";
       default -> "id.date"; // Default sorting by date
     };
   }

@@ -8,5 +8,6 @@ import org.mapstruct.Mapper;
 @Mapper(componentModel = "spring")
 public interface SpecialDayMapper {
   SpecialDay toEntity(SpecialDayCreationRequest request);
+
   SpecialDayResponse toSpecialDayResponse(SpecialDay specialDay);
 }
