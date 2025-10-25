@@ -5,7 +5,7 @@ import com.webapp.holidate.constants.db.DbTableNames;
 import com.webapp.holidate.entity.amenity.HotelAmenity;
 import com.webapp.holidate.entity.accommodation.room.Room;
 import com.webapp.holidate.entity.booking.Review;
-import com.webapp.holidate.entity.booking.discount.HotelDiscount;
+import com.webapp.holidate.entity.discount.HotelDiscount;
 import com.webapp.holidate.entity.image.HotelPhoto;
 import com.webapp.holidate.entity.location.*;
 import com.webapp.holidate.entity.location.entertainment_venue.HotelEntertainmentVenue;

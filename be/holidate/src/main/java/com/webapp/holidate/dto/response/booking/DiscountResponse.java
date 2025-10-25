@@ -1,10 +1,5 @@
 package com.webapp.holidate.dto.response.booking;
 
-import com.webapp.holidate.entity.booking.discount.Discount;
-import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

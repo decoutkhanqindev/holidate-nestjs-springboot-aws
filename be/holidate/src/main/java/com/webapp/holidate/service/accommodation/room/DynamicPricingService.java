@@ -3,13 +3,13 @@ package com.webapp.holidate.service.accommodation.room;
 import com.webapp.holidate.constants.AppProperties;
 import com.webapp.holidate.entity.accommodation.room.Room;
 import com.webapp.holidate.entity.accommodation.room.RoomInventory;
-import com.webapp.holidate.entity.booking.discount.Discount;
-import com.webapp.holidate.entity.booking.discount.SpecialDayDiscount;
+import com.webapp.holidate.entity.discount.Discount;
+import com.webapp.holidate.entity.discount.SpecialDayDiscount;
 import com.webapp.holidate.entity.special_day.SpecialDay;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.repository.accommodation.room.RoomInventoryRepository;
 import com.webapp.holidate.repository.accommodation.room.RoomRepository;
-import com.webapp.holidate.repository.booking.discount.SpecialDayDiscountRepository;
+import com.webapp.holidate.repository.discount.SpecialDayDiscountRepository;
 import com.webapp.holidate.repository.special_day.SpecialDayRepository;
 import com.webapp.holidate.type.ErrorType;
 import com.webapp.holidate.utils.DateTimeUtils;
@@ -76,8 +76,8 @@ public class DynamicPricingService {
 
         if (isSpecialDay) {
           SpecialDay specialDay = specialDayMap.get(currentDate);
-          SpecialDayDiscount specialDayDiscount = specialDayDiscountRepository.findByHolidayIdWithDiscount(specialDay.getId())
-            .orElseThrow(() -> new AppException(ErrorType.HOLIDAY_DISCOUNT_NOT_FOUND));
+          SpecialDayDiscount specialDayDiscount = specialDayDiscountRepository.findBySpecialDayIdWithDiscount(specialDay.getId())
+            .orElseThrow(() -> new AppException(ErrorType.SPECIAL_DAY_DISCOUNT_NOT_FOUND));
           Discount discount = specialDayDiscount.getDiscount();
           log.info("Applying special day discount of {}% for date {}", discount.getPercentage(), currentDate);
           newPrice = basePrice * (1 - discount.getPercentage() / 100);

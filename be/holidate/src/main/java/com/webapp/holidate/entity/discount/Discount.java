@@ -1,4 +1,4 @@
-package com.webapp.holidate.entity.booking.discount;
+package com.webapp.holidate.entity.discount;
 
 import com.webapp.holidate.constants.db.DbTableNames;
 import jakarta.persistence.*;

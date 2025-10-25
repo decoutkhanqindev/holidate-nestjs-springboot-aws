@@ -166,8 +166,8 @@ public enum ErrorType {
   CONTACT_FULL_NAME_NOT_BLANK(400, "Contact full name is required"),
   CONTACT_EMAIL_NOT_BLANK(400, "Contact email is required"),
   CONTACT_PHONE_NOT_BLANK(400, "Contact phone is required"),
-  HOLIDAY_DISCOUNT_NOT_FOUND(404, "Special day discount not found"),
-  HOLIDAY_DISCOUNT_EXISTS(409, "Special day discount already exists"),
+  SPECIAL_DAY_DISCOUNT_NOT_FOUND(404, "Special day discount not found"),
+  SPECIAL_DAY_DISCOUNT_EXISTS(409, "Special day discount already exists"),
   VALID_FROM_TO_DATE_NOT_BLANK(400, "Valid from and to date is required"),
   VALID_FROM_TO_DATE_INVALID(400, "Valid from and to date must be in yyyy-MM-dd format"),
 

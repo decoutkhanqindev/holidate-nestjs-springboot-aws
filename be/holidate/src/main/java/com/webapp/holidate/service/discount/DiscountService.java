@@ -1,10 +1,10 @@
-package com.webapp.holidate.service.booking;
+package com.webapp.holidate.service.discount;
 
 import com.webapp.holidate.dto.response.booking.DiscountResponse;
-import com.webapp.holidate.mapper.booking.DiscountMapper;
-import com.webapp.holidate.repository.booking.discount.DiscountRepository;
-import com.webapp.holidate.repository.booking.discount.HotelDiscountRepository;
-import com.webapp.holidate.repository.booking.discount.SpecialDayDiscountRepository;
+import com.webapp.holidate.mapper.discount.DiscountMapper;
+import com.webapp.holidate.repository.discount.DiscountRepository;
+import com.webapp.holidate.repository.discount.HotelDiscountRepository;
+import com.webapp.holidate.repository.discount.SpecialDayDiscountRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;

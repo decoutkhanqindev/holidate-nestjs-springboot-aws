@@ -1,6 +1,6 @@
-package com.webapp.holidate.repository.booking.discount;
+package com.webapp.holidate.repository.discount;
 
-import com.webapp.holidate.entity.booking.discount.HotelDiscount;
+import com.webapp.holidate.entity.discount.HotelDiscount;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

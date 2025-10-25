@@ -1,8 +1,8 @@
-package com.webapp.holidate.mapper.booking;
+package com.webapp.holidate.mapper.discount;
 
 import com.webapp.holidate.dto.request.booking.discount.DiscountCreationRequest;
 import com.webapp.holidate.dto.response.booking.DiscountResponse;
-import com.webapp.holidate.entity.booking.discount.Discount;
+import com.webapp.holidate.entity.discount.Discount;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")

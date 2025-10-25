@@ -1,14 +1,14 @@
-package com.webapp.holidate.entity.booking.discount;
+package com.webapp.holidate.entity.discount;
 
 import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
-import com.webapp.holidate.entity.special_day.SpecialDay;
+import com.webapp.holidate.entity.accommodation.Hotel;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Entity
-@Table(name = DbTableNames.SPECIAL_DAY_DISCOUNTS)
+@Table(name = DbTableNames.HOTEL_DISCOUNTS)
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
@@ -16,16 +16,16 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @Setter
 @ToString
-public class SpecialDayDiscount {
+public class HotelDiscount {
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   @Column(nullable = false)
   String id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = DbFieldNames.SPECIAL_DAY_ID, nullable = false)
+  @JoinColumn(name = DbFieldNames.HOTEL_ID, nullable = false)
   @ToString.Exclude
-  SpecialDay specialDay;
+  Hotel hotel;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = DbFieldNames.DISCOUNT_ID, nullable = false)
