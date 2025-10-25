@@ -503,7 +503,7 @@
 
 "use client";
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { hotelService, HotelResponse, Room, AmenityGroup, EntertainmentVenue } from "@/service/hotelService";
 
@@ -685,7 +685,7 @@ function RoomCard({ room, handleSelectRoom, innerRef }: { room: Room; handleSele
 export default function HotelDetailPage() {
     const { hotelId } = useParams();
     const router = useRouter();
-
+    const searchParams = useSearchParams();
     const [hotel, setHotel] = useState<HotelResponse | null>(null);
     const [isHotelLoading, setIsHotelLoading] = useState(true);
     const [hotelError, setHotelError] = useState<string | null>(null);
@@ -710,6 +710,14 @@ export default function HotelDetailPage() {
     const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
     const priceDisplayOptions = ["Mỗi phòng mỗi đêm (chưa bao gồm thuế và phí)", "Mỗi phòng mỗi đêm (bao gồm thuế và phí)", "Tổng giá (chưa bao gồm thuế và phí)", "Tổng giá (bao gồm thuế và phí)"];
     const [selectedPriceDisplay, setSelectedPriceDisplay] = useState(priceDisplayOptions[0]);
+    const checkinParam = searchParams.get('checkin');
+    const nightsParam = searchParams.get('nights');
+
+    const checkinDate = checkinParam ? new Date(checkinParam) : new Date();
+    const numNights = nightsParam ? parseInt(nightsParam, 10) : 1;
+    const checkoutDate = new Date(checkinDate);
+    checkoutDate.setDate(checkinDate.getDate() + numNights);
+    const dateDisplayString = `${formatDateForDisplay(checkinDate)} - ${formatDateForDisplay(checkoutDate)}, ${numNights} đêm`;
 
     useEffect(() => {
         if (!hotelId) return;
@@ -834,16 +842,15 @@ export default function HotelDetailPage() {
     const handleSelectRoom = (room: Room, price: number, includesBreakfast: boolean) => {
         if (!hotel || !hotel.name) return;
 
-        const checkin = new Date().toISOString().split('T')[0];
-        const nights = 1;
+
         const hotelImageUrl = hotel.photos?.[0]?.photos?.[0]?.url || '';
 
         // URL bây giờ rất gọn gàng, chỉ chứa các ID và thông tin cơ bản
         const params = new URLSearchParams({
             roomId: room.id.toString(),
             price: price.toString(),
-            checkin: checkin,
-            nights: nights.toString(),
+            checkin: checkinDate.toISOString().split('T')[0], // Dùng ngày đúng
+            nights: numNights.toString(), // Dùng số đêm đúng
             hotelName: hotel.name,
             hotelImageUrl: hotelImageUrl,
             breakfast: includesBreakfast.toString()
@@ -880,25 +887,23 @@ export default function HotelDetailPage() {
         ? Math.min(...rooms.map(room => room.basePricePerNight))
         : hotel?.currentPricePerNight ?? 0;
 
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-    const dateDisplayString = `${formatDateForDisplay(today)} - ${formatDateForDisplay(tomorrow)}, 1 đêm`;
 
     return (
         <div style={{ background: '#f7f9fb', minHeight: '100vh' }}>
             <style>{customStyles}</style>
 
-            <div style={{ background: 'linear-gradient(90deg,#1e3c72 0,#2a5298 100%)', color: '#fff', padding: '30px 0 8px 0' }}>
+            <div style={{ background: 'linear-gradient(90deg,#1e3c72 0,#2a5298 100%)', /*...*/ }}>
                 <div className="container d-flex align-items-center justify-content-between py-2">
                     <div className="d-flex align-items-center gap-3">
                         <div className="bg-primary bg-opacity-25 rounded-3 px-3 py-2 d-flex align-items-center">
                             <i className="bi bi-geo-alt-fill me-2"></i>
-                            <span className="fw-bold">{hotel ? hotel.name : "Đang tải tên khách sạn..."}</span>
+                            {/* Tên khách sạn vẫn giữ nguyên */}
+                            <span className="fw-bold text-white">{hotel ? hotel.name : "Đang tải tên khách sạn..."}</span>
                         </div>
                         <div className="bg-primary bg-opacity-25 rounded-3 px-3 py-2 d-flex align-items-center">
-                            <i className="bi bi-calendar-event me-2"></i>
-                            <span>{dateDisplayString}</span>
+                            <i className="bi bi-calendar-event me-2 text-white"></i>
+                            {/* Dùng chuỗi ngày tháng đã được tính toán ở trên */}
+                            <span className="text-white">{dateDisplayString}</span>
                         </div>
                     </div>
                     <div>

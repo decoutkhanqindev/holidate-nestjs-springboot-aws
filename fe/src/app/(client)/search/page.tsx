@@ -1,7 +1,15 @@
+
 // 'use client';
 
 // import { useSearchParams, useRouter } from 'next/navigation';
 // import { useEffect, useState, useRef, useCallback } from 'react';
+
+// // Import cho DatePicker
+// import DatePicker, { registerLocale } from 'react-datepicker';
+// import { vi } from 'date-fns/locale/vi';
+// import 'react-datepicker/dist/react-datepicker.css';
+
+// // Import các service và component con
 // import { hotelService, HotelResponse, HotelPhoto } from '@/service/hotelService';
 // import { amenityService, AmenityCategory } from '@/service/amenityService';
 // import Image from 'next/image';
@@ -10,6 +18,9 @@
 // import PriceSlider from './PriceSlider';
 // import LocationSearchInput from '@/components/Location/LocationSearchInput';
 // import { LocationSuggestion } from '@/service/locationService';
+// import GuestPicker from '@/components/DateSupport/GuestPicker';
+
+// registerLocale('vi', vi); // Đăng ký ngôn ngữ tiếng Việt
 
 // // --- CÁC HÀM TIỆN ÍCH ---
 // const getRatingText = (score: number) => {
@@ -21,13 +32,12 @@
 //     return "Bình thường";
 // };
 
-// const formatDateForDisplay = (checkin: string, nights: number): string => {
+// const formatDateForDisplay = (checkin: Date, nights: number): string => {
 //     try {
-//         const checkinDate = new Date(checkin);
-//         const checkoutDate = new Date(checkinDate);
-//         checkoutDate.setDate(checkinDate.getDate() + nights);
+//         const checkoutDate = new Date(checkin);
+//         checkoutDate.setDate(checkin.getDate() + nights);
 //         const format = (date: Date) => `${date.getDate()} thg ${date.getMonth() + 1}`;
-//         return `${format(checkinDate)} - ${format(checkoutDate)}, ${nights} đêm`;
+//         return `${format(checkin)} - ${format(checkoutDate)}, ${nights} đêm`;
 //     } catch (e) {
 //         return 'Chọn ngày';
 //     }
@@ -40,19 +50,54 @@
 //     </div>
 // );
 
+// /**
+//  * HÀM TIỆN ÍCH MỚI
+//  * Tập trung logic xây dựng tham số API vào một nơi để tránh lặp code.
+//  */
+// const buildApiParams = (searchParams: URLSearchParams, options: { page: number, size: number }) => {
+//     const query = searchParams.get('query') || '';
+//     const cityId = searchParams.get('city-id');
+//     const provinceId = searchParams.get('province-id');
+//     const districtId = searchParams.get('district-id');
+
+//     const apiParams: any = {
+//         ...options, // Gộp page, size
+//         adults: searchParams.get('adults') || '2',
+//         children: searchParams.get('children') || '0',
+//         rooms: searchParams.get('rooms') || '1'
+//     };
+
+//     // Logic ưu tiên ID
+//     if (provinceId) {
+//         apiParams['province-id'] = provinceId;
+//     } else if (cityId) {
+//         apiParams['city-id'] = cityId;
+//     } else if (districtId) {
+//         apiParams['district-id'] = districtId;
+//     } else if (query) {
+//         apiParams.name = query;
+//     }
+//     return apiParams;
+// };
+
+
 // // --- COMPONENT CHÍNH ---
 // export default function SearchPage() {
 //     const router = useRouter();
 //     const searchParams = useSearchParams();
 
-//     // === STATE CHO THANH TÌM KIẾM ===
+//     // === STATE CHO CÁC GIÁ TRỊ TÌM KIẾM ===
 //     const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | null>(null);
-//     const [currentQuery, setCurrentQuery] = useState(searchParams.get('query') || '');
-//     const [currentCheckin, setCurrentCheckin] = useState(searchParams.get('checkin') || new Date().toISOString().split('T')[0]);
-//     const [currentNights, setCurrentNights] = useState(parseInt(searchParams.get('nights') || '1', 10));
-//     const [currentGuests, setCurrentGuests] = useState(searchParams.get('guestsText') || '2 người lớn, 1 phòng');
+//     const [currentQuery, setCurrentQuery] = useState('');
+//     const [currentCheckin, setCurrentCheckin] = useState(new Date());
+//     const [currentNights, setCurrentNights] = useState(1);
+//     const [adults, setAdults] = useState(2);
+//     const [children, setChildren] = useState(0);
+//     const [rooms, setRooms] = useState(1);
 
-//     // === STATE CHO DỮ LIỆU VÀ BỘ LỌC ===
+//     // === STATE CHO UI VÀ BỘ LỌC ===
+//     const [showDatePicker, setShowDatePicker] = useState(false);
+//     const [showGuestPicker, setShowGuestPicker] = useState(false);
 //     const [hotels, setHotels] = useState<HotelResponse[]>([]);
 //     const [amenityCategories, setAmenityCategories] = useState<AmenityCategory[]>([]);
 //     const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
@@ -68,6 +113,158 @@
 //     const [loadingAmenities, setLoadingAmenities] = useState(true);
 //     const [loadingMore, setLoadingMore] = useState(false);
 
+//     const datePickerRef = useRef<HTMLDivElement>(null);
+//     const guestPickerRef = useRef<HTMLDivElement>(null);
+
+//     // Đồng bộ state của component với URL mỗi khi nó thay đổi
+//     useEffect(() => {
+//         setCurrentQuery(searchParams.get('query') || '');
+//         setCurrentCheckin(new Date(searchParams.get('checkin') || new Date()));
+//         setCurrentNights(parseInt(searchParams.get('nights') || '1', 10));
+//         setAdults(parseInt(searchParams.get('adults') || '2', 10));
+//         setChildren(parseInt(searchParams.get('children') || '0', 10));
+//         setRooms(parseInt(searchParams.get('rooms') || '1', 10));
+//     }, [searchParams]);
+
+//     // === CÁC HÀM XỬ LÝ LOGIC ===
+//     const handleLocationSelect = (location: LocationSuggestion) => {
+//         setSelectedLocation(location);
+//         setCurrentQuery(location.name);
+//     };
+
+//     const handleNewSearch = () => {
+//         setShowDatePicker(false);
+//         setShowGuestPicker(false);
+//         const params = new URLSearchParams();
+
+//         // Xử lý địa điểm
+//         if (selectedLocation) {
+//             switch (selectedLocation.type) {
+//                 case 'PROVINCE': case 'CITY_PROVINCE': params.set('province-id', selectedLocation.id.replace('province-', '')); break;
+//                 case 'CITY': params.set('city-id', selectedLocation.id.replace('city-', '')); break;
+//                 case 'DISTRICT': params.set('district-id', selectedLocation.id.replace('district-', '')); break;
+//                 case 'HOTEL':
+//                     router.push(`/hotels/${selectedLocation.id.replace('hotel-', '')}`);
+//                     return;
+//             }
+//             params.set('query', selectedLocation.name);
+//         } else if (currentQuery.trim()) {
+//             params.set('query', currentQuery);
+//         }
+
+//         // Xử lý các thông tin khác
+//         params.set('checkin', currentCheckin.toISOString().split('T')[0]);
+//         params.set('nights', currentNights.toString());
+//         params.set('adults', adults.toString());
+//         params.set('children', children.toString());
+//         params.set('rooms', rooms.toString());
+
+//         router.push(`/search?${params.toString()}`);
+//     };
+
+//     const handleDateChange = (date: Date | null) => {
+//         if (date) {
+//             setCurrentCheckin(date);
+//         }
+//     };
+
+//     // Cập nhật hàm xử lý GuestPicker
+//     const handleGuestApply = (data: { adults: number; children: number; rooms: number }) => {
+//         setAdults(data.adults);
+//         setChildren(data.children);
+//         setRooms(data.rooms);
+//     };
+
+//     const handleAmenityChange = (amenityId: string, isSelected: boolean) => {
+//         setPage(0);
+//         setHotels([]);
+//         setSelectedAmenities(prev => {
+//             const newSet = new Set(prev);
+//             if (isSelected) newSet.add(amenityId);
+//             else newSet.delete(amenityId);
+//             return Array.from(newSet);
+//         });
+//     };
+
+//     const handlePriceChange = (min: number, max: number) => {
+//         setPage(0);
+//         setHotels([]);
+//         setPriceRange([min, max]);
+//     };
+
+//     const handleSelectHotel = (hotelId: string) => {
+//         const params = new URLSearchParams();
+//         params.set('checkin', currentCheckin.toISOString().split('T')[0]);
+//         params.set('nights', currentNights.toString());
+//         params.set('adults', adults.toString());
+//         params.set('children', children.toString());
+//         params.set('rooms', rooms.toString());
+//         router.push(`/hotels/${hotelId}?${params.toString()}`);
+//     };
+
+//     // Xử lý click ra ngoài để đóng pop-up
+//     useEffect(() => {
+//         function handleClickOutside(event: MouseEvent) {
+//             if (datePickerRef.current && !datePickerRef.current.contains(event.target as Node)) {
+//                 setShowDatePicker(false);
+//             }
+//             if (guestPickerRef.current && !guestPickerRef.current.contains(event.target as Node)) {
+//                 setShowGuestPicker(false);
+//             }
+//         }
+//         document.addEventListener("mousedown", handleClickOutside);
+//         return () => document.removeEventListener("mousedown", handleClickOutside);
+//     }, []);
+
+//     // === USE EFFECT ĐỂ TẢI DỮ LIỆU ===
+//     useEffect(() => {
+//         setLoading(true);
+//         setHotels([]);
+//         setPage(0);
+
+//         const apiParams = buildApiParams(searchParams, { page: 0, size: 10 });
+
+//         if (selectedAmenities.length > 0) apiParams['amenity-ids'] = selectedAmenities.join(',');
+//         if (priceRange[0] !== DEFAULT_MIN_PRICE) apiParams['min-price'] = priceRange[0];
+//         if (priceRange[1] !== DEFAULT_MAX_PRICE) apiParams['max-price'] = priceRange[1];
+
+//         hotelService.searchHotels(apiParams)
+//             .then(paginatedData => {
+//                 setHotels(paginatedData.content);
+//                 setTotalHotelsFound(paginatedData.totalItems);
+//                 setHasMore(!paginatedData.last);
+//             })
+//             .catch(error => console.error("Lỗi tìm kiếm khách sạn:", error))
+//             .finally(() => setLoading(false));
+
+//     }, [searchParams, selectedAmenities, priceRange]);
+
+//     useEffect(() => {
+//         if (page > 0) {
+//             setLoadingMore(true);
+//             const apiParams = buildApiParams(searchParams, { page, size: 10 });
+
+//             if (selectedAmenities.length > 0) apiParams['amenity-ids'] = selectedAmenities.join(',');
+//             if (priceRange[0] !== DEFAULT_MIN_PRICE) apiParams['min-price'] = priceRange[0];
+//             if (priceRange[1] !== DEFAULT_MAX_PRICE) apiParams['max-price'] = priceRange[1];
+
+//             hotelService.searchHotels(apiParams)
+//                 .then(paginatedData => {
+//                     setHotels(prevHotels => [...prevHotels, ...paginatedData.content]);
+//                     setHasMore(!paginatedData.last);
+//                 }).catch(console.error)
+//                 .finally(() => setLoadingMore(false));
+//         }
+//     }, [page, searchParams, selectedAmenities, priceRange]);
+
+//     useEffect(() => {
+//         setLoadingAmenities(true);
+//         amenityService.getAllAmenityCategories()
+//             .then(data => setAmenityCategories(data))
+//             .catch(error => console.error("Không thể tải nhóm tiện nghi:", error))
+//             .finally(() => setLoadingAmenities(false));
+//     }, []);
+
 //     // Ref cho infinite scroll
 //     const observer = useRef<IntersectionObserver | null>(null);
 //     const lastHotelElementRef = useCallback((node: HTMLDivElement) => {
@@ -81,116 +278,7 @@
 //         if (node) observer.current.observe(node);
 //     }, [loading, loadingMore, hasMore]);
 
-//     // === CÁC HÀM XỬ LÝ LOGIC ===
-//     const handleLocationSelect = (location: LocationSuggestion) => {
-//         setSelectedLocation(location);
-//         setCurrentQuery(location.name);
-//     };
-
-//     const handleNewSearch = () => {
-//         const params = new URLSearchParams();
-//         if (selectedLocation) {
-//             switch (selectedLocation.type) {
-//                 case 'PROVINCE': case 'CITY_PROVINCE': params.set('province-id', selectedLocation.id); break;
-//                 case 'CITY': params.set('city-id', selectedLocation.id); break;
-//                 case 'DISTRICT': params.set('district-id', selectedLocation.id); break;
-//                 case 'HOTEL':
-//                     router.push(`/hotels/${selectedLocation.id.replace('hotel-', '')}`);
-//                     return;
-//             }
-//             params.set('query', selectedLocation.name);
-//         } else if (currentQuery.trim()) {
-//             params.set('query', currentQuery);
-//         }
-//         params.set('checkin', currentCheckin);
-//         params.set('nights', currentNights.toString());
-//         params.set('guestsText', currentGuests);
-
-//         router.push(`/search?${params.toString()}`);
-//     };
-
-//     const handleSelectHotel = (hotelId: string) => {
-//         const params = new URLSearchParams(searchParams);
-//         router.push(`/hotels/${hotelId}?${params.toString()}`);
-//     };
-
-//     const handleAmenityChange = (amenityId: string, isSelected: boolean) => {
-//         setSelectedAmenities(prev => {
-//             const newSet = new Set(prev);
-//             if (isSelected) newSet.add(amenityId);
-//             else newSet.delete(amenityId);
-//             return Array.from(newSet);
-//         });
-//     };
-
-//     const handlePriceChange = (min: number, max: number) => {
-//         setPriceRange([min, max]);
-//     };
-
-//     // === USE EFFECT HOOKS ===
-//     useEffect(() => {
-//         const query = searchParams.get('query') || '';
-//         const cityId = searchParams.get('city-id');
-//         const provinceId = searchParams.get('province-id');
-//         const districtId = searchParams.get('district-id');
-
-//         setLoading(true);
-//         setHotels([]);
-//         setPage(0);
-
-//         const apiParams: any = { page: 0, size: 10 };
-//         if (provinceId) apiParams['province-id'] = provinceId;
-//         else if (cityId) apiParams['city-id'] = cityId;
-//         else if (districtId) apiParams['district-id'] = districtId;
-//         else if (query) apiParams.name = query;
-
-//         if (selectedAmenities.length > 0) apiParams['amenity-ids'] = selectedAmenities.join(',');
-//         if (priceRange[0] !== DEFAULT_MIN_PRICE) apiParams['min-price'] = priceRange[0];
-//         if (priceRange[1] !== DEFAULT_MAX_PRICE) apiParams['max-price'] = priceRange[1];
-
-//         hotelService.searchHotels(apiParams)
-//             .then(paginatedData => {
-//                 setHotels(paginatedData.content);
-//                 setTotalHotelsFound(paginatedData.totalItems);
-//                 setHasMore(!paginatedData.last);
-//             }).catch(console.error)
-//             .finally(() => setLoading(false));
-//     }, [searchParams, selectedAmenities, priceRange]);
-
-//     useEffect(() => {
-//         if (page > 0) {
-//             setLoadingMore(true);
-//             const query = searchParams.get('query') || '';
-//             const cityId = searchParams.get('city-id');
-//             const provinceId = searchParams.get('province-id');
-//             const districtId = searchParams.get('district-id');
-
-//             const apiParams: any = { page, size: 10 };
-//             if (provinceId) apiParams['province-id'] = provinceId;
-//             else if (cityId) apiParams['city-id'] = cityId;
-//             else if (districtId) apiParams['district-id'] = districtId;
-//             else if (query) apiParams.name = query;
-
-//             if (selectedAmenities.length > 0) apiParams['amenity-ids'] = selectedAmenities.join(',');
-//             if (priceRange[0] !== DEFAULT_MIN_PRICE) apiParams['min-price'] = priceRange[0];
-//             if (priceRange[1] !== DEFAULT_MAX_PRICE) apiParams['max-price'] = priceRange[1];
-
-//             hotelService.searchHotels(apiParams)
-//                 .then(paginatedData => {
-//                     setHotels(prevHotels => [...prevHotels, ...paginatedData.content]);
-//                     setHasMore(!paginatedData.last);
-//                 }).catch(console.error)
-//                 .finally(() => setLoadingMore(false));
-//         }
-//     }, [page]);
-
-//     useEffect(() => {
-//         setLoadingAmenities(true);
-//         amenityService.getAllAmenityCategories()
-//             .then(data => setAmenityCategories(data))
-//             .catch(error => console.error("Không thể tải nhóm tiện nghi:", error))
-//             .finally(() => setLoadingAmenities(false));
-//     }, []);
+//     const displayGuests = `${adults} người lớn, ${children} Trẻ em, ${rooms} phòng`;
 
 //     return (
 //         <div className={styles.pageContainer}>
@@ -211,22 +299,58 @@
 
 //                         <div className={styles.divider}></div>
 
-//                         <div className={styles.searchSection}>
+//                         <div className={`${styles.searchSection} ${styles.dateSection}`} ref={datePickerRef}>
 //                             <i className={`bi bi-calendar3 ${styles.searchIcon}`}></i>
-//                             <div className={styles.searchInput}>
+//                             <div className={styles.searchInput} onClick={() => setShowDatePicker(!showDatePicker)}>
 //                                 <label>Ngày nhận phòng & Số đêm</label>
 //                                 <span>{formatDateForDisplay(currentCheckin, currentNights)}</span>
 //                             </div>
+
+//                             {showDatePicker && (
+//                                 <div className={styles.datePickerWrapper}>
+//                                     <DatePicker
+//                                         selected={currentCheckin}
+//                                         onChange={handleDateChange}
+//                                         inline
+//                                         locale="vi"
+//                                         minDate={new Date()}
+//                                     />
+//                                     <div className={styles.nightsSelector}>
+//                                         <label>Số đêm</label>
+//                                         <div className={styles.counter}>
+//                                             <button
+//                                                 onClick={() => setCurrentNights(n => Math.max(1, n - 1))}
+//                                                 disabled={currentNights <= 1}
+//                                             >
+//                                                 -
+//                                             </button>
+//                                             <span>{currentNights}</span>
+//                                             <button onClick={() => setCurrentNights(n => n + 1)}>+</button>
+//                                         </div>
+//                                     </div>
+//                                     <button className={styles.applyButton} onClick={() => setShowDatePicker(false)}>Xong</button>
+//                                 </div>
+//                             )}
 //                         </div>
 
 //                         <div className={styles.divider}></div>
 
-//                         <div className={styles.searchSection}>
+//                         <div className={`${styles.searchSection} ${styles.guestSection}`} ref={guestPickerRef}>
 //                             <i className={`bi bi-person ${styles.searchIcon}`}></i>
-//                             <div className={styles.searchInput}>
+//                             <div className={styles.searchInput} onClick={() => setShowGuestPicker(!showGuestPicker)}>
 //                                 <label>Khách và Phòng</label>
-//                                 <span>{currentGuests}</span>
+//                                 <span>{displayGuests}</span>
 //                             </div>
+
+//                             {showGuestPicker && (
+//                                 <GuestPicker
+//                                     initialAdults={adults}
+//                                     initialChildren={children}
+//                                     initialRooms={rooms}
+//                                     onApply={handleGuestApply}
+//                                     onClose={() => setShowGuestPicker(false)}
+//                                 />
+//                             )}
 //                         </div>
 
 //                         <button className={styles.searchButton} onClick={handleNewSearch}>
@@ -237,7 +361,6 @@
 //                 </div>
 //             </div>
 
-//             {/* << THAY ĐỔI 3: BỌC NỘI DUNG CHÍNH TRONG .mainContainer >> */}
 //             <div className={`${styles.mainContainer} container`}>
 //                 <aside className={styles.sidebar}>
 //                     <PriceSlider
@@ -268,7 +391,6 @@
 //                         </div>
 //                     </div>
 
-
 //                     {loading ? <div style={{ textAlign: 'center', padding: 50 }}>Đang tải kết quả...</div>
 //                         : hotels.length === 0 ? <div style={{ textAlign: 'center', padding: 50 }}>Không tìm thấy khách sạn nào phù hợp.</div>
 //                             : (
@@ -276,12 +398,22 @@
 //                                     {hotels.map((hotel, index) => {
 //                                         const allPhotos = hotel.photos?.flatMap((p: HotelPhoto) => p.photos.map(photo => photo.url)) || [];
 //                                         const mainImage = allPhotos[0] || '/placeholder.svg';
+//                                         const thumbnailImages = allPhotos.slice(1, 4);
 //                                         const cardContent = (
 //                                             <div className={styles.hotelCard} onClick={() => handleSelectHotel(hotel.id)}>
 //                                                 <div className={styles.imageColumn}>
 //                                                     <div className={styles.mainImageWrapper}>
 //                                                         <Image src={mainImage} alt={hotel.name} fill sizes="(max-width: 768px) 100vw, 33vw" style={{ objectFit: 'cover' }} />
 //                                                     </div>
+//                                                     {thumbnailImages.length > 0 && (
+//                                                         <div className={styles.thumbnailGrid} style={{ gridTemplateColumns: `repeat(${thumbnailImages.length}, 1fr)` }}>
+//                                                             {thumbnailImages.map((imgUrl, idx) => (
+//                                                                 <div key={idx} className={styles.thumbnailWrapper}>
+//                                                                     <Image src={imgUrl} alt={`${hotel.name} thumbnail ${idx + 1}`} fill sizes="10vw" style={{ objectFit: 'cover' }} />
+//                                                                 </div>
+//                                                             ))}
+//                                                         </div>
+//                                                     )}
 //                                                 </div>
 //                                                 <div className={styles.infoColumn}>
 //                                                     <h3 className="fw-bold text-dark mb-1 fs-5">{hotel.name}</h3>
@@ -306,7 +438,7 @@
 //                                                     <div className="text-end text-muted text-decoration-line-through small">
 //                                                         {hotel.rawPricePerNight > hotel.currentPricePerNight ? `${hotel.rawPricePerNight?.toLocaleString('vi-VN')} VND` : <span>&nbsp;</span>}
 //                                                     </div>
-//                                                     <div className={`text-end mb-1 ${styles.priceFinal}`}>{hotel.currentPricePerNight?.toLocaleString('vi-VN')} VND</div>
+//                                                     <div className={`text-end mb-1 ${styles.priceFinal}`}>{hotel.currentPricePerNight > 0 ? `${hotel.currentPricePerNight?.toLocaleString('vi-VN')} VND` : 'Liên hệ giá'}</div>
 //                                                     <div className="text-end text-muted small mb-2">Chưa bao gồm thuế và phí</div>
 //                                                     <button className={styles.selectRoomButton} onClick={(e) => { e.stopPropagation(); handleSelectHotel(hotel.id); }}>Xem các loại phòng</button>
 //                                                 </div>
@@ -327,6 +459,9 @@
 //             </div>
 //         </div>
 //     );
+// }
+
+
 'use client';
 
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -488,11 +623,12 @@ export default function SearchPage() {
         setHotels([]);
         setPriceRange([min, max]);
     };
-
     const handleSelectHotel = (hotelId: string) => {
         const params = new URLSearchParams(searchParams);
         router.push(`/hotels/${hotelId}?${params.toString()}`);
     };
+    // BÊN TRONG FILE SearchPage.tsx
+
 
     // Xử lý click ra ngoài để đóng pop-up
     useEffect(() => {
@@ -519,15 +655,30 @@ export default function SearchPage() {
         const provinceId = searchParams.get('province-id');
         const districtId = searchParams.get('district-id');
 
-        const apiParams: any = { page: 0, size: 10 };
-        if (provinceId) apiParams['province-id'] = provinceId;
-        else if (cityId) apiParams['city-id'] = cityId;
-        else if (districtId) apiParams['district-id'] = districtId;
-        else if (query) apiParams.name = query;
+        const apiParams: any = {
+            page: 0,
+            size: 10,
+            adults: searchParams.get('adults') || '2',
+            children: searchParams.get('children') || '0',
+            rooms: searchParams.get('rooms') || '1'
+        };
+
+        // LOGIC ĐÃ SỬA: Ưu tiên tìm theo ID, nếu không có ID mới tìm theo tên (query)
+        if (provinceId) {
+            apiParams['province-id'] = provinceId;
+        } else if (cityId) {
+            apiParams['city-id'] = cityId;
+        } else if (districtId) {
+            apiParams['district-id'] = districtId;
+        } else if (query) {
+            apiParams.name = query;
+        }
 
         if (selectedAmenities.length > 0) apiParams['amenity-ids'] = selectedAmenities.join(',');
         if (priceRange[0] !== DEFAULT_MIN_PRICE) apiParams['min-price'] = priceRange[0];
         if (priceRange[1] !== DEFAULT_MAX_PRICE) apiParams['max-price'] = priceRange[1];
+
+        console.log("Đang gửi yêu cầu API với:", apiParams); // Thêm dòng này để debug
 
         hotelService.searchHotels(apiParams)
             .then(paginatedData => {
@@ -539,7 +690,6 @@ export default function SearchPage() {
             .finally(() => setLoading(false));
 
     }, [searchParams, selectedAmenities, priceRange]);
-
     useEffect(() => {
         if (page > 0) {
             setLoadingMore(true);
@@ -548,11 +698,24 @@ export default function SearchPage() {
             const provinceId = searchParams.get('province-id');
             const districtId = searchParams.get('district-id');
 
-            const apiParams: any = { page, size: 10 };
-            if (provinceId) apiParams['province-id'] = provinceId;
-            else if (cityId) apiParams['city-id'] = cityId;
-            else if (districtId) apiParams['district-id'] = districtId;
-            else if (query) apiParams.name = query;
+            const apiParams: any = {
+                page,
+                size: 10,
+                adults: searchParams.get('adults') || '2',
+                children: searchParams.get('children') || '0',
+                rooms: searchParams.get('rooms') || '1'
+            };
+
+            // LOGIC ĐÃ SỬA: Ưu tiên tìm theo ID, nếu không có ID mới tìm theo tên (query)
+            if (provinceId) {
+                apiParams['province-id'] = provinceId;
+            } else if (cityId) {
+                apiParams['city-id'] = cityId;
+            } else if (districtId) {
+                apiParams['district-id'] = districtId;
+            } else if (query) {
+                apiParams.name = query;
+            }
 
             if (selectedAmenities.length > 0) apiParams['amenity-ids'] = selectedAmenities.join(',');
             if (priceRange[0] !== DEFAULT_MIN_PRICE) apiParams['min-price'] = priceRange[0];
@@ -565,8 +728,7 @@ export default function SearchPage() {
                 }).catch(console.error)
                 .finally(() => setLoadingMore(false));
         }
-    }, [page]);
-
+    }, [page, searchParams, selectedAmenities, priceRange]);
     useEffect(() => {
         setLoadingAmenities(true);
         amenityService.getAllAmenityCategories()
@@ -759,3 +921,5 @@ export default function SearchPage() {
         </div>
     );
 }
+
+
