@@ -23,6 +23,10 @@ public class SpecialDayService {
   SpecialDayMapper mapper;
 
   public SpecialDayResponse create(SpecialDayCreationRequest request) {
+    if (repository.existsByDate(request.getDate())) {
+      throw new AppException(ErrorType.SPECIAL_DAY_EXISTS);
+    }
+
     SpecialDay specialDay = mapper.toEntity(request);
     repository.save(specialDay);
     return mapper.toSpecialDayResponse(specialDay);
