@@ -69,6 +69,8 @@ public class SecurityConfig {
       .requestMatchers(HttpMethod.GET, AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS + CommonEndpoints.ID).permitAll()
       // 4. amenity endpoints
       .requestMatchers(HttpMethod.GET, AmenityEndpoints.AMENITY + ALL_ENDPOINTS).permitAll()
+      // 5. special day endpoints
+      .requestMatchers(HttpMethod.GET, SpecialDayEndpoints.SPECIAL_DAYS + ALL_ENDPOINTS).permitAll()
 
       // B. protected endpoints
       // I. user role
@@ -99,6 +101,8 @@ public class SecurityConfig {
       .requestMatchers(AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
       // 4. amenity endpoints
       .requestMatchers(AmenityEndpoints.AMENITY + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
+      // 5. special day endpoints
+      .requestMatchers(SpecialDayEndpoints.SPECIAL_DAYS + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
 
       // C. any other endpoints
       .anyRequest().authenticated());

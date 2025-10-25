@@ -185,6 +185,11 @@ public enum ErrorType {
   TIMES_USED_POSITIVE(400, "Times used must be positive"),
   MIN_BOOKING_PRICE_POSITIVE(400, "Minimum booking price must be positive"),
   MIN_BOOKING_COUNT_POSITIVE(400, "Minimum booking count must be positive"),
+
+  // special day errors
+  SPECIAL_DAY_NOT_FOUND(404, "Special day not found"),
+  SPECIAL_DAY_EXISTS(409, "Special day already exists"),
+  SPECIAL_DATE_NOT_BLANK(400, "Special day date is required")
   ;
 
   int statusCode;
