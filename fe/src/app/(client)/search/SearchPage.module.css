@@ -1,76 +1,178 @@
+/* src/app/(client)/search/SearchPage.module.css */
+
 .pageContainer {
     background-color: #f7f9fa;
     min-height: 100vh;
 }
 
-/* --- THANH TÌM KIẾM --- */
-.searchBarWrapper {
-    background: #fff;
-    padding: 12px 16px;
+/* ============================================= */
+/* --- THANH TÌM KIẾM (BẮT ĐẦU VỚI MOBILE) --- */
+/* ============================================= */
+
+.searchHeader {
+    background-color: white;
+    padding: 16px;
     border-bottom: 1px solid #e0e0e0;
-    position: sticky;
-    top: 0;
-    z-index: 100;
 }
 
 .searchBar {
-    display: flex;
-    flex-direction: column;
-    /* Mặc định xếp dọc trên mobile */
-    gap: 8px;
-    max-width: 1200px;
-    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    width: 100%;
 }
 
-.searchBarSection {
+.searchSection {
     display: flex;
     align-items: center;
-    background: #f7f9fa;
-    border: 1px solid #e0e0e0;
+    padding: 12px;
+    height: 60px;
+    cursor: pointer;
+    background-color: #f8f9fa;
     border-radius: 8px;
-    padding: 10px 12px;
-    width: 100%;
+    border: 1px solid #e9ecef;
+    position: relative;
 }
 
-.searchBarIcon {
-    color: #888;
-    margin-right: 8px;
-    flex-shrink: 0;
-    /* Ngăn icon bị co lại */
+.searchIcon {
+    font-size: 20px;
+    color: #0d6efd;
+    margin-right: 10px;
 }
 
-.searchBarInput {
-    border: none;
-    background: transparent;
+.searchInput {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     width: 100%;
-    outline: none;
-    font-size: 1rem;
-    color: #333;
+    min-width: 0;
+}
+
+.searchInput label {
+    font-size: 12px;
+    color: #6c757d;
+    margin-bottom: 2px;
+}
+
+.searchInput span {
+    font-size: 14px;
+    color: #212529;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.divider {
+    display: none;
 }
 
 .searchButton {
-    background-color: #ffc107;
-    border: none;
-    color: #333;
-    font-weight: bold;
-    border-radius: 8px;
-    padding: 12px 24px;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Căn giữa nút trên mobile */
-    gap: 8px;
+    background-color: #0d6efd;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0;
+    height: 52px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
     width: 100%;
 }
 
+.searchButton i {
+    margin-right: 8px;
+}
 
-/* --- BỐ CỤC CHÍNH --- */
+.datePickerWrapper, .guestPickerWrapper {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90vw;
+    max-width: 350px;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    z-index: 1010;
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+}
+
+.datePickerWrapper :global(.react-datepicker) {
+    border: none;
+    font-family: inherit;
+}
+
+.nightsSelector {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nightsSelector label {
+    font-weight: 500;
+    font-size: 16px;
+}
+
+.counter {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.counter button {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid #0d6efd;
+    background-color: white;
+    color: #0d6efd;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.counter button:disabled {
+    border-color: #ced4da;
+    color: #ced4da;
+    cursor: not-allowed;
+}
+
+.counter span {
+    font-size: 16px;
+    font-weight: bold;
+    min-width: 20px;
+    text-align: center;
+}
+
+.applyButton {
+    width: 100%;
+    margin-top: 16px;
+    padding: 12px;
+    background-color: #0d6efd;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+
+/* ============================================= */
+/* --- BỐ CỤC NỘI DUNG CHÍNH --- */
+/* ============================================= */
+
 .mainContainer {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding: 16px;
+    gap: 24px;
+    padding: 0 16px 24px 16px;
     max-width: 1200px;
     margin: 0 auto;
 }
@@ -86,7 +188,14 @@
     width: 100%;
 }
 
-/* --- CÁC BỘ LỌC (Filter) --- */
+.listHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+/* === CÁC BỘ LỌC (FILTER) === */
 .filterSectionHeader {
     display: flex;
     justify-content: space-between;
@@ -168,28 +277,24 @@
     cursor: pointer;
 }
 
-.listHeader {
-    display: flex;
-    flex-direction: column;
-    /* Xếp dọc trên mobile */
-    align-items: flex-start;
-    gap: 8px;
-    margin-bottom: 16px;
-}
-
+/* === DANH SÁCH KHÁCH SẠN === */
 .hotelCard {
-    display: flex;
-    flex-direction: column;
-    /* Xếp dọc trên mobile */
-    gap: 16px;
     background: #fff;
     border-radius: 12px;
     padding: 16px;
     margin-bottom: 16px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    cursor: pointer;
+    transition: box-shadow 0.2s;
 }
 
-/* Cột ảnh */
+.hotelCard:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
 .imageColumn {
     width: 100%;
     display: flex;
@@ -219,13 +324,11 @@
 }
 
 .infoColumn {
-    width: 100%;
     display: flex;
     flex-direction: column;
 }
 
 .priceColumn {
-    width: 100%;
     display: flex;
     flex-direction: column;
     border-top: 1px solid #eee;
@@ -240,14 +343,15 @@
 }
 
 .selectRoomButton {
-    background-color: #ffc107;
+    background-color: #0d6efd;
+    color: white;
     border: none;
-    color: #000;
     font-weight: bold;
     padding: 12px;
     border-radius: 8px;
     cursor: pointer;
     width: 100%;
+    margin-top: 8px;
 }
 
 .ratingBadge {
@@ -259,35 +363,77 @@
     font-size: 14px;
 }
 
-.bg-primary-soft {
-    background-color: rgba(13, 110, 253, 0.1);
-}
 
-.text-primary {
-    color: #0d6efd !important;
-}
+/* ============================================= */
+/* --- RESPONSIVE CHO TABLET & DESKTOP (>= 992px) --- */
+/* ============================================= */
+@media (min-width: 992px) {
+    .searchHeader {
+        padding: 24px 0;
+        margin-bottom: 24px;
+    }
 
-.bg-info-soft {
-    background-color: rgba(13, 202, 240, 0.1);
-}
-
-.text-info {
-    color: #0dcaf0 !important;
-}
-
-
-@media (min-width: 768px) {
     .searchBar {
+        display: flex;
         flex-direction: row;
+        align-items: center;
+        background-color: white;
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        height: 64px;
+        padding: 0;
+        gap: 0;
+    }
+
+    .searchSection {
+        flex: 1;
+        padding: 0 16px;
+        height: 100%;
+        background-color: transparent;
+        border: none;
+        border-radius: 0;
+    }
+
+    .searchSection:hover {
+        background-color: #f8f9fa;
+    }
+
+    .searchInput label {
+        font-size: 12px;
+    }
+
+    .searchInput span {
+        font-size: 16px;
+    }
+
+    .divider {
+        display: block;
+        width: 1px;
+        height: 40px;
+        background-color: #e0e0e0;
     }
 
     .searchButton {
+        width: auto;
+        height: 48px;
+        margin: 8px;
+        padding: 0 24px;
+    }
+
+    .datePickerWrapper,
+    .guestPickerWrapper {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        transform: none;
         width: auto;
     }
 
     .mainContainer {
         flex-direction: row;
         align-items: flex-start;
+        padding: 0;
     }
 
     .sidebar {
@@ -296,11 +442,6 @@
 
     .mainContent {
         flex: 1;
-    }
-
-    .listHeader {
-        flex-direction: row;
-        align-items: center;
     }
 
     .hotelCard {
@@ -311,226 +452,10 @@
         flex: 0 0 250px;
     }
 
-    .infoColumn {
-        flex: 1;
-    }
-
     .priceColumn {
-        flex: 0 0 220px;
         border-top: none;
         padding-top: 0;
         margin-top: 0;
+        flex: 0 0 220px;
     }
-}
-
-
-.pageContainer {
-    background-color: #f7f9fa;
-    min-height: 100vh;
-}
-
-.searchHeader {
-    background-color: white;
-    padding: 24px 0;
-    border-bottom: 1px solid #e0e0e0;
-    margin-bottom: 24px;
-}
-
-/* ---  TÌM KIẾM --- */
-
-
-.searchBar {
-    display: flex;
-    align-items: center;
-    background-color: white;
-    border-radius: 8px;
-    border: 1px solid #e0e0e0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    height: 64px;
-    width: 100%;
-    max-width: 1200px;
-    margin: 24px auto;
-
-    position: relative;
-}
-
-.searchSection {
-    display: flex;
-    align-items: center;
-    flex: 1;
-    padding: 0 16px;
-    height: 100%;
-    cursor: pointer;
-    min-width: 0;
-}
-
-
-.searchSection:hover {
-    background-color: #f8f9fa;
-}
-
-.searchIcon {
-    font-size: 20px;
-    color: #0d6efd;
-    margin-right: 12px;
-}
-
-.searchInput {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-}
-
-.searchInput label {
-    font-size: 12px;
-    color: #6c757d;
-    margin-bottom: 2px;
-}
-
-.searchInput span {
-    font-size: 16px;
-    color: #212529;
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.divider {
-    width: 1px;
-    height: 40px;
-    background-color: #e0e0e0;
-}
-
-.searchButton {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #0d6efd;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 0 24px;
-    height: 48px;
-    margin: 8px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.searchButton:hover {
-    background-color: #0b5ed7;
-}
-
-.searchButton i {
-    margin-right: 8px;
-}
-
-.mainContainer {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-}
-
-.sidebar {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.mainContent {
-    width: 100%;
-}
-
-
-.listHeader {
-    margin-bottom: 16px;
-}
-
-.hotelCard {
-    background: #fff;
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    display: flex;
-    gap: 16px;
-}
-
-
-
-@media (min-width: 992px) {
-    .mainContainer {
-        flex-direction: row;
-        align-items: flex-start;
-    }
-
-    .sidebar {
-        flex: 0 0 280px;
-    }
-
-    .mainContent {
-        flex: 1;
-    }
-}
-
-.locationSection {
-    position: relative;
-}
-
-
-/* Thêm vào cuối file SearchPage.module.css */
-
-.dateSection, .guestSection {
-    position: relative;
-}
-
-.datePickerWrapper {
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 0;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 1010;
-    padding: 16px;
-    border: 1px solid #e0e0e0;
-}
-
-/* Custom style cho react-datepicker */
-.datePickerWrapper :global(.react-datepicker) {
-    border: none;
-    font-family: inherit;
-}
-
-.datePickerWrapper :global(.react-datepicker__header) {
-    background-color: #f8f9fa;
-    border-bottom: none;
-}
-
-.datePickerWrapper :global(.react-datepicker__day--selected) {
-    background-color: #0d6efd;
-}
-
-.nightsSelector {
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1px solid #f0f0f0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.nightsSelector label {
-    font-weight: 500;
-}
-
-.nightsSelector select {
-    padding: 4px 8px;
-    border-radius: 6px;
-    border: 1px solid #ced4da;
 }
