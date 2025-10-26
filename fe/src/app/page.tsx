@@ -61,7 +61,6 @@ export default function HomePage() {
     setRooms(newRooms);
   };
 
-  // ...existing code...
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams();
@@ -95,8 +94,6 @@ export default function HomePage() {
 
     router.push(`/search?${params.toString()}`);
   };
-  // ...existing code...
-  // Đóng tất cả pop-up khi click ra ngoài thanh tìm kiếm
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (searchBarRef.current && !searchBarRef.current.contains(event.target as Node)) {
