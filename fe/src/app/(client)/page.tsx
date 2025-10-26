@@ -6,6 +6,9 @@ import DatePicker, { registerLocale } from 'react-datepicker';
 import { vi } from 'date-fns/locale/vi';
 import 'react-datepicker/dist/react-datepicker.css';
 
+// BƯỚC 1: IMPORT CÁC ICON CẦN THIẾT
+import { CiLocationOn, CiCalendarDate, CiUser, CiSearch } from 'react-icons/ci';
+
 import { LocationSuggestion } from '@/service/locationService';
 import DealsSection from '@/components/Deal/DealsSection';
 import HotelSelection from '@/components/HotelSection/HotelSelection';
@@ -17,21 +20,21 @@ import GuestPicker from '@/components/DateSupport/GuestPicker';
 
 registerLocale('vi', vi);
 
-// Định dạng ngày tháng để hiển thị trên thanh tìm kiếm
+// Định dạng ngày tháng để hiển thị trên thanh tìm kiếm (có thể tùy chỉnh lại cho phù hợp UI mới)
 const formatDateForDisplay = (checkin: Date, nights: number): string => {
   try {
     const checkoutDate = new Date(checkin);
     checkoutDate.setDate(checkin.getDate() + nights);
-    const format = (date: Date) => `${date.getDate()} thg ${date.getMonth() + 1}`;
-    return `${format(checkin)} - ${format(checkoutDate)}, ${nights} đêm`;
+    // Định dạng mới: 26 thg 10 2025 - 27 thg 10 2025
+    const format = (date: Date) => `${date.getDate()} thg ${date.getMonth() + 1} ${date.getFullYear()}`;
+    return `${format(checkin)} - ${format(checkoutDate)}`;
   } catch { return 'Chọn ngày'; }
 };
-
 
 export default function HomePage() {
   const router = useRouter();
 
-  // === STATE CHO THANH TÌM KIẾM ===
+  // === CÁC STATE VÀ LOGIC GIỮ NGUYÊN ===
   const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | null>(null);
   const [currentQuery, setCurrentQuery] = useState('');
   const [currentCheckin, setCurrentCheckin] = useState(new Date());
@@ -40,25 +43,17 @@ export default function HomePage() {
   const [children, setChildren] = useState(0);
   const [rooms, setRooms] = useState(1);
 
-  // === STATE CHO UI CỦA CÁC POP-UP ===
   const [activePopup, setActivePopup] = useState<'location' | 'date' | 'guest' | null>(null);
   const searchBarRef = useRef<HTMLDivElement>(null);
 
-  // === CÁC HÀM XỬ LÝ LOGIC ===
   const handleLocationSelect = (location: LocationSuggestion) => {
     setSelectedLocation(location);
     setCurrentQuery(location.name);
-    setActivePopup(null); // Đóng pop-up sau khi chọn
+    setActivePopup(null);
   };
 
   const handleDateChange = (date: Date | null) => {
     if (date) setCurrentCheckin(date);
-  };
-
-  const handleGuestChange = (newAdults: number, newChildren: number, newRooms: number) => {
-    setAdults(newAdults);
-    setChildren(newChildren);
-    setRooms(newRooms);
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -66,6 +61,7 @@ export default function HomePage() {
     const params = new URLSearchParams();
 
     if (selectedLocation) {
+      // ... (logic tìm kiếm giữ nguyên)
       switch (selectedLocation.type) {
         case 'PROVINCE':
         case 'CITY_PROVINCE':
@@ -91,9 +87,9 @@ export default function HomePage() {
     params.set('adults', adults.toString());
     params.set('children', children.toString());
     params.set('rooms', rooms.toString());
-
     router.push(`/search?${params.toString()}`);
   };
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (searchBarRef.current && !searchBarRef.current.contains(event.target as Node)) {
@@ -105,6 +101,8 @@ export default function HomePage() {
   }, []);
 
   const displayGuests = `${adults} người lớn, ${children} Trẻ em, ${rooms} phòng`;
+  // === KẾT THÚC PHẦN LOGIC GIỮ NGUYÊN ===
+
 
   return (
     <>
@@ -122,17 +120,32 @@ export default function HomePage() {
             <p className="text-lg mt-2 text-gray-200 drop-shadow-md">Đặt phòng khách sạn giá tốt nhất cùng Holidate</p>
           </div>
 
-          <div ref={searchBarRef} className="w-full max-w-5xl rounded-lg bg-white p-4 text-black shadow-2xl md:p-2">
-            <form onSubmit={handleSearch} className="flex flex-col md:flex-row items-center gap-2 bg-gray-100 p-2 rounded-lg">
+          {/* ==================================================================== */}
+          {/* BẮT ĐẦU PHẦN CODE GIAO DIỆN THANH TÌM KIẾM MỚI                 */}
+          {/* ==================================================================== */}
+          <div ref={searchBarRef} className="w-full max-w-5xl text-black">
+            {/* Các label phía trên thanh tìm kiếm */}
+            <div className="hidden md:flex mb-2 px-4">
+              <label className="w-5/12 text-sm font-semibold text-white">Thành phố, địa điểm hoặc tên khách sạn:</label>
+              <label className="w-4/12 text-sm font-semibold text-white">Ngày nhận phòng và trả phòng</label>
+              <label className="w-3/12 text-sm font-semibold text-white">Khách và Phòng</label>
+            </div>
+
+            <form onSubmit={handleSearch} className="flex flex-col md:flex-row items-center bg-white rounded-lg md:rounded-full shadow-2xl p-2 gap-2 md:gap-0">
 
               {/* --- Ô TÌM KIẾM ĐỊA ĐIỂM --- */}
-              <div className="relative flex-1 w-full">
-                <div className="p-3 bg-white rounded-md cursor-pointer h-full" onClick={() => setActivePopup(activePopup === 'location' ? null : 'location')}>
-                  <label className="text-xs text-gray-500">Thành phố, địa điểm</label>
-                  <div className="font-semibold">{currentQuery || 'Bạn muốn đi đâu?'}</div>
+              <div className="relative w-full md:w-5/12">
+                <div
+                  className="flex items-center gap-x-3 w-full h-14 px-4 cursor-pointer"
+                  onClick={() => setActivePopup(activePopup === 'location' ? null : 'location')}
+                >
+                  <CiLocationOn className="text-2xl text-blue-500 flex-shrink-0" />
+                  <span className="font-medium text-gray-700 truncate">
+                    {currentQuery || 'Thành phố, khách sạn, điểm đến'}
+                  </span>
                 </div>
                 {activePopup === 'location' && (
-                  <div className="absolute top-full mt-2 w-[400px] z-20">
+                  <div className="absolute left-0 top-full mt-2 w-full rounded-lg border bg-white p-2 shadow-lg z-20 md:w-[500px]">
                     <LocationSearchInput
                       initialValue={currentQuery}
                       onQueryChange={setCurrentQuery}
@@ -142,20 +155,25 @@ export default function HomePage() {
                 )}
               </div>
 
+              <div className="w-full h-px bg-gray-200 md:h-8 md:w-px" />
+
               {/* --- Ô CHỌN NGÀY --- */}
-              <div className="relative flex-1 w-full">
-                <div className="p-3 bg-white rounded-md cursor-pointer h-full" onClick={() => setActivePopup(activePopup === 'date' ? null : 'date')}>
-                  <label className="text-xs text-gray-500">Ngày nhận phòng & Số đêm</label>
-                  <div className="font-semibold">{formatDateForDisplay(currentCheckin, currentNights)}</div>
+              <div className="relative w-full md:w-4/12">
+                <div
+                  className="flex items-center gap-x-3 w-full h-14 px-4 cursor-pointer"
+                  onClick={() => setActivePopup(activePopup === 'date' ? null : 'date')}
+                >
+                  <CiCalendarDate className="text-2xl text-blue-500 flex-shrink-0" />
+                  <span className="font-medium text-gray-700 truncate">
+                    {formatDateForDisplay(currentCheckin, currentNights)}
+                  </span>
                 </div>
                 {activePopup === 'date' && (
-                  <div className="absolute top-full mt-2 z-20 p-4 bg-white rounded-lg shadow-lg border">
+                  <div className="absolute left-0 top-full mt-2 z-20 rounded-lg border bg-white p-4 shadow-lg md:left-auto">
                     <DatePicker
                       selected={currentCheckin}
                       onChange={handleDateChange}
-                      inline
-                      locale="vi"
-                      minDate={new Date()}
+                      inline locale="vi" minDate={new Date()}
                     />
                     <div className="flex justify-between items-center mt-4 pt-4 border-t">
                       <label className="font-medium">Số đêm</label>
@@ -169,34 +187,40 @@ export default function HomePage() {
                 )}
               </div>
 
+              <div className="w-full h-px bg-gray-200 md:h-8 md:w-px" />
+
               {/* --- Ô CHỌN KHÁCH --- */}
-              <div className="relative flex-1 w-full">
-                <div className="p-3 bg-white rounded-md cursor-pointer h-full" onClick={() => setActivePopup(activePopup === 'guest' ? null : 'guest')}>
-                  <label className="text-xs text-gray-500">Khách & phòng</label>
-                  <div className="font-semibold">{displayGuests}</div>
+              <div className="relative w-full md:w-3/12">
+                <div
+                  className="flex items-center gap-x-3 w-full h-14 px-4 cursor-pointer"
+                  onClick={() => setActivePopup(activePopup === 'guest' ? null : 'guest')}
+                >
+                  <CiUser className="text-2xl text-blue-500 flex-shrink-0" />
+                  <span className="font-medium text-gray-700 truncate">{displayGuests}</span>
                 </div>
                 {activePopup === 'guest' && (
-                  <div className="absolute top-full right-0 mt-2 z-20">
+                  <div className="absolute top-full right-0 mt-2 z-20 w-full max-w-sm md:w-auto">
                     <GuestPicker
-                      adults={adults}
-                      children={children}
-                      rooms={rooms}
-                      setAdults={setAdults}
-                      setChildren={setChildren}
-                      setRooms={setRooms}
+                      adults={adults} children={children} rooms={rooms}
+                      setAdults={setAdults} setChildren={setChildren} setRooms={setRooms}
                       onClose={() => setActivePopup(null)}
                     />
                   </div>
                 )}
               </div>
 
-              <div className="w-full md:w-auto">
-                <button type="submit" className="flex w-full items-center justify-center rounded-lg bg-orange-500 p-4 font-bold text-white shadow-md h-full">
-                  <span>Tìm kiếm</span>
+              {/* --- NÚT TÌM KIẾM --- */}
+              <div className="w-full md:w-auto p-1">
+                <button type="submit" className="flex w-full md:w-12 h-12 items-center justify-center rounded-lg md:rounded-full bg-orange-500 font-bold text-white shadow-md text-2xl hover:bg-orange-600 transition-colors">
+                  <CiSearch />
+                  <span className='md:hidden ml-2'>Tìm kiếm</span>
                 </button>
               </div>
             </form>
           </div>
+          {/* ==================================================================== */}
+          {/* KẾT THÚC PHẦN CODE GIAO DIỆN THANH TÌM KIẾM MỚI                 */}
+          {/* ==================================================================== */}
         </div>
       </div>
 

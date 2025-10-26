@@ -1,61 +1,62 @@
 /* src/components/LocationSearchInput.module.css */
 
-.searchInputWrapper {
+/* === STYLE CHO CHẾ ĐỘ 'STANDALONE' (CÁC TRANG KHÁC) === */
+.standaloneWrapper {
+    position: relative;
     width: 100%;
-    height: 100%;
-    /* Xóa position: relative ở đây, không cần nữa */
 }
 
 .locationInput {
     width: 100%;
     height: 100%;
-    border: none;
-    background: transparent;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    padding: 0.5rem 1rem;
+    background: white;
     outline: none;
     font-size: 16px;
     color: #212529;
     font-weight: 500;
-    padding: 0;
 }
 
-/* <<<<<<<<<<<< THAY ĐỔI LỚN NHẤT NẰM Ở ĐÂY >>>>>>>>>>>>>> */
-.suggestionsList {
+.suggestionsListStandalone {
     position: absolute;
     top: calc(100% + 8px);
-    /* Cách thanh search bar 8px */
     left: 0;
-    /* Bắt đầu từ cạnh trái của thanh search bar */
-
-    width: 500px;
-    /* << Đặt chiều rộng cố định, bạn có thể tăng/giảm số này */
-    /* Hoặc dùng min-width để nó có thể rộng hơn nếu cần */
-    /* min-width: 450px; */
-
+    width: 100%;
+    min-width: 400px;
     background: white;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
     list-style: none;
-    padding: 8px 0;
+    padding: 8px;
     margin: 0;
     max-height: 450px;
     overflow-y: auto;
     z-index: 1001;
 }
 
-/* ... các class cho suggestionItem, suggestionContent, ... giữ nguyên như lần trước ... */
+/* === STYLE CHO CHẾ ĐỘ 'EMBEDDED' (TRANG HOME) === */
+.suggestionsListEmbedded {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 400px;
+    overflow-y: auto;
+    border-top: 1px solid #e5e7eb;
+    margin-top: 8px;
+    padding-top: 8px;
+}
+
+/* === CÁC STYLE CHUNG CHO CẢ 2 CHẾ ĐỘ === */
 .suggestionItem {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 12px 16px;
     cursor: pointer;
-    border-bottom: 1px solid #f0f0f0;
-    overflow: hidden;
-}
-
-.suggestionItem:last-child {
-    border-bottom: none;
+    border-radius: 8px;
 }
 
 .suggestionItem:hover {
@@ -80,7 +81,7 @@
 }
 
 .suggestionDescription {
-    font-size: 11px !important;
+    font-size: 12px;
     color: #6c757d;
     margin-top: 2px;
     white-space: nowrap;
@@ -99,7 +100,6 @@
 .suggestionTypeLabel {
     border: 1px solid #0d6efd;
     color: #0d6efd;
-    background-color: transparent;
     border-radius: 12px;
     padding: 3px 12px;
     font-size: 12px;
@@ -113,6 +113,7 @@
 }
 
 .suggestionInfo {
-    padding: 16px 24px;
+    padding: 16px;
     color: #6c757d;
+    text-align: center;
 }

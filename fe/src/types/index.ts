@@ -8,6 +8,8 @@ export interface Hotel {
     address: string;
     status: HotelStatus;
     ownerId?: string; // Tùy chọn
+    imageUrl?: string; // Thêm trường này để hiển thị ảnh
+
 }
 
 // Bạn có thể thêm các type khác ở đây

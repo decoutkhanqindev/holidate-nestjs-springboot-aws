@@ -14,5 +14,5 @@ export default async function EditHotelPage({ params }: EditHotelPageProps) {
         notFound();
     }
 
-    return <EditHotelForm hotel={hotel} />;
+    // return <EditHotelForm hotel={hotel} />;
 }
