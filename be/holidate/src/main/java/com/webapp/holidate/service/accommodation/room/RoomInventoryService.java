@@ -6,7 +6,6 @@ import com.webapp.holidate.constants.api.param.RoomInventoryParams;
 import com.webapp.holidate.dto.request.acommodation.room.inventory.RoomInventoryCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.room.inventory.RoomInventoryPriceUpdateRequest;
 import com.webapp.holidate.dto.response.acommodation.room.RoomWithInventoriesResponse;
-import com.webapp.holidate.dto.response.acommodation.room.inventory.RoomInventoryPriceDetailsResponse;
 import com.webapp.holidate.dto.response.acommodation.room.inventory.RoomInventoryResponse;
 import com.webapp.holidate.dto.response.base.PagedResponse;
 import com.webapp.holidate.entity.accommodation.room.Room;
@@ -277,25 +276,31 @@ public class RoomInventoryService {
     roomInventoryRepository.saveAll(inventories);
   }
 
-  public List<RoomInventoryPriceDetailsResponse> getPriceDetails(
-      String roomId, LocalDate startDate, LocalDate endDate) {
-    return roomInventoryRepository.findAllByRoomIdAndDateBetween(roomId, startDate, endDate).stream()
-        .map(inventory -> {
-          LocalDate date = inventory.getId().getDate();
-          double originalPrice = inventory.getPrice();
-          double vatFee = originalPrice * vatRate;
-          double serviceFee = originalPrice * serviceFeeRate;
-          double finalPrice = originalPrice + vatFee + serviceFee;
+  public List<RoomInventory> validateRoomAvailability(String roomId, LocalDate checkInDate,
+      LocalDate checkOutDate, int numberOfRooms) {
+    // Get room inventories for the booking period
+    List<RoomInventory> inventories = roomInventoryRepository.findAllByRoomIdAndDateBetween(
+        roomId, checkInDate, checkOutDate.minusDays(1));
 
-          return RoomInventoryPriceDetailsResponse.builder()
-              .date(date)
-              .originalPrice(originalPrice)
-              .priceAfterDiscount(originalPrice)
-              .vatFee(vatFee)
-              .serviceFee(serviceFee)
-              .finalPrice(finalPrice)
-              .build();
-        })
-        .toList();
+    // Validate that all required dates have inventory
+    long daysRequested = checkInDate.until(checkOutDate).getDays();
+    if (inventories.size() != daysRequested) {
+      throw new AppException(ErrorType.ROOM_NOT_AVAILABLE);
+    }
+
+    // Check if enough rooms are available for each day
+    for (RoomInventory inventory : inventories) {
+      if (inventory.getAvailableRooms() < numberOfRooms) {
+        throw new AppException(ErrorType.INSUFFICIENT_ROOM_QUANTITY);
+      }
+    }
+
+    return inventories;
+  }
+
+  public double calculateOriginalPrice(List<RoomInventory> inventories, int numberOfRooms) {
+    return inventories.stream()
+        .mapToDouble(inventory -> inventory.getPrice() * numberOfRooms)
+        .sum();
   }
 }

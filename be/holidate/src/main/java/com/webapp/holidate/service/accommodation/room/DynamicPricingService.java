@@ -12,7 +12,7 @@ import com.webapp.holidate.repository.accommodation.room.RoomRepository;
 import com.webapp.holidate.repository.discount.SpecialDayDiscountRepository;
 import com.webapp.holidate.repository.special_day.SpecialDayRepository;
 import com.webapp.holidate.type.ErrorType;
-import com.webapp.holidate.utils.DateTimeUtils;
+import com.webapp.holidate.utils.DateTimeUtil;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 
 @Slf4j
 @Service
@@ -51,18 +50,19 @@ public class DynamicPricingService {
   @Transactional
   public void applyDynamicPricing() {
     LocalDate startDate = LocalDate.now();
-    int days = DateTimeUtils.millisToDays(dynamicPricingLookAheadMillis);
+    int days = DateTimeUtil.millisToDays(dynamicPricingLookAheadMillis);
     LocalDate endDate = startDate.plusDays(days);
 
     List<Room> rooms = roomRepository.findAll();
     Map<LocalDate, SpecialDay> specialDayMap = specialDayRepository.findAllByDateBetween(startDate, endDate)
-      .stream()
-      .collect(Collectors.toMap(SpecialDay::getDate, specialDay -> specialDay));
+        .stream()
+        .collect(Collectors.toMap(SpecialDay::getDate, specialDay -> specialDay));
 
     List<RoomInventory> inventoriesToUpdate = new ArrayList<>();
 
     for (Room room : rooms) {
-      List<RoomInventory> inventories = inventoryRepository.findAllByRoomIdAndDateBetween(room.getId(), startDate, endDate);
+      List<RoomInventory> inventories = inventoryRepository.findAllByRoomIdAndDateBetween(room.getId(), startDate,
+          endDate);
 
       for (RoomInventory inventory : inventories) {
         LocalDate currentDate = inventory.getId().getDate();
@@ -76,8 +76,9 @@ public class DynamicPricingService {
 
         if (isSpecialDay) {
           SpecialDay specialDay = specialDayMap.get(currentDate);
-          SpecialDayDiscount specialDayDiscount = specialDayDiscountRepository.findBySpecialDayIdWithDiscount(specialDay.getId())
-            .orElseThrow(() -> new AppException(ErrorType.SPECIAL_DAY_DISCOUNT_NOT_FOUND));
+          SpecialDayDiscount specialDayDiscount = specialDayDiscountRepository
+              .findBySpecialDayIdWithDiscount(specialDay.getId())
+              .orElseThrow(() -> new AppException(ErrorType.SPECIAL_DAY_DISCOUNT_NOT_FOUND));
           Discount discount = specialDayDiscount.getDiscount();
           log.info("Applying special day discount of {}% for date {}", discount.getPercentage(), currentDate);
           newPrice = basePrice * (1 - discount.getPercentage() / 100);
@@ -92,7 +93,7 @@ public class DynamicPricingService {
         boolean priceChanged = Double.compare(inventory.getPrice(), newPrice) != 0;
         if (priceChanged) {
           log.info("Updating price for room {} on date {}: old price = {}, new price = {}",
-            room.getId(), currentDate, inventory.getPrice(), newPrice);
+              room.getId(), currentDate, inventory.getPrice(), newPrice);
           inventory.setPrice(newPrice);
           log.info("Updated inventory: {}", inventory);
           inventoriesToUpdate.add(inventory);

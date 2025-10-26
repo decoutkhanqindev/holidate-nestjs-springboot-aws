@@ -1,7 +1,7 @@
 package com.webapp.holidate.component.security.oauth2;
 
 import com.webapp.holidate.constants.AppProperties;
-import com.webapp.holidate.utils.ResponseUtils;
+import com.webapp.holidate.utils.ResponseUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AccessLevel;
@@ -28,8 +28,9 @@ public class CustomOAuth2AuthenticationFailureHandler extends SimpleUrlAuthentic
   String tokenCookieName;
 
   @Override
-  public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException {
-    ResponseUtils.handleAuthCookiesResponse(response, tokenCookieName, null, 0);
+  public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
+      AuthenticationException exception) throws IOException {
+    ResponseUtil.handleAuthCookiesResponse(response, tokenCookieName, null, 0);
     getRedirectStrategy().sendRedirect(request, response, frontendLoginFailureUrl);
   }
 }

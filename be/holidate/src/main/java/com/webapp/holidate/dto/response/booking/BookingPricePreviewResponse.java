@@ -1,5 +1,6 @@
 package com.webapp.holidate.dto.response.booking;
 
+import com.webapp.holidate.dto.response.discount.DiscountBriefResponse;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -13,11 +14,11 @@ import lombok.experimental.FieldDefaults;
 @ToString
 @EqualsAndHashCode
 public class BookingPricePreviewResponse {
-  double subtotal;
+  double originalPrice;
   double discountAmount;
-  String appliedDiscountCode;
+  DiscountBriefResponse appliedDiscount;
   double netPriceAfterDiscount;
-  double tax;
-  double serviceFee;
-  double finalTotalPrice;
+  FeeResponse tax;
+  FeeResponse serviceFee;
+  double finalPrice;
 }

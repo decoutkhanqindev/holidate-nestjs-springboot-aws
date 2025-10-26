@@ -9,7 +9,7 @@ import com.webapp.holidate.repository.user.UserAuthInfoRepository;
 import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.service.auth.AuthService;
 import com.webapp.holidate.type.ErrorType;
-import com.webapp.holidate.utils.ResponseUtils;
+import com.webapp.holidate.utils.ResponseUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AccessLevel;
@@ -50,11 +50,12 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
   String tokenCookieName;
 
   @Override
-  public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
+  public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
+      Authentication authentication) throws IOException {
     OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
     String email = oAuth2User.getAttribute("email");
     User user = userRepository.findByEmail(email)
-      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
     UserAuthInfo authInfo = user.getAuthInfo();
     String accessToken;
     String refreshToken;
@@ -70,7 +71,7 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
     authInfoRepository.save(authInfo);
 
     int maxAge = (int) (refreshTokenExpirationMillis / 1000);
-    ResponseUtils.handleAuthCookiesResponse(response, tokenCookieName, accessToken, maxAge);
+    ResponseUtil.handleAuthCookiesResponse(response, tokenCookieName, accessToken, maxAge);
 
     getRedirectStrategy().sendRedirect(request, response, frontendLoginSuccessUrl);
   }

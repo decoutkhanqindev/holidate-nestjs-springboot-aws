@@ -1,5 +1,6 @@
 package com.webapp.holidate.dto.request.booking;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -33,10 +34,6 @@ public class BookingCreationRequest {
   @NotNull(message = "CHECK_IN_OUT_DATE_NOT_BLANK")
   LocalDate checkOutDate;
 
-  @NotNull(message = "NUMBER_OF_NIGHTS_NOT_BLANK")
-  @Positive(message = "NUMBER_OF_NIGHTS_MUST_BE_POSITIVE")
-  Integer numberOfNights;
-
   @NotNull(message = "NUMBER_OF_ROOMS_NOT_BLANK")
   @Positive(message = "NUMBER_OF_ROOMS_MUST_BE_POSITIVE")
   Integer numberOfRooms;
@@ -46,8 +43,9 @@ public class BookingCreationRequest {
   Integer numberOfAdults;
 
   @NotNull(message = "NUMBER_OF_CHILDREN_NOT_BLANK")
-  @Positive(message = "NUMBER_OF_CHILDREN_MUST_BE_POSITIVE")
-  Integer numberOfChildren;
+  @Min(value = 0, message = "NUMBER_OF_CHILDREN_MUST_BE_POSITIVE_OR_ZERO")
+  @Builder.Default
+  Integer numberOfChildren = 0;
 
   String discountCode;
 

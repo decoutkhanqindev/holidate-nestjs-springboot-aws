@@ -1,9 +1,8 @@
 package com.webapp.holidate.component.security;
 
-
 import com.webapp.holidate.exception.CustomAuthenticationException;
 import com.webapp.holidate.type.ErrorType;
-import com.webapp.holidate.utils.ResponseUtils;
+import com.webapp.holidate.utils.ResponseUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -17,13 +16,14 @@ import java.io.IOException;
 @Component
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
   @Override
-  public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException {
+  public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
+      throws IOException {
     ErrorType error = ErrorType.UNAUTHORIZED;
 
     if (authException instanceof CustomAuthenticationException e) {
       error = e.getError();
     }
 
-    ResponseUtils.handleAuthErrorResponse(response, error);
+    ResponseUtil.handleAuthErrorResponse(response, error);
   }
 }

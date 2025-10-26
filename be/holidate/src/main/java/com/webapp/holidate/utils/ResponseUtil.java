@@ -10,16 +10,16 @@ import org.springframework.http.ResponseEntity;
 
 import java.io.IOException;
 
-public class ResponseUtils {
+public class ResponseUtil {
   public static ResponseEntity<ApiResponse<String>> handleExceptionResponse(ErrorType error) {
     int statusCode = error.getStatusCode();
     String message = error.getMessage();
 
     ApiResponse<String> response = ApiResponse.<String>builder()
-      .statusCode(statusCode)
-      .message(message)
-      .data(null)
-      .build();
+        .statusCode(statusCode)
+        .message(message)
+        .data(null)
+        .build();
     return ResponseEntity.status(error.getStatusCode()).body(response);
   }
 
@@ -28,9 +28,9 @@ public class ResponseUtils {
     String message = error.getMessage();
 
     ApiResponse<?> apiResponse = ApiResponse.builder()
-      .statusCode(statusCode)
-      .message(message)
-      .build();
+        .statusCode(statusCode)
+        .message(message)
+        .build();
 
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
     response.setStatus(error.getStatusCode());

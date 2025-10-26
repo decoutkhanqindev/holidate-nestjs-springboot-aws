@@ -14,7 +14,7 @@ import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.type.ErrorType;
 import com.webapp.holidate.type.auth.OtpType;
 import com.webapp.holidate.type.user.AuthProviderType;
-import com.webapp.holidate.utils.DateTimeUtils;
+import com.webapp.holidate.utils.DateTimeUtil;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.AccessLevel;
@@ -66,7 +66,7 @@ public class EmailService {
 
   private SendOtpResponse sendOtp(String email, OtpType otpType, boolean requireActive) {
     UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email)
-      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
 
     String authProvider = authInfo.getAuthProvider();
     boolean localAuth = AuthProviderType.LOCAL.getValue().equals(authProvider);
@@ -91,7 +91,7 @@ public class EmailService {
     String otp = generateVerificationOtp();
     authInfo.setOtp(otp);
 
-    LocalDateTime expirationTime = DateTimeUtils.millisToLocalDateTime(otpExpirationMillis);
+    LocalDateTime expirationTime = DateTimeUtil.millisToLocalDateTime(otpExpirationMillis);
     authInfo.setOtpExpirationTime(expirationTime);
 
     authInfo.setOtpAttempts(0);
@@ -124,8 +124,8 @@ public class EmailService {
     }
 
     return SendOtpResponse.builder()
-      .sent(true)
-      .build();
+        .sent(true)
+        .build();
   }
 
   public VerificationResponse verifyEmailVerificationOtp(VerifyEmailVerificationOtpRequest request) {
@@ -138,7 +138,7 @@ public class EmailService {
 
   private VerificationResponse verifyOtp(String email, String inputOtp, OtpType otpType, String newPassword) {
     UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email)
-      .orElseThrow(() -> new AppException(ErrorType.INVALID_OTP));
+        .orElseThrow(() -> new AppException(ErrorType.INVALID_OTP));
 
     String authProvider = authInfo.getAuthProvider();
     boolean localAuth = AuthProviderType.LOCAL.getValue().equals(authProvider);
@@ -198,8 +198,8 @@ public class EmailService {
     authInfoRepository.save(authInfo);
 
     return VerificationResponse.builder()
-      .verified(true)
-      .build();
+        .verified(true)
+        .build();
   }
 
   private String generateVerificationOtp() {
@@ -222,7 +222,7 @@ public class EmailService {
 
     boolean maxAttemptsReached = attempts >= otpMaxAttempts;
     if (maxAttemptsReached) {
-      LocalDateTime blockUntil = DateTimeUtils.millisToLocalDateTime(otpBlockTimeMillis);
+      LocalDateTime blockUntil = DateTimeUtil.millisToLocalDateTime(otpBlockTimeMillis);
       authInfo.setOtpBlockedUntil(blockUntil);
       authInfo.setOtp(null);
       authInfo.setOtpExpirationTime(null);

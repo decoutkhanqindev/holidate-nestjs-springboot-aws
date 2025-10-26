@@ -345,20 +345,56 @@ public class DiscountService {
     }
   }
 
-  @Transactional
-  public void delete(String id) {
-    Discount discount = discountRepository.findByIdWithDetails(id)
+  public DiscountDetailsResponse delete(String id) {
+    Discount discount = discountRepository.findById(id)
         .orElseThrow(() -> new AppException(ErrorType.DISCOUNT_NOT_FOUND));
-
-    // Delete hotel discount relationships
-    var hotelDiscount = hotelDiscountRepository.findByDiscountId(id);
-    hotelDiscount.ifPresent(hotelDiscountRepository::delete);
-
-    // Delete special day discount relationships
-    var specialDayDiscount = specialDayDiscountRepository.findByDiscountId(id);
-    specialDayDiscount.ifPresent(specialDayDiscountRepository::delete);
-
-    // Delete the discount
     discountRepository.delete(discount);
+    return getById(id);
+  }
+
+  public Discount validateDiscount(String discountCode, double originalPrice) {
+    if (discountCode == null || discountCode.trim().isEmpty()) {
+      return null;
+    }
+
+    Discount discount = discountRepository.findByCode(discountCode)
+        .orElseThrow(() -> new AppException(ErrorType.INVALID_DISCOUNT_CODE));
+
+    // Validate discount conditions
+    LocalDate todayDate = LocalDate.now();
+    if (!discount.isActive() ||
+        todayDate.isBefore(discount.getValidFrom()) ||
+        todayDate.isAfter(discount.getValidTo())) {
+      throw new AppException(ErrorType.INVALID_DISCOUNT_CODE);
+    }
+
+    if (discount.getTimesUsed() >= discount.getUsageLimit()) {
+      throw new AppException(ErrorType.INVALID_DISCOUNT_CODE);
+    }
+
+    if (originalPrice < discount.getMinBookingPrice()) {
+      throw new AppException(ErrorType.INVALID_DISCOUNT_CODE);
+    }
+
+    return discount;
+  }
+
+  public double[] calculateDiscountAmount(Discount discount, double originalPrice) {
+    if (discount == null) {
+      return new double[] { 0.0, originalPrice };
+    }
+
+    double discountAmount = originalPrice * (discount.getPercentage() / 100.0);
+    double finalPrice = originalPrice - discountAmount;
+
+    return new double[] { discountAmount, finalPrice };
+  }
+
+  @Transactional
+  public void updateDiscountUsage(Discount discount) {
+    if (discount != null) {
+      discount.setTimesUsed(discount.getTimesUsed() + 1);
+      discountRepository.save(discount);
+    }
   }
 }

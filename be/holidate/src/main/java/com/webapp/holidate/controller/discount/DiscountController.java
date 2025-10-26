@@ -94,9 +94,10 @@ public class DiscountController {
   }
 
   @DeleteMapping(CommonEndpoints.ID)
-  public ApiResponse<Void> delete(@PathVariable String id) {
-    service.delete(id);
-    return ApiResponse.<Void>builder()
+  public ApiResponse<DiscountDetailsResponse> delete(@PathVariable String id) {
+    DiscountDetailsResponse response = service.delete(id);
+    return ApiResponse.<DiscountDetailsResponse>builder()
+        .data(response)
         .build();
   }
 }

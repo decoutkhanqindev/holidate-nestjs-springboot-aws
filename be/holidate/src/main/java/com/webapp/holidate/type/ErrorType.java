@@ -201,7 +201,17 @@ public enum ErrorType {
   SPECIAL_DAY_EXISTS(409, "Special day already exists"),
   SPECIAL_DAY_DATE_NOT_BLANK(400, "Special day date is required"),
   INVALID_DAYS_VALUE(400, "Days value must be positive"),
-  INVALID_DISTANCE_VALUE(400, "Distance value must be positive");
+  INVALID_DISTANCE_VALUE(400, "Distance value must be positive"),
+
+  // payment errors
+  PAYMENT_ORDER_ID_NOT_BLANK(400, "Payment order ID is required"),
+  PAYMENT_AMOUNT_INVALID(400, "Payment amount must be positive"),
+  PAYMENT_RETURN_URL_NOT_BLANK(400, "Payment return URL is required"),
+  PAYMENT_IP_ADDRESS_NOT_BLANK(400, "Payment IP address is required"),
+  PAYMENT_EXPIRE_TIME_INVALID(400, "Payment expire time must be positive"),
+  PAYMENT_URL_GENERATION_FAILED(500, "Failed to generate payment URL"),
+  PAYMENT_SIGNATURE_INVALID(400, "Invalid payment signature"),
+  PAYMENT_RESPONSE_INVALID(400, "Invalid payment response");
 
   int statusCode;
   String message;

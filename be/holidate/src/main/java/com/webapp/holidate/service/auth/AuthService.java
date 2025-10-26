@@ -29,7 +29,7 @@ import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.type.ErrorType;
 import com.webapp.holidate.type.user.AuthProviderType;
 import com.webapp.holidate.type.user.RoleType;
-import com.webapp.holidate.utils.DateTimeUtils;
+import com.webapp.holidate.utils.DateTimeUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -105,11 +105,11 @@ public class AuthService {
       user.setRole(role);
 
       UserAuthInfo newAuthInfo = UserAuthInfo.builder()
-        .authProvider(AuthProviderType.LOCAL.getValue())
-        .otpAttempts(0)
-        .active(false)
-        .user(user)
-        .build();
+          .authProvider(AuthProviderType.LOCAL.getValue())
+          .otpAttempts(0)
+          .active(false)
+          .user(user)
+          .build();
       user.setAuthInfo(newAuthInfo);
     }
 
@@ -120,7 +120,7 @@ public class AuthService {
   public TokenResponse login(LoginRequest loginRequest) throws JOSEException {
     String email = loginRequest.getEmail();
     UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email)
-      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
     User user = authInfo.getUser();
 
     String authProvider = authInfo.getAuthProvider();
@@ -147,29 +147,29 @@ public class AuthService {
     RoleResponse roleResponse = roleMapper.toRoleResponse(roleEntity);
 
     String accessToken = generateToken(user, accessTokenExpirationMillis);
-    LocalDateTime expiresAt = DateTimeUtils.millisToLocalDateTime(accessTokenExpirationMillis);
+    LocalDateTime expiresAt = DateTimeUtil.millisToLocalDateTime(accessTokenExpirationMillis);
 
     String refreshToken = generateToken(user, refreshTokenExpirationMillis);
     authInfo.setRefreshToken(refreshToken);
     authInfoRepository.save(authInfo);
 
     return TokenResponse.builder()
-      .id(id)
-      .email(email)
-      .fullName(fullName)
-      .role(roleResponse)
-      .accessToken(accessToken)
-      .expiresAt(expiresAt)
-      .refreshToken(refreshToken)
-      .build();
+        .id(id)
+        .email(email)
+        .fullName(fullName)
+        .role(roleResponse)
+        .accessToken(accessToken)
+        .expiresAt(expiresAt)
+        .refreshToken(refreshToken)
+        .build();
   }
 
   public VerificationResponse verifyToken(TokenRequest verifyTokenRequest) throws JOSEException, ParseException {
     String token = verifyTokenRequest.getToken();
     getSignedJWT(token);
     return VerificationResponse.builder()
-      .verified(true)
-      .build();
+        .verified(true)
+        .build();
   }
 
   public TokenResponse refreshToken(TokenRequest tokenRequest) throws JOSEException, ParseException {
@@ -177,7 +177,7 @@ public class AuthService {
     SignedJWT signedJWT = getSignedJWT(token);
     String email = signedJWT.getJWTClaimsSet().getSubject();
     User user = userRepository.findByEmail(email)
-      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
     UserAuthInfo authInfo = user.getAuthInfo();
 
     String storedRefreshToken = authInfo.getRefreshToken();
@@ -195,21 +195,21 @@ public class AuthService {
     RoleResponse roleResponse = roleMapper.toRoleResponse(roleEntity);
 
     String accessToken = generateToken(user, accessTokenExpirationMillis);
-    LocalDateTime expiresAt = DateTimeUtils.millisToLocalDateTime(accessTokenExpirationMillis);
+    LocalDateTime expiresAt = DateTimeUtil.millisToLocalDateTime(accessTokenExpirationMillis);
 
     String refreshToken = generateToken(user, refreshTokenExpirationMillis);
     authInfo.setRefreshToken(refreshToken);
     authInfoRepository.save(authInfo);
 
     return TokenResponse.builder()
-      .id(userId)
-      .email(email)
-      .fullName(fullName)
-      .role(roleResponse)
-      .accessToken(accessToken)
-      .expiresAt(expiresAt)
-      .refreshToken(refreshToken)
-      .build();
+        .id(userId)
+        .email(email)
+        .fullName(fullName)
+        .role(roleResponse)
+        .accessToken(accessToken)
+        .expiresAt(expiresAt)
+        .refreshToken(refreshToken)
+        .build();
   }
 
   public LogoutResponse logout(TokenRequest request) throws JOSEException, ParseException {
@@ -221,7 +221,7 @@ public class AuthService {
 
     String email = signedJWT.getJWTClaimsSet().getSubject();
     User user = userRepository.findByEmail(email)
-      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
     UserAuthInfo authInfo = user.getAuthInfo();
 
     String refreshToken = authInfo.getRefreshToken();
@@ -236,8 +236,8 @@ public class AuthService {
     authInfoRepository.save(authInfo);
 
     return LogoutResponse.builder()
-      .loggedOut(true)
-      .build();
+        .loggedOut(true)
+        .build();
   }
 
   public TokenResponse getMe(CustomAuthenticationToken authentication) {
@@ -246,7 +246,7 @@ public class AuthService {
     LocalDateTime expiresAt = authentication.getExpiresAt();
 
     User user = userRepository.findByEmail(email)
-      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
     String id = user.getId();
     String fullName = user.getFullName();
     Role roleEntity = user.getRole();
@@ -256,21 +256,21 @@ public class AuthService {
     String refreshToken = authInfo.getRefreshToken();
 
     return TokenResponse.builder()
-      .id(id)
-      .email(email)
-      .fullName(fullName)
-      .role(roleResponse)
-      .accessToken(accessToken)
-      .expiresAt(expiresAt)
-      .refreshToken(refreshToken)
-      .build();
+        .id(id)
+        .email(email)
+        .fullName(fullName)
+        .role(roleResponse)
+        .accessToken(accessToken)
+        .expiresAt(expiresAt)
+        .refreshToken(refreshToken)
+        .build();
   }
 
   private void createInvalidToken(String id, String token) {
     InvalidToken invalidToken = InvalidToken.builder()
-      .id(id)
-      .token(token)
-      .build();
+        .id(id)
+        .token(token)
+        .build();
     invalidTokenRepository.save(invalidToken);
   }
 
@@ -310,14 +310,14 @@ public class AuthService {
 
     JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
     JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-      .jwtID(UUID.randomUUID().toString())
-      .subject(user.getEmail())
-      .claim("fullName", user.getFullName())
-      .claim("scope", user.getRole().getName())
-      .issuer(issuer)
-      .issueTime(now)
-      .expirationTime(expirationTime)
-      .build();
+        .jwtID(UUID.randomUUID().toString())
+        .subject(user.getEmail())
+        .claim("fullName", user.getFullName())
+        .claim("scope", user.getRole().getName())
+        .issuer(issuer)
+        .issueTime(now)
+        .expirationTime(expirationTime)
+        .build();
     Payload payload = new Payload(claimsSet.toJSONObject());
     JWSObject jwsObject = new JWSObject(jwsHeader, payload);
 

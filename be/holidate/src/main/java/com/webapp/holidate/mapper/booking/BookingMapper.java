@@ -15,6 +15,7 @@ public interface BookingMapper {
   @Mapping(target = "user", ignore = true)
   @Mapping(target = "room", ignore = true)
   @Mapping(target = "hotel", ignore = true)
+  @Mapping(target = "numberOfNights", ignore = true)
   @Mapping(target = "originalPrice", ignore = true)
   @Mapping(target = "discountAmount", ignore = true)
   @Mapping(target = "finalPrice", ignore = true)

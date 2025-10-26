@@ -7,8 +7,8 @@ import com.webapp.holidate.constants.api.endpoint.auth.AuthEndpoints;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.service.auth.AuthService;
 import com.webapp.holidate.type.ErrorType;
-import com.webapp.holidate.utils.DateTimeUtils;
-import com.webapp.holidate.utils.ResponseUtils;
+import com.webapp.holidate.utils.DateTimeUtil;
+import com.webapp.holidate.utils.ResponseUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -42,7 +42,8 @@ public class CustomCookieAuthenticationFilter extends OncePerRequestFilter {
   String tokenCookieName;
 
   @Override
-  protected void doFilterInternal(HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull FilterChain filterChain) throws ServletException, IOException, RuntimeException {
+  protected void doFilterInternal(HttpServletRequest request, @NotNull HttpServletResponse response,
+      @NotNull FilterChain filterChain) throws ServletException, IOException, RuntimeException {
     String uri = request.getRequestURI();
     String getMeEndpoint = AuthEndpoints.AUTH + AuthEndpoints.ME;
 
@@ -65,21 +66,20 @@ public class CustomCookieAuthenticationFilter extends OncePerRequestFilter {
               scope = signedJWT.getJWTClaimsSet().getClaim("scope").toString();
               expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
             } catch (JOSEException | ParseException e) {
-              ResponseUtils.handleAuthErrorResponse(response, ErrorType.INVALID_TOKEN);
+              ResponseUtil.handleAuthErrorResponse(response, ErrorType.INVALID_TOKEN);
               return;
             } catch (AppException e) {
-              ResponseUtils.handleAuthErrorResponse(response, e.getError());
+              ResponseUtil.handleAuthErrorResponse(response, e.getError());
               return;
             }
 
             List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(scope));
             CustomAuthenticationToken authentication = new CustomAuthenticationToken(
-              email,
-              null,
-              authorities,
-              token,
-              DateTimeUtils.dateToLocalDateTime(expirationTime)
-            );
+                email,
+                null,
+                authorities,
+                token,
+                DateTimeUtil.dateToLocalDateTime(expirationTime));
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             break;
