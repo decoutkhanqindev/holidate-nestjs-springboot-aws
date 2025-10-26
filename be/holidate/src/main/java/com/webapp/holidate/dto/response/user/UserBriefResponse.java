@@ -12,7 +12,7 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class PartnerResponse {
+public class UserBriefResponse {
   String id;
   String email;
   String fullName;

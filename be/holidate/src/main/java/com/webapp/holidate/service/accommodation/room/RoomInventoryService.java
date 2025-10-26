@@ -203,37 +203,67 @@ public class RoomInventoryService {
     }
   }
 
-  // @Transactional
-  // public void updateAvailabilityForBooking(BookingRequest request) {
-  // List<RoomInventory> inventories =
-  // roomInventoryRepository.findById_RoomIdAndId_DateBetween(
-  // request.getRoomId(), request.getStartDate(), request.getEndDate());
-  //
-  // long daysRequested = ChronoUnit.DAYS.between(request.getStartDate(),
-  // request.getEndDate().plusDays(1));
-  // if (inventories.size() != daysRequested) {
-  // throw new ResourceNotFoundException("Một số ngày trong khoảng thời gian bạn
-  // chọn không có sẵn để đặt.");
-  // }
-  //
-  // for (RoomInventory inventory : inventories) {
-  // if (inventory.getAvailableRooms() < request.getNumberOfRooms()) {
-  // throw new InsufficientRoomsException("Không đủ phòng trống vào ngày " +
-  // inventory.getId().getDate());
-  // }
-  // inventory.setAvailableRooms(inventory.getAvailableRooms() -
-  // request.getNumberOfRooms());
-  // if (inventory.getAvailableRooms() == 0) {
-  // inventory.setStatus("SOLD_OUT");
-  // }
-  // }
-  // roomInventoryRepository.saveAll(inventories);
-  // }
+  @Transactional
+  public void updateAvailabilityForBooking(String roomId, LocalDate checkInDate, LocalDate checkOutDate,
+      int numberOfRooms) {
+    // Get room inventories for the booking period
+    List<RoomInventory> inventories = roomInventoryRepository.findAllByRoomIdAndDateBetween(
+        roomId, checkInDate, checkOutDate.minusDays(1));
 
-  // @Transactional
-  // public void updateAvailabilityForCancellation(BookingRequest request) {
-  // // Tương tự logic booking nhưng cộng lại số phòng
-  // }
+    // Validate that all required dates have inventory
+    long daysRequested = checkInDate.until(checkOutDate).getDays();
+    if (inventories.size() != daysRequested) {
+      throw new AppException(ErrorType.ROOM_NOT_AVAILABLE);
+    }
+
+    // Check availability and update inventory
+    for (RoomInventory inventory : inventories) {
+      if (inventory.getAvailableRooms() < numberOfRooms) {
+        throw new AppException(ErrorType.INSUFFICIENT_ROOM_QUANTITY);
+      }
+
+      // Update available rooms
+      int newAvailableRooms = inventory.getAvailableRooms() - numberOfRooms;
+      inventory.setAvailableRooms(newAvailableRooms);
+
+      // Update status if no rooms available
+      if (newAvailableRooms == 0) {
+        inventory.setStatus(RoomInventoryStatusType.UNAVAILABLE.getValue());
+      }
+    }
+
+    // Save all updated inventories
+    roomInventoryRepository.saveAll(inventories);
+  }
+
+  @Transactional
+  public void updateAvailabilityForCancellation(String roomId, LocalDate checkInDate, LocalDate checkOutDate,
+      int numberOfRooms) {
+    // Get room inventories for the cancellation period
+    List<RoomInventory> inventories = roomInventoryRepository.findAllByRoomIdAndDateBetween(
+        roomId, checkInDate, checkOutDate.minusDays(1));
+
+    // Validate that all required dates have inventory
+    long daysRequested = checkInDate.until(checkOutDate).getDays();
+    if (inventories.size() != daysRequested) {
+      throw new AppException(ErrorType.ROOM_NOT_AVAILABLE);
+    }
+
+    // Restore availability for each inventory
+    for (RoomInventory inventory : inventories) {
+      // Restore available rooms
+      int newAvailableRooms = inventory.getAvailableRooms() + numberOfRooms;
+      inventory.setAvailableRooms(newAvailableRooms);
+
+      // Update status back to available if rooms are now available
+      if (inventory.getStatus().equals(RoomInventoryStatusType.UNAVAILABLE.getValue()) && newAvailableRooms > 0) {
+        inventory.setStatus(RoomInventoryStatusType.AVAILABLE.getValue());
+      }
+    }
+
+    // Save all updated inventories
+    roomInventoryRepository.saveAll(inventories);
+  }
 
   @Transactional
   public void updatePriceForDateBetween(RoomInventoryPriceUpdateRequest request) {

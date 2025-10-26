@@ -19,7 +19,7 @@ public class AmenityCreationRequest {
   String name;
 
   @NotNull(message = "IS_FREE_NOT_BLANK")
-  Boolean isFree;
+  Boolean free;
 
   @NotBlank(message = "CATEGORY_ID_NOT_BLANK")
   String categoryId;

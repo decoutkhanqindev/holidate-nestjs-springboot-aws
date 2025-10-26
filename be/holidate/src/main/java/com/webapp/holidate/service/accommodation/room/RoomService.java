@@ -7,6 +7,7 @@ import com.webapp.holidate.dto.request.acommodation.room.RoomUpdateRequest;
 import com.webapp.holidate.dto.request.image.PhotoCreationRequest;
 import com.webapp.holidate.dto.response.acommodation.room.RoomDetailsResponse;
 import com.webapp.holidate.dto.response.acommodation.room.RoomResponse;
+import com.webapp.holidate.dto.response.acommodation.room.RoomResponse;
 import com.webapp.holidate.dto.response.base.PagedResponse;
 import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.entity.amenity.Amenity;

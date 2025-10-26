@@ -11,6 +11,10 @@ import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface CityMapper {
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "province", ignore = true)
+  @Mapping(target = "districts", ignore = true)
+  @Mapping(target = "hotels", ignore = true)
   City toEntity(CityCreationRequest request);
 
   CityResponse toCityResponse(City city);

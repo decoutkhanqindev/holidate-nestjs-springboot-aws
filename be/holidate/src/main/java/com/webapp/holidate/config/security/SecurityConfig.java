@@ -69,7 +69,8 @@ public class SecurityConfig {
         .permitAll()
         .requestMatchers(HttpMethod.GET, AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS)
         .permitAll()
-        .requestMatchers(HttpMethod.GET,AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS + CommonEndpoints.ID)
+        .requestMatchers(HttpMethod.GET,
+            AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS + CommonEndpoints.ID)
         .permitAll()
         // 4. amenity endpoints
         .requestMatchers(HttpMethod.GET, AmenityEndpoints.AMENITY + ALL_ENDPOINTS).permitAll()

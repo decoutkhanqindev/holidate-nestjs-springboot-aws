@@ -44,12 +44,16 @@ public interface HotelMapper {
   @Mapping(target = "partner", ignore = true)
   @Mapping(target = "amenities", ignore = true)
   @Mapping(target = "reviews", ignore = true)
+  @Mapping(target = "discounts", ignore = true)
   @Mapping(target = "rooms", ignore = true)
   @Mapping(target = "status", ignore = true)
   @Mapping(target = "createdAt", expression = "java(java.time.LocalDateTime.now())")
   @Mapping(target = "updatedAt", ignore = true)
   Hotel toEntity(HotelCreationRequest request);
 
+  @Mapping(target = "rawPricePerNight", ignore = true)
+  @Mapping(target = "currentPricePerNight", ignore = true)
+  @Mapping(target = "availableRooms", ignore = true)
   @Mapping(source = "photos", target = "photos", qualifiedByName = "hotelPhotosToCategories")
   HotelResponse toHotelResponse(Hotel hotel);
 
@@ -68,7 +72,7 @@ public interface HotelMapper {
   @Mapping(source = "photos", target = "photos", qualifiedByName = "hotelPhotosToCategories")
   @Mapping(source = "amenities", target = "amenities", qualifiedByName = "hotelAmenitiesToCategories")
   HotelDetailsResponse toHotelDetailsResponse(Hotel hotel);
-
+  
   HotelBriefResponse toHotelBriefResponse(Hotel hotel);
 
   /**

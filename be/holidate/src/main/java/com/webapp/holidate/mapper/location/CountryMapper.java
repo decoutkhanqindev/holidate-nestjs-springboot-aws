@@ -10,6 +10,9 @@ import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface CountryMapper {
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "provinces", ignore = true)
+  @Mapping(target = "hotels", ignore = true)
   Country toEntity(CountryCreationRequest request);
 
   LocationResponse toLocationResponse(Country country);

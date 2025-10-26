@@ -11,6 +11,10 @@ import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface WardMapper {
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "district", ignore = true)
+  @Mapping(target = "streets", ignore = true)
+  @Mapping(target = "hotels", ignore = true)
   Ward toEntity(WardCreationRequest request);
 
   WardResponse toWardResponse(Ward ward);
