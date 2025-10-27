@@ -13,7 +13,7 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class BookingPricePreviewResponse {
+public class BookingPriceDetailsResponse {
   double originalPrice;
   double discountAmount;
   DiscountBriefResponse appliedDiscount;

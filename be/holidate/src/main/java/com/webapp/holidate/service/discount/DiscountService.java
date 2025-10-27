@@ -22,7 +22,10 @@ import com.webapp.holidate.repository.discount.DiscountRepository;
 import com.webapp.holidate.repository.discount.HotelDiscountRepository;
 import com.webapp.holidate.repository.discount.SpecialDayDiscountRepository;
 import com.webapp.holidate.repository.special_day.SpecialDayRepository;
+import com.webapp.holidate.repository.booking.BookingRepository;
 import com.webapp.holidate.type.ErrorType;
+import com.webapp.holidate.type.booking.BookingStatusType;
+
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -49,6 +52,8 @@ public class DiscountService {
 
   SpecialDayDiscountRepository specialDayDiscountRepository;
   SpecialDayRepository specialDayRepository;
+
+  BookingRepository bookingRepository;
 
   DiscountMapper mapper;
   HotelMapper hotelMapper;
@@ -374,6 +379,44 @@ public class DiscountService {
 
     if (originalPrice < discount.getMinBookingPrice()) {
       throw new AppException(ErrorType.INVALID_DISCOUNT_CODE);
+    }
+
+    return discount;
+  }
+
+  public Discount validateDiscount(String discountCode, double originalPrice, String userId) {
+    if (discountCode == null || discountCode.trim().isEmpty()) {
+      return null;
+    }
+
+    Discount discount = discountRepository.findByCode(discountCode)
+        .orElseThrow(() -> new AppException(ErrorType.INVALID_DISCOUNT_CODE));
+
+    // Validate discount conditions
+    LocalDate todayDate = LocalDate.now();
+    if (!discount.isActive() ||
+        todayDate.isBefore(discount.getValidFrom()) ||
+        todayDate.isAfter(discount.getValidTo())) {
+      throw new AppException(ErrorType.INVALID_DISCOUNT_CODE);
+    }
+
+    if (discount.getTimesUsed() >= discount.getUsageLimit()) {
+      throw new AppException(ErrorType.INVALID_DISCOUNT_CODE);
+    }
+
+    if (originalPrice < discount.getMinBookingPrice()) {
+      throw new AppException(ErrorType.INVALID_DISCOUNT_CODE);
+    }
+
+    // Special validation for FIRSTBOOK10 discount
+    if ("FIRSTBOOK10".equals(discountCode)) {
+      // Check if user has any confirmed bookings (excluding cancelled ones)
+      List<String> confirmedStatuses = List.of(BookingStatusType.CONFIRMED.getValue(), BookingStatusType.COMPLETED.getValue());
+      long userBookingCount = bookingRepository.countByUserIdAndStatusIn(userId, confirmedStatuses);
+
+      if (userBookingCount > 0) {
+        throw new AppException(ErrorType.INVALID_DISCOUNT_CODE);
+      }
     }
 
     return discount;

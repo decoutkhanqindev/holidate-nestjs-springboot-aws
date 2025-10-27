@@ -40,232 +40,269 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
-  String ALL_ENDPOINTS = "/**";
+        String ALL_ENDPOINTS = "/**";
 
-  GoogleService googleService;
-  CustomOAuth2AuthenticationSuccessHandler successHandler;
-  CustomOAuth2AuthenticationFailureHandler failureHandler;
+        GoogleService googleService;
+        CustomOAuth2AuthenticationSuccessHandler successHandler;
+        CustomOAuth2AuthenticationFailureHandler failureHandler;
 
-  CustomJwtDecoder jwtDecoder;
-  CustomAuthenticationEntryPoint authenticationEntryPoint;
-  CustomAccessDeniedHandler accessDeniedHandler;
-  CustomCookieAuthenticationFilter cookieAuthenticationFilter;
+        CustomJwtDecoder jwtDecoder;
+        CustomAuthenticationEntryPoint authenticationEntryPoint;
+        CustomAccessDeniedHandler accessDeniedHandler;
+        CustomCookieAuthenticationFilter cookieAuthenticationFilter;
 
-  @NonFinal
-  @Value(AppProperties.FRONTEND_URL)
-  String frontendUrl;
+        @NonFinal
+        @Value(AppProperties.FRONTEND_URL)
+        String frontendUrl;
 
-  @Bean
-  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    http.authorizeHttpRequests(request -> request
-        // A. public endpoints
-        // 1. auth endpoints
-        .requestMatchers(AuthEndpoints.AUTH + ALL_ENDPOINTS).permitAll()
-        // 2. location endpoints
-        .requestMatchers(HttpMethod.GET, LocationEndpoints.LOCATION + ALL_ENDPOINTS).permitAll()
-        // 3. accommodation endpoints
-        .requestMatchers(HttpMethod.GET,
-            AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.HOTELS + ALL_ENDPOINTS)
-        .permitAll()
-        .requestMatchers(HttpMethod.GET, AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS)
-        .permitAll()
-        .requestMatchers(HttpMethod.GET,
-            AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS + CommonEndpoints.ID)
-        .permitAll()
-        // 3.1. room inventory endpoints - must be protected (not public)
-        .requestMatchers(HttpMethod.GET,
-            AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
-                + AccommodationEndpoints.ROOM_INVENTORIES + ALL_ENDPOINTS)
-        .hasAnyAuthority(RoleType.ADMIN.getValue(), RoleType.PARTNER.getValue())
-        // 4. amenity endpoints
-        .requestMatchers(HttpMethod.GET, AmenityEndpoints.AMENITY + ALL_ENDPOINTS).permitAll()
-        // 5. special day endpoints
-        .requestMatchers(HttpMethod.GET, SpecialDayEndpoints.SPECIAL_DAYS + ALL_ENDPOINTS).permitAll()
-        // 6. discount endpoints
-        .requestMatchers(HttpMethod.GET, DiscountEndpoints.DISCOUNTS + ALL_ENDPOINTS).permitAll()
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+                http.authorizeHttpRequests(request -> request
+                                // A. public endpoints
+                                // 1. auth endpoints
+                                .requestMatchers(AuthEndpoints.AUTH + ALL_ENDPOINTS).permitAll()
+                                // 2. location endpoints
+                                .requestMatchers(HttpMethod.GET, LocationEndpoints.LOCATION + ALL_ENDPOINTS).permitAll()
+                                // 3. accommodation endpoints
+                                .requestMatchers(HttpMethod.GET,
+                                                AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.HOTELS
+                                                                + ALL_ENDPOINTS)
+                                .permitAll()
+                                .requestMatchers(HttpMethod.GET,
+                                                AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS)
+                                .permitAll()
+                                .requestMatchers(HttpMethod.GET,
+                                                AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
+                                                                + CommonEndpoints.ID)
+                                .permitAll()
+                                // 3.1. room inventory endpoints - must be protected (not public)
+                                .requestMatchers(HttpMethod.GET,
+                                                AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
+                                                                + AccommodationEndpoints.ROOM_INVENTORIES
+                                                                + ALL_ENDPOINTS)
+                                .hasAnyAuthority(RoleType.ADMIN.getValue(), RoleType.PARTNER.getValue())
+                                // 4. amenity endpoints
+                                .requestMatchers(HttpMethod.GET, AmenityEndpoints.AMENITY + ALL_ENDPOINTS).permitAll()
+                                // 5. special day endpoints
+                                .requestMatchers(HttpMethod.GET, SpecialDayEndpoints.SPECIAL_DAYS + ALL_ENDPOINTS)
+                                .permitAll()
+                                // 6. discount endpoints
+                                .requestMatchers(HttpMethod.GET, DiscountEndpoints.DISCOUNTS + ALL_ENDPOINTS)
+                                .permitAll()
 
-        // B. protected endpoints
-        // I. user role
-        // 1. profile endpoints
-        .requestMatchers(HttpMethod.GET, UserEndpoints.USERS + CommonEndpoints.ID)
-        .hasAuthority(RoleType.USER.getValue())
-        .requestMatchers(HttpMethod.PUT, UserEndpoints.USERS + CommonEndpoints.ID)
-        .hasAuthority(RoleType.USER.getValue())
-        // 2. booking endpoints
-        .requestMatchers(HttpMethod.POST, BookingEndpoints.BOOKINGS + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.USER.getValue())
-        .requestMatchers(HttpMethod.GET, BookingEndpoints.BOOKINGS + BookingEndpoints.PRICE_PREVIEW + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.USER.getValue())
+                                // B. protected endpoints
+                                // I. user role
+                                // 1. profile endpoints
+                                .requestMatchers(HttpMethod.GET, UserEndpoints.USERS + CommonEndpoints.ID)
+                                .hasAuthority(RoleType.USER.getValue())
+                                .requestMatchers(HttpMethod.PUT, UserEndpoints.USERS + CommonEndpoints.ID)
+                                .hasAuthority(RoleType.USER.getValue())
+                                // 2. booking endpoints
+                                .requestMatchers(HttpMethod.POST, BookingEndpoints.BOOKINGS + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.USER.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                BookingEndpoints.BOOKINGS + BookingEndpoints.PRICE_PREVIEW
+                                                                + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.USER.getValue())
+                                .requestMatchers(HttpMethod.GET, BookingEndpoints.BOOKINGS + CommonEndpoints.ID)
+                                .hasAuthority(RoleType.USER.getValue())
 
-        // II. partner role
-        // 1. profile endpoints
-        .requestMatchers(HttpMethod.GET, UserEndpoints.USERS + CommonEndpoints.ID)
-        .hasAuthority(RoleType.PARTNER.getValue())
-        .requestMatchers(HttpMethod.PUT, UserEndpoints.USERS + CommonEndpoints.ID)
-        .hasAuthority(RoleType.PARTNER.getValue())
-        // 2. room management endpoints (partner specific)
-        .requestMatchers(HttpMethod.POST,
-            AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.PARTNER.getValue())
-        .requestMatchers(HttpMethod.GET,
-            AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.PARTNER.getValue())
-        .requestMatchers(HttpMethod.GET,
-            AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS + CommonEndpoints.ID)
-        .hasAuthority(RoleType.PARTNER.getValue())
-        .requestMatchers(HttpMethod.PUT,
-            AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS + CommonEndpoints.ID)
-        .hasAuthority(RoleType.PARTNER.getValue())
-        // 2.1. room inventory management endpoints (partner specific)
-        .requestMatchers(HttpMethod.POST,
-            AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
-                + AccommodationEndpoints.ROOM_INVENTORIES + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.PARTNER.getValue())
-        .requestMatchers(HttpMethod.PUT,
-            AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
-                + AccommodationEndpoints.ROOM_INVENTORIES + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.PARTNER.getValue())
-        .requestMatchers(HttpMethod.DELETE,
-            AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
-                + AccommodationEndpoints.ROOM_INVENTORIES + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.PARTNER.getValue())
-        // 3. booking endpoints
-        .requestMatchers(HttpMethod.POST, BookingEndpoints.BOOKINGS + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.PARTNER.getValue())
-        .requestMatchers(HttpMethod.GET, BookingEndpoints.BOOKINGS + BookingEndpoints.PRICE_PREVIEW + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.PARTNER.getValue())
+                                // II. partner role
+                                // 1. profile endpoints
+                                .requestMatchers(HttpMethod.GET, UserEndpoints.USERS + CommonEndpoints.ID)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                .requestMatchers(HttpMethod.PUT, UserEndpoints.USERS + CommonEndpoints.ID)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                // 2. room management endpoints (partner specific)
+                                .requestMatchers(HttpMethod.POST,
+                                                AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
+                                                                + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
+                                                                + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
+                                                                + CommonEndpoints.ID)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                .requestMatchers(HttpMethod.PUT,
+                                                AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
+                                                                + CommonEndpoints.ID)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                // 2.1. room inventory management endpoints (partner specific)
+                                .requestMatchers(HttpMethod.POST,
+                                                AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
+                                                                + AccommodationEndpoints.ROOM_INVENTORIES
+                                                                + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                .requestMatchers(HttpMethod.PUT,
+                                                AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
+                                                                + AccommodationEndpoints.ROOM_INVENTORIES
+                                                                + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                .requestMatchers(HttpMethod.DELETE,
+                                                AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
+                                                                + AccommodationEndpoints.ROOM_INVENTORIES
+                                                                + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                // 3. booking endpoints
+                                .requestMatchers(HttpMethod.POST, BookingEndpoints.BOOKINGS + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                BookingEndpoints.BOOKINGS + BookingEndpoints.PRICE_PREVIEW
+                                                                + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                .requestMatchers(HttpMethod.GET, BookingEndpoints.BOOKINGS + CommonEndpoints.ID)
+                                .hasAuthority(RoleType.PARTNER.getValue())
 
-        // III. admin role
-        // 1. profile endpoints
-        .requestMatchers(UserEndpoints.USERS + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
-        .requestMatchers(UserEndpoints.ROLES + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
-        // 2. location endpoints
-        .requestMatchers(LocationEndpoints.LOCATION + ALL_ENDPOINTS).hasAuthority(RoleType.ADMIN.getValue())
-        // 3. accommodation endpoints
-        .requestMatchers(HttpMethod.POST, AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        .requestMatchers(HttpMethod.GET, AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        .requestMatchers(HttpMethod.PUT, AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        .requestMatchers(HttpMethod.DELETE, AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        // 3.1. room management endpoints (admin can also manage rooms)
-        .requestMatchers(HttpMethod.POST,
-            AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        .requestMatchers(HttpMethod.GET,
-            AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        .requestMatchers(HttpMethod.GET,
-            AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS + CommonEndpoints.ID)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        .requestMatchers(HttpMethod.PUT,
-            AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS + CommonEndpoints.ID)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        .requestMatchers(HttpMethod.DELETE,
-            AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS + CommonEndpoints.ID)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        // 3.2. room inventory management endpoints (admin can also manage room
-        // inventories)
-        .requestMatchers(HttpMethod.POST,
-            AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
-                + AccommodationEndpoints.ROOM_INVENTORIES + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        .requestMatchers(HttpMethod.PUT,
-            AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
-                + AccommodationEndpoints.ROOM_INVENTORIES + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        .requestMatchers(HttpMethod.DELETE,
-            AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
-                + AccommodationEndpoints.ROOM_INVENTORIES + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        // 4. amenity endpoints
-        .requestMatchers(HttpMethod.POST, AmenityEndpoints.AMENITY + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        .requestMatchers(HttpMethod.PUT, AmenityEndpoints.AMENITY + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        .requestMatchers(HttpMethod.DELETE, AmenityEndpoints.AMENITY + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        // 5. special day endpoints
-        .requestMatchers(HttpMethod.POST, SpecialDayEndpoints.SPECIAL_DAYS + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        .requestMatchers(HttpMethod.PUT, SpecialDayEndpoints.SPECIAL_DAYS + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        .requestMatchers(HttpMethod.DELETE, SpecialDayEndpoints.SPECIAL_DAYS + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        // 6. discount endpoints
-        .requestMatchers(HttpMethod.POST, DiscountEndpoints.DISCOUNTS + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        .requestMatchers(HttpMethod.PUT, DiscountEndpoints.DISCOUNTS + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        .requestMatchers(HttpMethod.DELETE, DiscountEndpoints.DISCOUNTS + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        // 7. booking endpoints
-        .requestMatchers(HttpMethod.POST, BookingEndpoints.BOOKINGS + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        .requestMatchers(HttpMethod.GET, BookingEndpoints.BOOKINGS + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        .requestMatchers(HttpMethod.PUT, BookingEndpoints.BOOKINGS + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        .requestMatchers(HttpMethod.DELETE, BookingEndpoints.BOOKINGS + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.ADMIN.getValue())
-        .requestMatchers(HttpMethod.GET, BookingEndpoints.BOOKINGS + BookingEndpoints.PRICE_PREVIEW + ALL_ENDPOINTS)
-        .hasAuthority(RoleType.ADMIN.getValue())
+                                // III. admin role
+                                // 1. profile endpoints
+                                .requestMatchers(UserEndpoints.USERS + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(UserEndpoints.ROLES + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                // 2. location endpoints
+                                .requestMatchers(LocationEndpoints.LOCATION + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                // 3. accommodation endpoints
+                                .requestMatchers(HttpMethod.POST, AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.GET, AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.PUT, AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.DELETE,
+                                                AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                // 3.1. room management endpoints (admin can also manage rooms)
+                                .requestMatchers(HttpMethod.POST,
+                                                AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
+                                                                + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
+                                                                + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
+                                                                + CommonEndpoints.ID)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.PUT,
+                                                AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
+                                                                + CommonEndpoints.ID)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.DELETE,
+                                                AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
+                                                                + CommonEndpoints.ID)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                // 3.2. room inventory management endpoints (admin can also manage room
+                                // inventories)
+                                .requestMatchers(HttpMethod.POST,
+                                                AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
+                                                                + AccommodationEndpoints.ROOM_INVENTORIES
+                                                                + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.PUT,
+                                                AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
+                                                                + AccommodationEndpoints.ROOM_INVENTORIES
+                                                                + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.DELETE,
+                                                AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
+                                                                + AccommodationEndpoints.ROOM_INVENTORIES
+                                                                + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                // 4. amenity endpoints
+                                .requestMatchers(HttpMethod.POST, AmenityEndpoints.AMENITY + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.PUT, AmenityEndpoints.AMENITY + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.DELETE, AmenityEndpoints.AMENITY + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                // 5. special day endpoints
+                                .requestMatchers(HttpMethod.POST, SpecialDayEndpoints.SPECIAL_DAYS + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.PUT, SpecialDayEndpoints.SPECIAL_DAYS + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.DELETE, SpecialDayEndpoints.SPECIAL_DAYS + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                // 6. discount endpoints
+                                .requestMatchers(HttpMethod.POST, DiscountEndpoints.DISCOUNTS + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.PUT, DiscountEndpoints.DISCOUNTS + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.DELETE, DiscountEndpoints.DISCOUNTS + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                // 7. booking endpoints
+                                .requestMatchers(HttpMethod.POST, BookingEndpoints.BOOKINGS + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.GET, BookingEndpoints.BOOKINGS + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.PUT, BookingEndpoints.BOOKINGS + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.DELETE, BookingEndpoints.BOOKINGS + CommonEndpoints.ID)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                BookingEndpoints.BOOKINGS + BookingEndpoints.PRICE_PREVIEW
+                                                                + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
 
-        // C. any other endpoints
-        .anyRequest().authenticated());
+                                // C. any other endpoints
+                                .anyRequest().authenticated());
 
-    http
-        .csrf(CsrfConfigurer::disable)
-        .cors(corsConfigurer -> corsConfigurer.configurationSource(corsConfigurationSource()))
-        .oauth2Login(oAuth2LoginConfigurer -> oAuth2LoginConfigurer
-            .userInfoEndpoint(userInfoEndpointConfig -> userInfoEndpointConfig.userService(googleService))
-            .successHandler(successHandler)
-            .failureHandler(failureHandler))
-        .formLogin(FormLoginConfigurer::disable);
+                http
+                                .csrf(CsrfConfigurer::disable)
+                                .cors(corsConfigurer -> corsConfigurer.configurationSource(corsConfigurationSource()))
+                                .oauth2Login(oAuth2LoginConfigurer -> oAuth2LoginConfigurer
+                                                .userInfoEndpoint(userInfoEndpointConfig -> userInfoEndpointConfig
+                                                                .userService(googleService))
+                                                .successHandler(successHandler)
+                                                .failureHandler(failureHandler))
+                                .formLogin(FormLoginConfigurer::disable);
 
-    http
-        .oauth2ResourceServer(oAuth2ResourceServerConfigurer -> oAuth2ResourceServerConfigurer
-            .jwt(jwtConfigurer -> jwtConfigurer
-                .decoder(jwtDecoder)
-                .jwtAuthenticationConverter(jwtAuthenticationConverter()))
-            .authenticationEntryPoint(authenticationEntryPoint)
-            .accessDeniedHandler(accessDeniedHandler));
+                http
+                                .oauth2ResourceServer(oAuth2ResourceServerConfigurer -> oAuth2ResourceServerConfigurer
+                                                .jwt(jwtConfigurer -> jwtConfigurer
+                                                                .decoder(jwtDecoder)
+                                                                .jwtAuthenticationConverter(
+                                                                                jwtAuthenticationConverter()))
+                                                .authenticationEntryPoint(authenticationEntryPoint)
+                                                .accessDeniedHandler(accessDeniedHandler));
 
-    http.addFilterBefore(cookieAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                http.addFilterBefore(cookieAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-    return http.build();
-  }
+                return http.build();
+        }
 
-  @Bean
-  RoleHierarchy roleHierarchy() {
-    return RoleHierarchyImpl.fromHierarchy(RoleType.ADMIN.getValue() + " > " + RoleType.USER.getValue());
-  }
+        @Bean
+        RoleHierarchy roleHierarchy() {
+                return RoleHierarchyImpl.fromHierarchy(RoleType.ADMIN.getValue() + " > " + RoleType.USER.getValue());
+        }
 
-  @Bean
-  public CorsConfigurationSource corsConfigurationSource() {
-    CorsConfiguration corsConfiguration = new CorsConfiguration();
-    corsConfiguration.setAllowedOrigins(List.of(frontendUrl));
-    corsConfiguration.setAllowedMethods(List.of("*"));
-    corsConfiguration.setAllowedHeaders(List.of("*"));
-    corsConfiguration.setAllowCredentials(true);
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
+                CorsConfiguration corsConfiguration = new CorsConfiguration();
+                corsConfiguration.setAllowedOrigins(List.of(frontendUrl));
+                corsConfiguration.setAllowedMethods(List.of("*"));
+                corsConfiguration.setAllowedHeaders(List.of("*"));
+                corsConfiguration.setAllowCredentials(true);
 
-    UrlBasedCorsConfigurationSource urlBasedCorsConfigurationSource = new UrlBasedCorsConfigurationSource();
-    urlBasedCorsConfigurationSource.registerCorsConfiguration(ALL_ENDPOINTS, corsConfiguration);
+                UrlBasedCorsConfigurationSource urlBasedCorsConfigurationSource = new UrlBasedCorsConfigurationSource();
+                urlBasedCorsConfigurationSource.registerCorsConfiguration(ALL_ENDPOINTS, corsConfiguration);
 
-    return urlBasedCorsConfigurationSource;
-  }
+                return urlBasedCorsConfigurationSource;
+        }
 
-  @Bean
-  public JwtAuthenticationConverter jwtAuthenticationConverter() {
-    JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-    grantedAuthoritiesConverter.setAuthoritiesClaimName("scope");
-    grantedAuthoritiesConverter.setAuthorityPrefix("");
+        @Bean
+        public JwtAuthenticationConverter jwtAuthenticationConverter() {
+                JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+                grantedAuthoritiesConverter.setAuthoritiesClaimName("scope");
+                grantedAuthoritiesConverter.setAuthorityPrefix("");
 
-    JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
-    jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+                JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+                jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
 
-    return jwtAuthenticationConverter;
-  }
+                return jwtAuthenticationConverter;
+        }
 }

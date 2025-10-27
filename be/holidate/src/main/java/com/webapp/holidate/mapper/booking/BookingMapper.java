@@ -3,13 +3,21 @@ package com.webapp.holidate.mapper.booking;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+
+import java.time.temporal.ChronoUnit;
+
 import org.mapstruct.AfterMapping;
 
 import com.webapp.holidate.dto.request.booking.BookingCreationRequest;
 import com.webapp.holidate.dto.response.booking.BookingResponse;
 import com.webapp.holidate.entity.booking.Booking;
+import com.webapp.holidate.mapper.discount.DiscountMapper;
+import com.webapp.holidate.mapper.acommodation.room.RoomMapper;
+import com.webapp.holidate.mapper.user.UserMapper;
+import com.webapp.holidate.mapper.acommodation.HotelMapper;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = { DiscountMapper.class, RoomMapper.class, UserMapper.class,
+    HotelMapper.class })
 public interface BookingMapper {
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "user", ignore = true)
@@ -27,10 +35,8 @@ public interface BookingMapper {
   @Mapping(target = "updatedAt", ignore = true)
   Booking toEntity(BookingCreationRequest request);
 
-  @Mapping(target = "checkInDate", expression = "java(booking.getCheckInDate().toString())")
-  @Mapping(target = "checkOutDate", expression = "java(booking.getCheckOutDate().toString())")
-  @Mapping(target = "bookingDateTime", expression = "java(booking.getCreatedAt().toString())")
   @Mapping(target = "expiresAt", ignore = true)
+  @Mapping(target = "priceDetails", ignore = true)
   BookingResponse toBookingResponse(Booking booking, String paymentUrl);
 
   @AfterMapping
@@ -38,5 +44,10 @@ public interface BookingMapper {
       @MappingTarget BookingResponse.BookingResponseBuilder responseBuilder) {
     // Set expiration time to 15 minutes from creation time
     responseBuilder.expiresAt(booking.getCreatedAt().plusMinutes(15));
+
+    // Calculate numberOfNights
+    long numberOfNights = ChronoUnit.DAYS.between(
+        booking.getCheckInDate(), booking.getCheckOutDate());
+    responseBuilder.numberOfNights((int) numberOfNights);
   }
 }

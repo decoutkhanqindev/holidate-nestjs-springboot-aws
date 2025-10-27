@@ -3,7 +3,7 @@ package com.webapp.holidate.service.booking;
 import com.webapp.holidate.constants.AppProperties;
 import com.webapp.holidate.dto.request.booking.BookingCreationRequest;
 import com.webapp.holidate.dto.request.booking.BookingPricePreviewRequest;
-import com.webapp.holidate.dto.response.booking.BookingPricePreviewResponse;
+import com.webapp.holidate.dto.response.booking.BookingPriceDetailsResponse;
 import com.webapp.holidate.dto.response.booking.BookingResponse;
 import com.webapp.holidate.dto.response.booking.FeeResponse;
 import com.webapp.holidate.entity.accommodation.Hotel;
@@ -23,7 +23,7 @@ import com.webapp.holidate.service.accommodation.room.RoomInventoryService;
 import com.webapp.holidate.service.discount.DiscountService;
 import com.webapp.holidate.type.ErrorType;
 import com.webapp.holidate.type.booking.BookingStatusType;
-
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -46,8 +47,9 @@ public class BookingService {
 
   RoomInventoryService roomInventoryService;
   DiscountService discountService;
+  PaymentService paymentService;
 
-  BookingMapper mapper;
+  BookingMapper bookingMapper;
   DiscountMapper discountMapper;
 
   @NonFinal
@@ -59,7 +61,7 @@ public class BookingService {
   double serviceFeeRate;
 
   @Transactional
-  public BookingResponse create(BookingCreationRequest request) {
+  public BookingResponse create(BookingCreationRequest request, HttpServletRequest httpRequest) {
     // Step 1: Validate and fetch entities
     User user = userRepository.findById(request.getUserId())
         .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
@@ -105,18 +107,25 @@ public class BookingService {
     double originalPrice = roomInventoryService.calculateOriginalPrice(inventories, numberOfRooms);
 
     // Step 4: Validate and apply discount
-    Discount appliedDiscount = discountService.validateDiscount(request.getDiscountCode(), originalPrice);
+    Discount appliedDiscount = discountService.validateDiscount(request.getDiscountCode(), originalPrice,
+        request.getUserId());
     double[] discountAmounts = discountService.calculateDiscountAmount(appliedDiscount, originalPrice);
     double discountAmount = discountAmounts[0];
-    double finalPrice = discountAmounts[1];
+    double netPriceAfterDiscount = discountAmounts[1];
 
-    // Step 4: Create booking and update inventory in transaction
-    Booking booking = mapper.toEntity(request);
+    // Step 5: Calculate tax and service fee
+    double taxAmount = netPriceAfterDiscount * vatRate;
+    double serviceFeeAmount = netPriceAfterDiscount * serviceFeeRate;
+    double finalPrice = netPriceAfterDiscount + taxAmount + serviceFeeAmount;
+
+    // Step 6: Create booking and update inventory in transaction
+    Booking booking = bookingMapper.toEntity(request);
 
     // Set the fields that were ignored in mapper
     booking.setUser(user);
     booking.setRoom(room);
     booking.setHotel(hotel);
+    booking.setNumberOfNights((int) java.time.temporal.ChronoUnit.DAYS.between(checkInDate, checkOutDate));
     booking.setOriginalPrice(originalPrice);
     booking.setDiscountAmount(discountAmount);
     booking.setFinalPrice(finalPrice);
@@ -133,11 +142,20 @@ public class BookingService {
     // Update discount usage count if discount was applied
     discountService.updateDiscountUsage(appliedDiscount);
 
-    // Step 5: Return booking response with payment URL placeholder
-    return mapper.toBookingResponse(savedBooking, null);
+    // Step 7: Generate payment URL using PaymentService
+    String paymentUrl = paymentService.createPaymentUrl(savedBooking, httpRequest);
+
+    // Step 8: Return booking response with payment URL
+    BookingResponse response = bookingMapper.toBookingResponse(savedBooking, paymentUrl);
+
+    // Calculate price details using helper method
+    BookingPriceDetailsResponse priceDetails = calculatePriceDetails(savedBooking);
+    response.setPriceDetails(priceDetails);
+
+    return response;
   }
 
-  public BookingPricePreviewResponse getPricePreview(BookingPricePreviewRequest request) {
+  public BookingPriceDetailsResponse getPricePreview(BookingPricePreviewRequest request) {
     // Step 1: Validate and fetch room
     Room room = roomRepository.findById(request.getRoomId())
         .orElseThrow(() -> new AppException(ErrorType.ROOM_NOT_FOUND));
@@ -174,18 +192,117 @@ public class BookingService {
     List<RoomInventory> inventories = roomInventoryService.validateRoomAvailability(
         request.getRoomId(), startDate, endDate, numberOfRooms);
 
-    double subtotal = roomInventoryService.calculateOriginalPrice(inventories, numberOfRooms);
+    double originalPrice = roomInventoryService.calculateOriginalPrice(inventories, numberOfRooms);
 
-    // Step 5: Validate and apply discount
-    Discount appliedDiscount = discountService.validateDiscount(request.getDiscountCode(), subtotal);
-    double[] discountAmounts = discountService.calculateDiscountAmount(appliedDiscount, subtotal);
+    // Step 5: Validate and apply discount (without userId for preview)
+    Discount appliedDiscount = discountService.validateDiscount(request.getDiscountCode(), originalPrice);
+    double[] discountAmounts = discountService.calculateDiscountAmount(appliedDiscount, originalPrice);
     double discountAmount = discountAmounts[0];
-    double netPriceAfterDiscount = discountAmounts[1];
 
-    // Step 6: Calculate tax and service fee
+    // Step 6: Use helper method to calculate price details
+    return calculatePriceDetailsFromValues(originalPrice, discountAmount, appliedDiscount);
+  }
+
+  public BookingResponse getById(String id) {
+    Booking booking = bookingRepository.findByIdWithAllRelations(id)
+        .orElseThrow(() -> new AppException(ErrorType.BOOKING_NOT_FOUND));
+
+    // For existing bookings, paymentUrl is null since payment is already processed
+    BookingResponse response = bookingMapper.toBookingResponse(booking, null);
+
+    // Calculate price details
+    BookingPriceDetailsResponse priceDetails = calculatePriceDetails(booking);
+    response.setPriceDetails(priceDetails);
+
+    return response;
+  }
+
+  @Transactional
+  public BookingResponse delete(String id) {
+    Booking booking = bookingRepository.findByIdWithAllRelations(id)
+        .orElseThrow(() -> new AppException(ErrorType.BOOKING_NOT_FOUND));
+
+    // Check if booking can be deleted
+    String status = booking.getStatus();
+    if (BookingStatusType.CONFIRMED.getValue().equals(status)) {
+      throw new AppException(ErrorType.BOOKING_NOT_FOUND); // Using existing error type
+    }
+
+    // Create response before deletion
+    BookingResponse response = bookingMapper.toBookingResponse(booking, null);
+    BookingPriceDetailsResponse priceDetails = calculatePriceDetails(booking);
+    response.setPriceDetails(priceDetails);
+
+    // Release room inventory if booking was pending payment
+    if (BookingStatusType.PENDING_PAYMENT.getValue().equals(status)) {
+      roomInventoryService.updateAvailabilityForCancellation(
+          booking.getRoom().getId(),
+          booking.getCheckInDate(),
+          booking.getCheckOutDate(),
+          booking.getNumberOfRooms());
+    }
+
+    // Delete the booking (this will also delete related Payment and Review due to
+    // cascade)
+    bookingRepository.delete(booking);
+
+    return response;
+  }
+
+  @Transactional
+  public void cancelExpiredBookings() {
+    LocalDateTime expiredTime = LocalDateTime.now().minusMinutes(15);
+
+    List<Booking> expiredBookings = bookingRepository.findByStatusAndCreatedAtBefore(
+        BookingStatusType.PENDING_PAYMENT.getValue(), expiredTime);
+
+    for (Booking booking : expiredBookings) {
+      // Update booking status to cancelled
+      booking.setStatus(BookingStatusType.CANCELLED.getValue());
+      booking.setUpdatedAt(LocalDateTime.now());
+
+      // Release room inventory
+      roomInventoryService.updateAvailabilityForCancellation(
+          booking.getRoom().getId(),
+          booking.getCheckInDate(),
+          booking.getCheckOutDate(),
+          booking.getNumberOfRooms());
+
+      // Save updated booking
+      bookingRepository.save(booking);
+    }
+  }
+
+  private BookingPriceDetailsResponse calculatePriceDetails(Booking booking) {
+    return calculatePriceDetailsFromValues(
+        booking.getOriginalPrice(),
+        booking.getDiscountAmount(),
+        booking.getAppliedDiscount(),
+        booking.getFinalPrice());
+  }
+
+  private BookingPriceDetailsResponse calculatePriceDetailsFromValues(
+      double originalPrice,
+      double discountAmount,
+      Discount appliedDiscount) {
+    return calculatePriceDetailsFromValues(originalPrice, discountAmount, appliedDiscount, null);
+  }
+
+  private BookingPriceDetailsResponse calculatePriceDetailsFromValues(
+      double originalPrice,
+      double discountAmount,
+      Discount appliedDiscount,
+      Double finalPrice) {
+    // Calculate net price after discount
+    double netPriceAfterDiscount = originalPrice - discountAmount;
+
+    // Calculate tax and service fee
     double taxAmount = netPriceAfterDiscount * vatRate;
     double serviceFeeAmount = netPriceAfterDiscount * serviceFeeRate;
-    double finalPrice = netPriceAfterDiscount + taxAmount + serviceFeeAmount;
+
+    // Calculate final price if not provided
+    double calculatedFinalPrice = finalPrice != null ? finalPrice
+        : netPriceAfterDiscount + taxAmount + serviceFeeAmount;
 
     // Create FeeResponse objects
     FeeResponse tax = FeeResponse.builder()
@@ -200,15 +317,16 @@ public class BookingService {
         .amount(serviceFeeAmount)
         .build();
 
-    // Step 7: Build and return response
-    return BookingPricePreviewResponse.builder()
-        .originalPrice(subtotal)
+    // Create BookingPriceDetailsResponse
+    return BookingPriceDetailsResponse.builder()
+        .originalPrice(originalPrice)
         .discountAmount(discountAmount)
-        .appliedDiscount(appliedDiscount != null ? discountMapper.toDiscountBriefResponse(appliedDiscount) : null)
+        .appliedDiscount(
+            appliedDiscount != null ? discountMapper.toDiscountBriefResponse(appliedDiscount) : null)
         .netPriceAfterDiscount(netPriceAfterDiscount)
         .tax(tax)
         .serviceFee(serviceFee)
-        .finalPrice(finalPrice)
+        .finalPrice(calculatedFinalPrice)
         .build();
   }
 }
