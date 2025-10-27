@@ -2,9 +2,10 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { getUsers, getCurrentUser } from '@/lib/AdminAPI/userService'; // Import service
+import { getUsers, getCurrentUser } from '@/lib/AdminAPI/userService';
 import UsersTable from '@/components/Admin/staff_hotels/UsersTable';
 import Pagination from '@/components/Admin/pagination/Pagination';
+import UserFormModal from '@/components/Admin/staff_hotels/UserFormModal'; // << IMPORT MODAL MỚI
 import { PlusIcon } from '@heroicons/react/24/solid';
 import type { User } from '@/types';
 
@@ -26,8 +27,10 @@ export default function UsersPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
 
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingUser, setEditingUser] = useState<User | null>(null);
+
     useEffect(() => {
-        // Trong ứng dụng thật, bạn sẽ lấy currentUser từ useAuth()
         const user = getCurrentUser();
         setCurrentUser(user);
 
@@ -45,6 +48,40 @@ export default function UsersPage() {
         setCurrentPage(page);
     };
 
+    const handleEdit = (user: User) => {
+        setEditingUser(user);
+        setIsModalOpen(true);
+    };
+
+    const handleAddNew = () => {
+        setEditingUser(null);
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setEditingUser(null);
+    };
+
+    // HÀM XỬ LÝ LƯU DỮ LIỆU TỪ FORM
+    const handleSave = (formData: FormData) => {
+        const id = formData.get('id');
+        const username = formData.get('username');
+
+        if (id) {
+            // Logic cập nhật
+            alert(`(Giả lập) Đã cập nhật người dùng: ${username}`);
+            console.log("Cập nhật dữ liệu:", Object.fromEntries(formData.entries()));
+        } else {
+            // Logic thêm mới
+            alert(`(Giả lập) Đã thêm người dùng mới: ${username}`);
+            console.log("Thêm mới dữ liệu:", Object.fromEntries(formData.entries()));
+        }
+        // Sau khi lưu, đóng modal và tải lại dữ liệu (tùy chọn)
+        handleCloseModal();
+        // Cân nhắc gọi lại hàm loadUsers() để cập nhật bảng
+    };
+
     if (isLoading || !currentUser) {
         return <p>Đang tải dữ liệu người dùng...</p>;
     }
@@ -53,7 +90,7 @@ export default function UsersPage() {
         <div>
             <PageHeader title={<span style={{ color: '#2563eb' }}>Quản lý Người dùng</span>}>
                 <button
-                    // onClick={handleAddNew} // Sẽ thêm logic modal sau
+                    onClick={handleAddNew}
                     className="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 font-semibold shadow-sm"
                 >
                     <PlusIcon className="h-5 w-5" />
@@ -61,12 +98,20 @@ export default function UsersPage() {
                 </button>
             </PageHeader>
 
-            <UsersTable users={users} currentUser={currentUser} />
+            <UsersTable users={users} currentUser={currentUser} onEdit={handleEdit} />
 
             <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={handlePageChange}
+            />
+
+            {/* RENDER MODAL Ở ĐÂY */}
+            <UserFormModal
+                isOpen={isModalOpen}
+                onClose={handleCloseModal}
+                user={editingUser}
+                onSave={handleSave}
             />
         </div>
     );
