@@ -7,24 +7,63 @@ export interface Hotel {
     name: string;
     address: string;
     status: HotelStatus;
-    ownerId?: string; // Tùy chọn
-    imageUrl?: string; // Thêm trường này để hiển thị ảnh
+    ownerId?: string;
+    imageUrl?: string;
+    stt?: number;
+    description?: string;
 
 }
+// types/index.ts
 
-// Bạn có thể thêm các type khác ở đây
-export interface User {
+
+export type DiscountType = 'PERCENT' | 'AMOUNT';
+
+export interface Discount {
     id: string;
-    name: string;
-    email: string;
-    role: 'ADMIN' | 'HOTEL_MANAGER' | 'USER';
+    code: string;
+    discountValue: number;
+    discountType: DiscountType; // 'PERCENT' cho % hoặc 'AMOUNT' cho VND
+    expiresAt: Date;
+    createdAt: Date;
 }
+export type RoomStatus = 'AVAILABLE' | 'OCCUPIED' | 'MAINTENANCE';
 
-export interface Booking {
+export interface Room {
     id: string;
     hotelId: string;
-    userId: string;
+    name: string;
+    type: string;
+    price: number;
+    status: RoomStatus;
+    image: string;
+}
+
+
+// ... các type khác
+
+export type UserRole = 'SUPER_ADMIN' | 'HOTEL_ADMIN' | 'HOTEL_STAFF' | 'CUSTOMER';
+export type UserStatus = 'ACTIVE' | 'INACTIVE';
+
+export interface User {
+    id: number;
+    username: string;
+    email: string;
+    avatarUrl: string;
+    role: UserRole;
+    status: UserStatus;
+}
+
+
+export type PaymentStatus = 'PAID' | 'UNPAID' | 'PENDING' | 'REFUNDED';
+export type BookingStatus = 'COMPLETED' | 'CONFIRMED' | 'PENDING' | 'CANCELLED' | 'CHECKED_IN';
+
+export interface Booking {
+    id: number;
+    customerName: string;
+    roomNumbers: string[]; // Mảng chứa các số phòng, ví dụ ['03', '04']
     checkInDate: Date;
     checkOutDate: Date;
-    status: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+    totalAmount: number;
+    paymentStatus: PaymentStatus;
+    bookingStatus: BookingStatus;
 }

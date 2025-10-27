@@ -1,42 +1,81 @@
+// file: src/components/admin/layout/AdminSidebar.tsx
+
 "use client";
-// src/components/admin/layout/AdminSidebar.tsx
+
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import {
+    ChartBarIcon, BuildingOffice2Icon, KeyIcon, CalendarDaysIcon,
+    CreditCardIcon, TicketIcon, MegaphoneIcon, UserGroupIcon,
+    ChatBubbleLeftRightIcon,
+} from '@heroicons/react/24/outline';
 
 const navLinks = [
-    { href: '/admin-dashboard', label: 'Trang chủ', icon: 'bi-house-door-fill' },
-    { href: '/admin-rooms', label: 'Quản lý phòng', icon: 'bi-building-fill' },
-    { href: '/admin-hotels', label: 'Quản lý khách sạn', icon: 'bi-building' },
-    { href: 'admin-bookings', label: 'Quản lý đặt phòng', icon: 'bi-calendar-check' },
-    { href: '/admin-users', label: 'Quản lý người dùng', icon: 'bi-person-fill' },
-    { href: '/admin-marketing', label: 'Marketing', icon: 'bi-megaphone' },
+    { href: '/admin-dashboard', label: 'Thống kê', icon: ChartBarIcon },
+    { href: '/admin-hotels', label: 'Khách sạn', icon: BuildingOffice2Icon },
+    { href: '/admin-rooms', label: 'Phòng', icon: KeyIcon },
+    { href: '/admin-bookings', label: 'Đặt phòng', icon: CalendarDaysIcon },
+    { href: '/admin-payments', label: 'Thanh Toán', icon: CreditCardIcon },
+    { href: '/admin-discounts', label: 'Mã giảm giá', icon: TicketIcon },
+    { href: '/admin-users', label: 'Người dùng', icon: UserGroupIcon },
+    { href: '/admin-reviews', label: 'Đánh giá', icon: ChatBubbleLeftRightIcon },
+    { href: '/admin-marketing', label: 'Marketing', icon: MegaphoneIcon },
 ];
 
-export default function AdminSidebar() {
+interface AdminSidebarProps {
+    isCollapsed: boolean;
+}
+
+export default function AdminSidebar({ isCollapsed }: AdminSidebarProps) {
     const pathname = usePathname();
 
     return (
-        <aside className="bg-dark text-white p-0" style={{ width: '250px', minHeight: '100vh', boxShadow: '2px 0 8px rgba(0,0,0,0.04)' }}>
-            <div className="p-3 pb-2 border-bottom border-secondary" style={{ fontWeight: 700, fontSize: 18, letterSpacing: 1, color: '#4fd1c5' }}>
-                <i className="bi bi-person-circle me-2" style={{ fontSize: 22 }}></i> Admin Menu
+        <aside
+            className={`
+                fixed left-0 top-0 bottom-0 bg-white shadow-md z-50
+                flex flex-col
+                transition-all duration-300 ease-in-out
+                ${isCollapsed ? 'w-20' : 'w-[250px]'}
+            `}
+        >
+            <div className="h-[70px] flex items-center justify-center border-b border-gray-200">
+                <Link href="/admin-dashboard" className="text-2xl font-bold text-blue-600 no-underline transition-all">
+                    {isCollapsed ? 'A' : 'AdminPanel'}
+                </Link>
             </div>
-            <ul className="nav flex-column mb-2 mt-2">
-                {navLinks.map((link) => {
-                    const isActive = pathname.startsWith(link.href);
-                    return (
-                        <li key={link.href} className="nav-item mb-1">
-                            <Link
-                                href={link.href}
-                                className={`nav-link d-flex align-items-center px-3 py-2 rounded-2 transition ${isActive ? 'bg-info text-white fw-bold' : 'text-white'
-                                    } hover:bg-secondary`}
-                                style={{ fontSize: 15 }}
-                            >
-                                <i className={`bi ${link.icon} me-2`} style={{ fontSize: 18 }}></i> {link.label}
-                            </Link>
-                        </li>
-                    );
-                })}
-            </ul>
+
+            <nav className="flex-grow p-2 mt-4 space-y-2">
+                <ul>
+                    {navLinks.map((link) => {
+                        const isActive = pathname.startsWith(link.href);
+                        const Icon = link.icon;
+
+                        return (
+                            <li key={link.href}>
+                                <Link
+                                    href={link.href}
+                                    prefetch={false}
+                                    className={`
+    flex items-center gap-x-4 py-3 rounded-lg transition-colors duration-100 ease-in-out
+    ${isCollapsed ? 'px-3 justify-center' : 'px-4'}
+    ${isActive
+                                            ? 'bg-blue-50 text-blue-500 font-medium border-l-4 border-blue-400'
+                                            : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                                        }
+    no-underline hover:no-underline focus:no-underline
+  `}
+                                    title={isCollapsed ? link.label : ''}
+                                >
+                                    <Icon className="h-6 w-6 flex-shrink-0" />
+                                    {!isCollapsed && <span className="truncate">{link.label}</span>}
+                                </Link>
+
+
+                            </li>
+                        );
+                    })}
+                </ul>
+            </nav>
         </aside>
     );
 }

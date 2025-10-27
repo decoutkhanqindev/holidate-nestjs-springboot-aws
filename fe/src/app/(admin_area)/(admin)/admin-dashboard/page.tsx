@@ -5,11 +5,11 @@ import { BookingCharts } from '@/components/Admin/BookingCharts';
 export default function DashboardPage() {
     return (
         <div className="container-fluid">
+
             <PageHeader title={<span style={{ color: '#2563eb', fontWeight: 700, fontSize: '2rem' }}>Trang tổng quan</span>} />
-            {/* Thống kê đặt phòng + Bản đồ thống kê */}
+
             <BookingCharts />
-            {/* ...existing code... */}
-            {/* Thông Báo */}
+
             <div className="row mt-4">
                 <div className="col-md-3 mb-3">
                     <div className="card text-white bg-info h-100 shadow">
@@ -149,11 +149,11 @@ export default function DashboardPage() {
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td>a</td>
+                                    <td>a</td>
+                                    <td>a</td>
+                                    <td>a</td>
+                                    <td>a</td>
                                 </tr>
                             </tbody>
                         </table>

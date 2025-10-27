@@ -1,12 +1,12 @@
-// app/admin-bookings/page.tsx
+// app/admin-users/page.tsx
 "use client";
 
 import { useState, useEffect } from 'react';
-import { getBookings } from '@/lib/AdminAPI/bookingService';
-import BookingsTable from '@/components/Admin/booking/BookingsTable';
+import { getUsers, getCurrentUser } from '@/lib/AdminAPI/userService'; // Import service
+import UsersTable from '@/components/Admin/staff_hotels/UsersTable';
 import Pagination from '@/components/Admin/pagination/Pagination';
 import { PlusIcon } from '@heroicons/react/24/solid';
-import type { Booking } from '@/types';
+import type { User } from '@/types';
 
 function PageHeader({ title, children }: { title: React.ReactNode, children?: React.ReactNode }) {
     return (
@@ -19,50 +19,55 @@ function PageHeader({ title, children }: { title: React.ReactNode, children?: Re
 
 const ITEMS_PER_PAGE = 5;
 
-export default function BookingsPage() {
-    const [bookings, setBookings] = useState<Booking[]>([]);
+export default function UsersPage() {
+    const [users, setUsers] = useState<User[]>([]);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
 
     useEffect(() => {
-        async function loadBookings() {
+        // Trong ứng dụng thật, bạn sẽ lấy currentUser từ useAuth()
+        const user = getCurrentUser();
+        setCurrentUser(user);
+
+        async function loadUsers() {
             setIsLoading(true);
-            const response = await getBookings({ page: currentPage, limit: ITEMS_PER_PAGE });
-            setBookings(response.data);
+            const response = await getUsers({ page: currentPage, limit: ITEMS_PER_PAGE });
+            setUsers(response.data);
             setTotalPages(response.totalPages);
             setIsLoading(false);
         }
-        loadBookings();
+        loadUsers();
     }, [currentPage]);
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
     };
 
+    if (isLoading || !currentUser) {
+        return <p>Đang tải dữ liệu người dùng...</p>;
+    }
+
     return (
         <div>
-            <PageHeader title={<span style={{ color: '#2563eb' }}>Quản lý Đặt phòng</span>}>
+            <PageHeader title={<span style={{ color: '#2563eb' }}>Quản lý Người dùng</span>}>
                 <button
+                    // onClick={handleAddNew} // Sẽ thêm logic modal sau
                     className="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 font-semibold shadow-sm"
                 >
                     <PlusIcon className="h-5 w-5" />
-                    Thêm Đặt Phòng
+                    Thêm Người Dùng
                 </button>
             </PageHeader>
 
-            {isLoading ? (
-                <p>Đang tải dữ liệu đặt phòng...</p>
-            ) : (
-                <>
-                    <BookingsTable bookings={bookings} />
-                    <Pagination
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        onPageChange={handlePageChange}
-                    />
-                </>
-            )}
+            <UsersTable users={users} currentUser={currentUser} />
+
+            <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+            />
         </div>
     );
 }

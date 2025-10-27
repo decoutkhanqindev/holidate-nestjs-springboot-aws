@@ -3,10 +3,17 @@ import type { Hotel } from "@/types"; // Giả sử bạn có file types/index.t
 
 // DỮ LIỆU GIẢ - THAY THẾ BẰNG API THẬT CỦA BẠN
 let MOCK_HOTELS: Hotel[] = [
+
     { id: '1', name: 'Khách sạn Grand Saigon', address: '123 Đồng Khởi, Q.1, TP.HCM', status: 'ACTIVE', imageUrl: 'https://picsum.photos/seed/h001/200/200' },
     { id: '2', name: 'Hanoi Pearl Hotel', address: 'Số 6, Bà Triệu, Hoàn Kiếm, Hà Nội', status: 'ACTIVE', imageUrl: 'https://picsum.photos/seed/h002/200/200' },
+
     { id: '3', name: 'Resort Biển Đà Nẵng', address: 'Võ Nguyên Giáp, Sơn Trà, Đà Nẵng', status: 'PENDING', imageUrl: 'https://picsum.photos/seed/h003/200/200' },
     { id: '4', name: 'Khách sạn bị ẩn', address: '456 Lê Lợi, Q.1, TP.HCM', status: 'HIDDEN', imageUrl: 'https://picsum.photos/seed/h004/200/200' },
+    { id: '5', name: 'Hanoi Pearl Hotel', address: 'Số 6, Bà Triệu, Hoàn Kiếm, Hà Nội', status: 'ACTIVE', imageUrl: 'https://picsum.photos/seed/h002/200/200' },
+    { id: '6', name: 'Hanoi Pearl Hotel', address: 'Số 6, Bà Triệu, Hoàn Kiếm, Hà Nội', status: 'ACTIVE', imageUrl: 'https://picsum.photos/seed/h002/200/200' },
+    { id: '7', name: 'Hanoi Pearl Hotel', address: 'Số 6, Bà Triệu, Hoàn Kiếm, Hà Nội', status: 'ACTIVE', imageUrl: 'https://picsum.photos/seed/h002/200/200' },
+    { id: '8', name: 'Hanoi Pearl Hotel', address: 'Số 6, Bà Triệu, Hoàn Kiếm, Hà Nội', status: 'ACTIVE', imageUrl: 'https://picsum.photos/seed/h002/200/200' },
+
 ];
 
 // Hàm lấy danh sách khách sạn

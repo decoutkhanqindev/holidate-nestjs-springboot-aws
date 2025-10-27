@@ -25,7 +25,7 @@ export default async function HotelsPage() {
             <PageHeader title={<span style={{ color: '#2563eb', fontWeight: 700 }}>Quản lý Khách sạn</span>}>
                 {/* NÚT THÊM MỚI */}
                 <Link
-                    href="/hotels/new-placeholder" // Link tới trang thêm mới giả lập
+                    href="/admin-hotels/new" // << SỬA Ở ĐÂY
                     className="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all"
                 >
                     <PlusIcon className="h-5 w-5" />

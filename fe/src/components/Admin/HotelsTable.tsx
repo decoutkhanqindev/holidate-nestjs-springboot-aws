@@ -52,7 +52,7 @@ export default function HotelsTable({ hotels }: { hotels: Hotel[] }) {
                                         Xem
                                     </button>
                                     <Link
-                                        href={`/hotels/${hotel.id}`}
+                                        href={`/admin-hotels/${hotel.id}`} // << Đảm bảo nó chính xác là thế này
                                         className="text-blue-600 font-bold hover:text-pink-500 underline px-2 py-1 rounded transition"
                                     >
                                         Sửa

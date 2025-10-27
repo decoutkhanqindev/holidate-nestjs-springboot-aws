@@ -8,7 +8,7 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, children }: PageHeaderProps) {
     return (
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex items-center justify-between rounded-1 ">
             <h1 className="text-3xl font-bold text-gray-800">{title}</h1>
             {children && <div>{children}</div>}
         </div>
