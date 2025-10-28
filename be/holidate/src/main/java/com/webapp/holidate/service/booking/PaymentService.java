@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
@@ -57,168 +58,178 @@ public class PaymentService {
   @Value(AppProperties.FRONTEND_URL)
   String frontendUrl;
 
+  @NonFinal
+  @Value(AppProperties.BACKEND_URL)
+  String backendUrl;
+
   public String createPaymentUrl(Booking booking, HttpServletRequest request) {
-    try {
-      // Create payment entity
-      Payment payment = Payment.builder()
-          .booking(booking)
-          .amount(booking.getFinalPrice())
-          .paymentMethod("vnpay")
-          .status(PaymentStatusType.PENDING.getValue())
-          .build();
+    // Create payment entity
+    Payment payment = Payment.builder()
+        .booking(booking)
+        .amount(booking.getFinalPrice())
+        .paymentMethod("vnpay")
+        .status(PaymentStatusType.PENDING.getValue())
+        .build();
 
-      Payment savedPayment = paymentRepository.save(payment);
+    Payment savedPayment = paymentRepository.save(payment);
 
-      // Get client IP address
-      String ipAddress = getIpAddress(request);
+    // Get client IP address
+    String ipAddress = getIpAddress(request);
 
-      // Create VNPay parameters
-      Map<String, String> vnpParams = new TreeMap<>();
-      vnpParams.put("vnp_Version", "2.1.0");
-      vnpParams.put("vnp_Command", "pay");
-      vnpParams.put("vnp_TmnCode", vnpayTmnCode);
-      vnpParams.put("vnp_Amount", String.valueOf((long) (booking.getFinalPrice() * 100))); // Convert to cents
-      vnpParams.put("vnp_CurrCode", "VND");
-      vnpParams.put("vnp_TxnRef", savedPayment.getId());
-      vnpParams.put("vnp_OrderInfo", "Payment for booking: " + booking.getId());
-      vnpParams.put("vnp_OrderType", "other");
-      vnpParams.put("vnp_Locale", "vn");
-      vnpParams.put("vnp_ReturnUrl", frontendUrl + "/payment/callback");
-      vnpParams.put("vnp_IpAddr", ipAddress);
-      vnpParams.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
-      vnpParams.put("vnp_ExpireDate",
-          LocalDateTime.now().plusMinutes(15).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+    // Create VNPay parameters
+    Map<String, String> vnpParams = new TreeMap<>();
+    vnpParams.put("vnp_Version", "2.1.0");
+    vnpParams.put("vnp_Command", "pay");
+    vnpParams.put("vnp_TmnCode", vnpayTmnCode);
+    vnpParams.put("vnp_Amount", String.valueOf((long) (booking.getFinalPrice() * 100))); // Convert to cents
+    vnpParams.put("vnp_CurrCode", "VND");
+    vnpParams.put("vnp_TxnRef", savedPayment.getId());
+    vnpParams.put("vnp_OrderInfo", "Payment for booking: " + booking.getId());
+    vnpParams.put("vnp_OrderType", "other");
+    vnpParams.put("vnp_Locale", "vn");
+    vnpParams.put("vnp_ReturnUrl", backendUrl + "/payment/callback");
+    vnpParams.put("vnp_IpAddr", ipAddress);
+    vnpParams.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+    vnpParams.put("vnp_ExpireDate",
+        LocalDateTime.now().plusMinutes(15).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
 
-      // Build query string
-      StringBuilder queryString = new StringBuilder();
-      for (Map.Entry<String, String> entry : vnpParams.entrySet()) {
-        if (entry.getValue() != null && !entry.getValue().isEmpty()) {
+    // Build query string with URL encoding
+    StringBuilder queryString = new StringBuilder();
+    for (Map.Entry<String, String> entry : vnpParams.entrySet()) {
+      if (entry.getValue() != null && !entry.getValue().isEmpty()) {
+        try {
           queryString.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8.toString()));
           queryString.append("=");
           queryString.append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8.toString()));
           queryString.append("&");
+        } catch (UnsupportedEncodingException e) {
+          throw new AppException(ErrorType.PAYMENT_URL_GENERATION_FAILED);
         }
       }
-
-      // Remove last '&'
-      String query = queryString.toString();
-      if (query.endsWith("&")) {
-        query = query.substring(0, query.length() - 1);
-      }
-
-      // Generate secure hash
-      String secureHash = hmacSHA512(vnpayHashSecret, query);
-
-      // Build final URL
-      return vnpayApiUrl + "?" + query + "&vnp_SecureHash=" + secureHash;
-
-    } catch (Exception e) {
-      throw new AppException(ErrorType.PAYMENT_URL_GENERATION_FAILED);
     }
+
+    // Remove last '&'
+    String query = queryString.toString();
+    if (query.endsWith("&")) {
+      query = query.substring(0, query.length() - 1);
+    }
+
+    // Generate secure hash using the same method as validation
+    String secureHash = hmacSHA512(vnpayHashSecret, query);
+
+    // Build final URL
+    String paymentUrl = vnpayApiUrl + "?" + query + "&vnp_SecureHash=" + secureHash;
+
+    return paymentUrl;
   }
 
   @Transactional
   public String handleVnPayCallback(Map<String, String> vnpayParams) {
-    try {
-      // Validate signature
-      if (!validateSignature(vnpayParams)) {
-        return frontendUrl + "/payment/failure?reason=invalid_signature";
-      }
+    // Validate signature
+    if (!validateSignature(vnpayParams)) {
+      return frontendUrl + "/payment/failure?reason=invalid_signature";
+    }
 
-      // Get transaction reference (payment ID)
-      String transactionRef = vnpayParams.get("vnp_TxnRef");
-      if (transactionRef == null || transactionRef.isEmpty()) {
-        return frontendUrl + "/payment/failure?reason=missing_transaction_ref";
-      }
+    // Get transaction reference (payment ID)
+    String transactionRef = vnpayParams.get("vnp_TxnRef");
+    if (transactionRef == null || transactionRef.isEmpty()) {
+      return frontendUrl + "/payment/failure?reason=missing_transaction_ref";
+    }
 
-      // Find payment by ID
-      Payment payment = paymentRepository.findById(transactionRef)
-          .orElseThrow(() -> new AppException(ErrorType.BOOKING_NOT_FOUND));
+    // Find payment by ID
+    Payment payment = paymentRepository.findById(transactionRef)
+        .orElseThrow(() -> new AppException(ErrorType.BOOKING_NOT_FOUND));
 
-      // Check if payment is already processed
-      if (!PaymentStatusType.PENDING.getValue().equals(payment.getStatus())) {
-        return frontendUrl + "/payment/failure?reason=payment_already_processed";
-      }
+    // Check if payment is already processed
+    if (!PaymentStatusType.PENDING.getValue().equals(payment.getStatus())) {
+      return frontendUrl + "/payment/failure?reason=payment_already_processed";
+    }
 
-      // Get response code
-      String responseCode = vnpayParams.get("vnp_ResponseCode");
-      String transactionId = vnpayParams.get("vnp_TransactionNo");
+    // Get response code
+    String responseCode = vnpayParams.get("vnp_ResponseCode");
+    String transactionId = vnpayParams.get("vnp_TransactionNo");
 
-      if ("00".equals(responseCode)) {
-        // Payment successful
-        payment.setStatus(PaymentStatusType.SUCCESS.getValue());
-        payment.setTransactionId(transactionId);
-        payment.setCompletedAt(LocalDateTime.now());
+    if ("00".equals(responseCode)) {
+      // Payment successful
+      payment.setStatus(PaymentStatusType.SUCCESS.getValue());
+      payment.setTransactionId(transactionId);
+      payment.setCompletedAt(LocalDateTime.now());
 
-        // Update booking status
-        Booking booking = payment.getBooking();
-        booking.setStatus(BookingStatusType.CONFIRMED.getValue());
-        booking.setUpdatedAt(LocalDateTime.now());
+      // Update booking status
+      Booking booking = payment.getBooking();
+      booking.setStatus(BookingStatusType.CONFIRMED.getValue());
+      booking.setUpdatedAt(LocalDateTime.now());
 
-        bookingRepository.save(booking);
-        paymentRepository.save(payment);
+      bookingRepository.save(booking);
+      paymentRepository.save(payment);
 
-        return frontendUrl + "/payment/success?bookingId=" + booking.getId();
-      } else {
-        // Payment failed
-        payment.setStatus(PaymentStatusType.FAILED.getValue());
-        payment.setTransactionId(transactionId);
-        payment.setCompletedAt(LocalDateTime.now());
+      return frontendUrl + "/payment/success?bookingId=" + booking.getId();
+    } else {
+      // Payment failed
+      payment.setStatus(PaymentStatusType.FAILED.getValue());
+      payment.setTransactionId(transactionId);
+      payment.setCompletedAt(LocalDateTime.now());
 
-        // Update booking status
-        Booking booking = payment.getBooking();
-        booking.setStatus(BookingStatusType.CANCELLED.getValue());
-        booking.setUpdatedAt(LocalDateTime.now());
+      // Update booking status
+      Booking booking = payment.getBooking();
+      booking.setStatus(BookingStatusType.CANCELLED.getValue());
+      booking.setUpdatedAt(LocalDateTime.now());
 
-        // IMPORTANT: Release room inventory when payment fails
-        // This reverses the room hold from the booking creation process
-        roomInventoryService.updateAvailabilityForCancellation(
-            booking.getRoom().getId(),
-            booking.getCheckInDate(),
-            booking.getCheckOutDate(),
-            booking.getNumberOfRooms());
+      // IMPORTANT: Release room inventory when payment fails
+      // This reverses the room hold from the booking creation process
+      roomInventoryService.updateAvailabilityForCancellation(
+          booking.getRoom().getId(),
+          booking.getCheckInDate(),
+          booking.getCheckOutDate(),
+          booking.getNumberOfRooms());
 
-        bookingRepository.save(booking);
-        paymentRepository.save(payment);
+      bookingRepository.save(booking);
+      paymentRepository.save(payment);
 
-        return frontendUrl + "/payment/failure?reason=payment_failed&code=" + responseCode;
-      }
-
-    } catch (Exception e) {
-      return frontendUrl + "/payment/failure?reason=processing_error";
+      return frontendUrl + "/payment/failure?reason=payment_failed&code=" + responseCode;
     }
   }
 
-  private boolean validateSignature(Map<String, String> vnpayParams) {
-    try {
-      String receivedHash = vnpayParams.get("vnp_SecureHash");
-      if (receivedHash == null || receivedHash.isEmpty()) {
-        return false;
-      }
-
-      // Remove signature from params for validation
-      Map<String, String> paramsForValidation = new TreeMap<>(vnpayParams);
-      paramsForValidation.remove("vnp_SecureHash");
-      paramsForValidation.remove("vnp_SecureHashType");
-
-      // Build hash data
-      String hashData = buildHashData(paramsForValidation);
-
-      // Generate hash
-      String generatedHash = hmacSHA512(vnpayHashSecret, hashData);
-
-      return receivedHash.equals(generatedHash);
-    } catch (Exception e) {
+  public boolean validateSignature(Map<String, String> vnpayParams) {
+    String receivedHash = vnpayParams.get("vnp_SecureHash");
+    if (receivedHash == null || receivedHash.isEmpty()) {
       return false;
     }
+
+    // Remove signature from params for validation
+    Map<String, String> paramsForValidation = new TreeMap<>(vnpayParams);
+    paramsForValidation.remove("vnp_SecureHash");
+    paramsForValidation.remove("vnp_SecureHashType");
+
+    // Build hash data - VNPay requires specific parameter order
+    String hashData = buildHashDataForValidation(paramsForValidation);
+
+    // Generate hash
+    String generatedHash = hmacSHA512(vnpayHashSecret, hashData);
+
+    return receivedHash.equals(generatedHash);
   }
 
-  private String buildHashData(Map<String, String> params) {
+  private String buildHashDataForValidation(Map<String, String> params) {
+    // VNPay requires specific parameter order for signature validation
+    // Based on VNPay documentation, parameters should be sorted alphabetically
+    // and concatenated with '&' separator
+    // IMPORTANT: VNPay requires URL encoding for hash calculation
+
     StringBuilder hashData = new StringBuilder();
 
+    // Sort parameters by key (TreeMap already does this)
     for (Map.Entry<String, String> entry : params.entrySet()) {
       if (entry.getValue() != null && !entry.getValue().isEmpty()) {
-        hashData.append(entry.getKey()).append("=").append(entry.getValue()).append("&");
+        try {
+          // VNPay requires URL encoding for hash calculation
+          String encodedKey = URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8.toString());
+          String encodedValue = URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8.toString());
+          hashData.append(encodedKey).append("=").append(encodedValue).append("&");
+        } catch (UnsupportedEncodingException e) {
+          // Fallback to raw values if encoding fails
+          hashData.append(entry.getKey()).append("=").append(entry.getValue()).append("&");
+        }
       }
     }
 

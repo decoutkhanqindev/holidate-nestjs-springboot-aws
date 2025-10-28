@@ -28,7 +28,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
-import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.PessimisticLockingFailureException;
@@ -38,7 +37,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Slf4j
 @Service
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
@@ -72,11 +70,7 @@ public class BookingService {
       try {
         return performBookingCreation(request, httpRequest);
       } catch (PessimisticLockingFailureException e) {
-        log.warn("Pessimistic locking failure during booking creation for roomId: {} (attempt {}/{}). Retrying...",
-            request.getRoomId(), attempt, maxRetries);
-
         if (attempt == maxRetries) {
-          log.error("Max retries exceeded for booking creation. Throwing exception.");
           throw new AppException(ErrorType.CONCURRENT_BOOKING_FAILED);
         }
 
@@ -185,7 +179,6 @@ public class BookingService {
     BookingPriceDetailsResponse priceDetails = calculatePriceDetails(savedBooking);
     response.setPriceDetails(priceDetails);
 
-    log.info("Successfully created booking: {} for roomId: {}", savedBooking.getId(), request.getRoomId());
     return response;
   }
 

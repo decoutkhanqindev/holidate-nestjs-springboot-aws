@@ -89,6 +89,9 @@ public class SecurityConfig {
                                 // 6. discount endpoints
                                 .requestMatchers(HttpMethod.GET, DiscountEndpoints.DISCOUNTS + ALL_ENDPOINTS)
                                 .permitAll()
+                                // 7. payment callback endpoints (VNPay callback)
+                                .requestMatchers(HttpMethod.GET, BookingEndpoints.PAYMENT + BookingEndpoints.CALLBACK)
+                                .permitAll()
 
                                 // B. protected endpoints
                                 // I. user role

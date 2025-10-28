@@ -34,8 +34,8 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
   UserAuthInfoRepository authInfoRepository;
 
   @NonFinal
-  @Value(AppProperties.FRONTEND_LOGIN_SUCCESS_URL)
-  String frontendLoginSuccessUrl;
+  @Value(AppProperties.FRONTEND_URL)
+  String frontendUrl;
 
   @NonFinal
   @Value(AppProperties.JWT_ACCESS_TOKEN_EXPIRATION_MILLIS)
@@ -73,6 +73,6 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
     int maxAge = (int) (refreshTokenExpirationMillis / 1000);
     ResponseUtil.handleAuthCookiesResponse(response, tokenCookieName, accessToken, maxAge);
 
-    getRedirectStrategy().sendRedirect(request, response, frontendLoginSuccessUrl);
+    getRedirectStrategy().sendRedirect(request, response, frontendUrl);
   }
 }

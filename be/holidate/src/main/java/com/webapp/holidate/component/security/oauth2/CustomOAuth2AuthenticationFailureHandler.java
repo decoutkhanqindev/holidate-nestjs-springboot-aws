@@ -20,8 +20,8 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class CustomOAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationFailureHandler {
   @NonFinal
-  @Value(AppProperties.FRONTEND_LOGIN_FAILURE_URL)
-  String frontendLoginFailureUrl;
+  @Value(AppProperties.FRONTEND_URL)
+  String frontendUrl;
 
   @NonFinal
   @Value(AppProperties.JWT_TOKEN_COOKIE_NAME)
@@ -31,6 +31,6 @@ public class CustomOAuth2AuthenticationFailureHandler extends SimpleUrlAuthentic
   public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
       AuthenticationException exception) throws IOException {
     ResponseUtil.handleAuthCookiesResponse(response, tokenCookieName, null, 0);
-    getRedirectStrategy().sendRedirect(request, response, frontendLoginFailureUrl);
+    getRedirectStrategy().sendRedirect(request, response, frontendUrl);
   }
 }

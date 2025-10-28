@@ -24,8 +24,7 @@ public class EnvVariables {
   public static final String GOOGLE_CLIENT_ID = "GOOGLE_CLIENT_ID";
   public static final String GOOGLE_CLIENT_SECRET = "GOOGLE_CLIENT_SECRET";
   public static final String FRONTEND_URL = "FRONTEND_URL";
-  public static final String FRONTEND_LOGIN_SUCCESS_URL = "FRONTEND_LOGIN_SUCCESS_URL";
-  public static final String FRONTEND_LOGIN_FAILURE_URL = "FRONTEND_LOGIN_FAILURE_URL";
+  public static final String BACKEND_URL = "BACKEND_URL";
   public static final String OTP_EXPIRATION_MILLIS = "OTP_EXPIRATION_MILLIS";
   public static final String OTP_MAX_ATTEMPTS = "OTP_MAX_ATTEMPTS";
   public static final String OTP_BLOCK_TIME_MILLIS = "OTP_BLOCK_TIME_MILLIS";
