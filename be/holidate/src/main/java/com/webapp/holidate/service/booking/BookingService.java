@@ -28,14 +28,17 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
@@ -62,6 +65,34 @@ public class BookingService {
 
   @Transactional
   public BookingResponse create(BookingCreationRequest request, HttpServletRequest httpRequest) {
+    int maxRetries = 3;
+    int retryDelay = 100; // milliseconds
+
+    for (int attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return performBookingCreation(request, httpRequest);
+      } catch (PessimisticLockingFailureException e) {
+        log.warn("Pessimistic locking failure during booking creation for roomId: {} (attempt {}/{}). Retrying...",
+            request.getRoomId(), attempt, maxRetries);
+
+        if (attempt == maxRetries) {
+          log.error("Max retries exceeded for booking creation. Throwing exception.");
+          throw new AppException(ErrorType.CONCURRENT_BOOKING_FAILED);
+        }
+
+        try {
+          Thread.sleep(retryDelay * attempt); // Exponential backoff
+        } catch (InterruptedException ie) {
+          Thread.currentThread().interrupt();
+          throw new AppException(ErrorType.UNKNOWN_ERROR);
+        }
+      }
+    }
+
+    throw new AppException(ErrorType.UNKNOWN_ERROR);
+  }
+
+  private BookingResponse performBookingCreation(BookingCreationRequest request, HttpServletRequest httpRequest) {
     // Step 1: Validate and fetch entities
     User user = userRepository.findById(request.getUserId())
         .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
@@ -78,11 +109,11 @@ public class BookingService {
     LocalDate today = LocalDate.now();
 
     if (checkInDate.isBefore(today)) {
-      throw new AppException(ErrorType.CHECK_IN_OUT_DATE_NOT_BLANK);
+      throw new AppException(ErrorType.CHECK_IN_DATE_INVALID);
     }
 
     if (checkOutDate.isBefore(checkInDate) || checkOutDate.isEqual(checkInDate)) {
-      throw new AppException(ErrorType.CHECK_IN_OUT_DATE_NOT_BLANK);
+      throw new AppException(ErrorType.CHECK_OUT_DATE_INVALID);
     }
 
     // Step 2: Validate room capacity based on number of rooms
@@ -100,7 +131,9 @@ public class BookingService {
       throw new AppException(ErrorType.ROOM_NOT_AVAILABLE);
     }
 
-    // Step 3: Check room availability and calculate pricing
+    // Step 3: Check room availability and calculate pricing with pessimistic
+    // locking
+    // This will lock the inventory records to prevent concurrent modifications
     List<RoomInventory> inventories = roomInventoryService.validateRoomAvailability(
         request.getRoomId(), checkInDate, checkOutDate, numberOfRooms);
 
@@ -135,7 +168,7 @@ public class BookingService {
     // Save booking first
     Booking savedBooking = bookingRepository.save(booking);
 
-    // Update room inventory availability
+    // Update room inventory availability atomically (with locks already held)
     roomInventoryService.updateAvailabilityForBooking(
         request.getRoomId(), checkInDate, checkOutDate, numberOfRooms);
 
@@ -152,9 +185,11 @@ public class BookingService {
     BookingPriceDetailsResponse priceDetails = calculatePriceDetails(savedBooking);
     response.setPriceDetails(priceDetails);
 
+    log.info("Successfully created booking: {} for roomId: {}", savedBooking.getId(), request.getRoomId());
     return response;
   }
 
+  @Transactional
   public BookingPriceDetailsResponse getPricePreview(BookingPricePreviewRequest request) {
     // Step 1: Validate and fetch room
     Room room = roomRepository.findById(request.getRoomId())
@@ -166,11 +201,11 @@ public class BookingService {
     LocalDate today = LocalDate.now();
 
     if (startDate.isBefore(today)) {
-      throw new AppException(ErrorType.CHECK_IN_OUT_DATE_NOT_BLANK);
+      throw new AppException(ErrorType.CHECK_IN_DATE_INVALID);
     }
 
     if (endDate.isBefore(startDate) || endDate.isEqual(startDate)) {
-      throw new AppException(ErrorType.CHECK_IN_OUT_DATE_NOT_BLANK);
+      throw new AppException(ErrorType.CHECK_OUT_DATE_INVALID);
     }
 
     // Step 3: Validate room capacity based on number of rooms

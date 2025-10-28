@@ -153,6 +153,7 @@ public enum ErrorType {
   // booking errors
   BOOKING_NOT_FOUND(404, "Booking not found"),
   ROOM_NOT_AVAILABLE(400, "Room is not available for the selected dates"),
+  CONCURRENT_BOOKING_FAILED(409, "Booking failed due to concurrent access. Please try again"),
   INVALID_DISCOUNT_CODE(400, "Discount code is invalid or expired"),
   INSUFFICIENT_ROOM_QUANTITY(400, "Insufficient room quantity available"),
   NUMBER_OF_NIGHTS_NOT_BLANK(400, "Number of nights is required"),
@@ -173,6 +174,8 @@ public enum ErrorType {
   // check-in check-out errors
   CHECK_IN_OUT_TIME_INVALID(400, "Check-in and check-out time must be in HH:mm format"),
   CHECK_IN_OUT_DATE_NOT_BLANK(400, "Check-in and check-out date is required"),
+  CHECK_IN_DATE_INVALID(400, "Check-in date cannot be in the past"),
+  CHECK_OUT_DATE_INVALID(400, "Check-out date must be after check-in date"),
 
   // discount errors
   DISCOUNT_NOT_FOUND(404, "Discount not found"),

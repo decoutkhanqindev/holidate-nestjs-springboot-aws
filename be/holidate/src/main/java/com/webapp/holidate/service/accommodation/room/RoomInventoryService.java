@@ -205,8 +205,9 @@ public class RoomInventoryService {
   @Transactional
   public void updateAvailabilityForBooking(String roomId, LocalDate checkInDate, LocalDate checkOutDate,
       int numberOfRooms) {
-    // Get room inventories for the booking period
-    List<RoomInventory> inventories = roomInventoryRepository.findAllByRoomIdAndDateBetween(
+    // Get room inventories for the booking period with pessimistic locking
+    // This ensures no other transaction can modify these records until we're done
+    List<RoomInventory> inventories = roomInventoryRepository.findAllByRoomIdAndDateBetweenWithLock(
         roomId, checkInDate, checkOutDate.minusDays(1));
 
     // Validate that all required dates have inventory
@@ -215,13 +216,13 @@ public class RoomInventoryService {
       throw new AppException(ErrorType.ROOM_NOT_AVAILABLE);
     }
 
-    // Check availability and update inventory
+    // Check availability and update inventory atomically
     for (RoomInventory inventory : inventories) {
       if (inventory.getAvailableRooms() < numberOfRooms) {
         throw new AppException(ErrorType.INSUFFICIENT_ROOM_QUANTITY);
       }
 
-      // Update available rooms
+      // Update available rooms atomically
       int newAvailableRooms = inventory.getAvailableRooms() - numberOfRooms;
       inventory.setAvailableRooms(newAvailableRooms);
 
@@ -231,15 +232,15 @@ public class RoomInventoryService {
       }
     }
 
-    // Save all updated inventories
+    // Save all updated inventories - this will be atomic due to @Transactional
     roomInventoryRepository.saveAll(inventories);
   }
 
   @Transactional
   public void updateAvailabilityForCancellation(String roomId, LocalDate checkInDate, LocalDate checkOutDate,
       int numberOfRooms) {
-    // Get room inventories for the cancellation period
-    List<RoomInventory> inventories = roomInventoryRepository.findAllByRoomIdAndDateBetween(
+    // Get room inventories for the cancellation period with pessimistic locking
+    List<RoomInventory> inventories = roomInventoryRepository.findAllByRoomIdAndDateBetweenWithLock(
         roomId, checkInDate, checkOutDate.minusDays(1));
 
     // Validate that all required dates have inventory
@@ -248,7 +249,7 @@ public class RoomInventoryService {
       throw new AppException(ErrorType.ROOM_NOT_AVAILABLE);
     }
 
-    // Restore availability for each inventory
+    // Restore availability for each inventory atomically
     for (RoomInventory inventory : inventories) {
       // Restore available rooms
       int newAvailableRooms = inventory.getAvailableRooms() + numberOfRooms;
@@ -260,7 +261,7 @@ public class RoomInventoryService {
       }
     }
 
-    // Save all updated inventories
+    // Save all updated inventories - this will be atomic due to @Transactional
     roomInventoryRepository.saveAll(inventories);
   }
 
@@ -278,8 +279,9 @@ public class RoomInventoryService {
 
   public List<RoomInventory> validateRoomAvailability(String roomId, LocalDate checkInDate,
       LocalDate checkOutDate, int numberOfRooms) {
-    // Get room inventories for the booking period
-    List<RoomInventory> inventories = roomInventoryRepository.findAllByRoomIdAndDateBetween(
+    // Get room inventories for the booking period with pessimistic locking
+    // This ensures no other transaction can modify these records until we're done
+    List<RoomInventory> inventories = roomInventoryRepository.findAllByRoomIdAndDateBetweenWithLock(
         roomId, checkInDate, checkOutDate.minusDays(1));
 
     // Validate that all required dates have inventory

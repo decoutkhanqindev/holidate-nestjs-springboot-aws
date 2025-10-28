@@ -44,6 +44,8 @@ dependencies {
 
   implementation("org.springframework.boot:spring-boot-starter-mail:3.5.3")
 
+  implementation("org.springframework.boot:spring-boot-starter-aop")
+
   compileOnly("org.projectlombok:lombok")
   annotationProcessor("org.projectlombok:lombok")
 
