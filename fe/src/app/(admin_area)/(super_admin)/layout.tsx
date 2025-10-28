@@ -1,9 +1,8 @@
-// app/(admin_area)/(super_admin)/layout.tsx
 "use client";
 import { ReactNode, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/Admin/AuthContext_Admin/AuthContextAdmin";
-import SuperAdminLayout from "@/components/Admin/layout/SuperAdminLayout";
+import SuperAdminLayout from "@/components/AdminSuper/layout/SuperAdminLayout";
 
 export default function Layout({ children }: { children: ReactNode }) {
     const { isLoading, effectiveUser } = useAuth();
@@ -17,7 +16,6 @@ export default function Layout({ children }: { children: ReactNode }) {
         }
     }, [isLoading, effectiveUser, router]);
 
-    // Hiển thị loading trong khi chờ
     if (isLoading || !effectiveUser || effectiveUser.role !== 'SUPER_ADMIN') {
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -26,6 +24,6 @@ export default function Layout({ children }: { children: ReactNode }) {
         );
     }
 
-    // Nếu đúng quyền, hiển thị layout
+    // Nếu đúng quyền, chỉ cần gọi component layout và truyền children vào
     return <SuperAdminLayout>{children}</SuperAdminLayout>;
 }

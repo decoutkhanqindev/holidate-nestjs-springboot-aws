@@ -1,13 +1,8 @@
-/* src/app/(client)/search/SearchPage.module.css */
-
 .pageContainer {
     background-color: #f7f9fa;
     min-height: 100vh;
 }
 
-/* ============================================= */
-/* --- THANH TÌM KIẾM (BẮT ĐẦU VỚI MOBILE) --- */
-/* ============================================= */
 
 .searchHeader {
     background-color: white;
@@ -87,25 +82,54 @@
     margin-right: 8px;
 }
 
-.datePickerWrapper, .guestPickerWrapper {
-    position: fixed;
-    top: 50%;
+/* =====  POPUP    MOBILE ===== */
+.datePickerWrapper,
+.guestPickerWrapper {
+    position: absolute;
+    top: calc(100% + 4px);
+
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translateX(-50%);
+
     width: 90vw;
-    max-width: 350px;
+    max-width: 340px;
+
     background-color: white;
     border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     z-index: 1010;
-    padding: 20px;
+    padding: 16px;
     border: 1px solid #e0e0e0;
 }
 
 .datePickerWrapper :global(.react-datepicker) {
     border: none;
     font-family: inherit;
+    width: 100%;
 }
+
+.datePickerWrapper :global(.react-datepicker__month) {
+    width: 100%;
+}
+
+.datePickerWrapper :global(.react-datepicker__header) {
+    background-color: #f8f9fa;
+    border-bottom: none;
+}
+
+.datePickerWrapper :global(.react-datepicker__day-names),
+.datePickerWrapper :global(.react-datepicker__week) {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+}
+
+.datePickerWrapper :global(.react-datepicker__day) {
+    margin: 0;
+}
+
+/* =====  MOBILE ===== */
+
 
 .nightsSelector {
     margin-top: 16px;
@@ -153,14 +177,14 @@
 
 .applyButton {
     width: 100%;
-    margin-top: 16px;
-    padding: 12px;
-    background-color: #0d6efd;
-    color: white;
+    margin-top: 5px;
+    padding: 10px;
+    color: #0d6efd;
     border: none;
     border-radius: 8px;
     font-weight: bold;
     cursor: pointer;
+    text-align: right;
 }
 
 
@@ -351,7 +375,7 @@
     border-radius: 8px;
     cursor: pointer;
     width: 100%;
-    margin-top: 8px;
+    margin-bottom: 8px;
 }
 
 .ratingBadge {
@@ -364,9 +388,6 @@
 }
 
 
-/* ============================================= */
-/* --- RESPONSIVE CHO TABLET & DESKTOP (>= 992px) --- */
-/* ============================================= */
 @media (min-width: 992px) {
     .searchHeader {
         padding: 24px 0;
@@ -423,12 +444,18 @@
 
     .datePickerWrapper,
     .guestPickerWrapper {
-        position: absolute;
-        top: calc(100% + 8px);
         left: 0;
         transform: none;
+        top: calc(100%+1px);
+        width: auto;
+        max-width: none;
+    }
+
+    .datePickerWrapper :global(.react-datepicker) {
         width: auto;
     }
+
+    /* ===== KẾT THÚC GHI ĐÈ STYLE DESKTOP ===== */
 
     .mainContainer {
         flex-direction: row;
@@ -446,10 +473,17 @@
 
     .hotelCard {
         flex-direction: row;
+        align-items: stretch;
     }
 
     .imageColumn {
         flex: 0 0 250px;
+    }
+
+    .infoColumn {
+        flex: 1;
+        padding: 0 16px;
+        justify-content: center;
     }
 
     .priceColumn {
@@ -457,5 +491,14 @@
         padding-top: 0;
         margin-top: 0;
         flex: 0 0 220px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: center;
+    }
+
+    .selectRoomButton {
+        width: 100%;
+        margin-bottom: 8px;
     }
 }

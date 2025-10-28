@@ -65,7 +65,13 @@ const customStyles = `
     .headerBox { background: rgba(255, 255, 255, 0.15); border-radius: 6px; padding: 8px 12px; color: white; display: flex; align-items: center; }
     .headerBoxInteractive { background: rgba(255, 255, 255, 0.15); border-radius: 6px; padding: 8px 12px; color: white; display: flex; align-items: center; cursor: pointer; position: relative; transition: background-color 0.2s; }
     .headerBoxInteractive:hover { background: rgba(255, 255, 255, 0.25); }
-    .datePickerWrapper { position: absolute; top: calc(100% + 8px); left: 0; background-color: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1010; padding: 16px; border: 1px solid #e0e0e0; color: #333; }
+    .datePickerWrapper {
+     position: absolute;
+      top: calc(100% + 8px);
+       left: 0; 
+     
+       background-color: white;
+        border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1010; padding: 16px; border: 1px solid #e0e0e0; color: #333; }
     .datePickerWrapper .react-datepicker { border: none; font-family: inherit; }
     .datePickerWrapper .react-datepicker__header { background-color: #f8f9fa; border-bottom: none; }
     .datePickerWrapper .react-datepicker__day--selected { background-color: #0d6efd; }
@@ -370,7 +376,7 @@ export default function HotelDetailPage() {
                                 </div>
                             )}
                         </div>
-                        <div className="headerBoxInteractive" ref={guestPickerRef} onClick={() => setShowGuestPicker(!showGuestPicker)}>
+                        {/* <div className="headerBoxInteractive" ref={guestPickerRef} onClick={() => setShowGuestPicker(!showGuestPicker)}>
                             <i className="bi bi-person me-2"></i>
                             <span>{displayGuests}</span>
                             {showGuestPicker && (
@@ -384,7 +390,7 @@ export default function HotelDetailPage() {
                                     onClose={() => setShowGuestPicker(false)}
                                 />
                             )}
-                        </div>
+                        </div> */}
                     </div>
                     <div>
                         <button className="btn btn-warning fw-bold px-4">

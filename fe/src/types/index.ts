@@ -60,10 +60,26 @@ export type BookingStatus = 'COMPLETED' | 'CONFIRMED' | 'PENDING' | 'CANCELLED' 
 export interface Booking {
     id: number;
     customerName: string;
-    roomNumbers: string[]; // Mảng chứa các số phòng, ví dụ ['03', '04']
+    roomNumbers: string[];
     checkInDate: Date;
     checkOutDate: Date;
     totalAmount: number;
     paymentStatus: PaymentStatus;
     bookingStatus: BookingStatus;
+}
+
+
+/// type dành cho super admin
+
+
+export interface HotelAdmin {
+    id: number;
+    username: string;
+    email: string;
+    managedHotel: {
+        id: string;
+        name: string;
+    };
+    status: 'ACTIVE' | 'INACTIVE';
+    createdAt: Date;
 }
