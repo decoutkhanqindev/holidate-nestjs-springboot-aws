@@ -124,33 +124,6 @@ public interface RoomMapper {
   }
 
   /**
-   * Tính giá của phòng cho một ngày cụ thể dựa trên RoomInventory.
-   * Sử dụng cho booking để tính giá chính xác cho ngày check-in.
-   */
-  default double getPriceForDate(Room room, LocalDate date) {
-    // Nếu không có inventories, return base price
-    if (room.getInventories() == null || room.getInventories().isEmpty()) {
-      return room.getBasePricePerNight();
-    }
-
-    // Tìm inventory cho ngày cụ thể
-    Optional<RoomInventory> dateInventory = room.getInventories().stream()
-        .filter(inventory -> inventory.getId().getDate().equals(date))
-        .findFirst();
-
-    if (dateInventory.isPresent()) {
-      return dateInventory.get().getPrice();
-    }
-
-    // Nếu không có inventory cho ngày đó, tìm inventory gần nhất trong tương lai
-    Optional<RoomInventory> nearestFutureInventory = room.getInventories().stream()
-        .filter(inventory -> !inventory.getId().getDate().isBefore(date))
-        .min(Comparator.comparing(inv -> inv.getId().getDate()));
-
-    return nearestFutureInventory.map(RoomInventory::getPrice).orElseGet(room::getBasePricePerNight);
-  }
-
-  /**
    * Lấy số phòng available vào ngày hiện tại dựa trên RoomInventory.
    * Logic tương tự như getCurrentPricePerNight()
    */
