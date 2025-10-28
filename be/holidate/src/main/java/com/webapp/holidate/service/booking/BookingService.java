@@ -179,6 +179,12 @@ public class BookingService {
     BookingPriceDetailsResponse priceDetails = calculatePriceDetails(savedBooking);
     response.setPriceDetails(priceDetails);
 
+    // Override room's currentPricePerNight with check-in date price
+    if (response.getRoom() != null) {
+      double checkInPrice = roomInventoryService.getPriceForDate(savedBooking.getRoom(), savedBooking.getCheckInDate());
+      response.getRoom().setCurrentPricePerNight(checkInPrice);
+    }
+
     return response;
   }
 

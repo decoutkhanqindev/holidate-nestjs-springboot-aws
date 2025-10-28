@@ -3,7 +3,6 @@ package com.webapp.holidate.mapper.booking;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-
 import java.time.temporal.ChronoUnit;
 
 import org.mapstruct.AfterMapping;

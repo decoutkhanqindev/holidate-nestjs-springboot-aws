@@ -33,7 +33,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -304,5 +306,29 @@ public class RoomInventoryService {
     return inventories.stream()
         .mapToDouble(inventory -> inventory.getPrice() * numberOfRooms)
         .sum();
+  }
+
+  public double getPriceForDate(Room room, LocalDate date) {
+    // If no inventories, return base price
+    if (room.getInventories() == null || room.getInventories().isEmpty()) {
+      return room.getBasePricePerNight();
+    }
+
+    // Find inventory for the specific date
+    Optional<RoomInventory> dateInventory = room.getInventories().stream()
+        .filter(inventory -> inventory.getId().getDate().equals(date))
+        .findFirst();
+
+    if (dateInventory.isPresent()) {
+      return dateInventory.get().getPrice();
+    }
+
+    // If no inventory for the date, find the nearest future inventory
+    Optional<RoomInventory> nearestFutureInventory = room.getInventories().stream()
+        .filter(inventory -> !inventory.getId().getDate().isBefore(date))
+        .min(Comparator.comparing(inv -> inv.getId().getDate()));
+
+    return nearestFutureInventory.map(RoomInventory::getPrice)
+        .orElseGet(room::getBasePricePerNight);
   }
 }
