@@ -25,12 +25,12 @@ public class PaymentController {
 
   @GetMapping(BookingEndpoints.CALLBACK)
   public ResponseEntity<String> handleVnPayCallback(
-      @RequestParam Map<String, String> vnpayParams,
-      HttpServletRequest request) {
+    @RequestParam Map<String, String> vnpayParams,
+    HttpServletRequest request) {
 
     String redirectUrl = service.handleVnPayCallback(vnpayParams);
     return ResponseEntity.status(HttpStatus.FOUND)
-        .header("Location", redirectUrl)
-        .build();
+      .header("Location", redirectUrl)
+      .build();
   }
 }

@@ -66,7 +66,7 @@ public class EmailService {
 
   private SendOtpResponse sendOtp(String email, OtpType otpType, boolean requireActive) {
     UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email)
-        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
 
     String authProvider = authInfo.getAuthProvider();
     boolean localAuth = AuthProviderType.LOCAL.getValue().equals(authProvider);
@@ -124,8 +124,8 @@ public class EmailService {
     }
 
     return SendOtpResponse.builder()
-        .sent(true)
-        .build();
+      .sent(true)
+      .build();
   }
 
   public VerificationResponse verifyEmailVerificationOtp(VerifyEmailVerificationOtpRequest request) {
@@ -138,7 +138,7 @@ public class EmailService {
 
   private VerificationResponse verifyOtp(String email, String inputOtp, OtpType otpType, String newPassword) {
     UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email)
-        .orElseThrow(() -> new AppException(ErrorType.INVALID_OTP));
+      .orElseThrow(() -> new AppException(ErrorType.INVALID_OTP));
 
     String authProvider = authInfo.getAuthProvider();
     boolean localAuth = AuthProviderType.LOCAL.getValue().equals(authProvider);
@@ -198,8 +198,8 @@ public class EmailService {
     authInfoRepository.save(authInfo);
 
     return VerificationResponse.builder()
-        .verified(true)
-        .build();
+      .verified(true)
+      .build();
   }
 
   private String generateVerificationOtp() {

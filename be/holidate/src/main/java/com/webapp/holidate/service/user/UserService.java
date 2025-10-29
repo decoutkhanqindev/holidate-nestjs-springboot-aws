@@ -59,59 +59,59 @@ public class UserService {
 
     String roleId = request.getRoleId();
     Role role = roleRepository.findById(roleId)
-        .orElseThrow(() -> new AppException(ErrorType.ROLE_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.ROLE_NOT_FOUND));
     user.setRole(role);
 
     String countryId = request.getCountryId();
     if (countryId != null) {
       Country country = countryRepository.findById(countryId)
-          .orElseThrow(() -> new AppException(ErrorType.COUNTRY_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.COUNTRY_NOT_FOUND));
       user.setCountry(country);
     }
 
     String provinceId = request.getProvinceId();
     if (provinceId != null) {
       Province province = provinceRepository.findById(provinceId)
-          .orElseThrow(() -> new AppException(ErrorType.PROVINCE_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.PROVINCE_NOT_FOUND));
       user.setProvince(province);
     }
 
     String cityId = request.getCityId();
     if (cityId != null) {
       City city = cityRepository.findById(request.getCityId())
-          .orElseThrow(() -> new AppException(ErrorType.CITY_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.CITY_NOT_FOUND));
       user.setCity(city);
     }
 
     String districtId = request.getDistrictId();
     if (districtId != null) {
       District district = districtRepository.findById(request.getDistrictId())
-          .orElseThrow(() -> new AppException(ErrorType.DISTRICT_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.DISTRICT_NOT_FOUND));
       user.setDistrict(district);
     }
 
     String wardId = request.getWardId();
     if (wardId != null) {
       Ward ward = wardRepository.findById(request.getWardId())
-          .orElseThrow(() -> new AppException(ErrorType.WARD_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.WARD_NOT_FOUND));
       user.setWard(ward);
     }
 
     String streetId = request.getStreetId();
     if (streetId != null) {
       Street street = streetRepository.findById(request.getStreetId())
-          .orElseThrow(() -> new AppException(ErrorType.STREET_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.STREET_NOT_FOUND));
       user.setStreet(street);
     }
 
     String authProvider = request.getAuthProvider();
 
     UserAuthInfo authInfo = UserAuthInfo.builder()
-        .authProvider(authProvider)
-        .otpAttempts(0)
-        .active(false)
-        .user(user)
-        .build();
+      .authProvider(authProvider)
+      .otpAttempts(0)
+      .active(false)
+      .user(user)
+      .build();
     user.setAuthInfo(authInfo);
 
     userRepository.save(user);
@@ -124,14 +124,14 @@ public class UserService {
 
   public UserResponse getById(String id) {
     User user = userRepository.findById(id)
-        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
     return userMapper.toUserResponse(user);
   }
 
   @Transactional
   public UserResponse update(String id, UserUpdateRequest request) throws IOException {
     User user = userRepository.findById(id)
-        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
 
     updateInfo(user, request);
     updateLocation(user, request);
@@ -198,7 +198,7 @@ public class UserService {
     boolean countryChanged = newCountryId != null && !newCountryId.equals(currentCountryId);
     if (countryChanged) {
       Country country = countryRepository.findById(newCountryId)
-          .orElseThrow(() -> new AppException(ErrorType.COUNTRY_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.COUNTRY_NOT_FOUND));
       user.setCountry(country);
     }
 
@@ -207,7 +207,7 @@ public class UserService {
     boolean provinceChanged = newProvinceId != null && !newProvinceId.equals(currentProvinceId);
     if (provinceChanged) {
       Province province = provinceRepository.findById(newProvinceId)
-          .orElseThrow(() -> new AppException(ErrorType.PROVINCE_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.PROVINCE_NOT_FOUND));
       user.setProvince(province);
     }
 
@@ -216,7 +216,7 @@ public class UserService {
     boolean cityChanged = newCityId != null && !newCityId.equals(currentCityId);
     if (cityChanged) {
       City city = cityRepository.findById(newCityId)
-          .orElseThrow(() -> new AppException(ErrorType.CITY_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.CITY_NOT_FOUND));
       user.setCity(city);
     }
 
@@ -225,7 +225,7 @@ public class UserService {
     boolean districtChanged = newDistrictId != null && !newDistrictId.equals(currentDistrictId);
     if (districtChanged) {
       District district = districtRepository.findById(newDistrictId)
-          .orElseThrow(() -> new AppException(ErrorType.DISTRICT_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.DISTRICT_NOT_FOUND));
       user.setDistrict(district);
     }
 
@@ -234,7 +234,7 @@ public class UserService {
     boolean wardChanged = newWardId != null && !newWardId.equals(currentWardId);
     if (wardChanged) {
       Ward ward = wardRepository.findById(newWardId)
-          .orElseThrow(() -> new AppException(ErrorType.WARD_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.WARD_NOT_FOUND));
       user.setWard(ward);
     }
 
@@ -243,14 +243,14 @@ public class UserService {
     boolean streetChanged = newStreetId != null && !newStreetId.equals(currentStreetId);
     if (streetChanged) {
       Street street = streetRepository.findById(newStreetId)
-          .orElseThrow(() -> new AppException(ErrorType.STREET_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.STREET_NOT_FOUND));
       user.setStreet(street);
     }
   }
 
   public UserResponse delete(String id) {
     User user = userRepository.findById(id)
-        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
     userRepository.delete(user);
     return userMapper.toUserResponse(user);
   }

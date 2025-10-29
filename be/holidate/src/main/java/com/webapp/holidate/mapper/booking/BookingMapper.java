@@ -14,8 +14,8 @@ import org.mapstruct.MappingTarget;
 
 import java.time.temporal.ChronoUnit;
 
-@Mapper(componentModel = "spring", uses = { DiscountMapper.class, RoomMapper.class, UserMapper.class,
-    HotelMapper.class })
+@Mapper(componentModel = "spring", uses = {DiscountMapper.class, RoomMapper.class, UserMapper.class,
+  HotelMapper.class})
 public interface BookingMapper {
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "user", ignore = true)
@@ -39,13 +39,13 @@ public interface BookingMapper {
 
   @AfterMapping
   default void addExpirationTime(Booking booking,
-      @MappingTarget BookingResponse.BookingResponseBuilder responseBuilder) {
+                                 @MappingTarget BookingResponse.BookingResponseBuilder responseBuilder) {
     // Set expiration time to 15 minutes from creation time
     responseBuilder.expiresAt(booking.getCreatedAt().plusMinutes(15));
 
     // Calculate numberOfNights
     long numberOfNights = ChronoUnit.DAYS.between(
-        booking.getCheckInDate(), booking.getCheckOutDate());
+      booking.getCheckInDate(), booking.getCheckOutDate());
     responseBuilder.numberOfNights((int) numberOfNights);
   }
 }

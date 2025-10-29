@@ -29,7 +29,7 @@ public class CustomOAuth2AuthenticationFailureHandler extends SimpleUrlAuthentic
 
   @Override
   public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
-      AuthenticationException exception) throws IOException {
+                                      AuthenticationException exception) throws IOException {
     ResponseUtil.handleAuthCookiesResponse(response, tokenCookieName, null, 0);
     getRedirectStrategy().sendRedirect(request, response, frontendUrl);
   }

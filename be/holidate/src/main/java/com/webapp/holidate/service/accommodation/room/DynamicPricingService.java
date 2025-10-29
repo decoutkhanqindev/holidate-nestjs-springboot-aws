@@ -55,14 +55,14 @@ public class DynamicPricingService {
 
     List<Room> rooms = roomRepository.findAll();
     Map<LocalDate, SpecialDay> specialDayMap = specialDayRepository.findAllByDateBetween(startDate, endDate)
-        .stream()
-        .collect(Collectors.toMap(SpecialDay::getDate, specialDay -> specialDay));
+      .stream()
+      .collect(Collectors.toMap(SpecialDay::getDate, specialDay -> specialDay));
 
     List<RoomInventory> inventoriesToUpdate = new ArrayList<>();
 
     for (Room room : rooms) {
       List<RoomInventory> inventories = inventoryRepository.findAllByRoomIdAndDateBetween(room.getId(), startDate,
-          endDate);
+        endDate);
 
       for (RoomInventory inventory : inventories) {
         LocalDate currentDate = inventory.getId().getDate();
@@ -77,8 +77,8 @@ public class DynamicPricingService {
         if (isSpecialDay) {
           SpecialDay specialDay = specialDayMap.get(currentDate);
           SpecialDayDiscount specialDayDiscount = specialDayDiscountRepository
-              .findBySpecialDayIdWithDiscount(specialDay.getId())
-              .orElseThrow(() -> new AppException(ErrorType.SPECIAL_DAY_DISCOUNT_NOT_FOUND));
+            .findBySpecialDayIdWithDiscount(specialDay.getId())
+            .orElseThrow(() -> new AppException(ErrorType.SPECIAL_DAY_DISCOUNT_NOT_FOUND));
           Discount discount = specialDayDiscount.getDiscount();
           log.info("Applying special day discount of {}% for date {}", discount.getPercentage(), currentDate);
           newPrice = basePrice * (1 - discount.getPercentage() / 100);
@@ -93,7 +93,7 @@ public class DynamicPricingService {
         boolean priceChanged = Double.compare(inventory.getPrice(), newPrice) != 0;
         if (priceChanged) {
           log.info("Updating price for room {} on date {}: old price = {}, new price = {}",
-              room.getId(), currentDate, inventory.getPrice(), newPrice);
+            room.getId(), currentDate, inventory.getPrice(), newPrice);
           inventory.setPrice(newPrice);
           log.info("Updated inventory: {}", inventory);
           inventoriesToUpdate.add(inventory);

@@ -33,8 +33,8 @@ public interface RoomRepository extends JpaRepository<Room, String> {
 
   @Query(RoomQueries.FIND_AVAILABLE_ROOM_CANDIDATES)
   List<RoomCandidate> findAvailableRoomCandidates(
-      String hotelId,
-      LocalDate checkinDate,
-      LocalDate checkoutDate,
-      long numberOfNights);
+    String hotelId,
+    LocalDate checkinDate,
+    LocalDate checkoutDate,
+    long numberOfNights);
 }

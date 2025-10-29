@@ -20,24 +20,24 @@ public interface DiscountRepository extends JpaRepository<Discount, String> {
 
   @Query(DiscountQueries.FIND_ALL_WITH_FILTERS)
   Page<Discount> findAllWithFilters(
-      @Nullable String code,
-      @Nullable Boolean active,
-      @Nullable Boolean currentlyValid,
-      @Nullable LocalDate validFrom,
-      @Nullable LocalDate validTo,
-      @Nullable Double minPercentage,
-      @Nullable Double maxPercentage,
-      @Nullable Integer minBookingPrice,
-      @Nullable Integer maxBookingPrice,
-      @Nullable Integer minBookingCount,
-      @Nullable Integer maxBookingCount,
-      @Nullable Boolean available,
-      @Nullable Boolean exhausted,
-      @Nullable Integer minTimesUsed,
-      @Nullable Integer maxTimesUsed,
-      @Nullable String hotelId,
-      @Nullable String specialDayId,
-      Pageable pageable);
+    @Nullable String code,
+    @Nullable Boolean active,
+    @Nullable Boolean currentlyValid,
+    @Nullable LocalDate validFrom,
+    @Nullable LocalDate validTo,
+    @Nullable Double minPercentage,
+    @Nullable Double maxPercentage,
+    @Nullable Integer minBookingPrice,
+    @Nullable Integer maxBookingPrice,
+    @Nullable Integer minBookingCount,
+    @Nullable Integer maxBookingCount,
+    @Nullable Boolean available,
+    @Nullable Boolean exhausted,
+    @Nullable Integer minTimesUsed,
+    @Nullable Integer maxTimesUsed,
+    @Nullable String hotelId,
+    @Nullable String specialDayId,
+    Pageable pageable);
 
   @Query(DiscountQueries.FIND_BY_ID_WITH_DETAILS)
   Optional<Discount> findByIdWithDetails(String id);

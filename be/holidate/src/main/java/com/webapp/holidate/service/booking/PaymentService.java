@@ -60,11 +60,11 @@ public class PaymentService {
   public String createPaymentUrl(Booking booking, HttpServletRequest request) {
     // Create payment entity
     Payment payment = Payment.builder()
-        .booking(booking)
-        .amount(booking.getFinalPrice())
-        .paymentMethod("vnpay")
-        .status(PaymentStatusType.PENDING.getValue())
-        .build();
+      .booking(booking)
+      .amount(booking.getFinalPrice())
+      .paymentMethod("vnpay")
+      .status(PaymentStatusType.PENDING.getValue())
+      .build();
 
     Payment savedPayment = paymentRepository.save(payment);
 
@@ -86,7 +86,7 @@ public class PaymentService {
     vnpParams.put("vnp_IpAddr", ipAddress);
     vnpParams.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
     vnpParams.put("vnp_ExpireDate",
-        LocalDateTime.now().plusMinutes(15).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+      LocalDateTime.now().plusMinutes(15).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
 
     // Build query string with URL encoding
     StringBuilder queryString = new StringBuilder();
@@ -127,7 +127,7 @@ public class PaymentService {
 
     // Find payment by ID
     Payment payment = paymentRepository.findById(transactionRef)
-        .orElseThrow(() -> new AppException(ErrorType.BOOKING_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.BOOKING_NOT_FOUND));
 
     // Check if payment is already processed
     if (!PaymentStatusType.PENDING.getValue().equals(payment.getStatus())) {
@@ -167,10 +167,10 @@ public class PaymentService {
       // IMPORTANT: Release room inventory when payment fails
       // This reverses the room hold from the booking creation process
       roomInventoryService.updateAvailabilityForCancellation(
-          booking.getRoom().getId(),
-          booking.getCheckInDate(),
-          booking.getCheckOutDate(),
-          booking.getNumberOfRooms());
+        booking.getRoom().getId(),
+        booking.getCheckInDate(),
+        booking.getCheckOutDate(),
+        booking.getNumberOfRooms());
 
       bookingRepository.save(booking);
       paymentRepository.save(payment);

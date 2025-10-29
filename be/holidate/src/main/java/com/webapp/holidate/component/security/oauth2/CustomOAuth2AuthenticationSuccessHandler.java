@@ -51,11 +51,11 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
 
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-      Authentication authentication) throws IOException {
+                                      Authentication authentication) throws IOException {
     OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
     String email = oAuth2User.getAttribute("email");
     User user = userRepository.findByEmail(email)
-        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
     UserAuthInfo authInfo = user.getAuthInfo();
     String accessToken;
     String refreshToken;

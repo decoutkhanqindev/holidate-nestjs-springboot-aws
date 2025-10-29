@@ -21,11 +21,11 @@ import java.util.Comparator;
 import java.util.Optional;
 
 @Mapper(componentModel = "spring", uses = {
-    PhotoCategoryMapper.class,
-    AmenityCategoryMapper.class,
-    CancellationPolicyMapper.class,
-    ReschedulePolicyMapper.class,
-    RoomInventoryMapper.class
+  PhotoCategoryMapper.class,
+  AmenityCategoryMapper.class,
+  CancellationPolicyMapper.class,
+  ReschedulePolicyMapper.class,
+  RoomInventoryMapper.class
 })
 public interface RoomMapper {
   @Mapping(target = "id", ignore = true)
@@ -53,7 +53,7 @@ public interface RoomMapper {
 
   @AfterMapping
   default void addCurrentPriceToBrief(Room room,
-      @MappingTarget RoomBriefResponse.RoomBriefResponseBuilder responseBuilder) {
+                                      @MappingTarget RoomBriefResponse.RoomBriefResponseBuilder responseBuilder) {
     double currentPrice = getCurrentPricePerNight(room);
     responseBuilder.currentPricePerNight(currentPrice);
   }
@@ -79,7 +79,7 @@ public interface RoomMapper {
 
   @AfterMapping
   default void addCurrentPriceToDetails(Room room,
-      @MappingTarget RoomDetailsResponse.RoomDetailsResponseBuilder responseBuilder) {
+                                        @MappingTarget RoomDetailsResponse.RoomDetailsResponseBuilder responseBuilder) {
     double currentPrice = getCurrentPricePerNight(room);
     responseBuilder.currentPricePerNight(currentPrice);
 
@@ -107,8 +107,8 @@ public interface RoomMapper {
 
     // Tìm inventory cho ngày hiện tại
     Optional<RoomInventory> todayInventory = room.getInventories().stream()
-        .filter(inventory -> inventory.getId().getDate().equals(today))
-        .findFirst();
+      .filter(inventory -> inventory.getId().getDate().equals(today))
+      .findFirst();
 
     if (todayInventory.isPresent()) {
       return todayInventory.get().getPrice();
@@ -117,8 +117,8 @@ public interface RoomMapper {
     // Nếu không có inventory cho ngày hiện tại, tìm inventory gần nhất trong tương
     // lai
     Optional<RoomInventory> nearestFutureInventory = room.getInventories().stream()
-        .filter(inventory -> !inventory.getId().getDate().isBefore(today))
-        .min(Comparator.comparing(inv -> inv.getId().getDate()));
+      .filter(inventory -> !inventory.getId().getDate().isBefore(today))
+      .min(Comparator.comparing(inv -> inv.getId().getDate()));
 
     return nearestFutureInventory.map(RoomInventory::getPrice).orElseGet(room::getBasePricePerNight);
   }
@@ -137,8 +137,8 @@ public interface RoomMapper {
 
     // Tìm inventory cho ngày hiện tại
     Optional<RoomInventory> todayInventory = room.getInventories().stream()
-        .filter(inventory -> inventory.getId().getDate().equals(today))
-        .findFirst();
+      .filter(inventory -> inventory.getId().getDate().equals(today))
+      .findFirst();
 
     if (todayInventory.isPresent()) {
       return todayInventory.get().getAvailableRooms();
@@ -147,8 +147,8 @@ public interface RoomMapper {
     // Nếu không có inventory cho ngày hiện tại, tìm inventory gần nhất trong tương
     // lai
     Optional<RoomInventory> nearestFutureInventory = room.getInventories().stream()
-        .filter(inventory -> !inventory.getId().getDate().isBefore(today))
-        .min(Comparator.comparing(inv -> inv.getId().getDate()));
+      .filter(inventory -> !inventory.getId().getDate().isBefore(today))
+      .min(Comparator.comparing(inv -> inv.getId().getDate()));
 
     return nearestFutureInventory.map(RoomInventory::getAvailableRooms).orElse(room.getQuantity());
   }

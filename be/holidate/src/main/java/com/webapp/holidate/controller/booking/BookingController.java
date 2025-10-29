@@ -23,36 +23,36 @@ public class BookingController {
 
   @PostMapping
   public ApiResponse<BookingResponse> create(
-      @RequestBody @Valid BookingCreationRequest request,
-      HttpServletRequest httpRequest) {
+    @RequestBody @Valid BookingCreationRequest request,
+    HttpServletRequest httpRequest) {
     BookingResponse response = service.create(request, httpRequest);
     return ApiResponse.<BookingResponse>builder()
-        .data(response)
-        .build();
+      .data(response)
+      .build();
   }
 
   @GetMapping(BookingEndpoints.PRICE_PREVIEW)
   public ApiResponse<BookingPriceDetailsResponse> getPricePreview(
-      @RequestBody @Valid BookingPricePreviewRequest request) {
+    @RequestBody @Valid BookingPricePreviewRequest request) {
     BookingPriceDetailsResponse response = service.getPricePreview(request);
     return ApiResponse.<BookingPriceDetailsResponse>builder()
-        .data(response)
-        .build();
+      .data(response)
+      .build();
   }
 
   @GetMapping(CommonEndpoints.ID)
   public ApiResponse<BookingResponse> getById(@PathVariable String id) {
     BookingResponse response = service.getById(id);
     return ApiResponse.<BookingResponse>builder()
-        .data(response)
-        .build();
+      .data(response)
+      .build();
   }
 
   @DeleteMapping(CommonEndpoints.ID)
   public ApiResponse<BookingResponse> delete(@PathVariable String id) {
     BookingResponse response = service.delete(id);
     return ApiResponse.<BookingResponse>builder()
-        .data(response)
-        .build();
+      .data(response)
+      .build();
   }
 }

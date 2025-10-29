@@ -17,39 +17,39 @@ public interface HotelRepository extends JpaRepository<Hotel, String>, JpaSpecif
 
   @Query(HotelQueries.FIND_ALL_IDS_BY_FILTER)
   List<String> findAllIdsByFilter(
-      @Nullable String name,
-      @Nullable String countryId,
-      @Nullable String provinceId,
-      @Nullable String cityId,
-      @Nullable String districtId,
-      @Nullable String wardId,
-      @Nullable String streetId,
-      @Nullable String status,
-      @Nullable List<String> amenityIds,
-      int amenityIdsCount,
-      @Nullable Integer starRating,
-      @Nullable Double minPrice,
-      @Nullable Double maxPrice);
+    @Nullable String name,
+    @Nullable String countryId,
+    @Nullable String provinceId,
+    @Nullable String cityId,
+    @Nullable String districtId,
+    @Nullable String wardId,
+    @Nullable String streetId,
+    @Nullable String status,
+    @Nullable List<String> amenityIds,
+    int amenityIdsCount,
+    @Nullable Integer starRating,
+    @Nullable Double minPrice,
+    @Nullable Double maxPrice);
 
   @Query(HotelQueries.FIND_ALL_BY_IDS)
   List<Hotel> findAllByIds(List<String> hotelIds);
 
   @Query(HotelQueries.FIND_ALL_WITH_FILTERS_PAGED)
   Page<Hotel> findAllWithFiltersPaged(
-      @Nullable String name,
-      @Nullable String countryId,
-      @Nullable String provinceId,
-      @Nullable String cityId,
-      @Nullable String districtId,
-      @Nullable String wardId,
-      @Nullable String streetId,
-      @Nullable String status,
-      @Nullable List<String> amenityIds,
-      int amenityIdsCount,
-      @Nullable Integer starRating,
-      @Nullable Double minPrice,
-      @Nullable Double maxPrice,
-      Pageable pageable);
+    @Nullable String name,
+    @Nullable String countryId,
+    @Nullable String provinceId,
+    @Nullable String cityId,
+    @Nullable String districtId,
+    @Nullable String wardId,
+    @Nullable String streetId,
+    @Nullable String status,
+    @Nullable List<String> amenityIds,
+    int amenityIdsCount,
+    @Nullable Integer starRating,
+    @Nullable Double minPrice,
+    @Nullable Double maxPrice,
+    Pageable pageable);
 
   @Query(HotelQueries.FIND_ALL_BY_IDS_WITH_ROOMS_AND_INVENTORIES)
   List<Hotel> findAllByIdsWithRoomsAndInventories(List<String> hotelIds);

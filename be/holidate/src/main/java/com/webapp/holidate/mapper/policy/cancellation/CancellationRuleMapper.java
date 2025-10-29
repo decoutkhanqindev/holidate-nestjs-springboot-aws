@@ -21,7 +21,7 @@ public interface CancellationRuleMapper {
     }
 
     return rules.stream()
-        .map(this::toCancellationRuleResponse)
-        .collect(Collectors.toList());
+      .map(this::toCancellationRuleResponse)
+      .collect(Collectors.toList());
   }
 }

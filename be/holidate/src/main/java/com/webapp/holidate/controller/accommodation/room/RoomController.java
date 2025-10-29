@@ -31,42 +31,42 @@ public class RoomController {
 
   @PostMapping(MediaType.MULTIPART_FORM_DATA_VALUE)
   public ApiResponse<RoomDetailsResponse> create(@ModelAttribute @Valid RoomCreationRequest request)
-      throws IOException {
+    throws IOException {
     RoomDetailsResponse response = service.create(request);
     return ApiResponse.<RoomDetailsResponse>builder()
-        .data(response)
-        .build();
+      .data(response)
+      .build();
   }
 
   @GetMapping
   public ApiResponse<PagedResponse<RoomResponse>> getAllByHotelId(
-      @RequestParam(name = HotelParams.HOTEL_ID) String hotelId,
-      @RequestParam(name = CommonParams.STATUS, required = false) String status,
-      @RequestParam(name = PaginationParams.PAGE, defaultValue = PaginationParams.DEFAULT_PAGE) int page,
-      @RequestParam(name = PaginationParams.SIZE, defaultValue = PaginationParams.DEFAULT_SIZE) int size,
-      @RequestParam(name = SortingParams.SORT_BY, required = false) String sortBy,
-      @RequestParam(name = SortingParams.SORT_DIR, defaultValue = SortingParams.SORT_DIR_ASC) String sortDir) {
+    @RequestParam(name = HotelParams.HOTEL_ID) String hotelId,
+    @RequestParam(name = CommonParams.STATUS, required = false) String status,
+    @RequestParam(name = PaginationParams.PAGE, defaultValue = PaginationParams.DEFAULT_PAGE) int page,
+    @RequestParam(name = PaginationParams.SIZE, defaultValue = PaginationParams.DEFAULT_SIZE) int size,
+    @RequestParam(name = SortingParams.SORT_BY, required = false) String sortBy,
+    @RequestParam(name = SortingParams.SORT_DIR, defaultValue = SortingParams.SORT_DIR_ASC) String sortDir) {
     PagedResponse<RoomResponse> response = service.getAllByHotelId(hotelId, status, page, size, sortBy, sortDir);
     return ApiResponse.<PagedResponse<RoomResponse>>builder()
-        .data(response)
-        .build();
+      .data(response)
+      .build();
   }
 
   @GetMapping(CommonEndpoints.ID)
   public ApiResponse<RoomDetailsResponse> getById(@PathVariable String id) {
     RoomDetailsResponse response = service.getById(id);
     return ApiResponse.<RoomDetailsResponse>builder()
-        .data(response)
-        .build();
+      .data(response)
+      .build();
   }
 
   @PutMapping(path = CommonEndpoints.ID, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ApiResponse<RoomDetailsResponse> update(
-      @PathVariable String id,
-      @ModelAttribute @Valid RoomUpdateRequest request) throws IOException {
+    @PathVariable String id,
+    @ModelAttribute @Valid RoomUpdateRequest request) throws IOException {
     RoomDetailsResponse response = service.update(id, request);
     return ApiResponse.<RoomDetailsResponse>builder()
-        .data(response)
-        .build();
+      .data(response)
+      .build();
   }
 }

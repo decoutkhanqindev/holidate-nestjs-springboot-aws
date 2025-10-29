@@ -43,7 +43,7 @@ public class CustomCookieAuthenticationFilter extends OncePerRequestFilter {
 
   @Override
   protected void doFilterInternal(HttpServletRequest request, @NotNull HttpServletResponse response,
-      @NotNull FilterChain filterChain) throws ServletException, IOException, RuntimeException {
+                                  @NotNull FilterChain filterChain) throws ServletException, IOException, RuntimeException {
     String uri = request.getRequestURI();
     String getMeEndpoint = AuthEndpoints.AUTH + AuthEndpoints.ME;
 
@@ -75,11 +75,11 @@ public class CustomCookieAuthenticationFilter extends OncePerRequestFilter {
 
             List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(scope));
             CustomAuthenticationToken authentication = new CustomAuthenticationToken(
-                email,
-                null,
-                authorities,
-                token,
-                DateTimeUtil.dateToLocalDateTime(expirationTime));
+              email,
+              null,
+              authorities,
+              token,
+              DateTimeUtil.dateToLocalDateTime(expirationTime));
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             break;
