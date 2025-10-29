@@ -1,19 +1,18 @@
 package com.webapp.holidate.mapper.booking;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
-import java.time.temporal.ChronoUnit;
-
-import org.mapstruct.AfterMapping;
-
 import com.webapp.holidate.dto.request.booking.BookingCreationRequest;
 import com.webapp.holidate.dto.response.booking.BookingResponse;
 import com.webapp.holidate.entity.booking.Booking;
-import com.webapp.holidate.mapper.discount.DiscountMapper;
-import com.webapp.holidate.mapper.acommodation.room.RoomMapper;
-import com.webapp.holidate.mapper.user.UserMapper;
 import com.webapp.holidate.mapper.acommodation.HotelMapper;
+import com.webapp.holidate.mapper.acommodation.room.RoomMapper;
+import com.webapp.holidate.mapper.discount.DiscountMapper;
+import com.webapp.holidate.mapper.user.UserMapper;
+import org.mapstruct.AfterMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+
+import java.time.temporal.ChronoUnit;
 
 @Mapper(componentModel = "spring", uses = { DiscountMapper.class, RoomMapper.class, UserMapper.class,
     HotelMapper.class })

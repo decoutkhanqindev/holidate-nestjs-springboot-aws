@@ -1,10 +1,25 @@
 package com.webapp.holidate.service.booking;
 
+import com.webapp.holidate.constants.AppProperties;
+import com.webapp.holidate.entity.booking.Booking;
+import com.webapp.holidate.entity.booking.Payment;
+import com.webapp.holidate.exception.AppException;
+import com.webapp.holidate.repository.booking.BookingRepository;
+import com.webapp.holidate.repository.booking.PaymentRepository;
+import com.webapp.holidate.service.accommodation.room.RoomInventoryService;
+import com.webapp.holidate.type.ErrorType;
+import com.webapp.holidate.type.booking.BookingStatusType;
+import com.webapp.holidate.type.booking.PaymentStatusType;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
-import java.io.UnsupportedEncodingException;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
@@ -13,26 +28,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.TreeMap;
-
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
-import com.webapp.holidate.constants.AppProperties;
-import com.webapp.holidate.entity.booking.Booking;
-import com.webapp.holidate.entity.booking.Payment;
-import com.webapp.holidate.exception.AppException;
-import com.webapp.holidate.repository.booking.PaymentRepository;
-import com.webapp.holidate.repository.booking.BookingRepository;
-import com.webapp.holidate.service.accommodation.room.RoomInventoryService;
-import com.webapp.holidate.type.ErrorType;
-import com.webapp.holidate.type.booking.BookingStatusType;
-import com.webapp.holidate.type.booking.PaymentStatusType;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.transaction.Transactional;
 
 @Service
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
@@ -97,14 +92,10 @@ public class PaymentService {
     StringBuilder queryString = new StringBuilder();
     for (Map.Entry<String, String> entry : vnpParams.entrySet()) {
       if (entry.getValue() != null && !entry.getValue().isEmpty()) {
-        try {
-          queryString.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8.toString()));
-          queryString.append("=");
-          queryString.append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8.toString()));
-          queryString.append("&");
-        } catch (UnsupportedEncodingException e) {
-          throw new AppException(ErrorType.PAYMENT_URL_GENERATION_FAILED);
-        }
+        queryString.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8));
+        queryString.append("=");
+        queryString.append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
+        queryString.append("&");
       }
     }
 
@@ -118,9 +109,7 @@ public class PaymentService {
     String secureHash = hmacSHA512(vnpayHashSecret, query);
 
     // Build final URL
-    String paymentUrl = vnpayApiUrl + "?" + query + "&vnp_SecureHash=" + secureHash;
-
-    return paymentUrl;
+    return vnpayApiUrl + "?" + query + "&vnp_SecureHash=" + secureHash;
   }
 
   @Transactional
@@ -221,15 +210,10 @@ public class PaymentService {
     // Sort parameters by key (TreeMap already does this)
     for (Map.Entry<String, String> entry : params.entrySet()) {
       if (entry.getValue() != null && !entry.getValue().isEmpty()) {
-        try {
-          // VNPay requires URL encoding for hash calculation
-          String encodedKey = URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8.toString());
-          String encodedValue = URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8.toString());
-          hashData.append(encodedKey).append("=").append(encodedValue).append("&");
-        } catch (UnsupportedEncodingException e) {
-          // Fallback to raw values if encoding fails
-          hashData.append(entry.getKey()).append("=").append(entry.getValue()).append("&");
-        }
+        // VNPay requires URL encoding for hash calculation
+        String encodedKey = URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8);
+        String encodedValue = URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8);
+        hashData.append(encodedKey).append("=").append(encodedValue).append("&");
       }
     }
 

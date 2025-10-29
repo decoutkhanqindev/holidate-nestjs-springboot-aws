@@ -1,8 +1,8 @@
 package com.webapp.holidate.service.accommodation.room;
 
 import com.webapp.holidate.constants.AppProperties;
-import com.webapp.holidate.constants.api.param.SortingParams;
 import com.webapp.holidate.constants.api.param.RoomInventoryParams;
+import com.webapp.holidate.constants.api.param.SortingParams;
 import com.webapp.holidate.dto.request.acommodation.room.inventory.RoomInventoryCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.room.inventory.RoomInventoryPriceUpdateRequest;
 import com.webapp.holidate.dto.response.acommodation.room.RoomWithInventoriesResponse;
