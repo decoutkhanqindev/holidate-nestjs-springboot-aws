@@ -1,15 +1,14 @@
+/* --- CÁC STYLE CŨ CỦA TRANG DETAIL (GIỮ NGUYÊN) --- */
 .hotel-detail-page {
     background: #f7f9fb;
     min-height: 100vh;
 }
 
-/* Nav Top */
 .hotel-nav-top {
     background-color: #0d6efd;
     color: white;
 }
 
-/* Tabs */
 .hotel-tabs .tab-items span {
     cursor: pointer;
     padding: 10px 15px;
@@ -20,7 +19,6 @@
     border-bottom: 3px solid #0d6efd;
 }
 
-/* Grid ảnh */
 .main-photo-wrapper {
     border-radius: 16px;
     overflow: hidden;
@@ -35,15 +33,15 @@
     height: 154px;
 }
 
-/* Card info */
-.hotel-info-card, .nearby-card, .review-card {
+.hotel-info-card,
+.nearby-card,
+.review-card {
     padding: 20px;
     border-radius: 16px;
     background: #fff;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-/* Checkbox */
 .custom-checkbox-wrapper {
     position: relative;
     padding-left: 28px;
@@ -103,7 +101,6 @@
     transform: rotate(45deg);
 }
 
-/* Dropdown */
 .price-dropdown-menu {
     min-width: 320px;
     border-radius: 8px;
@@ -122,7 +119,6 @@
     background-color: #f4f6f8;
 }
 
-/* Thanh đầu tiên cố định ở trên cùng */
 .sticky-tab-bar:first-of-type {
     position: fixed !important;
     top: 0 !important;
@@ -133,11 +129,9 @@
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Thanh thứ hai nằm ngay dưới thanh đầu tiên */
 .sticky-tab-bar:last-of-type {
     position: fixed !important;
     top: 120px !important;
-    /* tùy theo chiều cao thanh trên */
     left: 0 !important;
     width: 100% !important;
     background: #fff !important;
@@ -145,8 +139,266 @@
     border-bottom: 1px solid #e3e6ea !important;
 }
 
-/* Để nội dung phía dưới không bị che */
 .main-content {
     margin-top: 200px !important;
-    /* tổng chiều cao 2 thanh cố định */
+}
+
+
+/* --- STYLES FOR NEW SEARCH HEADER (COPY TỪ SEARCHPAGE) --- */
+.searchHeader {
+    background-color: white;
+    padding: 16px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.searchBar {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    width: 100%;
+}
+
+.searchSection {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    height: 60px;
+    cursor: pointer;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    position: relative;
+}
+
+.searchIcon {
+    font-size: 20px;
+    color: #0d6efd;
+    margin-right: 10px;
+}
+
+.searchInput {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+}
+
+.searchInput label {
+    font-size: 12px;
+    color: #6c757d;
+    margin-bottom: 2px;
+}
+
+.searchInput span {
+    font-size: 14px;
+    color: #212529;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dividerSearch {
+    display: none;
+}
+
+.searchButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #0d6efd;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0;
+    height: 52px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+}
+
+.searchButton i {
+    margin-right: 8px;
+}
+
+/* Popups cho Date và Guest picker */
+.datePickerWrapper {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90vw;
+    max-width: 340px;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    z-index: 1010;
+    padding: 16px;
+    border: 1px solid #e0e0e0;
+}
+
+
+
+.datePickerWrapper :global(.react-datepicker) {
+    border: none;
+    font-family: inherit;
+    width: 100%;
+}
+
+.datePickerWrapper :global(.react-datepicker__month) {
+    width: 100%;
+}
+
+.datePickerWrapper :global(.react-datepicker__header) {
+    background-color: #f8f9fa;
+    border-bottom: none;
+}
+
+.datePickerWrapper :global(.react-datepicker__day-names),
+.datePickerWrapper :global(.react-datepicker__week) {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+}
+
+.datePickerWrapper :global(.react-datepicker__day) {
+    margin: 0;
+}
+
+/* Controls bên trong popup */
+.nightsSelector {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nightsSelector label {
+    font-weight: 500;
+    font-size: 16px;
+}
+
+.counter {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.counter button {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid #0d6efd;
+    background-color: white;
+    color: #0d6efd;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.counter button:disabled {
+    border-color: #ced4da;
+    color: #ced4da;
+    cursor: not-allowed;
+}
+
+.counter span {
+    font-size: 16px;
+    font-weight: bold;
+    min-width: 20px;
+    text-align: center;
+}
+
+.applyButton {
+    width: 100%;
+    margin-top: 5px;
+    padding: 10px;
+    color: #0d6efd;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: right;
+}
+
+/* Media Query cho Desktop */
+@media (min-width: 992px) {
+    .searchHeader {
+        padding: 15px 0;
+        margin-bottom: 0;
+    }
+
+    .searchBar {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        background-color: white;
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        height: 64px;
+        padding: 0;
+        gap: 0;
+
+    }
+
+    .searchSection {
+        flex: 1;
+        padding: 0 16px;
+        height: 100%;
+        background-color: transparent;
+        border: none;
+        border-radius: 0;
+    }
+
+    .searchSection:hover {
+        background-color: #f8f9fa;
+    }
+
+    .searchInput label {
+        font-size: 12px;
+    }
+
+    .searchInput span {
+        font-size: 16px;
+    }
+
+    .divider {
+        display: block;
+        width: 1px;
+        height: 40px;
+        background-color: #e0e0e0;
+    }
+
+    .searchButton {
+        width: auto;
+        height: 48px;
+        margin: 8px;
+        padding: 0 24px;
+    }
+
+    .datePickerWrapper {
+        left: 0;
+        right: auto;
+        transform: none;
+        top: calc(100%+1px);
+        width: auto;
+        max-width: none;
+    }
+
+    .guestPickerWrapper {
+        right: -11px;
+        left: auto;
+        transform: none;
+        top: calc(100% - 50%);
+        width: auto;
+        max-width: none;
+    }
+
+    .datePickerWrapper :global(.react-datepicker) {
+        width: auto;
+    }
 }

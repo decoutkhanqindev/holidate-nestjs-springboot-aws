@@ -7,12 +7,14 @@ import DatePicker, { registerLocale } from 'react-datepicker';
 import { vi } from 'date-fns/locale/vi';
 import 'react-datepicker/dist/react-datepicker.css';
 
-import { hotelService, HotelResponse, Room, AmenityGroup, EntertainmentVenue } from "@/service/hotelService";
+import { hotelService, HotelResponse, Room } from "@/service/hotelService";
 import GuestPicker from '@/components/DateSupport/GuestPicker';
+// --- CẬP NHẬT: Import CSS của chính nó ---
+import styles from './HotelDetailPage.module.css';
 
 registerLocale('vi', vi);
 
-// --- HÀM TIỆN ÍCH ---
+// --- HÀM TIỆN ÍCH (GIỮ NGUYÊN) ---
 const getFullAddress = (hotel: HotelResponse) => {
     return [
         hotel.address,
@@ -44,47 +46,17 @@ const formatDistance = (distanceInMeters: number) => {
     return `${(distanceInMeters / 1000).toFixed(2)} km`;
 };
 
-const customStyles = `
-    /* --- Checkbox --- */
-    .custom-checkbox-wrapper { position: relative !important; padding-left: 28px !important; cursor: pointer !important; font-size: 14px !important; color: #333 !important; user-select: none !important; display: block !important; margin-bottom: 12px !important; }
-    .custom-checkbox-wrapper input { position: absolute !important; opacity: 0 !important; cursor: pointer !important; height: 0 !important; width: 0 !important; }
-    .checkmark { position: absolute !important; top: 0 !important; left: 0 !important; height: 18px !important; width: 18px !important; background-color: #fff !important; border: 1px solid #ced4da !important; border-radius: 4px !important; }
-    .custom-checkbox-wrapper:hover input ~ .checkmark { border-color: #007bff !important; }
-    .custom-checkbox-wrapper input:checked ~ .checkmark { background-color: #0d6efd !important; border-color: #0d6efd !important; }
-    .checkmark:after { content: "" !important; position: absolute !important; display: none !important; }
-    .custom-checkbox-wrapper input:checked ~ .checkmark:after { display: block !important; }
-    .custom-checkbox-wrapper .checkmark:after { left: 6px !important; top: 2px !important; width: 5px !important; height: 10px !important; border: solid white !important; border-width: 0 2px 2px 0 !important; transform: rotate(45deg) !important; }
-
-    /* --- Sticky Tab --- */
+// --- CẬP NHẬT: Bỏ customStyles vì đã chuyển vào file CSS ---
+const customStylesForPage = `
     .sticky-tab-bar { position: sticky !important; top: 0 !important; background: #fff !important; z-index: 1000 !important; border-bottom: 2px solid #e3e6ea !important; }
     .sticky-tab-bar .tab-item { cursor: pointer !important; font-weight: bold !important; padding: 0 18px !important; height: 48px !important; display: inline-flex !important; align-items: center !important; color: #6c757d !important; border: none !important; background: none !important; outline: none !important; font-size: 16px !important; transition: color 0.2s !important; }
     .sticky-tab-bar .tab-item.active { color: #1565c0 !important; border-bottom: 3px solid #1565c0 !important; background: none !important; }
     .sticky-tab-bar .tab-item:not(.active):hover { color: #0070f3 !important; }
-
-    /* --- CSS MỚI CHO HEADER --- */
-    .headerBox { background: rgba(255, 255, 255, 0.15); border-radius: 6px; padding: 8px 12px; color: white; display: flex; align-items: center; }
-    .headerBoxInteractive { background: rgba(255, 255, 255, 0.15); border-radius: 6px; padding: 8px 12px; color: white; display: flex; align-items: center; cursor: pointer; position: relative; transition: background-color 0.2s; }
-    .headerBoxInteractive:hover { background: rgba(255, 255, 255, 0.25); }
-    .datePickerWrapper {
-     position: absolute;
-      top: calc(100% + 8px);
-       left: 0; 
-     
-       background-color: white;
-        border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1010; padding: 16px; border: 1px solid #e0e0e0; color: #333; }
-    .datePickerWrapper .react-datepicker { border: none; font-family: inherit; }
-    .datePickerWrapper .react-datepicker__header { background-color: #f8f9fa; border-bottom: none; }
-    .datePickerWrapper .react-datepicker__day--selected { background-color: #0d6efd; }
-    .nightsSelector { margin-top: 16px; padding-top: 16px; border-top: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
-    .nightsSelector label { font-weight: 500; font-size: 16px; }
-    .counter { display: flex; align-items: center; gap: 12px; }
-    .counter button { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #0d6efd; background-color: white; color: #0d6efd; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
-    .counter button:disabled { border-color: #ced4da; color: #ced4da; cursor: not-allowed; }
-    .counter span { font-size: 16px; font-weight: bold; min-width: 20px; text-align: center; }
-    .applyButton { background-color: #0d6efd; color: white; border: none; border-radius: 6px; padding: 10px; font-weight: bold; cursor: pointer; margin-top: 16px; width: 100%; }
 `;
 
+// --- COMPONENT ROOMCARD (GIỮ NGUYÊN) ---
 function RoomCard({ room, handleSelectRoom, innerRef }: { room: Room; handleSelectRoom: (room: Room, price: number, includesBreakfast: boolean) => void; innerRef?: (node: HTMLDivElement | null) => void }) {
+    // ... (nội dung RoomCard giữ nguyên)
     const roomPhotos = room.photos?.flatMap(cat => cat.photos.map(p => p.url)) || [];
     const basePrice = room.basePricePerNight ?? 0;
     const originalPrice = basePrice * 1.25;
@@ -146,6 +118,7 @@ function RoomCard({ room, handleSelectRoom, innerRef }: { room: Room; handleSele
 }
 
 export default function HotelDetailPage() {
+    // --- STATE VÀ LOGIC GIỮ NGUYÊN TỪ TRƯỚC ---
     const { hotelId } = useParams();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -186,6 +159,7 @@ export default function HotelDetailPage() {
     const observer = useRef<IntersectionObserver | null>(null);
 
     const loadMoreRooms = useCallback(async () => {
+        // ... (logic giữ nguyên)
         if (!hotelId || isFetchingMore) return;
         setIsFetchingMore(true);
         try {
@@ -202,6 +176,7 @@ export default function HotelDetailPage() {
     }, [hotelId, isFetchingMore, page, hasMore]);
 
     const lastRoomElementRef = useCallback((node: HTMLDivElement | null) => {
+        // ... (logic giữ nguyên)
         if (isFetchingMore) return;
         if (observer.current) observer.current.disconnect();
         if (typeof window !== 'undefined' && window.IntersectionObserver) {
@@ -215,6 +190,7 @@ export default function HotelDetailPage() {
     }, [isFetchingMore, hasMore, loadMoreRooms]);
 
     useEffect(() => {
+        // ... (logic giữ nguyên)
         const checkinParam = searchParams.get('checkin');
         const nightsParam = searchParams.get('nights');
         const adultsParam = searchParams.get('adults');
@@ -229,6 +205,7 @@ export default function HotelDetailPage() {
     }, [searchParams]);
 
     useEffect(() => {
+        // ... (logic giữ nguyên)
         if (!hotelId) return;
         const hotelIdStr = hotelId as string;
         const fetchHotelData = async () => {
@@ -263,6 +240,20 @@ export default function HotelDetailPage() {
         fetchInitialRooms();
     }, [hotelId]);
 
+    const handleRefetchAvailability = () => {
+        // ... (logic giữ nguyên)
+        setShowDatePicker(false);
+        setShowGuestPicker(false);
+        const params = new URLSearchParams();
+        params.set('checkin', currentCheckin.toISOString().split('T')[0]);
+        params.set('nights', currentNights.toString());
+        params.set('adults', adults.toString());
+        params.set('children', children.toString());
+        params.set('rooms', roomsCount.toString());
+        router.push(`/hotels/${hotelId}?${params.toString()}`);
+    };
+
+    // ... các hàm handler khác giữ nguyên ...
     const handleTabClick = (tab: string) => {
         isScrollingByClick.current = true;
         setActiveTab(tab);
@@ -314,11 +305,6 @@ export default function HotelDetailPage() {
     };
 
     const handleDateChange = (date: Date | null) => { if (date) setCurrentCheckin(date); };
-    const handleGuestChange = (newAdults: number, newChildren: number, newRooms: number) => {
-        setAdults(newAdults);
-        setChildren(newChildren);
-        setRoomsCount(newRooms);
-    };
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -335,12 +321,12 @@ export default function HotelDetailPage() {
 
     useEffect(() => { window.addEventListener("scroll", handleScrollSync, { passive: true }); return () => window.removeEventListener("scroll", handleScrollSync); }, [handleScrollSync]);
 
+
     if (isHotelLoading || initialRoomsLoading) return <div className="container py-5 text-center"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Đang tải...</span></div></div>;
     if (hotelError || !hotel) return <div className="container py-5"><div className="alert alert-danger">{hotelError || "Không tìm thấy khách sạn"}</div></div>;
 
     const displayGuests = `${adults} người lớn, ${children} Trẻ em, ${roomsCount} phòng`;
     const dateDisplayString = formatDateForDisplay(currentCheckin, currentNights);
-
     const allPhotoUrls = hotel.photos.flatMap(cat => Array.isArray(cat.photos) ? cat.photos.map(p => p.url) : []) || [];
     const displayPhotos = allPhotoUrls.length > 0 ? allPhotoUrls : Array(5).fill("/placeholder.svg");
     const mainAmenities = hotel.amenities?.flatMap(group => group.amenities).slice(0, 6) || [];
@@ -348,54 +334,67 @@ export default function HotelDetailPage() {
     const lowestPrice = rooms.length > 0 ? Math.min(...rooms.map(room => room.basePricePerNight)) : hotel.currentPricePerNight ?? 0;
 
     return (
-        <div style={{ background: '#f7f9fb', minHeight: '100vh' }}>
-            <style>{customStyles}</style>
+        <div className={styles['hotel-detail-page']}>
+            <style>{customStylesForPage}</style>
 
-            <div style={{ background: 'linear-gradient(90deg,#1e3c72 0,#2a5298 100%)', color: '#fff', padding: '16px 0' }}>
-                <div className="container d-flex align-items-center justify-content-between">
-                    <div className="d-flex align-items-center gap-2">
-                        <div className="headerBox">
-                            <i className="bi bi-geo-alt-fill me-2"></i>
-                            <span className="fw-bold">{hotel.name}</span>
+            {/* --- CẬP NHẬT: JSX mới sử dụng class từ styles object --- */}
+            <div className={styles.searchHeader}>
+                <div className="container">
+                    <div className={styles.searchBar}>
+                        <div className={`${styles.searchSection} ${styles.locationSection}`}>
+                            <i className={`bi bi-geo-alt ${styles.searchIcon}`}></i>
+                            <div className={styles.searchInput}>
+                                <label>Khách sạn</label>
+                                <span>{hotel.name}</span>
+                            </div>
                         </div>
-                        <div className="headerBoxInteractive" ref={datePickerRef} onClick={() => setShowDatePicker(!showDatePicker)}>
-                            <i className="bi bi-calendar-event me-2"></i>
-                            <span>{dateDisplayString}</span>
+                        <div className={styles.divider}></div>
+                        <div className={`${styles.searchSection} ${styles.dateSection}`} ref={datePickerRef}>
+                            <i className={`bi bi-calendar3 ${styles.searchIcon}`}></i>
+                            <div className={styles.searchInput} onClick={() => setShowDatePicker(!showDatePicker)}>
+                                <label>Ngày nhận phòng & Số đêm</label>
+                                <span>{dateDisplayString}</span>
+                            </div>
                             {showDatePicker && (
-                                <div className="datePickerWrapper">
+                                <div className={styles.datePickerWrapper}>
                                     <DatePicker selected={currentCheckin} onChange={handleDateChange} inline locale="vi" minDate={new Date()} />
-                                    <div className="nightsSelector">
+                                    <div className={styles.nightsSelector}>
                                         <label>Số đêm</label>
-                                        <div className="counter">
-                                            <button onClick={(e) => { e.stopPropagation(); setCurrentNights(n => Math.max(1, n - 1)); }} disabled={currentNights <= 1}>-</button>
+                                        <div className={styles.counter}>
+                                            <button onClick={() => setCurrentNights(n => Math.max(1, n - 1))} disabled={currentNights <= 1}>-</button>
                                             <span>{currentNights}</span>
-                                            <button onClick={(e) => { e.stopPropagation(); setCurrentNights(n => n + 1); }}>+</button>
+                                            <button onClick={() => setCurrentNights(n => n + 1)}>+</button>
                                         </div>
                                     </div>
-                                    <button className="applyButton" onClick={(e) => { e.stopPropagation(); setShowDatePicker(false); }}>Xong</button>
+                                    <button className={styles.applyButton} onClick={() => setShowDatePicker(false)}>Xong</button>
                                 </div>
                             )}
                         </div>
-                        {/* <div className="headerBoxInteractive" ref={guestPickerRef} onClick={() => setShowGuestPicker(!showGuestPicker)}>
-                            <i className="bi bi-person me-2"></i>
-                            <span>{displayGuests}</span>
+                        <div className={styles.divider}></div>
+                        <div className={`${styles.searchSection} ${styles.guestSection}`} ref={guestPickerRef}>
+                            <i className={`bi bi-person ${styles.searchIcon}`}></i>
+                            <div className={styles.searchInput} onClick={() => setShowGuestPicker(!showGuestPicker)}>
+                                <label>Khách và Phòng</label>
+                                <span>{displayGuests}</span>
+                            </div>
                             {showGuestPicker && (
-                                <GuestPicker
-                                    adults={adults}
-                                    children={children}
-                                    rooms={roomsCount}
-                                    setAdults={setAdults}
-                                    setChildren={setChildren}
-                                    setRooms={setRoomsCount}
-                                    onClose={() => setShowGuestPicker(false)}
-                                />
+                                <div className={styles.guestPickerWrapper}>
+                                    <GuestPicker
+                                        adults={adults}
+                                        children={children}
+                                        rooms={roomsCount}
+                                        setAdults={setAdults}
+                                        setChildren={setChildren}
+                                        setRooms={setRoomsCount}
+                                        onClose={() => setShowGuestPicker(false)}
+                                    />
+                                </div>
                             )}
-                        </div> */}
-                    </div>
-                    <div>
-                        <button className="btn btn-warning fw-bold px-4">
-                            <i className="bi bi-search me-2"></i>
-                            Tìm lại phòng trống
+                        </div>
+                        <div className={styles.divider}></div>
+                        <button className={styles.searchButton} onClick={handleRefetchAvailability}>
+                            <i className="bi bi-search"></i>
+                            <span>Tìm lại</span>
                         </button>
                     </div>
                 </div>
@@ -413,105 +412,120 @@ export default function HotelDetailPage() {
                 </div>
             </div>
 
-            <div ref={overviewRef} className="container mt-4">
-                <div className="row g-2">
-                    <div className="col-md-7">
-                        <div style={{ borderRadius: '16px', overflow: 'hidden', width: '100%', height: '320px' }}>
-                            <Image src={displayPhotos[0]} width={700} height={320} alt="Hotel main photo" style={{ objectFit: 'cover', width: '100%', height: '100%' }} priority />
+            <div ref={overviewRef} className="container py-4">
+                <div className="row g-2 mb-4">
+                    <div className="col-lg-7">
+                        <div style={{ borderRadius: '16px', overflow: 'hidden', width: '100%', height: '410px', position: 'relative' }}>
+                            <Image src={displayPhotos[0]} layout="fill" objectFit="cover" alt="Hotel main photo" priority />
                         </div>
                     </div>
-                    <div className="col-md-5">
-                        <div className="row g-2" style={{ minHeight: '320px' }}>
+                    <div className="col-lg-5">
+                        <div className="row g-2" style={{ height: '410px' }}>
                             {displayPhotos.slice(1, 5).map((url, idx) => (
                                 <div key={idx} className="col-6">
-                                    <div style={{ borderRadius: '10px', overflow: 'hidden', width: '100%', height: '154px' }}>
-                                        <Image src={url} width={200} height={154} alt={`Hotel side photo ${idx + 1}`} style={{ objectFit: 'cover', width: '100%', height: '100%' }} />
+                                    <div style={{ borderRadius: '10px', overflow: 'hidden', width: '100%', height: '201px', position: 'relative' }}>
+                                        <Image src={url} layout="fill" objectFit="cover" alt={`Hotel side photo ${idx + 1}`} />
                                     </div>
                                 </div>
                             ))}
                         </div>
                     </div>
                 </div>
-                <div className="container" style={{ marginTop: '32px' }}>
-                    <div className="row gx-4 gy-4">
-                        <div className="col-lg-8">
-                            <div className="card shadow-lg p-4 mb-4" style={{ borderRadius: '18px' }}>
-                                <div className="d-flex align-items-center mb-2">
-                                    <span className="badge bg-primary me-2">Khách Sạn</span>
-                                    {hotel.starRating > 0 && <span className="text-warning fw-bold">{'★'.repeat(hotel.starRating)}</span>}
-                                    <span className="ms-3 fw-bold fs-4 text-dark">{hotel.name}</span>
-                                </div>
-                                <div className="mb-2">
-                                    <span className="fw-bold">Địa chỉ:</span> {getFullAddress(hotel)}
-                                </div>
-                                <div className="mb-2 d-flex align-items-center flex-wrap">
+
+                {/* --- KHU VỰC THÔNG TIN --- */}
+                <div className="row gx-lg-4 gy-4">
+                    {/* --- CỘT TRÁI: THÔNG TIN CHÍNH --- */}
+                    <div className="col-lg-8">
+                        <div className="bg-white rounded-4 shadow-sm p-4 mb-4">
+                            <div className="d-flex align-items-center mb-3 flex-wrap">
+                                <span className="badge bg-primary me-2 fs-6 py-2">Khách Sạn</span>
+                                {hotel.starRating > 0 && <span className="text-warning fw-bold fs-5 ms-2">{'★'.repeat(hotel.starRating)}</span>}
+                            </div>
+                            <h1 className="fw-bold fs-2 text-dark mb-3">{hotel.name}</h1>
+                            <div className="mb-4 d-flex align-items-start">
+                                <i className="bi bi-geo-alt-fill text-danger fs-5 me-2 mt-1"></i>
+                                <span className="text-muted">{getFullAddress(hotel)}</span>
+                            </div>
+                            <div className="d-flex align-items-center flex-wrap bg-light p-3 rounded-3">
+                                <div className="me-auto">
                                     <span className="fw-bold">Giá phòng/đêm từ:</span>
-                                    <span className="text-danger fw-bold ms-2 fs-5">{lowestPrice > 0 ? lowestPrice.toLocaleString("vi-VN") : 'Liên hệ'} VND</span>
-                                    <button className="btn btn-warning btn-lg fw-bold px-4 ms-auto mt-2 mt-lg-0" onClick={() => handleTabClick('rooms')}>Chọn phòng</button>
+                                    <span className="text-danger fw-bold ms-2 fs-4">{lowestPrice > 0 ? lowestPrice.toLocaleString("vi-VN") : 'Liên hệ'} VND</span>
                                 </div>
-                            </div>
-                            <div ref={amenitiesRef} className="card shadow p-4 mb-4">
-                                <h5 className="fw-bold mb-3">Tiện ích chính</h5>
-                                <div className="d-flex flex-wrap">
-                                    {mainAmenities.map((item) => (
-                                        <span key={item.id} className="me-4 mb-3 d-flex align-items-center" style={{ minWidth: '150px' }}>
-                                            <i className="bi bi-check-circle text-primary me-2" style={{ fontSize: "1.1rem" }}></i>
-                                            <span className="text-dark small fw-semibold">{item.name}</span>
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="card shadow p-4">
-                                <h5 className="fw-bold mb-2">Mô tả khách sạn</h5>
-                                <p className="mb-0 text-dark">{hotel.description}</p>
+                                <button className="btn btn-warning btn-lg fw-bold px-4 mt-2 mt-sm-0" onClick={() => handleTabClick('rooms')}>
+                                    Chọn phòng ngay
+                                </button>
                             </div>
                         </div>
-                        <div className="col-lg-4">
-                            <div className="card shadow-lg p-4 mb-4">
-                                <h5 className="fw-bold mb-3">Trong khu vực</h5>
-                                <ul className="list-unstyled mb-0">
-                                    {nearbyVenues.map((item) => (
-                                        <li key={item.id} className="mb-2 d-flex align-items-center">
-                                            <i className="bi bi-geo-alt text-primary me-2"></i>
-                                            <span className="fw-semibold">{item.name}</span>
-                                            <span className="ms-auto text-muted">{formatDistance(item.distance)}</span>
-                                        </li>
-                                    ))}
-                                </ul>
+
+                        <div ref={amenitiesRef} className="bg-white rounded-4 shadow-sm p-4 mb-4">
+                            <h5 className="fw-bold mb-3">Tiện ích chính</h5>
+                            <div className="row">
+                                {mainAmenities.map((item) => (
+                                    <div key={item.id} className="col-md-6 mb-3">
+                                        <div className="d-flex align-items-center">
+                                            <i className="bi bi-check-circle text-primary me-2 fs-5"></i>
+                                            <span className="text-dark">{item.name}</span>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
+                        </div>
+
+                        <div className="bg-white rounded-4 shadow-sm p-4">
+                            <h5 className="fw-bold mb-3">Mô tả khách sạn</h5>
+                            <p className="mb-0 text-dark" style={{ lineHeight: 1.7 }}>{hotel.description}</p>
+                        </div>
+                    </div>
+
+                    {/* --- CỘT PHẢI: KHU VỰC LÂN CẬN --- */}
+                    <div className="col-lg-4">
+                        <div className="bg-white rounded-4 shadow-sm p-4">
+                            <h5 className="fw-bold mb-3">Trong khu vực</h5>
+                            <ul className="list-unstyled mb-0">
+                                {nearbyVenues.map((item) => (
+                                    <li key={item.id} className="mb-3 d-flex align-items-center">
+                                        <i className="bi bi-geo-alt text-primary me-3 fs-5"></i>
+                                        <div>
+                                            <div className="fw-semibold">{item.name}</div>
+                                            <div className="small text-muted">{formatDistance(item.distance)}</div>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div ref={roomsSectionRef} className="container mb-5">
+                {/* ... (nội dung giữ nguyên) ... */}
                 <h4 className="fw-bold mb-3 text-dark pt-4">Những phòng còn trống tại {hotel.name}</h4>
                 <div className="bg-white p-4 mb-3" style={{ borderBottom: '1px solid #e3e6ea' }}>
                     <h5 className="fw-bold mb-3 text-dark">Tìm kiếm nhanh hơn bằng cách chọn những tiện nghi bạn cần</h5>
                     <div className="row align-items-start">
                         <div className="col-lg-4 col-md-6">
-                            <label className="custom-checkbox-wrapper">Miễn phí hủy phòng
+                            <label className={styles['custom-checkbox-wrapper']}>Miễn phí hủy phòng
                                 <input type="checkbox" />
-                                <span className="checkmark"></span>
+                                <span className={styles.checkmark}></span>
                             </label>
-                            <label className="custom-checkbox-wrapper">Thanh toán gần ngày đến ở
+                            <label className={styles['custom-checkbox-wrapper']}>Thanh toán gần ngày đến ở
                                 <input type="checkbox" />
-                                <span className="checkmark"></span>
+                                <span className={styles.checkmark}></span>
                                 <div className="text-muted" style={{ fontSize: '12px', marginLeft: '28px', marginTop: '-8px' }}>Không cần thanh toán ngay hôm nay</div>
                             </label>
-                            <label className="custom-checkbox-wrapper">Thanh Toán Tại Khách Sạn <i className="bi bi-info-circle ms-1"></i>
+                            <label className={styles['custom-checkbox-wrapper']}>Thanh Toán Tại Khách Sạn <i className="bi bi-info-circle ms-1"></i>
                                 <input type="checkbox" />
-                                <span className="checkmark"></span>
+                                <span className={styles.checkmark}></span>
                             </label>
                         </div>
                         <div className="col-lg-4 col-md-6 text-dark">
-                            <label className="custom-checkbox-wrapper">Giường lớn <i className="bi bi-info-circle ms-1"></i>
+                            <label className={styles['custom-checkbox-wrapper']}>Giường lớn <i className="bi bi-info-circle ms-1"></i>
                                 <input type="checkbox" />
-                                <span className="checkmark"></span>
+                                <span className={styles.checkmark}></span>
                             </label>
-                            <label className="custom-checkbox-wrapper">Miễn phí bữa sáng
+                            <label className={styles['custom-checkbox-wrapper']}>Miễn phí bữa sáng
                                 <input type="checkbox" />
-                                <span className="checkmark"></span>
+                                <span className={styles.checkmark}></span>
                             </label>
                         </div>
                         <div className="col-lg-4 col-md-12 mt-3 mt-lg-0">
@@ -555,6 +569,7 @@ export default function HotelDetailPage() {
                     </div>
                 )}
             </div>
+
         </div>
     );
 }
