@@ -6,6 +6,7 @@ import com.webapp.holidate.constants.api.param.RoomInventoryParams;
 import com.webapp.holidate.dto.request.acommodation.room.inventory.RoomInventoryCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.room.inventory.RoomInventoryPriceUpdateRequest;
 import com.webapp.holidate.dto.response.acommodation.room.RoomWithInventoriesResponse;
+import com.webapp.holidate.dto.response.acommodation.room.inventory.RoomInventoryPriceByDateResponse;
 import com.webapp.holidate.dto.response.acommodation.room.inventory.RoomInventoryResponse;
 import com.webapp.holidate.dto.response.base.PagedResponse;
 import com.webapp.holidate.entity.accommodation.room.Room;
@@ -330,5 +331,48 @@ public class RoomInventoryService {
 
     return nearestFutureInventory.map(RoomInventory::getPrice)
         .orElseGet(room::getBasePricePerNight);
+  }
+
+  public List<RoomInventoryPriceByDateResponse> getPricesByDateRange(
+      String roomId, LocalDate checkInDate, LocalDate checkOutDate) {
+    // Get room inventories for the booking period
+    List<RoomInventory> inventories = roomInventoryRepository.findAllByRoomIdAndDateBetween(
+        roomId, checkInDate, checkOutDate.minusDays(1));
+
+    // Convert to response DTOs
+    List<RoomInventoryPriceByDateResponse> pricesByDate = inventories.stream()
+        .map(inventory -> RoomInventoryPriceByDateResponse.builder()
+            .date(inventory.getId().getDate())
+            .price(inventory.getPrice())
+            .build())
+        .sorted(Comparator.comparing(RoomInventoryPriceByDateResponse::getDate))
+        .toList();
+
+    // If there are missing dates, fill them with base price
+    Room room = roomRepository.findById(roomId)
+        .orElseThrow(() -> new AppException(ErrorType.ROOM_NOT_FOUND));
+    double basePrice = room.getBasePricePerNight();
+
+    List<RoomInventoryPriceByDateResponse> allPricesByDate = new ArrayList<>();
+    LocalDate currentDate = checkInDate;
+    int inventoryIndex = 0;
+
+    while (currentDate.isBefore(checkOutDate)) {
+      if (inventoryIndex < pricesByDate.size()
+          && pricesByDate.get(inventoryIndex).getDate().equals(currentDate)) {
+        // Use price from inventory
+        allPricesByDate.add(pricesByDate.get(inventoryIndex));
+        inventoryIndex++;
+      } else {
+        // Use base price for missing dates
+        allPricesByDate.add(RoomInventoryPriceByDateResponse.builder()
+            .date(currentDate)
+            .price(basePrice)
+            .build());
+      }
+      currentDate = currentDate.plusDays(1);
+    }
+
+    return allPricesByDate;
   }
 }

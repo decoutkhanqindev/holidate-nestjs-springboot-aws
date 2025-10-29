@@ -14,11 +14,7 @@ import java.time.LocalDate;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class RoomInventoryPriceDetailsResponse {
+public class RoomInventoryPriceByDateResponse {
   LocalDate date;
-  double originalPrice;
-  double priceAfterDiscount;
-  double vatFee;
-  double serviceFee;
-  double finalPrice;
+  double price;
 }

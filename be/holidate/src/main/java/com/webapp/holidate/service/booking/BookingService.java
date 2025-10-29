@@ -6,6 +6,7 @@ import com.webapp.holidate.dto.request.booking.BookingPricePreviewRequest;
 import com.webapp.holidate.dto.response.booking.BookingPriceDetailsResponse;
 import com.webapp.holidate.dto.response.booking.BookingResponse;
 import com.webapp.holidate.dto.response.booking.FeeResponse;
+import com.webapp.holidate.dto.response.acommodation.room.inventory.RoomInventoryPriceByDateResponse;
 import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.entity.accommodation.room.Room;
 import com.webapp.holidate.entity.accommodation.room.RoomInventory;
@@ -183,6 +184,13 @@ public class BookingService {
     if (response.getRoom() != null) {
       double checkInPrice = roomInventoryService.getPriceForDate(savedBooking.getRoom(), savedBooking.getCheckInDate());
       response.getRoom().setCurrentPricePerNight(checkInPrice);
+
+      // Set pricesByDate for booking period
+      List<RoomInventoryPriceByDateResponse> pricesByDate = roomInventoryService.getPricesByDateRange(
+          savedBooking.getRoom().getId(),
+          savedBooking.getCheckInDate(),
+          savedBooking.getCheckOutDate());
+      response.getRoom().setPricesByDateRange(pricesByDate);
     }
 
     return response;
@@ -248,6 +256,15 @@ public class BookingService {
     BookingPriceDetailsResponse priceDetails = calculatePriceDetails(booking);
     response.setPriceDetails(priceDetails);
 
+    // Set pricesByDate for booking period
+    if (response.getRoom() != null) {
+      List<RoomInventoryPriceByDateResponse> pricesByDate = roomInventoryService.getPricesByDateRange(
+          booking.getRoom().getId(),
+          booking.getCheckInDate(),
+          booking.getCheckOutDate());
+      response.getRoom().setPricesByDateRange(pricesByDate);
+    }
+
     return response;
   }
 
@@ -266,6 +283,15 @@ public class BookingService {
     BookingResponse response = bookingMapper.toBookingResponse(booking, null);
     BookingPriceDetailsResponse priceDetails = calculatePriceDetails(booking);
     response.setPriceDetails(priceDetails);
+
+    // Set pricesByDate for booking period
+    if (response.getRoom() != null) {
+      List<RoomInventoryPriceByDateResponse> pricesByDate = roomInventoryService.getPricesByDateRange(
+          booking.getRoom().getId(),
+          booking.getCheckInDate(),
+          booking.getCheckOutDate());
+      response.getRoom().setPricesByDateRange(pricesByDate);
+    }
 
     // Release room inventory if booking was pending payment
     if (BookingStatusType.PENDING_PAYMENT.getValue().equals(status)) {

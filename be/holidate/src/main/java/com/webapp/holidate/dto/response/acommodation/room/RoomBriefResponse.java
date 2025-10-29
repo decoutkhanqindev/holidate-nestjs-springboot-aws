@@ -1,13 +1,11 @@
 package com.webapp.holidate.dto.response.acommodation.room;
 
-import com.webapp.holidate.dto.response.amenity.AmenityCategoryDetailsResponse;
-import com.webapp.holidate.dto.response.image.PhotoCategoryResponse;
+import com.webapp.holidate.dto.response.acommodation.room.inventory.RoomInventoryPriceByDateResponse;
 import com.webapp.holidate.dto.response.policy.cancellation.CancellationPolicyResponse;
 import com.webapp.holidate.dto.response.policy.reschedule.ReschedulePolicyResponse;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -34,4 +32,5 @@ public class RoomBriefResponse {
   boolean smokingAllowed;
   boolean wifiAvailable;
   boolean breakfastIncluded;
+  List<RoomInventoryPriceByDateResponse> pricesByDateRange;
 }
