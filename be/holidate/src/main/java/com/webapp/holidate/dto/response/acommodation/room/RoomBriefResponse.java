@@ -25,7 +25,6 @@ public class RoomBriefResponse {
   int maxAdults;
   int maxChildren;
   double basePricePerNight;
-  double currentPricePerNight;
   BedTypeResponse bedType;
   CancellationPolicyResponse cancellationPolicy;
   ReschedulePolicyResponse reschedulePolicy;

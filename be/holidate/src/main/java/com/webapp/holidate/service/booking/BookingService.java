@@ -75,7 +75,7 @@ public class BookingService {
         }
 
         try {
-          Thread.sleep(retryDelay * attempt); // Exponential backoff
+          Thread.sleep((long) retryDelay * attempt); // Exponential backoff
         } catch (InterruptedException ie) {
           Thread.currentThread().interrupt();
           throw new AppException(ErrorType.UNKNOWN_ERROR);
@@ -179,11 +179,7 @@ public class BookingService {
     BookingPriceDetailsResponse priceDetails = calculatePriceDetails(savedBooking);
     response.setPriceDetails(priceDetails);
 
-    // Override room's currentPricePerNight with check-in date price
     if (response.getRoom() != null) {
-      double checkInPrice = roomInventoryService.getPriceForDate(savedBooking.getRoom(), savedBooking.getCheckInDate());
-      response.getRoom().setCurrentPricePerNight(checkInPrice);
-
       // Set pricesByDate for booking period
       List<RoomInventoryPriceByDateResponse> pricesByDate = roomInventoryService.getPricesByDateRange(
         savedBooking.getRoom().getId(),

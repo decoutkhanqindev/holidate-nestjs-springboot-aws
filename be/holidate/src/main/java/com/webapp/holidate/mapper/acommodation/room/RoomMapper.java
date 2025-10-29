@@ -48,15 +48,7 @@ public interface RoomMapper {
   @Mapping(source = "amenities", target = "amenities", qualifiedByName = "roomAmenitiesToCategories")
   RoomResponse toRoomResponse(Room room);
 
-  @Mapping(target = "currentPricePerNight", ignore = true)
   RoomBriefResponse toRoomBriefResponse(Room room);
-
-  @AfterMapping
-  default void addCurrentPriceToBrief(Room room,
-                                      @MappingTarget RoomBriefResponse.RoomBriefResponseBuilder responseBuilder) {
-    double currentPrice = getCurrentPricePerNight(room);
-    responseBuilder.currentPricePerNight(currentPrice);
-  }
 
   @AfterMapping
   default void addCurrentPrice(Room room, @MappingTarget RoomResponse.RoomResponseBuilder responseBuilder) {
