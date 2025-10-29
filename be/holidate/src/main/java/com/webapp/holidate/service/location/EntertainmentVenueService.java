@@ -56,6 +56,6 @@ public class EntertainmentVenueService {
             .build();
         }
       )
-      .collect(Collectors.toList());
+      .toList();
   }
 }

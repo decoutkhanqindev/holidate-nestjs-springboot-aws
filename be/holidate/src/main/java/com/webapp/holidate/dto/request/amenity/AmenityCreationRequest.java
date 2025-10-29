@@ -1,6 +1,7 @@
 package com.webapp.holidate.dto.request.amenity;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -17,8 +18,8 @@ public class AmenityCreationRequest {
   @NotBlank(message = "NAME_NOT_BLANK")
   String name;
 
-  @NotBlank(message = "IS_FREE_NOT_BLANK")
-  boolean isFree;
+  @NotNull(message = "IS_FREE_NOT_BLANK")
+  Boolean free;
 
   @NotBlank(message = "CATEGORY_ID_NOT_BLANK")
   String categoryId;

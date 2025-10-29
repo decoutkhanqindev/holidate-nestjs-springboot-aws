@@ -4,4 +4,9 @@ public class HotelParams {
   public static final String HOTEL_ID = "hotel-id";
   public static final String AMENITY_IDS = "amenity-ids";
   public static final String STAR_RATING = "star-rating";
+
+  // Sort fields
+  public static final String PRICE = "price";
+  public static final String AVAILABLE_ROOMS = "available-rooms";
+  public static final String CREATED_AT = "created-at";
 }

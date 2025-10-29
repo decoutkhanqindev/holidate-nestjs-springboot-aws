@@ -1,5 +1,6 @@
 package com.webapp.holidate.service.accommodation.room;
 
+import com.webapp.holidate.constants.api.param.RoomParams;
 import com.webapp.holidate.constants.api.param.SortingParams;
 import com.webapp.holidate.dto.request.acommodation.room.RoomCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.room.RoomUpdateRequest;
@@ -8,10 +9,10 @@ import com.webapp.holidate.dto.response.acommodation.room.RoomDetailsResponse;
 import com.webapp.holidate.dto.response.acommodation.room.RoomResponse;
 import com.webapp.holidate.dto.response.base.PagedResponse;
 import com.webapp.holidate.entity.accommodation.Hotel;
-import com.webapp.holidate.entity.accommodation.amenity.Amenity;
-import com.webapp.holidate.entity.accommodation.amenity.RoomAmenity;
 import com.webapp.holidate.entity.accommodation.room.BedType;
 import com.webapp.holidate.entity.accommodation.room.Room;
+import com.webapp.holidate.entity.amenity.Amenity;
+import com.webapp.holidate.entity.amenity.RoomAmenity;
 import com.webapp.holidate.entity.image.Photo;
 import com.webapp.holidate.entity.image.PhotoCategory;
 import com.webapp.holidate.entity.image.RoomPhoto;
@@ -46,7 +47,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -161,8 +161,7 @@ public class RoomService {
   }
 
   public PagedResponse<RoomResponse> getAllByHotelId(
-    String hotelId, String status, int page, int size, String sortBy, String sortDir
-  ) {
+    String hotelId, String status, int page, int size, String sortBy, String sortDir) {
     // Clean up and validate pagination parameters
     page = Math.max(0, page);
     size = Math.min(Math.max(1, size), 100);
@@ -177,7 +176,7 @@ public class RoomService {
 
     // Check if sort field is valid (only price sorting allowed)
     boolean hasSortBy = sortBy != null && !sortBy.isEmpty()
-      && SortingParams.SORT_BY_PRICE.equals(sortBy);
+      && RoomParams.PRICE.equals(sortBy);
     if (!hasSortBy) {
       sortBy = null;
     }
@@ -192,8 +191,7 @@ public class RoomService {
   // Get rooms with database-level pagination
   private PagedResponse<RoomResponse> getRoomsWithPagination(
     String hotelId, String status, boolean hasStatusFilter,
-    int page, int size, String sortBy, String sortDir
-  ) {
+    int page, int size, String sortBy, String sortDir) {
     // Create Pageable with sorting
     Pageable pageable = createPageable(page, size, sortBy, sortDir);
 
@@ -245,7 +243,7 @@ public class RoomService {
   // Map API sort field to entity field name for rooms
   private String mapRoomSortFieldToEntity(String sortBy) {
     return switch (sortBy) {
-      case SortingParams.SORT_BY_PRICE -> "basePricePerNight";
+      case RoomParams.PRICE -> "basePricePerNight";
       default -> "createdAt"; // Default sorting by creation date
     };
   }

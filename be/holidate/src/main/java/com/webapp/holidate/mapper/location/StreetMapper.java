@@ -11,6 +11,9 @@ import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface StreetMapper {
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "ward", ignore = true)
+  @Mapping(target = "hotels", ignore = true)
   Street toEntity(StreetCreationRequest request);
 
   StreetResponse toStreetResponse(Street street);

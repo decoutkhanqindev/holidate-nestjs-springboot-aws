@@ -26,6 +26,5 @@ public class HotelBriefResponse {
   double latitude;
   double longitude;
   int starRating;
-  double averageScore;
   String status;
 }

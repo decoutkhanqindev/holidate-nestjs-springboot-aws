@@ -1,11 +1,12 @@
 package com.webapp.holidate.service.accommodation.room;
 
 import com.webapp.holidate.constants.AppProperties;
+import com.webapp.holidate.constants.api.param.RoomInventoryParams;
 import com.webapp.holidate.constants.api.param.SortingParams;
 import com.webapp.holidate.dto.request.acommodation.room.inventory.RoomInventoryCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.room.inventory.RoomInventoryPriceUpdateRequest;
 import com.webapp.holidate.dto.response.acommodation.room.RoomWithInventoriesResponse;
-import com.webapp.holidate.dto.response.acommodation.room.inventory.RoomInventoryPriceDetailsResponse;
+import com.webapp.holidate.dto.response.acommodation.room.inventory.RoomInventoryPriceByDateResponse;
 import com.webapp.holidate.dto.response.acommodation.room.inventory.RoomInventoryResponse;
 import com.webapp.holidate.dto.response.base.PagedResponse;
 import com.webapp.holidate.entity.accommodation.room.Room;
@@ -33,8 +34,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -66,7 +68,10 @@ public class RoomInventoryService {
     double basePrice = room.getBasePricePerNight();
     LocalDate today = LocalDate.now();
 
-    int days = request.getDays();
+    Integer days = request.getDays();
+    if (days == null || days <= 0) {
+      throw new AppException(ErrorType.INVALID_DAYS_VALUE);
+    }
     for (int i = 0; i < days; i++) {
       LocalDate date = today.plusDays(i);
       RoomInventoryId id = RoomInventoryId.builder()
@@ -96,8 +101,7 @@ public class RoomInventoryService {
 
   public PagedResponse<RoomInventoryResponse> getAllByRoomIdForDateBetween(
     String roomId, LocalDate startDate, LocalDate endDate, String status,
-    int page, int size, String sortBy, String sortDir
-  ) {
+    int page, int size, String sortBy, String sortDir) {
     // Clean up and validate pagination parameters
     page = Math.max(0, page);
     size = Math.min(Math.max(1, size), 100);
@@ -112,9 +116,9 @@ public class RoomInventoryService {
 
     // Check if sort field is valid
     boolean hasSortBy = sortBy != null && !sortBy.isEmpty()
-      && (SortingParams.SORT_BY_DATE.equals(sortBy)
-      || SortingParams.SORT_BY_PRICE.equals(sortBy)
-      || SortingParams.SORT_BY_AVAILABLE_ROOMS.equals(sortBy));
+      && (RoomInventoryParams.DATE.equals(sortBy)
+      || RoomInventoryParams.PRICE.equals(sortBy)
+      || RoomInventoryParams.AVAILABLE_ROOMS.equals(sortBy));
     if (!hasSortBy) {
       sortBy = null;
     }
@@ -131,8 +135,7 @@ public class RoomInventoryService {
   // Get inventories with 100% database-level pagination
   private PagedResponse<RoomInventoryResponse> getInventoriesWithDatabasePagination(
     String roomId, LocalDate startDate, LocalDate endDate, String status,
-    boolean hasStatusFilter, int page, int size, String sortBy, String sortDir
-  ) {
+    boolean hasStatusFilter, int page, int size, String sortBy, String sortDir) {
     // Get paginated data directly from database
     Page<RoomInventory> inventoryPage = getInventoriesWithPagination(
       roomId, startDate, endDate, status, hasStatusFilter, page, size, sortBy, sortDir);
@@ -178,9 +181,9 @@ public class RoomInventoryService {
   // Map sort field from API to entity field name
   private String mapInventorySortFieldToEntity(String sortBy) {
     return switch (sortBy) {
-      case SortingParams.SORT_BY_DATE -> "id.date";
-      case SortingParams.SORT_BY_PRICE -> "price";
-      case SortingParams.SORT_BY_AVAILABLE_ROOMS -> "availableRooms";
+      case RoomInventoryParams.DATE -> "id.date";
+      case RoomInventoryParams.PRICE -> "price";
+      case RoomInventoryParams.AVAILABLE_ROOMS -> "availableRooms";
       default -> "id.date"; // Default sorting by date
     };
   }
@@ -188,8 +191,7 @@ public class RoomInventoryService {
   // Get inventories with database-level pagination
   private Page<RoomInventory> getInventoriesWithPagination(
     String roomId, LocalDate startDate, LocalDate endDate, String status,
-    boolean hasStatusFilter, int page, int size, String sortBy, String sortDir
-  ) {
+    boolean hasStatusFilter, int page, int size, String sortBy, String sortDir) {
 
     Pageable pageable = createPageable(page, size, sortBy, sortDir);
 
@@ -203,37 +205,68 @@ public class RoomInventoryService {
     }
   }
 
-  // @Transactional
-  // public void updateAvailabilityForBooking(BookingRequest request) {
-  // List<RoomInventory> inventories =
-  // roomInventoryRepository.findById_RoomIdAndId_DateBetween(
-  // request.getRoomId(), request.getStartDate(), request.getEndDate());
-  //
-  // long daysRequested = ChronoUnit.DAYS.between(request.getStartDate(),
-  // request.getEndDate().plusDays(1));
-  // if (inventories.size() != daysRequested) {
-  // throw new ResourceNotFoundException("Một số ngày trong khoảng thời gian bạn
-  // chọn không có sẵn để đặt.");
-  // }
-  //
-  // for (RoomInventory inventory : inventories) {
-  // if (inventory.getAvailableRooms() < request.getNumberOfRooms()) {
-  // throw new InsufficientRoomsException("Không đủ phòng trống vào ngày " +
-  // inventory.getId().getDate());
-  // }
-  // inventory.setAvailableRooms(inventory.getAvailableRooms() -
-  // request.getNumberOfRooms());
-  // if (inventory.getAvailableRooms() == 0) {
-  // inventory.setStatus("SOLD_OUT");
-  // }
-  // }
-  // roomInventoryRepository.saveAll(inventories);
-  // }
+  @Transactional
+  public void updateAvailabilityForBooking(String roomId, LocalDate checkInDate, LocalDate checkOutDate,
+                                           int numberOfRooms) {
+    // Get room inventories for the booking period with pessimistic locking
+    // This ensures no other transaction can modify these records until we're done
+    List<RoomInventory> inventories = roomInventoryRepository.findAllByRoomIdAndDateBetweenWithLock(
+      roomId, checkInDate, checkOutDate.minusDays(1));
 
-  // @Transactional
-  // public void updateAvailabilityForCancellation(BookingRequest request) {
-  // // Tương tự logic booking nhưng cộng lại số phòng
-  // }
+    // Validate that all required dates have inventory
+    long daysRequested = checkInDate.until(checkOutDate).getDays();
+    if (inventories.size() != daysRequested) {
+      throw new AppException(ErrorType.ROOM_NOT_AVAILABLE);
+    }
+
+    // Check availability and update inventory atomically
+    for (RoomInventory inventory : inventories) {
+      if (inventory.getAvailableRooms() < numberOfRooms) {
+        throw new AppException(ErrorType.INSUFFICIENT_ROOM_QUANTITY);
+      }
+
+      // Update available rooms atomically
+      int newAvailableRooms = inventory.getAvailableRooms() - numberOfRooms;
+      inventory.setAvailableRooms(newAvailableRooms);
+
+      // Update status if no rooms available
+      if (newAvailableRooms == 0) {
+        inventory.setStatus(RoomInventoryStatusType.UNAVAILABLE.getValue());
+      }
+    }
+
+    // Save all updated inventories - this will be atomic due to @Transactional
+    roomInventoryRepository.saveAll(inventories);
+  }
+
+  @Transactional
+  public void updateAvailabilityForCancellation(String roomId, LocalDate checkInDate, LocalDate checkOutDate,
+                                                int numberOfRooms) {
+    // Get room inventories for the cancellation period with pessimistic locking
+    List<RoomInventory> inventories = roomInventoryRepository.findAllByRoomIdAndDateBetweenWithLock(
+      roomId, checkInDate, checkOutDate.minusDays(1));
+
+    // Validate that all required dates have inventory
+    long daysRequested = checkInDate.until(checkOutDate).getDays();
+    if (inventories.size() != daysRequested) {
+      throw new AppException(ErrorType.ROOM_NOT_AVAILABLE);
+    }
+
+    // Restore availability for each inventory atomically
+    for (RoomInventory inventory : inventories) {
+      // Restore available rooms
+      int newAvailableRooms = inventory.getAvailableRooms() + numberOfRooms;
+      inventory.setAvailableRooms(newAvailableRooms);
+
+      // Update status back to available if rooms are now available
+      if (inventory.getStatus().equals(RoomInventoryStatusType.UNAVAILABLE.getValue()) && newAvailableRooms > 0) {
+        inventory.setStatus(RoomInventoryStatusType.AVAILABLE.getValue());
+      }
+    }
+
+    // Save all updated inventories - this will be atomic due to @Transactional
+    roomInventoryRepository.saveAll(inventories);
+  }
 
   @Transactional
   public void updatePriceForDateBetween(RoomInventoryPriceUpdateRequest request) {
@@ -247,25 +280,99 @@ public class RoomInventoryService {
     roomInventoryRepository.saveAll(inventories);
   }
 
-  public List<RoomInventoryPriceDetailsResponse> getPriceDetails(
-    String roomId, LocalDate startDate, LocalDate endDate) {
-    return roomInventoryRepository.findAllByRoomIdAndDateBetween(roomId, startDate, endDate).stream()
-      .map(inventory -> {
-        LocalDate date = inventory.getId().getDate();
-        double originalPrice = inventory.getPrice();
-        double vatFee = originalPrice * vatRate;
-        double serviceFee = originalPrice * serviceFeeRate;
-        double finalPrice = originalPrice + vatFee + serviceFee;
+  public List<RoomInventory> validateRoomAvailability(String roomId, LocalDate checkInDate,
+                                                      LocalDate checkOutDate, int numberOfRooms) {
+    // Get room inventories for the booking period with pessimistic locking
+    // This ensures no other transaction can modify these records until we're done
+    List<RoomInventory> inventories = roomInventoryRepository.findAllByRoomIdAndDateBetweenWithLock(
+      roomId, checkInDate, checkOutDate.minusDays(1));
 
-        return RoomInventoryPriceDetailsResponse.builder()
-          .date(date)
-          .originalPrice(originalPrice)
-          .priceAfterDiscount(originalPrice)
-          .vatFee(vatFee)
-          .serviceFee(serviceFee)
-          .finalPrice(finalPrice)
-          .build();
-      })
+    // Validate that all required dates have inventory
+    long daysRequested = checkInDate.until(checkOutDate).getDays();
+    if (inventories.size() != daysRequested) {
+      throw new AppException(ErrorType.ROOM_NOT_AVAILABLE);
+    }
+
+    // Check if enough rooms are available for each day
+    for (RoomInventory inventory : inventories) {
+      if (inventory.getAvailableRooms() < numberOfRooms) {
+        throw new AppException(ErrorType.INSUFFICIENT_ROOM_QUANTITY);
+      }
+    }
+
+    return inventories;
+  }
+
+  public double calculateOriginalPrice(List<RoomInventory> inventories, int numberOfRooms) {
+    return inventories.stream()
+      .mapToDouble(inventory -> inventory.getPrice() * numberOfRooms)
+      .sum();
+  }
+
+  public double getPriceForDate(Room room, LocalDate date) {
+    // If no inventories, return base price
+    if (room.getInventories() == null || room.getInventories().isEmpty()) {
+      return room.getBasePricePerNight();
+    }
+
+    // Find inventory for the specific date
+    Optional<RoomInventory> dateInventory = room.getInventories().stream()
+      .filter(inventory -> inventory.getId().getDate().equals(date))
+      .findFirst();
+
+    if (dateInventory.isPresent()) {
+      return dateInventory.get().getPrice();
+    }
+
+    // If no inventory for the date, find the nearest future inventory
+    Optional<RoomInventory> nearestFutureInventory = room.getInventories().stream()
+      .filter(inventory -> !inventory.getId().getDate().isBefore(date))
+      .min(Comparator.comparing(inv -> inv.getId().getDate()));
+
+    return nearestFutureInventory.map(RoomInventory::getPrice)
+      .orElseGet(room::getBasePricePerNight);
+  }
+
+  public List<RoomInventoryPriceByDateResponse> getPricesByDateRange(
+    String roomId, LocalDate checkInDate, LocalDate checkOutDate) {
+    // Get room inventories for the booking period
+    List<RoomInventory> inventories = roomInventoryRepository.findAllByRoomIdAndDateBetween(
+      roomId, checkInDate, checkOutDate.minusDays(1));
+
+    // Convert to response DTOs
+    List<RoomInventoryPriceByDateResponse> pricesByDate = inventories.stream()
+      .map(inventory -> RoomInventoryPriceByDateResponse.builder()
+        .date(inventory.getId().getDate())
+        .price(inventory.getPrice())
+        .build())
+      .sorted(Comparator.comparing(RoomInventoryPriceByDateResponse::getDate))
       .toList();
+
+    // If there are missing dates, fill them with base price
+    Room room = roomRepository.findById(roomId)
+      .orElseThrow(() -> new AppException(ErrorType.ROOM_NOT_FOUND));
+    double basePrice = room.getBasePricePerNight();
+
+    List<RoomInventoryPriceByDateResponse> allPricesByDate = new ArrayList<>();
+    LocalDate currentDate = checkInDate;
+    int inventoryIndex = 0;
+
+    while (currentDate.isBefore(checkOutDate)) {
+      if (inventoryIndex < pricesByDate.size()
+        && pricesByDate.get(inventoryIndex).getDate().equals(currentDate)) {
+        // Use price from inventory
+        allPricesByDate.add(pricesByDate.get(inventoryIndex));
+        inventoryIndex++;
+      } else {
+        // Use base price for missing dates
+        allPricesByDate.add(RoomInventoryPriceByDateResponse.builder()
+          .date(currentDate)
+          .price(basePrice)
+          .build());
+      }
+      currentDate = currentDate.plusDays(1);
+    }
+
+    return allPricesByDate;
   }
 }

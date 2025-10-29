@@ -14,7 +14,7 @@ import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.type.ErrorType;
 import com.webapp.holidate.type.auth.OtpType;
 import com.webapp.holidate.type.user.AuthProviderType;
-import com.webapp.holidate.utils.DateTimeUtils;
+import com.webapp.holidate.utils.DateTimeUtil;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.AccessLevel;
@@ -91,7 +91,7 @@ public class EmailService {
     String otp = generateVerificationOtp();
     authInfo.setOtp(otp);
 
-    LocalDateTime expirationTime = DateTimeUtils.millisToLocalDateTime(otpExpirationMillis);
+    LocalDateTime expirationTime = DateTimeUtil.millisToLocalDateTime(otpExpirationMillis);
     authInfo.setOtpExpirationTime(expirationTime);
 
     authInfo.setOtpAttempts(0);
@@ -222,7 +222,7 @@ public class EmailService {
 
     boolean maxAttemptsReached = attempts >= otpMaxAttempts;
     if (maxAttemptsReached) {
-      LocalDateTime blockUntil = DateTimeUtils.millisToLocalDateTime(otpBlockTimeMillis);
+      LocalDateTime blockUntil = DateTimeUtil.millisToLocalDateTime(otpBlockTimeMillis);
       authInfo.setOtpBlockedUntil(blockUntil);
       authInfo.setOtp(null);
       authInfo.setOtpExpirationTime(null);

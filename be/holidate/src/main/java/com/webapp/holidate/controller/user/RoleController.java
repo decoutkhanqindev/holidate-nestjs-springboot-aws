@@ -25,23 +25,23 @@ public class RoleController {
   public ApiResponse<RoleResponse> create(@RequestBody @Valid RoleCreationRequest request) {
     RoleResponse response = service.create(request);
     return ApiResponse.<RoleResponse>builder()
-        .data(response)
-        .build();
+      .data(response)
+      .build();
   }
 
   @GetMapping
   public ApiResponse<List<RoleResponse>> getAll() {
     List<RoleResponse> responses = service.getAll();
     return ApiResponse.<List<RoleResponse>>builder()
-        .data(responses)
-        .build();
+      .data(responses)
+      .build();
   }
 
   @DeleteMapping(CommonEndpoints.ID)
   public ApiResponse<RoleResponse> delete(@PathVariable String id) {
     RoleResponse response = service.delete(id);
     return ApiResponse.<RoleResponse>builder()
-        .data(response)
-        .build();
+      .data(response)
+      .build();
   }
 }

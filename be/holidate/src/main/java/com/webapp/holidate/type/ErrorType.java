@@ -93,14 +93,10 @@ public enum ErrorType {
   LATITUDE_INVALID(400, "Latitude must be between -90.0 and 90.0"),
   LONGITUDE_INVALID(400, "Longitude must be between -180.0 and 180.0"),
   PARTNER_ID_NOT_BLANK(400, "Partner ID is required"),
-
-  // hotel errors
   HOTEL_NOT_FOUND(404, "Hotel not found"),
   HOTEL_EXISTS(409, "Hotel already exists"),
   HOTEL_STATUS_NOT_BLANK(400, "Hotel status is required"),
   HOTEL_STATUS_INVALID(400, "Hotel status must be active, inactive, maintenance, or closed"),
-
-  // room errors
   HOTEL_ID_NOT_BLANK(400, "Hotel ID is required"),
   ROOM_NOT_FOUND(404, "Room not found"),
   ROOM_EXISTS(409, "Room already exists in this hotel"),
@@ -109,6 +105,7 @@ public enum ErrorType {
   ROOM_STATUS_NOT_BLANK(400, "Room status is required"),
   ROOM_STATUS_INVALID(400, "Room status must be available, booked, maintenance, or closed"),
   VIEW_NOT_BLANK(400, "View is required"),
+  AREA_NOT_BLANK(400, "Area is required"),
   AREA_MUST_BE_POSITIVE(400, "Area must be a positive number"),
   MAX_ADULTS_MUST_BE_POSITIVE(400, "Max adults must be a positive number"),
   MAX_CHILDREN_MUST_BE_POSITIVE_OR_ZERO(400, "Max children must be zero or a positive number"),
@@ -122,14 +119,14 @@ public enum ErrorType {
   BED_TYPE_NOT_FOUND(404, "Bed type not found"),
   START_DATE_NOT_BLANK(400, "Start date is required"),
   END_DATE_NOT_BLANK(400, "End date is required"),
+  DAYS_NOT_BLANK(400, "Days is required"),
   DAYS_NOT_POSITIVE(400, "Days must be a positive number"),
-
-  // discount errors
-  HOLIDAY_DISCOUNT_NOT_FOUND(404, "SpecialDay discount not found"),
-  HOLIDAY_DISCOUNT_EXISTS(409, "SpecialDay discount already exists"),
+  PRICE_NOT_BLANK(400, "Price is required"),
+  MAX_ADULTS_NOT_BLANK(400, "Max adults is required"),
+  MAX_CHILDREN_NOT_BLANK(400, "Max children is required"),
+  QUANTITY_NOT_BLANK(400, "Quantity is required"),
 
   // policy errors
-  CHECK_IN_OUT_TIME_INVALID(400, "Check-in and check-out time must be in HH:mm format"),
   CANCELLATION_POLICY_NOT_FOUND(404, "Cancellation policy not found"),
   RESCHEDULE_POLICY_NOT_FOUND(404, "Reschedule policy not found"),
   PET_POLICY_RULE_NOT_FOUND(404, "Pet policy rule not found"),
@@ -147,11 +144,77 @@ public enum ErrorType {
   // image errors
   PHOTOS_NOT_BLANK(400, "Photos are required"),
   PHOTO_FILES_NOT_EMPTY(400, "At least one photo file is required"),
+  PHOTOS_NOT_EMPTY(400, "Photos are required"),
   PHOTO_IDS_NOT_EMPTY(400, "At least one photo ID is required"),
   PHOTO_NOT_FOUND(404, "Photo not found"),
   PHOTO_CATEGORY_ID_NOT_BLANK(400, "Photo category ID is required"),
   PHOTO_CATEGORY_NOT_FOUND(404, "Photo category not found"),
-  ;
+
+  // booking errors
+  BOOKING_NOT_FOUND(404, "Booking not found"),
+  ROOM_NOT_AVAILABLE(400, "Room is not available for the selected dates"),
+  CONCURRENT_BOOKING_FAILED(409, "Booking failed due to concurrent access. Please try again"),
+  INVALID_DISCOUNT_CODE(400, "Discount code is invalid or expired"),
+  INSUFFICIENT_ROOM_QUANTITY(400, "Insufficient room quantity available"),
+  NUMBER_OF_NIGHTS_NOT_BLANK(400, "Number of nights is required"),
+  NUMBER_OF_ROOMS_NOT_BLANK(400, "Number of rooms is required"),
+  NUMBER_OF_ADULTS_NOT_BLANK(400, "Number of adults is required"),
+  NUMBER_OF_CHILDREN_NOT_BLANK(400, "Number of children is required"),
+  NUMBER_OF_NIGHTS_MUST_BE_POSITIVE(400, "Number of nights must be a positive number"),
+  NUMBER_OF_ROOMS_MUST_BE_POSITIVE(400, "Number of rooms must be a positive number"),
+  NUMBER_OF_ADULTS_MUST_BE_POSITIVE(400, "Number of adults must be a positive number"),
+  NUMBER_OF_CHILDREN_MUST_BE_POSITIVE_OR_ZERO(400, "Number of children must be zero or a positive number"),
+  CONTACT_FULL_NAME_NOT_BLANK(400, "Contact full name is required"),
+  CONTACT_EMAIL_NOT_BLANK(400, "Contact email is required"),
+  CONTACT_PHONE_NOT_BLANK(400, "Contact phone is required"),
+  SPECIAL_DAY_DISCOUNT_EXISTS(409, "Special day discount already exists"),
+  VALID_FROM_TO_DATE_NOT_BLANK(400, "Valid from and to date is required"),
+  VALID_FROM_TO_DATE_INVALID(400, "Valid from and to date must be in yyyy-MM-dd format"),
+
+  // check-in check-out errors
+  CHECK_IN_OUT_TIME_INVALID(400, "Check-in and check-out time must be in HH:mm format"),
+  CHECK_IN_OUT_DATE_NOT_BLANK(400, "Check-in and check-out date is required"),
+  CHECK_IN_DATE_INVALID(400, "Check-in date cannot be in the past"),
+  CHECK_OUT_DATE_INVALID(400, "Check-out date must be after check-in date"),
+
+  // discount errors
+  DISCOUNT_NOT_FOUND(404, "Discount not found"),
+  HOTEL_DISCOUNT_NOT_FOUND(404, "Hotel discount not found"),
+  SPECIAL_DAY_DISCOUNT_NOT_FOUND(404, "Special day discount not found"),
+  DISCOUNT_EXISTS(409, "Discount already exists"),
+  DISCOUNT_CODE_NOT_BLANK(400, "Discount code is required"),
+  DISCOUNT_CODE_TOO_LONG(400, "Discount code must not exceed 50 characters"),
+  DISCOUNT_DESCRIPTION_NOT_BLANK(400, "Discount description is required"),
+  DISCOUNT_DESCRIPTION_TOO_LONG(400, "Discount description must not exceed 500 characters"),
+  DISCOUNT_PERCENTAGE_NOT_BLANK(400, "Discount percentage is required"),
+  DISCOUNT_PERCENTAGE_INVALID(400, "Discount percentage must be between 0 and 100"),
+  USAGE_LIMIT_NOT_BLANK(400, "Usage limit is required"),
+  USAGE_LIMIT_INVALID(400, "Usage limit must be at least 1"),
+  TIMES_USED_NOT_BLANK(400, "Times used is required"),
+  TIMES_USED_INVALID(400, "Times used must be non-negative"),
+  MIN_BOOKING_PRICE_INVALID(400, "Minimum booking price must be non-negative"),
+  MIN_BOOKING_COUNT_INVALID(400, "Minimum booking count must be at least 1"),
+  VALID_FROM_NOT_BLANK(400, "Valid from date is required"),
+  VALID_TO_NOT_BLANK(400, "Valid to date is required"),
+  ACTIVE_NOT_BLANK(400, "Active status is required"),
+
+  // special day errors
+  SPECIAL_DAY_ID_NOT_BLANK(400, "Special day ID is required"),
+  SPECIAL_DAY_NOT_FOUND(404, "Special day not found"),
+  SPECIAL_DAY_EXISTS(409, "Special day already exists"),
+  SPECIAL_DAY_DATE_NOT_BLANK(400, "Special day date is required"),
+  INVALID_DAYS_VALUE(400, "Days value must be positive"),
+  INVALID_DISTANCE_VALUE(400, "Distance value must be positive"),
+
+  // payment errors
+  PAYMENT_ORDER_ID_NOT_BLANK(400, "Payment order ID is required"),
+  PAYMENT_AMOUNT_INVALID(400, "Payment amount must be positive"),
+  PAYMENT_RETURN_URL_NOT_BLANK(400, "Payment return URL is required"),
+  PAYMENT_IP_ADDRESS_NOT_BLANK(400, "Payment IP address is required"),
+  PAYMENT_EXPIRE_TIME_INVALID(400, "Payment expire time must be positive"),
+  PAYMENT_URL_GENERATION_FAILED(500, "Failed to generate payment URL"),
+  PAYMENT_SIGNATURE_INVALID(400, "Invalid payment signature"),
+  PAYMENT_RESPONSE_INVALID(400, "Invalid payment response");
 
   int statusCode;
   String message;

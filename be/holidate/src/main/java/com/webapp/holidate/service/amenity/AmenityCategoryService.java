@@ -3,7 +3,7 @@ package com.webapp.holidate.service.amenity;
 import com.webapp.holidate.dto.request.amenity.AmenityCategoryCreationRequest;
 import com.webapp.holidate.dto.response.amenity.AmenityCategoryDetailsResponse;
 import com.webapp.holidate.dto.response.amenity.AmenityCategoryResponse;
-import com.webapp.holidate.entity.accommodation.amenity.AmenityCategory;
+import com.webapp.holidate.entity.amenity.AmenityCategory;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.amenity.AmenityCategoryMapper;
 import com.webapp.holidate.repository.amenity.AmenityCategoryRepository;

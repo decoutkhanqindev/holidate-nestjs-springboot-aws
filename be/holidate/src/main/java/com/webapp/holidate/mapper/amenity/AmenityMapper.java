@@ -2,7 +2,7 @@ package com.webapp.holidate.mapper.amenity;
 
 import com.webapp.holidate.dto.request.amenity.AmenityCreationRequest;
 import com.webapp.holidate.dto.response.amenity.AmenityDetailsResponse;
-import com.webapp.holidate.entity.accommodation.amenity.Amenity;
+import com.webapp.holidate.entity.amenity.Amenity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

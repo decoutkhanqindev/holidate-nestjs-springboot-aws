@@ -4,7 +4,7 @@ import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
 import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.entity.accommodation.room.Room;
-import com.webapp.holidate.entity.booking.discount.Discount;
+import com.webapp.holidate.entity.discount.Discount;
 import com.webapp.holidate.entity.user.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -48,6 +48,12 @@ public class Booking {
 
   @Column(nullable = false)
   LocalDate checkOutDate;
+
+  @Column(nullable = false)
+  int numberOfNights;
+
+  @Column(nullable = false)
+  int numberOfRooms;
 
   @Column(nullable = false)
   int numberOfAdults;

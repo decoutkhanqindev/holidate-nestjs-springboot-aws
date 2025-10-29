@@ -75,7 +75,7 @@ public class ProvinceService {
 
 
     if (nameProvided) {
-     return provinceRepository.findAllByNameContainingIgnoreCase(name)
+      return provinceRepository.findAllByNameContainingIgnoreCase(name)
         .stream()
         .map(provinceMapper::toLocationResponse)
         .toList();

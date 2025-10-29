@@ -26,17 +26,17 @@ public class ProvinceController {
   public ApiResponse<ProvinceResponse> create(@RequestBody @Valid ProvinceCreationRequest request) {
     ProvinceResponse response = service.create(request);
     return ApiResponse.<ProvinceResponse>builder()
-        .data(response)
-        .build();
+      .data(response)
+      .build();
   }
 
   @GetMapping
   public ApiResponse<List<LocationResponse>> getAll(
-      @RequestParam(value = CommonParams.NAME, required = false) String name,
-      @RequestParam(value = LocationParams.COUNTRY_ID, required = false) String countryId) {
+    @RequestParam(value = CommonParams.NAME, required = false) String name,
+    @RequestParam(value = LocationParams.COUNTRY_ID, required = false) String countryId) {
     List<LocationResponse> responses = service.getAll(name, countryId);
     return ApiResponse.<List<LocationResponse>>builder()
-        .data(responses)
-        .build();
+      .data(responses)
+      .build();
   }
 }

@@ -26,17 +26,17 @@ public class StreetController {
   public ApiResponse<StreetResponse> create(@RequestBody @Valid StreetCreationRequest request) {
     StreetResponse response = service.create(request);
     return ApiResponse.<StreetResponse>builder()
-        .data(response)
-        .build();
+      .data(response)
+      .build();
   }
 
   @GetMapping
   public ApiResponse<List<LocationResponse>> getAll(
-      @RequestParam(value = CommonParams.NAME, required = false) String name,
-      @RequestParam(value = LocationParams.WARD_ID, required = false) String wardId) {
+    @RequestParam(value = CommonParams.NAME, required = false) String name,
+    @RequestParam(value = LocationParams.WARD_ID, required = false) String wardId) {
     List<LocationResponse> responses = service.getAll(name, wardId);
     return ApiResponse.<List<LocationResponse>>builder()
-        .data(responses)
-        .build();
+      .data(responses)
+      .build();
   }
 }

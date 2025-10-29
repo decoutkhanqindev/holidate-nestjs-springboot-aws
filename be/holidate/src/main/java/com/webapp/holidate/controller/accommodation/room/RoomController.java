@@ -45,8 +45,7 @@ public class RoomController {
     @RequestParam(name = PaginationParams.PAGE, defaultValue = PaginationParams.DEFAULT_PAGE) int page,
     @RequestParam(name = PaginationParams.SIZE, defaultValue = PaginationParams.DEFAULT_SIZE) int size,
     @RequestParam(name = SortingParams.SORT_BY, required = false) String sortBy,
-    @RequestParam(name = SortingParams.SORT_DIR, defaultValue = SortingParams.SORT_DIR_ASC) String sortDir
-  ) {
+    @RequestParam(name = SortingParams.SORT_DIR, defaultValue = SortingParams.SORT_DIR_ASC) String sortDir) {
     PagedResponse<RoomResponse> response = service.getAllByHotelId(hotelId, status, page, size, sortBy, sortDir);
     return ApiResponse.<PagedResponse<RoomResponse>>builder()
       .data(response)

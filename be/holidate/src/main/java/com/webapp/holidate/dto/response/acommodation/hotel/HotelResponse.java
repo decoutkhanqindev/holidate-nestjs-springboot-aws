@@ -33,7 +33,6 @@ public class HotelResponse {
   double latitude;
   double longitude;
   int starRating;
-  double averageScore;
   HotelPolicyResponse policy;
   String status;
   double rawPricePerNight;

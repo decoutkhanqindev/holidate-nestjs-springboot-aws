@@ -7,7 +7,6 @@ import com.webapp.holidate.constants.api.endpoint.auth.AuthEndpoints;
 import com.webapp.holidate.dto.request.auth.LoginRequest;
 import com.webapp.holidate.dto.request.auth.RegisterRequest;
 import com.webapp.holidate.dto.request.auth.TokenRequest;
-import com.webapp.holidate.dto.request.auth.VerifyTokenRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.auth.LogoutResponse;
 import com.webapp.holidate.dto.response.auth.TokenResponse;
@@ -15,7 +14,7 @@ import com.webapp.holidate.dto.response.auth.VerificationResponse;
 import com.webapp.holidate.dto.response.user.UserResponse;
 import com.webapp.holidate.service.auth.AuthService;
 import com.webapp.holidate.service.auth.EmailService;
-import com.webapp.holidate.utils.ResponseUtils;
+import com.webapp.holidate.utils.ResponseUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -56,7 +55,7 @@ public class AuthController {
   }
 
   @PostMapping(AuthEndpoints.VERIFY_TOKEN)
-  public ApiResponse<VerificationResponse> verifyToken(@RequestBody @Valid VerifyTokenRequest request)
+  public ApiResponse<VerificationResponse> verifyToken(@RequestBody @Valid TokenRequest request)
     throws ParseException, JOSEException {
     VerificationResponse response = authService.verifyToken(request);
     return ApiResponse.<VerificationResponse>builder()
@@ -80,7 +79,7 @@ public class AuthController {
     LogoutResponse response = authService.logout(request);
 
     // clear the token cookie
-    ResponseUtils.handleAuthCookiesResponse(httpServletResponse, tokenCookieName, "", 0);
+    ResponseUtil.handleAuthCookiesResponse(httpServletResponse, tokenCookieName, "", 0);
 
     return ApiResponse.<LogoutResponse>builder()
       .data(response)

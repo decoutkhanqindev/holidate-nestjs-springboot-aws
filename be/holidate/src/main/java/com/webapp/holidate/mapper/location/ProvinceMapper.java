@@ -11,6 +11,10 @@ import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface ProvinceMapper {
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "cities", ignore = true)
+  @Mapping(target = "country", ignore = true)
+  @Mapping(target = "hotels", ignore = true)
   Province toEntity(ProvinceCreationRequest request);
 
   ProvinceResponse toProvinceResponse(Province province);
@@ -20,5 +24,6 @@ public interface ProvinceMapper {
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "cities", ignore = true)
   @Mapping(target = "country", ignore = true)
+  @Mapping(target = "hotels", ignore = true)
   void updateEntity(@MappingTarget Province Province, ProvinceUpdateRequest request);
 }

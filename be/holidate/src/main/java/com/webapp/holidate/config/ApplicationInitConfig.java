@@ -41,7 +41,7 @@ public class ApplicationInitConfig {
   @Bean
   public ApplicationRunner applicationRunner() {
     return args -> {
-      if (userRepository.existsByFullName(adminFullName)){
+      if (userRepository.existsByFullName(adminFullName)) {
         log.info("Admin user already exists. Email: {}, Password: {}, Full Name: {}", adminEmail, adminPassword, adminFullName);
       } else {
         createAdminUser();

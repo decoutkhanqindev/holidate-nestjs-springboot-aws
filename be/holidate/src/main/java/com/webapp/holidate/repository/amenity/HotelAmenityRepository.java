@@ -1,6 +1,6 @@
 package com.webapp.holidate.repository.amenity;
 
-import com.webapp.holidate.entity.accommodation.amenity.HotelAmenity;
+import com.webapp.holidate.entity.amenity.HotelAmenity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

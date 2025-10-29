@@ -1,7 +1,7 @@
 package com.webapp.holidate.entity.special_day;
 
 import com.webapp.holidate.constants.db.DbTableNames;
-import com.webapp.holidate.entity.booking.discount.SpecialDayDiscount;
+import com.webapp.holidate.entity.discount.SpecialDayDiscount;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;

@@ -5,7 +5,7 @@ import com.webapp.holidate.entity.policy.cancelation.CancellationPolicy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring", uses = { CancellationRuleMapper.class })
+@Mapper(componentModel = "spring", uses = {CancellationRuleMapper.class})
 public interface CancellationPolicyMapper {
   @Mapping(source = "rules", target = "rules", qualifiedByName = "rulesToRuleResponses")
   CancellationPolicyResponse toCancellationPolicyResponse(CancellationPolicy cancellationPolicy);

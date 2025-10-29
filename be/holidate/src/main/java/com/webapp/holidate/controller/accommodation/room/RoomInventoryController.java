@@ -22,7 +22,8 @@ import java.io.IOException;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping(AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS + AccommodationEndpoints.ROOM_INVENTORIES)
+@RequestMapping(AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
+  + AccommodationEndpoints.ROOM_INVENTORIES)
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class RoomInventoryController {
@@ -46,8 +47,7 @@ public class RoomInventoryController {
     @RequestParam(value = PaginationParams.PAGE, defaultValue = PaginationParams.DEFAULT_PAGE) int page,
     @RequestParam(value = PaginationParams.SIZE, defaultValue = PaginationParams.DEFAULT_SIZE) int size,
     @RequestParam(value = SortingParams.SORT_BY, required = false) String sortBy,
-    @RequestParam(value = SortingParams.SORT_DIR, defaultValue = SortingParams.SORT_DIR_ASC) String sortDir
-  ) {
+    @RequestParam(value = SortingParams.SORT_DIR, defaultValue = SortingParams.SORT_DIR_ASC) String sortDir) {
     PagedResponse<RoomInventoryResponse> response = service.getAllByRoomIdForDateBetween(
       roomId, startDate, endDate, status, page, size, sortBy, sortDir);
     return ApiResponse.<PagedResponse<RoomInventoryResponse>>builder()

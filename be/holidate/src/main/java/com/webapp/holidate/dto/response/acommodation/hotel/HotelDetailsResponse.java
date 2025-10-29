@@ -5,7 +5,7 @@ import com.webapp.holidate.dto.response.image.PhotoCategoryResponse;
 import com.webapp.holidate.dto.response.location.LocationResponse;
 import com.webapp.holidate.dto.response.location.entertainment_venue.EntertainmentVenueCategoryResponse;
 import com.webapp.holidate.dto.response.policy.HotelPolicyResponse;
-import com.webapp.holidate.dto.response.user.PartnerResponse;
+import com.webapp.holidate.dto.response.user.UserBriefResponse;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -36,11 +36,10 @@ public class HotelDetailsResponse {
   List<PhotoCategoryResponse> photos;
   List<AmenityCategoryDetailsResponse> amenities;
   HotelPolicyResponse policy;
-  PartnerResponse partner;
+  UserBriefResponse partner;
   double latitude;
   double longitude;
   int starRating;
-  double averageScore;
   String status;
   LocalDateTime createdAt;
   LocalDateTime updatedAt;

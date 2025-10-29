@@ -2,6 +2,7 @@ package com.webapp.holidate.service.accommodation;
 
 import com.webapp.holidate.component.room.RoomCandidate;
 import com.webapp.holidate.component.room.RoomCombinationFinder;
+import com.webapp.holidate.constants.api.param.HotelParams;
 import com.webapp.holidate.constants.api.param.SortingParams;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelUpdateRequest;
@@ -13,9 +14,9 @@ import com.webapp.holidate.dto.response.acommodation.hotel.HotelDetailsResponse;
 import com.webapp.holidate.dto.response.acommodation.hotel.HotelResponse;
 import com.webapp.holidate.dto.response.base.PagedResponse;
 import com.webapp.holidate.entity.accommodation.Hotel;
-import com.webapp.holidate.entity.accommodation.amenity.Amenity;
-import com.webapp.holidate.entity.accommodation.amenity.HotelAmenity;
 import com.webapp.holidate.entity.accommodation.room.Room;
+import com.webapp.holidate.entity.amenity.Amenity;
+import com.webapp.holidate.entity.amenity.HotelAmenity;
 import com.webapp.holidate.entity.document.HotelPolicyIdentificationDocument;
 import com.webapp.holidate.entity.image.HotelPhoto;
 import com.webapp.holidate.entity.image.Photo;
@@ -169,8 +170,7 @@ public class HotelService {
     LocalDate checkinDate, LocalDate checkoutDate,
     Integer requiredAdults, Integer requiredChildren, Integer requiredRooms,
     Double minPrice, Double maxPrice,
-    int page, int size, String sortBy, String sortDir
-  ) {
+    int page, int size, String sortBy, String sortDir) {
     // Clean up page and size values
     page = Math.max(0, page);
     size = Math.min(Math.max(1, size), 100);
@@ -185,9 +185,9 @@ public class HotelService {
 
     // Check if sort field is valid
     boolean hasSortBy = sortBy != null && !sortBy.isEmpty()
-      && (SortingParams.SORT_BY_PRICE.equals(sortBy) ||
-      SortingParams.SORT_BY_STAR_RATING.equals(sortBy) ||
-      SortingParams.SORT_BY_CREATED_AT.equals(sortBy));
+      && (HotelParams.PRICE.equals(sortBy) ||
+      HotelParams.STAR_RATING.equals(sortBy) ||
+      HotelParams.CREATED_AT.equals(sortBy));
     if (!hasSortBy) {
       sortBy = null;
     }
@@ -239,8 +239,8 @@ public class HotelService {
   // Map API sort field to entity field name (only for database-sortable fields)
   private String mapSortFieldToEntity(String sortBy) {
     return switch (sortBy) {
-      case SortingParams.SORT_BY_STAR_RATING -> "starRating";
-      case SortingParams.SORT_BY_CREATED_AT -> "createdAt";
+      case HotelParams.STAR_RATING -> "starRating";
+      case HotelParams.CREATED_AT -> "createdAt";
       default -> "createdAt"; // Default sorting
     };
   }
@@ -248,8 +248,8 @@ public class HotelService {
   // Check if sort field can be handled at database level
   private boolean canSortAtDatabaseLevel(String sortBy) {
     return sortBy == null ||
-      SortingParams.SORT_BY_STAR_RATING.equals(sortBy) ||
-      SortingParams.SORT_BY_CREATED_AT.equals(sortBy);
+      HotelParams.STAR_RATING.equals(sortBy) ||
+      HotelParams.CREATED_AT.equals(sortBy);
   }
 
   // Get all hotels when no filters applied
@@ -293,8 +293,7 @@ public class HotelService {
     LocalDate checkinDate, LocalDate checkoutDate,
     Integer requiredAdults, Integer requiredChildren, Integer requiredRooms,
     Double minPrice, Double maxPrice,
-    int page, int size, String sortBy, String sortDir
-  ) {
+    int page, int size, String sortBy, String sortDir) {
     // Check if we need complex filtering (date/guest requirements) or complex
     // sorting (price)
     boolean hasValidDateRange = checkinDate != null && checkoutDate != null;
@@ -324,8 +323,7 @@ public class HotelService {
     String name, String countryId, String provinceId, String cityId, String districtId,
     String wardId, String streetId, List<String> amenityIds, Integer starRating, String status,
     Double minPrice, Double maxPrice,
-    int page, int size, String sortBy, String sortDir
-  ) {
+    int page, int size, String sortBy, String sortDir) {
     // Create pageable with sorting
     Pageable pageable = createPageable(page, size, sortBy, sortDir);
 
@@ -369,8 +367,7 @@ public class HotelService {
     LocalDate checkinDate, LocalDate checkoutDate,
     Integer requiredAdults, Integer requiredChildren, Integer requiredRooms,
     Double minPrice, Double maxPrice,
-    int page, int size, String sortBy, String sortDir
-  ) {
+    int page, int size, String sortBy, String sortDir) {
     // Step 1: Filter hotels from database using basic filters (without pagination)
     int requiredAmenityCount = (amenityIds != null) ? amenityIds.size() : 0;
     List<String> filteredHotelIds = hotelRepository.findAllIdsByFilter(
@@ -449,8 +446,7 @@ public class HotelService {
   // Filter hotels based only on guest capacity requirements
   private List<Hotel> filterByGuestRequirementsOnly(
     List<Hotel> candidateHotels,
-    Integer requiredAdults, Integer requiredChildren, Integer requiredRooms
-  ) {
+    Integer requiredAdults, Integer requiredChildren, Integer requiredRooms) {
     return candidateHotels.stream()
       .filter(hotel -> {
         Set<Room> rooms = hotel.getRooms();
@@ -468,8 +464,7 @@ public class HotelService {
     List<Hotel> candidateHotels,
     LocalDate checkinDate, LocalDate checkoutDate, long totalNightsStay,
     Integer requiredAdults, Integer requiredChildren, Integer requiredRooms,
-    boolean needsDateAndGuestValidation
-  ) {
+    boolean needsDateAndGuestValidation) {
     return candidateHotels.stream()
       .filter(hotel -> isHotelAvailable(
         hotel, checkinDate, checkoutDate, totalNightsStay,
@@ -483,8 +478,7 @@ public class HotelService {
     Hotel hotel,
     LocalDate checkinDate, LocalDate checkoutDate, long totalNightsStay,
     Integer requiredAdults, Integer requiredChildren, Integer requiredRooms,
-    boolean needsDateAndGuestValidation
-  ) {
+    boolean needsDateAndGuestValidation) {
     // Step 1: Check if rooms are available for the date range
     List<RoomCandidate> availableRoomCandidates = roomRepository.findAvailableRoomCandidates(
       hotel.getId(), checkinDate, checkoutDate, totalNightsStay);
@@ -515,8 +509,7 @@ public class HotelService {
     Set<Room> hotelRooms,
     Integer requiredAdults,
     Integer requiredChildren,
-    Integer requiredRooms
-  ) {
+    Integer requiredRooms) {
     // First check if hotel has any rooms at all
     boolean hasAvailableRooms = hotelRooms != null && !hotelRooms.isEmpty();
     if (!hasAvailableRooms) {
@@ -568,8 +561,7 @@ public class HotelService {
     List<Room> availableRooms,
     int totalAdultsRequired,
     int totalChildrenRequired,
-    int totalRoomsRequired
-  ) {
+    int totalRoomsRequired) {
     // First check if we have enough rooms available
     boolean hasSufficientRooms = availableRooms.size() >= totalRoomsRequired;
     if (!hasSufficientRooms) {
@@ -616,8 +608,7 @@ public class HotelService {
   // Calculate how many children can fit in current room considering adults
   // already placed
   private int getChildrenCanFitInThisRoom(
-    Room currentRoom, int childrenStillNeedAccommodation, int adultsCanFitInThisRoom
-  ) {
+    Room currentRoom, int childrenStillNeedAccommodation, int adultsCanFitInThisRoom) {
     // Step 1: Calculate initial children that can fit based on room max children
     // limit
     int childrenCanFitInThisRoom = Math.min(childrenStillNeedAccommodation, currentRoom.getMaxChildren());
@@ -678,13 +669,13 @@ public class HotelService {
       .sorted((h1, h2) -> {
         // Step 3: Compare values based on sort field
         int comparison = switch (sortBy) {
-          case SortingParams.SORT_BY_PRICE ->
+          case HotelParams.PRICE ->
             // Compare price per night (double values)
             Double.compare(h1.getCurrentPricePerNight(), h2.getCurrentPricePerNight());
-          case SortingParams.SORT_BY_STAR_RATING ->
+          case HotelParams.STAR_RATING ->
             // Compare star rating (integer values)
             Integer.compare(h1.getStarRating(), h2.getStarRating());
-          case SortingParams.SORT_BY_CREATED_AT ->
+          case HotelParams.CREATED_AT ->
             // Compare creation date (LocalDateTime values)
             h1.getCreatedAt().compareTo(h2.getCreatedAt());
           default ->
@@ -847,10 +838,15 @@ public class HotelService {
 
         entertainmentVenueRepository.save(newVenue);
 
+        Double distance = venueRequest.getDistance();
+        if (distance == null || distance <= 0) {
+          throw new AppException(ErrorType.INVALID_DISTANCE_VALUE);
+        }
+
         HotelEntertainmentVenue hotelVenue = HotelEntertainmentVenue.builder()
           .hotel(hotel)
           .entertainmentVenue(newVenue)
-          .distance(venueRequest.getDistance())
+          .distance(distance)
           .build();
 
         hotelEntertainmentVenueRepository.save(hotelVenue);
@@ -886,10 +882,15 @@ public class HotelService {
           EntertainmentVenue entertainmentVenue = entertainmentVenueRepository.findById(venueId)
             .orElseThrow(() -> new AppException(ErrorType.ENTERTAINMENT_VENUE_NOT_FOUND));
 
+          Integer distance = venueRequest.getDistance();
+          if (distance == null || distance <= 0) {
+            throw new AppException(ErrorType.INVALID_DISTANCE_VALUE);
+          }
+
           HotelEntertainmentVenue hotelVenue = HotelEntertainmentVenue.builder()
             .hotel(hotel)
             .entertainmentVenue(entertainmentVenue)
-            .distance(venueRequest.getDistance())
+            .distance(distance)
             .build();
 
           hotelEntertainmentVenueRepository.save(hotelVenue);
@@ -904,7 +905,10 @@ public class HotelService {
     if (hasVenuesWithDistanceToUpdate) {
       for (HotelEntertainmentVenueRequest venueRequest : venuesWithDistanceToUpdate) {
         String venueId = venueRequest.getEntertainmentVenueId();
-        int newDistance = venueRequest.getDistance();
+        Integer newDistance = venueRequest.getDistance();
+        if (newDistance == null || newDistance <= 0) {
+          throw new AppException(ErrorType.INVALID_DISTANCE_VALUE);
+        }
 
         HotelEntertainmentVenue existingVenue = currentVenues.stream()
           .filter(hotelVenue -> hotelVenue.getEntertainmentVenue().getId().equals(venueId))

@@ -1,6 +1,6 @@
 package com.webapp.holidate.component.scheduler;
 
-import com.webapp.holidate.service.pricing.DynamicPricingService;
+import com.webapp.holidate.service.accommodation.room.DynamicPricingService;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.scheduling.annotation.Scheduled;

@@ -59,15 +59,13 @@ public class HotelController {
     @RequestParam(name = RoomParams.MAX_PRICE, required = false) Double maxPrice,
     @RequestParam(name = PaginationParams.PAGE, defaultValue = PaginationParams.DEFAULT_PAGE) int page,
     @RequestParam(name = PaginationParams.SIZE, defaultValue = PaginationParams.DEFAULT_SIZE) int size,
-    @RequestParam(name = SortingParams.SORT_BY, defaultValue = SortingParams.SORT_BY_CREATED_AT) String sortBy,
-    @RequestParam(name = SortingParams.SORT_DIR, defaultValue = SortingParams.SORT_DIR_ASC) String sortDir
-  ) {
+    @RequestParam(name = SortingParams.SORT_BY, defaultValue = HotelParams.CREATED_AT) String sortBy,
+    @RequestParam(name = SortingParams.SORT_DIR, defaultValue = SortingParams.SORT_DIR_ASC) String sortDir) {
     PagedResponse<HotelResponse> response = hotelService.getAll(
       name, countryId, provinceId, cityId, districtId, wardId, streetId,
       amenityIds, starRating, status,
       checkinDate, checkoutDate, requiredAdults, requiredChildren, requiredRooms, minPrice, maxPrice,
-      page, size, sortBy, sortDir
-    );
+      page, size, sortBy, sortDir);
     return ApiResponse.<PagedResponse<HotelResponse>>builder()
       .data(response)
       .build();

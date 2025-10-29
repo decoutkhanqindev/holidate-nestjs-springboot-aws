@@ -26,17 +26,17 @@ public class WardController {
   public ApiResponse<WardResponse> create(@RequestBody @Valid WardCreationRequest request) {
     WardResponse response = service.create(request);
     return ApiResponse.<WardResponse>builder()
-        .data(response)
-        .build();
+      .data(response)
+      .build();
   }
 
   @GetMapping
   public ApiResponse<List<LocationResponse>> getAll(
-      @RequestParam(value = CommonParams.NAME, required = false) String name,
-      @RequestParam(value = LocationParams.DISTRICT_ID, required = false) String districtId) {
+    @RequestParam(value = CommonParams.NAME, required = false) String name,
+    @RequestParam(value = LocationParams.DISTRICT_ID, required = false) String districtId) {
     List<LocationResponse> responses = service.getAll(name, districtId);
     return ApiResponse.<List<LocationResponse>>builder()
-        .data(responses)
-        .build();
+      .data(responses)
+      .build();
   }
 }

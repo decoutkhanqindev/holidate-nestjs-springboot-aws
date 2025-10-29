@@ -15,5 +15,5 @@ import lombok.experimental.FieldDefaults;
 @EqualsAndHashCode
 public class TokenRequest {
   @NotBlank(message = "TOKEN_NOT_BLANK")
-  private String token;
+  String token;
 }

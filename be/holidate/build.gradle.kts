@@ -34,7 +34,7 @@ dependencies {
 
   implementation("org.springframework.security:spring-security-crypto:6.5.1")
   implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
-  implementation ("org.springframework.boot:spring-boot-starter-oauth2-client")
+  implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
   implementation("com.nimbusds:nimbus-jose-jwt:10.3")
 
   implementation("org.springframework.boot:spring-boot-starter-web")
@@ -43,6 +43,8 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 
   implementation("org.springframework.boot:spring-boot-starter-mail:3.5.3")
+
+  implementation("org.springframework.boot:spring-boot-starter-aop")
 
   compileOnly("org.projectlombok:lombok")
   annotationProcessor("org.projectlombok:lombok")

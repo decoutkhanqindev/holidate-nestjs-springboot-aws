@@ -28,41 +28,41 @@ public class UserController {
   public ApiResponse<UserResponse> create(@RequestBody @Valid UserCreationRequest request) {
     UserResponse response = service.create(request);
     return ApiResponse.<UserResponse>builder()
-        .data(response)
-        .build();
+      .data(response)
+      .build();
   }
 
   @GetMapping
   public ApiResponse<List<UserResponse>> getAll() {
     List<UserResponse> responses = service.getAll();
     return ApiResponse.<List<UserResponse>>builder()
-        .data(responses)
-        .build();
+      .data(responses)
+      .build();
   }
 
   @GetMapping(CommonEndpoints.ID)
   public ApiResponse<UserResponse> getById(@PathVariable String id) {
     UserResponse response = service.getById(id);
     return ApiResponse.<UserResponse>builder()
-        .data(response)
-        .build();
+      .data(response)
+      .build();
   }
 
   @PutMapping(path = CommonEndpoints.ID, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ApiResponse<UserResponse> update(
-      @PathVariable String id,
-      @ModelAttribute @Valid UserUpdateRequest request) throws IOException {
+    @PathVariable String id,
+    @ModelAttribute @Valid UserUpdateRequest request) throws IOException {
     UserResponse response = service.update(id, request);
     return ApiResponse.<UserResponse>builder()
-        .data(response)
-        .build();
+      .data(response)
+      .build();
   }
 
   @DeleteMapping(CommonEndpoints.ID)
   public ApiResponse<UserResponse> delete(@PathVariable String id) {
     UserResponse response = service.delete(id);
     return ApiResponse.<UserResponse>builder()
-        .data(response)
-        .build();
+      .data(response)
+      .build();
   }
 }

@@ -1,7 +1,6 @@
 package com.webapp.holidate.dto.request.policy;
 
-import com.webapp.holidate.constants.ValidationPatterns;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -18,10 +17,12 @@ import java.util.List;
 @ToString
 @EqualsAndHashCode
 public class HotelPolicyRequest {
-  @Pattern(regexp = ValidationPatterns.CHECK_IN_OUT_TIME, message = "CHECK_IN_OUT_TIME_INVALID")
+  @NotNull(message = "CHECK_IN_OUT_TIME_INVALID")
   LocalTime checkInTime;
-  @Pattern(regexp = ValidationPatterns.CHECK_IN_OUT_TIME, message = "CHECK_IN_OUT_TIME_INVALID")
+
+  @NotNull(message = "CHECK_IN_OUT_TIME_INVALID")
   LocalTime checkOutTime;
+
   Boolean allowsPayAtHotel;
   List<String> requiredIdentificationDocumentIdsToAdd;
   List<String> requiredIdentificationDocumentIdsToRemove;

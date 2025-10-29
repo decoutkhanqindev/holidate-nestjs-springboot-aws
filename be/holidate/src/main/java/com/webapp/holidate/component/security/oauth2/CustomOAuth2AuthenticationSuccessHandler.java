@@ -9,7 +9,7 @@ import com.webapp.holidate.repository.user.UserAuthInfoRepository;
 import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.service.auth.AuthService;
 import com.webapp.holidate.type.ErrorType;
-import com.webapp.holidate.utils.ResponseUtils;
+import com.webapp.holidate.utils.ResponseUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AccessLevel;
@@ -34,8 +34,8 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
   UserAuthInfoRepository authInfoRepository;
 
   @NonFinal
-  @Value(AppProperties.FRONTEND_LOGIN_SUCCESS_URL)
-  String frontendLoginSuccessUrl;
+  @Value(AppProperties.FRONTEND_URL)
+  String frontendUrl;
 
   @NonFinal
   @Value(AppProperties.JWT_ACCESS_TOKEN_EXPIRATION_MILLIS)
@@ -50,7 +50,8 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
   String tokenCookieName;
 
   @Override
-  public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
+  public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
+                                      Authentication authentication) throws IOException {
     OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
     String email = oAuth2User.getAttribute("email");
     User user = userRepository.findByEmail(email)
@@ -70,8 +71,8 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
     authInfoRepository.save(authInfo);
 
     int maxAge = (int) (refreshTokenExpirationMillis / 1000);
-    ResponseUtils.handleAuthCookiesResponse(response, tokenCookieName, accessToken, maxAge);
+    ResponseUtil.handleAuthCookiesResponse(response, tokenCookieName, accessToken, maxAge);
 
-    getRedirectStrategy().sendRedirect(request, response, frontendLoginSuccessUrl);
+    getRedirectStrategy().sendRedirect(request, response, frontendUrl);
   }
 }

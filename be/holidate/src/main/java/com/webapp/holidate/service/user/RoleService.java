@@ -25,7 +25,7 @@ public class RoleService {
     String name = request.getName();
     boolean exists = repository.existsByName(name);
     if (exists) {
-      throw  new AppException(ErrorType.ROLE_EXISTS);
+      throw new AppException(ErrorType.ROLE_EXISTS);
     }
 
     Role role = mapper.toEntity(request);

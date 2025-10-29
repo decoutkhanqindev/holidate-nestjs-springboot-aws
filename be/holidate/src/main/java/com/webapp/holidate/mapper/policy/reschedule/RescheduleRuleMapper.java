@@ -20,7 +20,7 @@ public interface RescheduleRuleMapper {
     }
 
     return rules.stream()
-        .map(this::toRescheduleRuleResponse)
-        .toList();
+      .map(this::toRescheduleRuleResponse)
+      .toList();
   }
 }
