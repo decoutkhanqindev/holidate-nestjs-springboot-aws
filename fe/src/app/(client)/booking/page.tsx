@@ -1,29 +1,36 @@
 'use client';
 
-import { Suspense, useState, ChangeEvent, useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { Suspense, useState, ChangeEvent, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import styles from './BookingPage.module.css';
-import { bookingService } from '@/service/bookingService';
+import { bookingService, BookingPriceDetailsResponse } from '@/service/bookingService';
 import { useAuth } from '@/contexts/AuthContext';
 import { hotelService, RoomDetailResponse } from '@/service/hotelService';
 
 function BookingComponent() {
     const searchParams = useSearchParams();
-    const { user, isLoggedIn } = useAuth();
+    const { user, isLoggedIn, isLoading: isAuthLoading, openModal, closeModal } = useAuth();
 
+    // === STATE ===
     const [customerInfo, setCustomerInfo] = useState({ fullName: '', email: '', phone: '' });
     const [formErrors, setFormErrors] = useState({ fullName: '', email: '', phone: '' });
     const [specialRequests, setSpecialRequests] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [generalError, setGeneralError] = useState('');
     const [currentStep, setCurrentStep] = useState(1);
-
     const [roomDetails, setRoomDetails] = useState<RoomDetailResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [priceDetails, setPriceDetails] = useState<BookingPriceDetailsResponse | null>(null);
+    const [isPriceLoading, setIsPriceLoading] = useState(true);
+    const [bookingIntent, setBookingIntent] = useState(false);
+
+    // State mới cho mã giảm giá
+    const [discountCode, setDiscountCode] = useState('');
+    const [discountError, setDiscountError] = useState('');
+    const [discountSuccess, setDiscountSuccess] = useState('');
 
     const roomId = searchParams.get('roomId');
-    const price = searchParams.get('price');
     const checkin = searchParams.get('checkin');
     const nights = searchParams.get('nights');
     const hotelName = searchParams.get('hotelName');
@@ -32,31 +39,147 @@ function BookingComponent() {
 
     useEffect(() => {
         if (isLoggedIn && user) {
-            setCustomerInfo(prevInfo => ({
-                ...prevInfo,
+            setCustomerInfo({
                 fullName: user.fullName || '',
                 email: user.email || '',
-            }));
+                phone: user.phone || ''
+            });
         }
     }, [isLoggedIn, user]);
+
+    useEffect(() => {
+        if (isLoggedIn && bookingIntent) {
+            setBookingIntent(false);
+            closeModal();
+            if (validateForm()) {
+                setCurrentStep(2);
+            }
+        }
+    }, [isLoggedIn, bookingIntent, closeModal]);
 
     useEffect(() => {
         if (roomId) {
             setIsLoading(true);
             hotelService.getRoomById(roomId)
-                .then(data => {
-                    setRoomDetails(data);
-                })
+                .then(setRoomDetails)
                 .catch(err => {
                     console.error("Lỗi khi tải chi tiết phòng:", err);
                     setGeneralError("Không thể tải được thông tin chi tiết của phòng.");
                 })
-                .finally(() => {
-                    setIsLoading(false);
-                });
+                .finally(() => setIsLoading(false));
+        } else {
+            setIsLoading(false);
+            setGeneralError("Thiếu ID phòng để tiếp tục.");
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [roomId]);
+
+    const getCheckoutDateString = (checkinStr: string, nightsNum: number): string => {
+        try {
+            const date = new Date(checkinStr);
+            date.setDate(date.getDate() + nightsNum);
+            return date.toISOString().split('T')[0];
+        } catch { return ''; }
+    };
+
+    // const fetchPricePreview = useCallback(async (codeToApply?: string) => {
+    //     if (roomDetails && checkin && nights) {
+    //         setIsPriceLoading(true);
+    //         setDiscountError('');
+    //         setDiscountSuccess('');
+    //         try {
+    //             const payload = {
+    //                 roomId: roomDetails.id.toString(),
+    //                 startDate: checkin,
+    //                 endDate: getCheckoutDateString(checkin, parseInt(nights, 10)),
+    //                 numberOfRooms: 1,
+    //                 numberOfAdults: roomDetails.maxAdults,
+    //                 numberOfChildren: roomDetails.maxChildren || 0,
+    //                 ...(codeToApply && { discountCode: codeToApply })
+    //             };
+    //             const data = await bookingService.getBookingPricePreview(payload);
+    //             setPriceDetails(data);
+
+    //             if (codeToApply && data.appliedDiscount) {
+    //                 setDiscountSuccess(`Áp dụng mã "${data.appliedDiscount.code}" thành công!`);
+    //             } else if (codeToApply && !data.appliedDiscount) {
+    //                 setDiscountError("Mã giảm giá không hợp lệ hoặc không thể áp dụng.");
+    //             }
+
+    //         } catch (error: any) {
+    //             setGeneralError(error.message || "Không thể tính toán giá.");
+    //             if (codeToApply) {
+    //                 setDiscountError(error.message || "Không thể áp dụng mã giảm giá.");
+    //             }
+    //         } finally {
+    //             setIsPriceLoading(false);
+    //         }
+    //     }
+    // }, [roomDetails, checkin, nights]);
+    // Trong file BookingPage.tsx
+
+    // ...
+
+    const fetchPricePreview = useCallback(async (codeToApply?: string) => {
+        // THÊM CHỐT CHẶN AN TOÀN
+        if (!roomDetails || !checkin || !nights || isNaN(parseInt(nights, 10))) {
+            console.warn("⚠️ [fetchPricePreview] Bỏ qua gọi API vì thiếu thông tin cần thiết (roomDetails, checkin, nights).");
+            setIsPriceLoading(false); // Dừng loading
+            setPriceDetails(null);    // Reset giá
+            return;
+        }
+
+        setIsPriceLoading(true);
+        setDiscountError('');
+        setDiscountSuccess('');
+        try {
+            const payload = {
+                roomId: roomDetails.id.toString(),
+                startDate: checkin,
+                endDate: getCheckoutDateString(checkin, parseInt(nights, 10)),
+                numberOfRooms: 1,
+                numberOfAdults: roomDetails.maxAdults,
+                numberOfChildren: roomDetails.maxChildren || 0,
+                ...(codeToApply && { discountCode: codeToApply })
+            };
+            const data = await bookingService.getBookingPricePreview(payload);
+            setPriceDetails(data);
+
+            if (codeToApply && data.appliedDiscount) {
+                setDiscountSuccess(`Áp dụng mã "${data.appliedDiscount.code}" thành công!`);
+            } else if (codeToApply && !data.appliedDiscount) {
+                setDiscountError("Mã giảm giá không hợp lệ hoặc không thể áp dụng.");
+            }
+
+        } catch (error: any) {
+            // Sửa lại message lỗi để rõ ràng hơn
+            setGeneralError("Không thể tính toán giá phòng. Vui lòng kiểm tra lại thông tin và thử lại.");
+            if (codeToApply) {
+                setDiscountError(error.message || "Không thể áp dụng mã giảm giá.");
+            }
+        } finally {
+            setIsPriceLoading(false);
+        }
+    }, [roomDetails, checkin, nights]);
+
+    useEffect(() => {
+        // Chỉ gọi fetchPricePreview khi có roomDetails
+        if (roomDetails) {
+            fetchPricePreview();
+        }
+    }, [roomDetails, fetchPricePreview]);
+
+    // ...
+    useEffect(() => {
+        if (roomDetails) {
+            fetchPricePreview(); // Gọi lần đầu để lấy giá gốc
+        }
+    }, [roomDetails, fetchPricePreview]);
+
+    const handleApplyDiscount = () => {
+        if (discountCode.trim()) {
+            fetchPricePreview(discountCode.trim());
+        }
+    };
 
     const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { id, value } = e.target;
@@ -74,29 +197,83 @@ function BookingComponent() {
         }
     };
 
-    const validateForm = () => { /* ... giữ nguyên hàm validate ... */ return true; };
-    const handleSubmitBooking = () => { if (validateForm()) setCurrentStep(2); };
-    const handleFinalPayment = async () => { /* ... giữ nguyên hàm thanh toán ... */ };
+    const validateForm = () => { return true; };
 
-    if (isLoading) {
+    const handleSubmitBooking = () => {
+        if (isAuthLoading) return;
+        if (!isLoggedIn) {
+            setBookingIntent(true);
+            openModal();
+            return;
+        }
+        if (validateForm()) {
+            setCurrentStep(2);
+        }
+    };
+
+    const handleFinalPayment = async () => {
+        if (!isLoggedIn || !user?.id) {
+            setGeneralError("Bạn cần đăng nhập để đặt phòng.");
+            openModal();
+            return;
+        }
+        if (!roomDetails || !checkin || !nights) {
+            setGeneralError("Thiếu thông tin đặt phòng.");
+            return;
+        }
+
+        setIsSubmitting(true);
+        setGeneralError('');
+
+        try {
+            const bookingPayload = {
+                userId: user.id,
+                roomId: roomDetails.id.toString(),
+                hotelId: roomDetails.hotel.id,
+                checkInDate: checkin,
+                checkOutDate: getCheckoutDateString(checkin, parseInt(nights, 10)),
+                numberOfRooms: 1,
+                numberOfAdults: roomDetails.maxAdults,
+                numberOfChildren: roomDetails.maxChildren || 0,
+                contactFullName: customerInfo.fullName,
+                contactEmail: customerInfo.email,
+                contactPhone: customerInfo.phone,
+                ...(priceDetails?.appliedDiscount?.code && { discountCode: priceDetails.appliedDiscount.code })
+            };
+
+            const response = await bookingService.createBooking(bookingPayload);
+
+            if (response && response.paymentUrl) {
+                window.location.href = response.paymentUrl;
+            } else {
+                setGeneralError("Không nhận được URL thanh toán từ server.");
+                setIsSubmitting(false);
+            }
+        } catch (error: any) {
+            console.error("LỖI KHI TẠO BOOKING:", error);
+            setGeneralError(error.message || "Đã có lỗi xảy ra khi tạo đơn hàng.");
+            setIsSubmitting(false);
+            setCurrentStep(1);
+        }
+    };
+
+    if (isLoading || isAuthLoading) {
         return <div className={styles.centered}>Đang tải thông tin đặt phòng...</div>;
     }
 
-    if (generalError || !roomDetails || !price || !nights || !checkin) {
-        return <div className={styles.centered}>{generalError || "Thiếu thông tin để hiển thị trang."}</div>;
+    if (!roomDetails || !nights || !checkin) {
+        return <div className={styles.centered}>Thiếu thông tin để hiển thị trang.</div>;
     }
 
     const numNights = parseInt(nights, 10);
     const numGuests = roomDetails.maxAdults;
     const roomName = roomDetails.name;
-
     const checkinDate = new Date(checkin);
     const checkoutDate = new Date(checkinDate);
     checkoutDate.setDate(checkoutDate.getDate() + numNights);
-    const pricePerNight = parseFloat(price);
-    const totalPriceForNights = pricePerNight * numNights;
-    const taxAndFee = totalPriceForNights * 0.1;
-    const finalPrice = totalPriceForNights + taxAndFee;
+    const totalPriceForNights = priceDetails?.originalPrice ?? 0;
+    const taxAndFee = (priceDetails?.tax?.amount ?? 0) + (priceDetails?.serviceFee?.amount ?? 0);
+    const finalPrice = priceDetails?.finalPrice ?? 0;
     const formatDate = (date: Date) => date.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'numeric', year: 'numeric' });
 
     return (
@@ -111,10 +288,7 @@ function BookingComponent() {
 
             <h1 className={styles.pageTitle}>{currentStep === 1 ? 'Đặt phòng của bạn' : 'Xác nhận và Thanh toán'}</h1>
             <p className={styles.pageSubtitle}>
-                {currentStep === 1
-                    ? 'Hãy đảm bảo tất cả thông tin chi tiết trên trang này đã chính xác trước khi tiến hành thanh toán.'
-                    : 'Vui lòng xác nhận lại lần cuối trước khi thanh toán.'
-                }
+                {currentStep === 1 ? 'Hãy đảm bảo tất cả thông tin chi tiết trên trang này đã chính xác trước khi tiến hành thanh toán.' : 'Vui lòng xác nhận lại lần cuối trước khi thanh toán.'}
             </p>
 
             {generalError && <div className={styles.generalError}>{generalError}</div>}
@@ -139,7 +313,7 @@ function BookingComponent() {
                                 <div>
                                     <strong>Khách hàng thân mến!</strong>
                                     <br />
-                                    <a href="#">Đăng nhập hoặc Đăng ký</a> để nhận thêm nhiều ưu đãi.
+                                    <button onClick={openModal} className={styles.loginLink}>Đăng nhập hoặc Đăng ký</button> để nhận thêm nhiều ưu đãi.
                                 </div>
                             </div>
                         </div>
@@ -172,30 +346,26 @@ function BookingComponent() {
                             </div>
 
                             <div className={styles.formSection}>
-                                <h2 className={styles.sectionTitle}>Tiện nghi và Đặc điểm phòng</h2>
-                                <div className={styles.amenitiesList}>
-                                    {roomDetails.view && (
-                                        <div className={styles.amenityItem}>
-                                            <i className="bi bi-image" style={{ color: '#0d6efd' }}></i>
-                                            <strong>Hướng nhìn:</strong> {roomDetails.view}
-                                        </div>
-                                    )}
-                                    {roomDetails.area > 0 && (
-                                        <div className={styles.amenityItem}>
-                                            <i className="bi bi-rulers" style={{ color: '#0d6efd' }}></i>
-                                            <strong>Diện tích:</strong> {roomDetails.area} m²
-                                        </div>
-                                    )}
-                                    <hr className={styles.divider} />
-                                    <p><strong>Phòng của bạn bao gồm:</strong></p>
-                                    <div className={styles.checkboxGrid}>
-                                        {(roomDetails.amenities?.flatMap(group => group.amenities) || []).map(amenity => (
-                                            <span key={amenity.id} className={styles.amenityTag}>
-                                                ✔️ {amenity.name}
-                                            </span>
-                                        ))}
-                                    </div>
+                                <h2 className={styles.sectionTitle}>Mã giảm giá</h2>
+                                <div className={styles.discountForm}>
+                                    <input
+                                        type="text"
+                                        placeholder="Nhập mã giảm giá"
+                                        value={discountCode}
+                                        onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                                        className={styles.discountInput}
+                                        disabled={isPriceLoading}
+                                    />
+                                    <button
+                                        onClick={handleApplyDiscount}
+                                        disabled={isPriceLoading || !discountCode}
+                                        className={styles.discountButton}
+                                    >
+                                        {isPriceLoading ? 'Đang áp dụng...' : 'Áp dụng'}
+                                    </button>
                                 </div>
+                                {discountSuccess && <p className={styles.discountSuccess}>{discountSuccess}</p>}
+                                {discountError && <p className={styles.discountError}>{discountError}</p>}
                             </div>
 
                             <div className={styles.formSection}>
@@ -227,30 +397,41 @@ function BookingComponent() {
 
                     <div className={styles.finalPriceSection}>
                         <h2 className={styles.sectionTitle}>Chi tiết giá</h2>
-                        <div className={styles.priceDetailsContainer}>
-                            <div className={styles.priceRow}>
-                                <div>
-                                    <p style={{ margin: 0, fontWeight: 'bold' }}>Giá phòng</p>
-                                    <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>(1x) {roomName} ({numNights} đêm)</p>
+                        {isPriceLoading ? (
+                            <div style={{ textAlign: 'center', padding: '20px' }}>Đang tính toán giá...</div>
+                        ) : priceDetails ? (
+                            <div className={styles.priceDetailsContainer}>
+                                <div className={styles.priceRow}>
+                                    <div>
+                                        <p style={{ margin: 0, fontWeight: 'bold' }}>Giá phòng ({numNights} đêm)</p>
+                                    </div>
+                                    <span>{totalPriceForNights.toLocaleString('vi-VN')} VND</span>
                                 </div>
-                                <span>{totalPriceForNights.toLocaleString('vi-VN')} VND</span>
+                                {priceDetails.appliedDiscount && (
+                                    <div className={`${styles.priceRow} ${styles.discountSuccess}`}>
+                                        <span>Giảm giá ({priceDetails.appliedDiscount.code})</span>
+                                        <span>- {priceDetails.discountAmount.toLocaleString('vi-VN')} VND</span>
+                                    </div>
+                                )}
+                                <div className={styles.priceRow}>
+                                    <span>Thuế và phí</span>
+                                    <span>{taxAndFee.toLocaleString('vi-VN')} VND</span>
+                                </div>
+                                <hr className={styles.divider} />
+                                <div className={`${styles.priceRow} ${styles.totalPrice}`}>
+                                    <span>Tổng giá</span>
+                                    <span>{finalPrice.toLocaleString('vi-VN')} VND</span>
+                                </div>
                             </div>
-                            <div className={styles.priceRow}>
-                                <span>Thuế và phí</span>
-                                <span>{taxAndFee.toLocaleString('vi-VN')} VND</span>
-                            </div>
-                            <hr className={styles.divider} />
-                            <div className={`${styles.priceRow} ${styles.totalPrice}`}>
-                                <span>Tổng giá</span>
-                                <span>{finalPrice.toLocaleString('vi-VN')} VND</span>
-                            </div>
-                        </div>
+                        ) : (
+                            <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>Không thể tải chi tiết giá.</div>
+                        )}
                     </div>
 
                     <div>
                         {currentStep === 1 && (
-                            <button className={styles.continueButton} onClick={handleSubmitBooking}>
-                                Tiếp tục
+                            <button className={styles.continueButton} onClick={handleSubmitBooking} disabled={isPriceLoading || isAuthLoading}>
+                                {isAuthLoading ? "Đang tải..." : "Tiếp tục"}
                             </button>
                         )}
                         {currentStep === 2 && (
@@ -259,7 +440,7 @@ function BookingComponent() {
                                     Quay lại
                                 </button>
                                 <button className={styles.continueButton} onClick={handleFinalPayment} disabled={isSubmitting}>
-                                    {isSubmitting ? 'Đang chuyển hướng...' : 'Xác nhận & Thanh toán'}
+                                    {isSubmitting ? 'Đang xử lý...' : 'Xác nhận & Thanh toán'}
                                 </button>
                             </div>
                         )}

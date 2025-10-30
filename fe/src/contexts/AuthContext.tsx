@@ -19,43 +19,54 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    // dành cho login bằng email
-    const processEmailLoginSuccess = (accessToken: string, refreshToken: string) => {
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-        const decodedToken = jwtDecode<JwtPayload>(accessToken);
+    // THAY ĐỔI 1: Hàm này giờ sẽ nhận toàn bộ object data từ API login
+    const processEmailLoginSuccess = (loginData: { id: string; email: string; fullName: string; accessToken: string; refreshToken: string; }) => {
+        // Lưu token vào localStorage
+        localStorage.setItem('accessToken', loginData.accessToken);
+        localStorage.setItem('refreshToken', loginData.refreshToken);
+
+        // LƯU Ý QUAN TRỌNG: Lưu ID người dùng riêng ra localStorage
+        localStorage.setItem('userId', loginData.id);
+
+        // Tạo user state từ data nhận được
         const userData: User = {
-            fullName: decodedToken.fullName,
-            email: decodedToken.sub,
+            id: loginData.id,
+            fullName: loginData.fullName,
+            email: loginData.email,
         };
         setUser(userData);
         setIsLoggedIn(true);
-        console.log("✅ [Email Login] Đăng nhập thành công, user state đã được cập nhật:", userData);
+        console.log("✅ [Login] Đăng nhập thành công, user state đã được cập nhật từ data:", userData);
     };
 
     useEffect(() => {
         const initializeAuth = async () => {
-            //Kiểm tra token từ localStorage ( Email Login)
             const tokenFromStorage = localStorage.getItem('accessToken');
 
-            if (tokenFromStorage) {
+            // THAY ĐỔI 2: Đọc cả ID người dùng từ localStorage
+            const userIdFromStorage = localStorage.getItem('userId');
+
+            // Chỉ khôi phục phiên nếu CÓ CẢ token VÀ userId
+            if (tokenFromStorage && userIdFromStorage) {
                 try {
-                    console.log(" [Session Restore] Phát hiện token trong localStorage. Đang khôi phục...");
+                    console.log(" [Session Restore] Phát hiện token và userId. Đang khôi phục...");
                     const decodedToken = jwtDecode<JwtPayload>(tokenFromStorage);
                     if (decodedToken.exp && decodedToken.exp * 1000 < Date.now()) {
-                        console.warn("[Session Restore] Token trong localStorage đã hết hạn.");
-                        logout(); // Dọn  token cũ
+                        console.warn("[Session Restore] Token đã hết hạn.");
+                        logout();
                     } else {
+                        // Tạo lại user data từ 2 nguồn: userId từ storage và thông tin còn lại từ token
                         const userData: User = {
+                            id: userIdFromStorage,
                             fullName: decodedToken.fullName,
                             email: decodedToken.sub,
                         };
                         setUser(userData);
                         setIsLoggedIn(true);
-                        console.log("[Session Restore] Khôi phục phiên từ localStorage thành công.");
+                        console.log("[Session Restore] Khôi phục phiên thành công (giải pháp tạm thời).", userData);
                     }
                 } catch (error) {
-                    console.error(" [Session Restore] Token trong localStorage không hợp lệ.", error);
+                    console.error(" [Session Restore] Token không hợp lệ.", error);
                     logout();
                 } finally {
                     setIsLoading(false);
@@ -63,17 +74,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 return;
             }
 
-            try {
-                const response = await getMyProfile();
-                const userData: User = response.data.data;
-                setUser(userData);
-                setIsLoggedIn(true);
-                console.log(" [Session Restore] Khôi phục phiên từ server (cookie) thành công.");
-            } catch (error) {
-                console.log("ℹ [Session Restore] Không có phiên đăng nhập hợp lệ từ server.");
-            } finally {
-                setIsLoading(false);
-            }
+            // Nếu không có đủ thông tin, coi như chưa đăng nhập
+            setIsLoading(false);
         };
 
         initializeAuth();
@@ -82,13 +84,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const openModal = () => setIsModalOpen(true);
     const closeModal = () => setIsModalOpen(false);
 
-    // Logic login bằng email không đổi
+    // THAY ĐỔI 3: Hàm login bây giờ sẽ truyền cả object data vào hàm success
     const login = async (email: string, password: string) => {
         setIsLoading(true);
         try {
             const response = await loginUser({ email, password });
-            const { accessToken, refreshToken } = response.data.data;
-            processEmailLoginSuccess(accessToken, refreshToken);
+            // Lấy toàn bộ object data từ response API
+            const loginData = response.data.data;
+            processEmailLoginSuccess(loginData);
             closeModal();
         } catch (error) {
             console.error("Lỗi đăng nhập:", error);
@@ -98,42 +101,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    // THAY ĐỔI 4: Hàm logout phải xóa cả userId
     const logout = async () => {
-        try {
-            await logoutUser({});
-        } catch (error) { console.error("Lỗi khi đăng xuất trên server:", error); }
+        try { await logoutUser({}); } catch (error) { console.error("Lỗi khi đăng xuất trên server:", error); }
         finally {
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
-            // Xóa cookie token (Google login)
-            document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-            document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            localStorage.removeItem('userId'); // <<--- XÓA CẢ userId KHI LOGOUT
             setUser(null);
             setIsLoggedIn(false);
             window.location.reload();
         }
     };
-    // const logout = async () => {
-    //     try {
-    //         // Gửi yêu cầu đăng xuất đến server
-    //         await logoutUser();
-    //         console.log(" [Logout] Yêu cầu đăng xuất tới server thành công.");
 
-    //         // CHỈ DỌN DẸP CLIENT KHI SERVER ĐÃ XÁC NHẬN
-    //         localStorage.removeItem('accessToken');
-    //         localStorage.removeItem('refreshToken');
-    //         setUser(null);
-    //         setIsLoggedIn(false);
-
-    //         // Chuyển hướng về trang chủ để làm mới triệt để
-    //         window.location.href = '/';
-
-    //     } catch (error) {
-    //         console.error(" [Logout] Đăng xuất trên server THẤT BẠI:", error);
-    //         // Thông báo cho người dùng biết để họ không bị bối rối
-    //         alert("Đã xảy ra lỗi khi đăng xuất. Vui lòng kiểm tra console và liên hệ quản trị viên.");
-    //     }
-    // };
     return (
         <AuthContext.Provider value={{ isLoggedIn, user, isLoading, isModalOpen, openModal, closeModal, login, logout }}>
             {children}
