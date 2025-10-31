@@ -8,5 +8,4 @@ public class BookingEndpoints {
   public static final String RESCHEDULE = "/reschedule";
   public static final String PAYMENT = "/payment";
   public static final String CALLBACK = "/callback";
-  public static final String STATUS = "/status";
 }

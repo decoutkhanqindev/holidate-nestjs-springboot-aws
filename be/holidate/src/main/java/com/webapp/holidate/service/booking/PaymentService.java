@@ -593,7 +593,6 @@ public class PaymentService {
           rescheduleFee, newOriginalPrice, discountAmount, transactionRef, transactionId);
       return frontendUrl + "/payment/success?bookingId=" + bookingId + "&type=reschedule";
     } catch (Exception e) {
-      log.error("Failed to complete reschedule after payment for booking: {}", bookingId, e);
       return frontendUrl + "/payment/failure?reason=reschedule_failed";
     }
   }
