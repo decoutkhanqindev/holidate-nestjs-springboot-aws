@@ -1,9 +1,12 @@
 package com.webapp.holidate.service.booking;
 
 import com.webapp.holidate.constants.AppProperties;
+import com.webapp.holidate.constants.api.param.BookingParams;
+import com.webapp.holidate.constants.api.param.SortingParams;
 import com.webapp.holidate.dto.request.booking.BookingCreationRequest;
 import com.webapp.holidate.dto.request.booking.BookingPricePreviewRequest;
 import com.webapp.holidate.dto.response.acommodation.room.inventory.RoomInventoryPriceByDateResponse;
+import com.webapp.holidate.dto.response.base.PagedResponse;
 import com.webapp.holidate.dto.response.booking.BookingPriceDetailsResponse;
 import com.webapp.holidate.dto.response.booking.BookingResponse;
 import com.webapp.holidate.dto.response.booking.FeeResponse;
@@ -14,6 +17,7 @@ import com.webapp.holidate.entity.booking.Booking;
 import com.webapp.holidate.entity.discount.Discount;
 import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.exception.AppException;
+import com.webapp.holidate.mapper.PagedMapper;
 import com.webapp.holidate.mapper.booking.BookingMapper;
 import com.webapp.holidate.mapper.discount.DiscountMapper;
 import com.webapp.holidate.repository.accommodation.HotelRepository;
@@ -31,6 +35,10 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.PessimisticLockingFailureException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -52,6 +60,7 @@ public class BookingService {
 
   BookingMapper bookingMapper;
   DiscountMapper discountMapper;
+  PagedMapper pagedMapper;
 
   @NonFinal
   @Value(AppProperties.VAT_RATE)
@@ -192,7 +201,7 @@ public class BookingService {
   }
 
   @Transactional
-  public BookingPriceDetailsResponse getPricePreview(BookingPricePreviewRequest request) {
+  public BookingPriceDetailsResponse createPricePreview(BookingPricePreviewRequest request) {
     // Step 1: Validate and fetch room
     Room room = roomRepository.findById(request.getRoomId())
       .orElseThrow(() -> new AppException(ErrorType.ROOM_NOT_FOUND));
@@ -238,6 +247,108 @@ public class BookingService {
 
     // Step 6: Use helper method to calculate price details
     return calculatePriceDetailsFromValues(originalPrice, discountAmount, appliedDiscount);
+  }
+
+  public PagedResponse<BookingResponse> getAll(
+    String userId, String roomId, String hotelId, String status,
+    LocalDate checkInDate, LocalDate checkOutDate,
+    LocalDateTime createdFrom, LocalDateTime createdTo,
+    Double minPrice, Double maxPrice,
+    String contactEmail, String contactPhone, String contactFullName,
+    int page, int size, String sortBy, String sortDir) {
+    // Clean up page and size values
+    page = Math.max(0, page);
+    size = Math.min(Math.max(1, size), 100);
+
+    // Check if sort direction is valid
+    boolean hasSortDir = sortDir != null && !sortDir.isEmpty()
+      && (SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir) ||
+      SortingParams.SORT_DIR_DESC.equalsIgnoreCase(sortDir));
+    if (!hasSortDir) {
+      sortDir = SortingParams.SORT_DIR_DESC;
+    }
+
+    // Check if sort field is valid
+    boolean hasSortBy = sortBy != null && !sortBy.isEmpty()
+      && (BookingParams.CREATED_AT.equals(sortBy) ||
+      BookingParams.CHECK_IN_DATE_SORT.equals(sortBy) ||
+      BookingParams.CHECK_OUT_DATE_SORT.equals(sortBy) ||
+      BookingParams.FINAL_PRICE.equals(sortBy) ||
+      BookingParams.STATUS_SORT.equals(sortBy));
+    if (!hasSortBy) {
+      sortBy = null;
+    }
+
+    // Create Pageable with sorting
+    Pageable pageable = createPageable(page, size, sortBy, sortDir);
+
+    // Get bookings from database with pagination
+    Page<Booking> bookingPage = bookingRepository.findAllWithFiltersPaged(
+      userId, roomId, hotelId, status,
+      checkInDate, checkOutDate, createdFrom, createdTo,
+      minPrice, maxPrice, contactEmail, contactPhone, contactFullName,
+      pageable);
+
+    // Check if we have any bookings
+    if (bookingPage.isEmpty()) {
+      return pagedMapper.createEmptyPagedResponse(page, size);
+    }
+
+    // Convert entities to response DTOs with price details
+    List<BookingResponse> bookingResponses = bookingPage.getContent().stream()
+      .map(booking -> {
+        BookingResponse response = bookingMapper.toBookingResponse(booking, null);
+        BookingPriceDetailsResponse priceDetails = calculatePriceDetails(booking);
+        response.setPriceDetails(priceDetails);
+
+        // Set pricesByDate for booking period
+        if (response.getRoom() != null) {
+          List<RoomInventoryPriceByDateResponse> pricesByDate = roomInventoryService.getPricesByDateRange(
+            booking.getRoom().getId(),
+            booking.getCheckInDate(),
+            booking.getCheckOutDate());
+          response.getRoom().setPricesByDateRange(pricesByDate);
+        }
+
+        return response;
+      })
+      .toList();
+
+    // Create and return paged response with database pagination metadata
+    return pagedMapper.createPagedResponse(
+      bookingResponses,
+      page,
+      size,
+      bookingPage.getTotalElements(),
+      bookingPage.getTotalPages());
+  }
+
+  // Create Pageable object with sorting
+  private Pageable createPageable(int page, int size, String sortBy, String sortDir) {
+    if (sortBy == null) {
+      return PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+    }
+
+    // Map sort field to entity field
+    String entitySortField = mapSortFieldToEntity(sortBy);
+    Sort.Direction direction = SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir)
+      ? Sort.Direction.ASC
+      : Sort.Direction.DESC;
+
+    Sort sort = Sort.by(direction, entitySortField);
+    return PageRequest.of(page, size, sort);
+  }
+
+  // Map API sort field to entity field name
+  private String mapSortFieldToEntity(String sortBy) {
+    return switch (sortBy) {
+      case BookingParams.CHECK_IN_DATE_SORT -> "checkInDate";
+      case BookingParams.CHECK_OUT_DATE_SORT -> "checkOutDate";
+      case BookingParams.FINAL_PRICE -> "finalPrice";
+      case BookingParams.STATUS_SORT -> "status";
+      case BookingParams.CREATED_AT -> "createdAt";
+      default -> "createdAt"; // Default sorting
+    };
   }
 
   public BookingResponse getById(String id) {

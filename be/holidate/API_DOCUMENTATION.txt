@@ -1,0 +1,467 @@
+================================================================================
+                    TÀI LIỆU API - HOLIDATE BACKEND
+================================================================================
+
+Tài liệu này mô tả chi tiết các endpoint của 3 controller: BookingController,
+PaymentController và DiscountController.
+
+================================================================================
+1. BOOKING CONTROLLER
+================================================================================
+
+Base Path: /bookings
+
+--------------------------------------------------------------------------------
+1.1. TẠO BOOKING MỚI
+--------------------------------------------------------------------------------
+Method: POST
+Endpoint: /bookings
+Request Body: BookingCreationRequest
+
+Request Body Structure:
+{
+  "userId": String (required, not blank) - ID của người dùng
+  "roomId": String (required, not blank) - ID của phòng
+  "hotelId": String (required, not blank) - ID của khách sạn
+  "checkInDate": LocalDate (required, not null) - Ngày check-in (format: YYYY-MM-DD)
+  "checkOutDate": LocalDate (required, not null) - Ngày check-out (format: YYYY-MM-DD)
+  "numberOfRooms": Integer (required, not null, must be positive) - Số lượng phòng
+  "numberOfAdults": Integer (required, not null, must be positive) - Số lượng người lớn
+  "numberOfChildren": Integer (optional, default: 0, min: 0) - Số lượng trẻ em
+  "discountCode": String (optional) - Mã giảm giá
+  "contactFullName": String (required, not blank) - Họ tên người liên hệ
+  "contactEmail": String (optional, must be valid email) - Email liên hệ
+  "contactPhone": String (optional, must match phone pattern) - Số điện thoại liên hệ
+}
+
+Response Structure: ApiResponse<BookingResponse>
+{
+  "statusCode": Integer (default: 200)
+  "message": String (default: "")
+  "data": {
+    "id": String - ID của booking
+    "user": {
+      "id": String - ID người dùng
+      "email": String - Email người dùng
+      "fullName": String - Họ tên người dùng
+      "role": {
+        "id": String
+        "name": String
+      }
+    }
+    "room": {
+      "id": String - ID phòng
+      "name": String - Tên phòng
+      "view": String - View của phòng
+      "area": Double - Diện tích phòng
+      "maxAdults": Integer - Số người lớn tối đa
+      "maxChildren": Integer - Số trẻ em tối đa
+      "basePricePerNight": Double - Giá cơ bản mỗi đêm
+      "bedType": {
+        "id": String
+        "name": String
+      }
+      "cancellationPolicy": CancellationPolicyResponse - Chính sách hủy
+      "reschedulePolicy": ReschedulePolicyResponse - Chính sách đổi ngày
+      "smokingAllowed": Boolean - Cho phép hút thuốc
+      "wifiAvailable": Boolean - Có WiFi
+      "breakfastIncluded": Boolean - Bao gồm bữa sáng
+      "pricesByDateRange": List<RoomInventoryPriceByDateResponse> - Giá theo từng ngày
+    }
+    "hotel": {
+      "id": String - ID khách sạn
+      "name": String - Tên khách sạn
+      "address": String - Địa chỉ
+      "country": LocationResponse - Quốc gia
+      "province": LocationResponse - Tỉnh/Thành phố
+      "city": LocationResponse - Thành phố
+      "district": LocationResponse - Quận/Huyện
+      "ward": LocationResponse - Phường/Xã
+      "street": LocationResponse - Đường
+      "latitude": Double - Vĩ độ
+      "longitude": Double - Kinh độ
+      "starRating": Integer - Hạng sao
+      "status": String - Trạng thái
+    }
+    "checkInDate": LocalDate - Ngày check-in
+    "checkOutDate": LocalDate - Ngày check-out
+    "numberOfNights": Integer - Số đêm
+    "numberOfRooms": Integer - Số lượng phòng
+    "numberOfAdults": Integer - Số người lớn
+    "numberOfChildren": Integer - Số trẻ em
+    "priceDetails": {
+      "originalPrice": Double - Giá gốc
+      "discountAmount": Double - Số tiền giảm giá
+      "appliedDiscount": {
+        "id": String - ID mã giảm giá
+        "code": String - Mã giảm giá
+        "description": String - Mô tả
+        "percentage": Double - Phần trăm giảm giá
+        "usageLimit": Integer - Giới hạn sử dụng
+        "timesUsed": Integer - Số lần đã sử dụng
+      } hoặc null
+      "netPriceAfterDiscount": Double - Giá sau khi giảm
+      "tax": {
+        "name": String - Tên thuế
+        "percentage": Double - Phần trăm thuế
+        "amount": Double - Số tiền thuế
+      }
+      "serviceFee": {
+        "name": String - Tên phí dịch vụ
+        "percentage": Double - Phần trăm phí dịch vụ
+        "amount": Double - Số tiền phí dịch vụ
+      }
+      "finalPrice": Double - Giá cuối cùng
+    }
+    "contactFullName": String - Họ tên liên hệ
+    "contactEmail": String - Email liên hệ
+    "contactPhone": String - Số điện thoại liên hệ
+    "status": String - Trạng thái booking
+    "paymentUrl": String - URL thanh toán
+    "createdAt": LocalDateTime - Thời gian tạo
+    "expiresAt": LocalDateTime - Thời gian hết hạn
+    "updatedAt": LocalDateTime - Thời gian cập nhật
+  }
+}
+
+--------------------------------------------------------------------------------
+1.2. XEM TRƯỚC GIÁ BOOKING
+--------------------------------------------------------------------------------
+Method: GET
+Endpoint: /bookings/price-preview
+Request Body: BookingPricePreviewRequest
+
+Request Body Structure:
+{
+  "roomId": String (required, not blank) - ID của phòng
+  "startDate": LocalDate (required, not null) - Ngày bắt đầu (format: YYYY-MM-DD)
+  "endDate": LocalDate (required, not null) - Ngày kết thúc (format: YYYY-MM-DD)
+  "numberOfRooms": Integer (required, not null, must be positive) - Số lượng phòng
+  "numberOfAdults": Integer (required, not null, must be positive) - Số lượng người lớn
+  "numberOfChildren": Integer (optional, default: 0, min: 0) - Số lượng trẻ em
+  "discountCode": String (optional) - Mã giảm giá
+}
+
+Response Structure: ApiResponse<BookingPriceDetailsResponse>
+{
+  "statusCode": Integer (default: 200)
+  "message": String (default: "")
+  "data": {
+    "originalPrice": Double - Giá gốc
+    "discountAmount": Double - Số tiền giảm giá
+    "appliedDiscount": {
+      "id": String
+      "code": String
+      "description": String
+      "percentage": Double
+      "usageLimit": Integer
+      "timesUsed": Integer
+    } hoặc null
+    "netPriceAfterDiscount": Double - Giá sau khi giảm
+    "tax": {
+      "name": String
+      "percentage": Double
+      "amount": Double
+    }
+    "serviceFee": {
+      "name": String
+      "percentage": Double
+      "amount": Double
+    }
+    "finalPrice": Double - Giá cuối cùng
+  }
+}
+
+Lưu ý: Endpoint này sử dụng GET nhưng yêu cầu Request Body (không phải query parameters).
+Đây có thể là một thiết kế không chuẩn RESTful, có thể cần xem xét lại.
+
+--------------------------------------------------------------------------------
+1.3. LẤY BOOKING THEO ID
+--------------------------------------------------------------------------------
+Method: GET
+Endpoint: /bookings/{id}
+
+Path Parameters:
+- id: String (required, format: UUID - [a-fA-F0-9\\-]{36}) - ID của booking
+
+Response Structure: ApiResponse<BookingResponse>
+{
+  "statusCode": Integer (default: 200)
+  "message": String (default: "")
+  "data": BookingResponse (cấu trúc giống như response của endpoint 1.1)
+}
+
+--------------------------------------------------------------------------------
+1.4. XÓA BOOKING
+--------------------------------------------------------------------------------
+Method: DELETE
+Endpoint: /bookings/{id}
+
+Path Parameters:
+- id: String (required, format: UUID - [a-fA-F0-9\\-]{36}) - ID của booking
+
+Response Structure: ApiResponse<BookingResponse>
+{
+  "statusCode": Integer (default: 200)
+  "message": String (default: "")
+  "data": BookingResponse (cấu trúc giống như response của endpoint 1.1)
+}
+
+================================================================================
+2. PAYMENT CONTROLLER
+================================================================================
+
+Base Path: /payment
+
+--------------------------------------------------------------------------------
+2.1. XỬ LÝ CALLBACK TỪ VNPAY
+--------------------------------------------------------------------------------
+Method: GET
+Endpoint: /payment/callback
+
+Query Parameters:
+- Các tham số từ VNPay được truyền dưới dạng Map<String, String>
+  (ví dụ: vnp_Amount, vnp_BankCode, vnp_BankTranNo, vnp_CardType, 
+   vnp_OrderInfo, vnp_PayDate, vnp_ResponseCode, vnp_TmnCode, 
+   vnp_TransactionNo, vnp_TransactionStatus, vnp_TxnRef, vnp_SecureHash)
+
+Request: HttpServletRequest - Để lấy thông tin request
+
+Response Structure: ResponseEntity<String>
+- Status Code: 302 (Found - Redirect)
+- Header: "Location" chứa URL redirect
+- Body: String (thường là rỗng vì redirect)
+
+Mô tả: Endpoint này xử lý callback từ VNPay sau khi thanh toán.
+Sau khi xử lý, server sẽ redirect người dùng đến một URL được trả về từ service.
+
+================================================================================
+3. DISCOUNT CONTROLLER
+================================================================================
+
+Base Path: /discounts
+
+--------------------------------------------------------------------------------
+3.1. TẠO MÃ GIẢM GIÁ MỚI
+--------------------------------------------------------------------------------
+Method: POST
+Endpoint: /discounts
+
+Request Body: DiscountCreationRequest
+
+Request Body Structure:
+{
+  "code": String (required, not blank, max length: 50) - Mã giảm giá
+  "description": String (required, not blank) - Mô tả mã giảm giá
+  "percentage": Double (required, not null, min: 0.0, max: 100.0) - Phần trăm giảm giá
+  "usageLimit": Integer (required, not null, must be positive) - Giới hạn số lần sử dụng
+  "timesUsed": Integer (required, not null, min: 0) - Số lần đã sử dụng
+  "minBookingPrice": Integer (optional, min: 0) - Giá booking tối thiểu để áp dụng
+  "minBookingCount": Integer (optional, must be positive) - Số lượng booking tối thiểu
+  "validFrom": LocalDate (required, not null) - Ngày bắt đầu có hiệu lực (format: YYYY-MM-DD)
+  "validTo": LocalDate (required, not null) - Ngày kết thúc hiệu lực (format: YYYY-MM-DD)
+}
+
+Query Parameters:
+- hotel-id: String (optional) - ID của khách sạn nếu mã giảm giá áp dụng cho khách sạn cụ thể
+- special-day-id: String (optional) - ID của ngày đặc biệt nếu mã giảm giá áp dụng cho ngày đặc biệt
+
+Response Structure: ApiResponse<DiscountDetailsResponse>
+{
+  "statusCode": Integer (default: 200)
+  "message": String (default: "")
+  "data": {
+    "id": String - ID của mã giảm giá
+    "code": String - Mã giảm giá
+    "description": String - Mô tả
+    "percentage": Double - Phần trăm giảm giá
+    "usageLimit": Integer - Giới hạn sử dụng
+    "timesUsed": Integer - Số lần đã sử dụng
+    "minBookingPrice": Integer - Giá booking tối thiểu
+    "minBookingCount": Integer - Số lượng booking tối thiểu
+    "validFrom": LocalDate - Ngày bắt đầu
+    "validTo": LocalDate - Ngày kết thúc
+    "active": Boolean - Trạng thái active
+    "hotel": {
+      "id": String
+      "name": String
+      "address": String
+      "country": LocationResponse
+      "province": LocationResponse
+      "city": LocationResponse
+      "district": LocationResponse
+      "ward": LocationResponse
+      "street": LocationResponse
+      "latitude": Double
+      "longitude": Double
+      "starRating": Integer
+      "status": String
+    } hoặc null
+    "specialDay": {
+      "id": String
+      "date": LocalDate
+      "name": String
+    } hoặc null
+    "createdAt": LocalDateTime - Thời gian tạo
+    "updatedAt": LocalDateTime - Thời gian cập nhật
+  }
+}
+
+--------------------------------------------------------------------------------
+3.2. LẤY DANH SÁCH MÃ GIẢM GIÁ (CÓ PHÂN TRANG)
+--------------------------------------------------------------------------------
+Method: GET
+Endpoint: /discounts
+
+Query Parameters (Tất cả đều optional):
+- code: String - Lọc theo mã giảm giá
+- active: Boolean - Lọc theo trạng thái active/inactive
+- currently-valid: Boolean - Lọc theo mã còn hiệu lực hay không
+- valid-from: LocalDate (format: YYYY-MM-DD) - Lọc từ ngày bắt đầu
+- valid-to: LocalDate (format: YYYY-MM-DD) - Lọc đến ngày kết thúc
+- min-percentage: Double - Lọc theo phần trăm giảm giá tối thiểu
+- max-percentage: Double - Lọc theo phần trăm giảm giá tối đa
+- min-booking-price: Integer - Lọc theo giá booking tối thiểu
+- max-booking-price: Integer - Lọc theo giá booking tối đa
+- min-booking-count: Integer - Lọc theo số lượng booking tối thiểu
+- max-booking-count: Integer - Lọc theo số lượng booking tối đa
+- available: Boolean - Lọc mã còn sử dụng được (chưa hết lượt)
+- exhausted: Boolean - Lọc mã đã hết lượt sử dụng
+- min-times-used: Integer - Lọc theo số lần sử dụng tối thiểu
+- max-times-used: Integer - Lọc theo số lần sử dụng tối đa
+- hotel-id: String - Lọc theo ID khách sạn
+- special-day-id: String - Lọc theo ID ngày đặc biệt
+- page: Integer (default: 0) - Số trang (bắt đầu từ 0)
+- size: Integer (default: 10) - Số phần tử mỗi trang
+- sort-by: String (default: "created-at") - Trường để sắp xếp
+  (có thể là: percentage, usage-limit, times-used, created-at)
+- sort-dir: String (default: "asc") - Hướng sắp xếp: "asc" hoặc "desc"
+
+Response Structure: ApiResponse<PagedResponse<DiscountResponse>>
+{
+  "statusCode": Integer (default: 200)
+  "message": String (default: "")
+  "data": {
+    "content": [
+      {
+        "id": String
+        "code": String
+        "description": String
+        "percentage": Double
+        "usageLimit": Integer
+        "timesUsed": Integer
+        "minBookingPrice": Integer
+        "minBookingCount": Integer
+        "validFrom": LocalDate
+        "validTo": LocalDate
+        "active": Boolean
+        "createdAt": LocalDateTime
+        "updatedAt": LocalDateTime
+      },
+      ...
+    ]
+    "page": Integer - Số trang hiện tại
+    "size": Integer - Số phần tử mỗi trang
+    "totalItems": Long - Tổng số phần tử
+    "totalPages": Integer - Tổng số trang
+    "first": Boolean - Có phải trang đầu tiên không
+    "last": Boolean - Có phải trang cuối cùng không
+    "hasNext": Boolean - Có trang tiếp theo không
+    "hasPrevious": Boolean - Có trang trước đó không
+  }
+}
+
+--------------------------------------------------------------------------------
+3.3. LẤY CHI TIẾT MÃ GIẢM GIÁ THEO ID
+--------------------------------------------------------------------------------
+Method: GET
+Endpoint: /discounts/{id}
+
+Path Parameters:
+- id: String (required, format: UUID - [a-fA-F0-9\\-]{36}) - ID của mã giảm giá
+
+Response Structure: ApiResponse<DiscountDetailsResponse>
+{
+  "statusCode": Integer (default: 200)
+  "message": String (default: "")
+  "data": DiscountDetailsResponse (cấu trúc giống như response của endpoint 3.1)
+}
+
+--------------------------------------------------------------------------------
+3.4. CẬP NHẬT MÃ GIẢM GIÁ
+--------------------------------------------------------------------------------
+Method: PUT
+Endpoint: /discounts/{id}
+
+Path Parameters:
+- id: String (required, format: UUID - [a-fA-F0-9\\-]{36}) - ID của mã giảm giá
+
+Request Body: DiscountUpdateRequest
+
+Request Body Structure (Tất cả các trường đều optional):
+{
+  "code": String (optional, max length: 50) - Mã giảm giá
+  "description": String (optional, max length: 500) - Mô tả
+  "percentage": Double (optional, min: 0.0, max: 100.0) - Phần trăm giảm giá
+  "usageLimit": Integer (optional, must be positive) - Giới hạn sử dụng
+  "timesUsed": Integer (optional, min: 0) - Số lần đã sử dụng
+  "minBookingPrice": Integer (optional, min: 0) - Giá booking tối thiểu
+  "minBookingCount": Integer (optional, must be positive) - Số lượng booking tối thiểu
+  "validFrom": LocalDate (optional) - Ngày bắt đầu
+  "validTo": LocalDate (optional) - Ngày kết thúc
+  "active": Boolean (optional) - Trạng thái active
+  "hotelId": String (optional) - ID khách sạn
+  "specialDayId": String (optional) - ID ngày đặc biệt
+}
+
+Response Structure: ApiResponse<DiscountDetailsResponse>
+{
+  "statusCode": Integer (default: 200)
+  "message": String (default: "")
+  "data": DiscountDetailsResponse (cấu trúc giống như response của endpoint 3.1)
+}
+
+--------------------------------------------------------------------------------
+3.5. XÓA MÃ GIẢM GIÁ
+--------------------------------------------------------------------------------
+Method: DELETE
+Endpoint: /discounts/{id}
+
+Path Parameters:
+- id: String (required, format: UUID - [a-fA-F0-9\\-]{36}) - ID của mã giảm giá
+
+Response Structure: ApiResponse<DiscountDetailsResponse>
+{
+  "statusCode": Integer (default: 200)
+  "message": String (default: "")
+  "data": DiscountDetailsResponse (cấu trúc giống như response của endpoint 3.1)
+}
+
+================================================================================
+CHÚ Ý CHUNG:
+================================================================================
+
+1. Tất cả các endpoint đều trả về dạng ApiResponse<T> với cấu trúc:
+   {
+     "statusCode": Integer,
+     "message": String,
+     "data": T
+   }
+
+2. UUID format: [a-fA-F0-9\\-]{36} - định dạng UUID chuẩn
+
+3. LocalDate format: YYYY-MM-DD (ví dụ: 2024-12-25)
+
+4. LocalDateTime format: ISO 8601 (ví dụ: 2024-12-25T10:30:00)
+
+5. Tất cả các endpoint đều có validation, nếu request không hợp lệ sẽ trả về
+   lỗi validation với message tương ứng.
+
+6. Endpoint GET /bookings/price-preview sử dụng Request Body thay vì Query Parameters,
+   đây có thể là thiết kế không chuẩn RESTful. Có thể xem xét chuyển sang POST
+   hoặc chuyển các tham số sang Query Parameters.
+
+================================================================================
+KẾT THÚC TÀI LIỆU
+================================================================================
+
