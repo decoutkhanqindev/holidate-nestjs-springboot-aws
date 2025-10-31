@@ -21,12 +21,16 @@ public class BookingQueries {
       "LEFT JOIN FETCH rh.ward " +
       "LEFT JOIN FETCH rh.street " +
       "LEFT JOIN FETCH b.hotel h " +
+      "LEFT JOIN FETCH h.policy hpol " +
+      "LEFT JOIN FETCH hpol.cancellationPolicy hcp " +
+      "LEFT JOIN FETCH hcp.rules " +
       "LEFT JOIN FETCH h.country " +
       "LEFT JOIN FETCH h.province " +
       "LEFT JOIN FETCH h.city " +
       "LEFT JOIN FETCH h.district " +
       "LEFT JOIN FETCH h.ward " +
       "LEFT JOIN FETCH h.street " +
+      "LEFT JOIN FETCH b.payment pay " +
       "LEFT JOIN FETCH b.appliedDiscount " +
       "WHERE b.id = :id";
 

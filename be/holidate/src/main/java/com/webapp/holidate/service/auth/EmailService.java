@@ -13,6 +13,7 @@ import com.webapp.holidate.repository.user.UserAuthInfoRepository;
 import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.type.ErrorType;
 import com.webapp.holidate.type.auth.OtpType;
+import com.webapp.holidate.type.email.EmailType;
 import com.webapp.holidate.type.user.AuthProviderType;
 import com.webapp.holidate.utils.DateTimeUtil;
 import jakarta.mail.MessagingException;
@@ -66,7 +67,7 @@ public class EmailService {
 
   private SendOtpResponse sendOtp(String email, OtpType otpType, boolean requireActive) {
     UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email)
-      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
 
     String authProvider = authInfo.getAuthProvider();
     boolean localAuth = AuthProviderType.LOCAL.getValue().equals(authProvider);
@@ -124,8 +125,8 @@ public class EmailService {
     }
 
     return SendOtpResponse.builder()
-      .sent(true)
-      .build();
+        .sent(true)
+        .build();
   }
 
   public VerificationResponse verifyEmailVerificationOtp(VerifyEmailVerificationOtpRequest request) {
@@ -138,7 +139,7 @@ public class EmailService {
 
   private VerificationResponse verifyOtp(String email, String inputOtp, OtpType otpType, String newPassword) {
     UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email)
-      .orElseThrow(() -> new AppException(ErrorType.INVALID_OTP));
+        .orElseThrow(() -> new AppException(ErrorType.INVALID_OTP));
 
     String authProvider = authInfo.getAuthProvider();
     boolean localAuth = AuthProviderType.LOCAL.getValue().equals(authProvider);
@@ -198,8 +199,8 @@ public class EmailService {
     authInfoRepository.save(authInfo);
 
     return VerificationResponse.builder()
-      .verified(true)
-      .build();
+        .verified(true)
+        .build();
   }
 
   private String generateVerificationOtp() {
@@ -229,5 +230,41 @@ public class EmailService {
     }
 
     authInfoRepository.save(authInfo);
+  }
+
+  public void sendRefundNotification(
+      String customerEmail,
+      String customerName,
+      String bookingId,
+      String hotelName,
+      String roomName,
+      String checkInDate,
+      String checkOutDate,
+      double totalAmount,
+      double penaltyAmount,
+      double refundAmount) {
+    Context context = new Context();
+    context.setVariable("customerName", customerName);
+    context.setVariable("bookingId", bookingId);
+    context.setVariable("hotelName", hotelName);
+    context.setVariable("roomName", roomName);
+    context.setVariable("checkInDate", checkInDate);
+    context.setVariable("checkOutDate", checkOutDate);
+    context.setVariable("totalAmount", totalAmount);
+    context.setVariable("penaltyAmount", penaltyAmount);
+    context.setVariable("refundAmount", refundAmount);
+
+    String htmlContent = templateEngine.process(EmailType.REFUND_NOTIFICATION.getTemplateName(), context);
+
+    try {
+      MimeMessage mimeMessage = mailSender.createMimeMessage();
+      MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+      mimeMessageHelper.setTo(customerEmail);
+      mimeMessageHelper.setSubject(EmailType.REFUND_NOTIFICATION.getEmailSubject());
+      mimeMessageHelper.setText(htmlContent, true);
+      mailSender.send(mimeMessage);
+    } catch (MessagingException e) {
+      throw new AppException(ErrorType.SEND_EMAIL_FAILED);
+    }
   }
 }

@@ -49,6 +49,7 @@ public class HolidateApplication {
     System.setProperty(EnvVariables.VNPAY_TMN_CODE, dotenv.get(EnvVariables.VNPAY_TMN_CODE));
     System.setProperty(EnvVariables.VNPAY_HASH_SECRET, dotenv.get(EnvVariables.VNPAY_HASH_SECRET));
     System.setProperty(EnvVariables.VNPAY_API_URL, dotenv.get(EnvVariables.VNPAY_API_URL));
+    System.setProperty(EnvVariables.VNPAY_REFUND_URL, dotenv.get(EnvVariables.VNPAY_REFUND_URL));
 
     SpringApplication.run(HolidateApplication.class, args);
   }

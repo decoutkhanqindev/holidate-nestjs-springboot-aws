@@ -152,6 +152,7 @@ public enum ErrorType {
 
   // booking errors
   BOOKING_NOT_FOUND(404, "Booking not found"),
+  BOOKING_NOT_CONFIRMED(400, "Booking is not confirmed"),
   ROOM_NOT_AVAILABLE(400, "Room is not available for the selected dates"),
   CONCURRENT_BOOKING_FAILED(409, "Booking failed due to concurrent access. Please try again"),
   INVALID_DISCOUNT_CODE(400, "Discount code is invalid or expired"),
@@ -214,7 +215,29 @@ public enum ErrorType {
   PAYMENT_EXPIRE_TIME_INVALID(400, "Payment expire time must be positive"),
   PAYMENT_URL_GENERATION_FAILED(500, "Failed to generate payment URL"),
   PAYMENT_SIGNATURE_INVALID(400, "Invalid payment signature"),
-  PAYMENT_RESPONSE_INVALID(400, "Invalid payment response");
+  PAYMENT_RESPONSE_INVALID(400, "Invalid payment response"),
+  PAYMENT_REFUND_FAILED(500, "Failed to refund payment"),
+
+  // VNPay specific error codes
+  VNPAY_TRANSACTION_SUSPICIOUS(400, "Giao dịch bị nghi ngờ (liên quan tới lừa đảo, giao dịch bất thường)"),
+  VNPAY_ACCOUNT_NOT_REGISTERED(400, "Thẻ/Tài khoản chưa đăng ký dịch vụ InternetBanking"),
+  VNPAY_VERIFICATION_FAILED(400, "Xác thực thông tin thẻ/tài khoản không đúng quá 3 lần"),
+  VNPAY_PAYMENT_EXPIRED(400, "Đã hết hạn chờ thanh toán. Vui lòng thực hiện lại giao dịch"),
+  VNPAY_ACCOUNT_LOCKED(400, "Thẻ/Tài khoản bị khóa"),
+  VNPAY_OTP_INCORRECT(400, "Nhập sai mật khẩu xác thực giao dịch (OTP)"),
+  VNPAY_TRANSACTION_CANCELLED(400, "Khách hàng hủy giao dịch"),
+  VNPAY_INSUFFICIENT_BALANCE(400, "Tài khoản không đủ số dư để thực hiện giao dịch"),
+  VNPAY_TRANSACTION_LIMIT_EXCEEDED(400, "Tài khoản đã vượt quá hạn mức giao dịch cho phép"),
+  VNPAY_BANK_MAINTENANCE(503, "Ngân hàng thanh toán đang bảo trì"),
+  VNPAY_PAYMENT_PASSWORD_INCORRECT(400, "Nhập sai mật khẩu thanh toán quá số lần quy định"),
+  VNPAY_TRANSACTION_NOT_FOUND(404, "Không tìm thấy giao dịch"),
+  VNPAY_TRANSACTION_ALREADY_PROCESSED(400, "Giao dịch đã được xử lý"),
+  VNPAY_INVALID_TRANSACTION(400, "Giao dịch không hợp lệ"),
+  VNPAY_MERCHANT_INVALID(400, "Merchant không hợp lệ"),
+  VNPAY_INVALID_AMOUNT(400, "Số tiền không hợp lệ"),
+  VNPAY_DUPLICATE_TRANSACTION(409, "Giao dịch bị trùng lặp"),
+  VNPAY_REFUND_NOT_ALLOWED(400, "Không được phép hoàn tiền cho giao dịch này"),
+  VNPAY_REFUND_AMOUNT_EXCEEDED(400, "Số tiền hoàn trả vượt quá số tiền giao dịch");
 
   int statusCode;
   String message;

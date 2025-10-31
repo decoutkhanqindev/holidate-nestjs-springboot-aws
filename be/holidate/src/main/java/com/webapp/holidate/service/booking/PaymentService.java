@@ -17,6 +17,11 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.web.client.RestTemplate;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -29,6 +34,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.TreeMap;
 
+@Slf4j
 @Service
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
@@ -50,6 +56,10 @@ public class PaymentService {
   String vnpayApiUrl;
 
   @NonFinal
+  @Value(AppProperties.VNPAY_REFUND_URL)
+  String vnpayRefundUrl;
+
+  @NonFinal
   @Value(AppProperties.FRONTEND_URL)
   String frontendUrl;
 
@@ -60,11 +70,11 @@ public class PaymentService {
   public String createPaymentUrl(Booking booking, HttpServletRequest request) {
     // Create payment entity
     Payment payment = Payment.builder()
-      .booking(booking)
-      .amount(booking.getFinalPrice())
-      .paymentMethod("vnpay")
-      .status(PaymentStatusType.PENDING.getValue())
-      .build();
+        .booking(booking)
+        .amount(booking.getFinalPrice())
+        .paymentMethod("vnpay")
+        .status(PaymentStatusType.PENDING.getValue())
+        .build();
 
     Payment savedPayment = paymentRepository.save(payment);
 
@@ -86,7 +96,7 @@ public class PaymentService {
     vnpParams.put("vnp_IpAddr", ipAddress);
     vnpParams.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
     vnpParams.put("vnp_ExpireDate",
-      LocalDateTime.now().plusMinutes(15).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+        LocalDateTime.now().plusMinutes(15).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
 
     // Build query string with URL encoding
     StringBuilder queryString = new StringBuilder();
@@ -112,6 +122,98 @@ public class PaymentService {
     return vnpayApiUrl + "?" + query + "&vnp_SecureHash=" + secureHash;
   }
 
+  // VNPay Refund API integration
+  // NOTE: VNPay Sandbox environment may not support refund functionality.
+  // In sandbox mode, this method will skip the actual refund API call and log the
+  // action.
+  // In production, it will call the actual VNPay refund API.
+  public void refundPayment(Payment payment, double refundAmount) {
+    if (payment == null) {
+      throw new AppException(ErrorType.BOOKING_NOT_FOUND);
+    }
+    if (refundAmount < 0) {
+      throw new AppException(ErrorType.UNKNOWN_ERROR);
+    }
+
+    // Validate transactionId from VNPay exists (required for refund)
+    if (payment.getTransactionId() == null || payment.getTransactionId().isEmpty()) {
+      throw new AppException(ErrorType.VNPAY_TRANSACTION_NOT_FOUND);
+    }
+
+    // Check if using sandbox environment (VNPay sandbox may not support refund)
+    boolean isSandbox = vnpayRefundUrl != null && vnpayRefundUrl.contains("sandbox");
+
+    if (isSandbox) {
+      // In sandbox mode, skip actual refund call and log the action
+      // This allows testing the cancellation flow without actual refund processing
+      log.warn("Sandbox Mode: Skipping VNPay refund API call. Refund would be processed in production. " +
+          "Payment ID: {}, Transaction ID: {}, Refund Amount: {}",
+          payment.getId(), payment.getTransactionId(), refundAmount);
+      // Continue execution - refund is considered successful in sandbox for testing
+      return;
+    }
+
+    // Production mode: Call actual VNPay Refund API
+    // VNPay requires amount in smallest currency unit (x100)
+    long amountInCents = (long) Math.round(refundAmount * 100);
+
+    // Build refund params
+    Map<String, String> params = new TreeMap<>();
+    params.put("vnp_RequestId", String.valueOf(System.currentTimeMillis()));
+    params.put("vnp_Version", "2.1.0");
+    params.put("vnp_Command", "refund");
+    params.put("vnp_TmnCode", vnpayTmnCode);
+    // 02 = Full refund, 03 = Partial refund. Choose 03 if refundAmount <
+    // payment.amount
+    String transactionType = (refundAmount < payment.getAmount()) ? "03" : "02";
+    params.put("vnp_TransactionType", transactionType);
+    // Use vnp_TxnRef is payment.id sent when create payment
+    params.put("vnp_TxnRef", payment.getId());
+    // Use vnp_TransactionNo is transaction ID from VNPay (required for refund)
+    params.put("vnp_TransactionNo", payment.getTransactionId());
+    params.put("vnp_Amount", String.valueOf(amountInCents));
+    params.put("vnp_CurrCode", "VND");
+    params.put("vnp_OrderInfo", "Refund for booking: " + payment.getBooking().getId());
+    // Original transaction date from VNPay (use completedAt if available, otherwise
+    // createdAt)
+    LocalDateTime transactionDate = payment.getCompletedAt() != null ? payment.getCompletedAt()
+        : payment.getCreatedAt();
+    String originalTransDate = transactionDate.format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+    params.put("vnp_TransactionDate", originalTransDate);
+    params.put("vnp_IpAddr", "127.0.0.1");
+    params.put("vnp_CreateBy", "system");
+    params.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+
+    // Create secure hash
+    String hashData = buildHashDataForValidation(params);
+    String secureHash = hmacSHA512(vnpayHashSecret, hashData);
+    params.put("vnp_SecureHash", secureHash);
+
+    // Call VNPay Refund API
+    RestTemplate restTemplate = new RestTemplate();
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    HttpEntity<Map<String, String>> request = new HttpEntity<>(params, headers);
+
+    @SuppressWarnings("unchecked")
+    Map<String, Object> response = restTemplate.postForObject(vnpayRefundUrl, request, Map.class);
+    if (response == null) {
+      throw new AppException(ErrorType.PAYMENT_RESPONSE_INVALID);
+    }
+
+    // According to documentation, code "00" is success
+    Object responseCodeObj = response.get("vnp_ResponseCode");
+    String responseCode = responseCodeObj != null ? responseCodeObj.toString() : null;
+    if (responseCode == null || responseCode.isEmpty()) {
+      throw new AppException(ErrorType.PAYMENT_RESPONSE_INVALID);
+    }
+
+    if (!"00".equals(responseCode)) {
+      ErrorType errorType = mapVnPayResponseCodeToErrorType(responseCode);
+      throw new AppException(errorType);
+    }
+  }
+
   @Transactional
   public String handleVnPayCallback(Map<String, String> vnpayParams) {
     // Validate signature
@@ -127,7 +229,7 @@ public class PaymentService {
 
     // Find payment by ID
     Payment payment = paymentRepository.findById(transactionRef)
-      .orElseThrow(() -> new AppException(ErrorType.BOOKING_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.BOOKING_NOT_FOUND));
 
     // Check if payment is already processed
     if (!PaymentStatusType.PENDING.getValue().equals(payment.getStatus())) {
@@ -137,6 +239,33 @@ public class PaymentService {
     // Get response code
     String responseCode = vnpayParams.get("vnp_ResponseCode");
     String transactionId = vnpayParams.get("vnp_TransactionNo");
+
+    // Validate response code
+    if (responseCode == null || responseCode.isEmpty()) {
+      // Invalid response - treat as payment failed
+      ErrorType errorType = ErrorType.PAYMENT_RESPONSE_INVALID;
+
+      payment.setStatus(PaymentStatusType.FAILED.getValue());
+      payment.setTransactionId(transactionId);
+      payment.setCompletedAt(LocalDateTime.now());
+
+      // Update booking status
+      Booking booking = payment.getBooking();
+      booking.setStatus(BookingStatusType.CANCELLED.getValue());
+      booking.setUpdatedAt(LocalDateTime.now());
+
+      // Release room inventory
+      roomInventoryService.updateAvailabilityForCancellation(
+          booking.getRoom().getId(),
+          booking.getCheckInDate(),
+          booking.getCheckOutDate(),
+          booking.getNumberOfRooms());
+
+      bookingRepository.save(booking);
+      paymentRepository.save(payment);
+
+      return frontendUrl + "/payment/failure?reason=invalid_response&errorType=" + errorType.name();
+    }
 
     if ("00".equals(responseCode)) {
       // Payment successful
@@ -154,7 +283,9 @@ public class PaymentService {
 
       return frontendUrl + "/payment/success?bookingId=" + booking.getId();
     } else {
-      // Payment failed
+      // Payment failed - get specific error type
+      ErrorType errorType = mapVnPayResponseCodeToErrorType(responseCode);
+
       payment.setStatus(PaymentStatusType.FAILED.getValue());
       payment.setTransactionId(transactionId);
       payment.setCompletedAt(LocalDateTime.now());
@@ -167,15 +298,18 @@ public class PaymentService {
       // IMPORTANT: Release room inventory when payment fails
       // This reverses the room hold from the booking creation process
       roomInventoryService.updateAvailabilityForCancellation(
-        booking.getRoom().getId(),
-        booking.getCheckInDate(),
-        booking.getCheckOutDate(),
-        booking.getNumberOfRooms());
+          booking.getRoom().getId(),
+          booking.getCheckInDate(),
+          booking.getCheckOutDate(),
+          booking.getNumberOfRooms());
 
       bookingRepository.save(booking);
       paymentRepository.save(payment);
 
-      return frontendUrl + "/payment/failure?reason=payment_failed&code=" + responseCode;
+      // Include error code and type in redirect URL for frontend handling
+      String errorTypeParam = errorType != null ? errorType.name() : ErrorType.PAYMENT_RESPONSE_INVALID.name();
+      return frontendUrl + "/payment/failure?reason=payment_failed&code=" + responseCode + "&errorType="
+          + errorTypeParam;
     }
   }
 
@@ -261,5 +395,37 @@ public class PaymentService {
     }
 
     return request.getRemoteAddr();
+  }
+
+  private ErrorType mapVnPayResponseCodeToErrorType(String responseCode) {
+    return switch (responseCode) {
+      case "00" -> null; // Success - should not reach here
+      case "07" -> ErrorType.VNPAY_TRANSACTION_SUSPICIOUS;
+      case "09" -> ErrorType.VNPAY_ACCOUNT_NOT_REGISTERED;
+      case "10" -> ErrorType.VNPAY_VERIFICATION_FAILED;
+      case "11" -> ErrorType.VNPAY_PAYMENT_EXPIRED;
+      case "12" -> ErrorType.VNPAY_ACCOUNT_LOCKED;
+      case "13" -> ErrorType.VNPAY_OTP_INCORRECT;
+      case "24" -> ErrorType.VNPAY_TRANSACTION_CANCELLED;
+      case "51" -> ErrorType.VNPAY_INSUFFICIENT_BALANCE;
+      case "65" -> ErrorType.VNPAY_TRANSACTION_LIMIT_EXCEEDED;
+      case "75" -> ErrorType.VNPAY_BANK_MAINTENANCE;
+      case "79" -> ErrorType.VNPAY_PAYMENT_PASSWORD_INCORRECT;
+      default -> {
+        // For refund specific errors or unknown codes
+        if (responseCode.startsWith("91") || responseCode.startsWith("94")) {
+          yield ErrorType.VNPAY_TRANSACTION_NOT_FOUND;
+        } else if (responseCode.startsWith("94")) {
+          yield ErrorType.VNPAY_DUPLICATE_TRANSACTION;
+        } else if (responseCode.startsWith("95") || responseCode.startsWith("96")) {
+          yield ErrorType.VNPAY_TRANSACTION_ALREADY_PROCESSED;
+        } else if (responseCode.startsWith("97")) {
+          yield ErrorType.VNPAY_INVALID_TRANSACTION;
+        } else if (responseCode.startsWith("99")) {
+          yield ErrorType.VNPAY_REFUND_NOT_ALLOWED;
+        }
+        yield ErrorType.PAYMENT_RESPONSE_INVALID; // Default fallback
+      }
+    };
   }
 }

@@ -92,4 +92,12 @@ public class BookingController {
         .data(response)
         .build();
   }
+
+  @PostMapping(CommonEndpoints.ID + BookingEndpoints.CANCEL)
+  public ApiResponse<BookingResponse> cancel(@PathVariable String id) {
+    BookingResponse response = service.cancel(id);
+    return ApiResponse.<BookingResponse>builder()
+        .data(response)
+        .build();
+  }
 }

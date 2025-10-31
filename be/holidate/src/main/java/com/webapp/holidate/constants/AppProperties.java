@@ -26,4 +26,5 @@ public class AppProperties {
   public static final String VNPAY_TMN_CODE = "${spring.payment.vnpay.tmn-code}";
   public static final String VNPAY_HASH_SECRET = "${spring.payment.vnpay.hash-secret}";
   public static final String VNPAY_API_URL = "${spring.payment.vnpay.api-url}";
+  public static final String VNPAY_REFUND_URL = "${spring.payment.vnpay.refund-url}";
 }

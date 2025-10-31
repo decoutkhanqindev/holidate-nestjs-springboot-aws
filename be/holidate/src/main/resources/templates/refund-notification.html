@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Thông báo hoàn tiền</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background-color: #4CAF50; color: white; padding: 15px; text-align: center; }
+    .content { padding: 20px; background-color: #f9f9f9; }
+    .info-box { background-color: white; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #4CAF50; }
+    .amount-box {
+      display: inline-block;
+      padding: 15px 25px;
+      background-color: #4CAF50;
+      color: white;
+      font-size: 20px;
+      font-weight: bold;
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+    .footer { margin-top: 20px; padding: 10px; text-align: center; font-size: 12px; color: #666; }
+    .warning { color: #ff9800; font-weight: bold; }
+    .success { color: #4CAF50; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    table td { padding: 8px; border-bottom: 1px solid #ddd; }
+    table td:first-child { font-weight: bold; width: 40%; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Thông báo hoàn tiền đơn đặt phòng</h1>
+  </div>
+
+  <div class="content">
+    <p>Xin chào <span th:text="${customerName}">Khách hàng</span>,</p>
+
+    <p>Chúng tôi xin thông báo đơn đặt phòng của bạn đã được hủy và tiền hoàn trả đã được xử lý.</p>
+
+    <div class="info-box">
+      <h3 style="margin-top: 0;">Thông tin đơn đặt phòng</h3>
+      <table>
+        <tr>
+          <td>Mã đơn hàng:</td>
+          <td th:text="${bookingId}">BOOKING-123</td>
+        </tr>
+        <tr>
+          <td>Khách sạn:</td>
+          <td th:text="${hotelName}">Tên khách sạn</td>
+        </tr>
+        <tr>
+          <td>Phòng:</td>
+          <td th:text="${roomName}">Tên phòng</td>
+        </tr>
+        <tr>
+          <td>Ngày nhận phòng:</td>
+          <td th:text="${checkInDate}">2025-01-01</td>
+        </tr>
+        <tr>
+          <td>Ngày trả phòng:</td>
+          <td th:text="${checkOutDate}">2025-01-03</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="info-box">
+      <h3 style="margin-top: 0;">Chi tiết hoàn tiền</h3>
+      <table>
+        <tr>
+          <td>Tổng tiền đã thanh toán:</td>
+          <td th:text="${#numbers.formatDecimal(totalAmount, 1, 'POINT', 0, 'COMMA')} + ' VNĐ'">0 VNĐ</td>
+        </tr>
+        <tr th:if="${penaltyAmount > 0}">
+          <td>Phí hủy phòng:</td>
+          <td class="warning" th:text="'-' + ${#numbers.formatDecimal(penaltyAmount, 1, 'POINT', 0, 'COMMA')} + ' VNĐ'">0 VNĐ</td>
+        </tr>
+        <tr>
+          <td><strong>Số tiền hoàn trả:</strong></td>
+          <td>
+            <span class="success amount-box" th:text="${#numbers.formatDecimal(refundAmount, 1, 'POINT', 0, 'COMMA')} + ' VNĐ'">0 VNĐ</span>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <p th:if="${penaltyAmount > 0}" class="warning">
+      <strong>Lưu ý:</strong> Đơn đặt phòng của bạn đã bị áp dụng phí hủy theo chính sách của khách sạn. 
+      Số tiền hoàn trả đã trừ đi phí này.
+    </p>
+
+    <p class="success">
+      <strong>Số tiền hoàn trả sẽ được chuyển về tài khoản của bạn trong vòng 5-7 ngày làm việc.</strong>
+    </p>
+
+    <p>Nếu bạn có bất kỳ thắc mắc nào, vui lòng liên hệ với bộ phận hỗ trợ khách hàng của chúng tôi.</p>
+  </div>
+
+  <div class="footer">
+    <p>Trân trọng,<br>Đội ngũ Holidate</p>
+    <p>© 2025 Holidate. All rights reserved.</p>
+  </div>
+</div>
+</body>
+</html>
+
