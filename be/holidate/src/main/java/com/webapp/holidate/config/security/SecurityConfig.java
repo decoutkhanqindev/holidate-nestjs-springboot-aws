@@ -111,6 +111,10 @@ public class SecurityConfig {
                                                 BookingEndpoints.BOOKINGS + CommonEndpoints.ID
                                                                 + BookingEndpoints.CANCEL)
                                 .hasAuthority(RoleType.USER.getValue())
+                                .requestMatchers(HttpMethod.POST,
+                                                BookingEndpoints.BOOKINGS + CommonEndpoints.ID
+                                                                + BookingEndpoints.RESCHEDULE)
+                                .hasAuthority(RoleType.USER.getValue())
                                 .requestMatchers(HttpMethod.GET, BookingEndpoints.BOOKINGS)
                                 .hasAuthority(RoleType.USER.getValue())
                                 .requestMatchers(HttpMethod.GET, BookingEndpoints.BOOKINGS + CommonEndpoints.ID)
@@ -165,6 +169,10 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.POST,
                                                 BookingEndpoints.BOOKINGS + CommonEndpoints.ID
                                                                 + BookingEndpoints.CANCEL)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                .requestMatchers(HttpMethod.POST,
+                                                BookingEndpoints.BOOKINGS + CommonEndpoints.ID
+                                                                + BookingEndpoints.RESCHEDULE)
                                 .hasAuthority(RoleType.PARTNER.getValue())
                                 .requestMatchers(HttpMethod.GET, BookingEndpoints.BOOKINGS)
                                 .hasAuthority(RoleType.PARTNER.getValue())
@@ -265,6 +273,10 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.POST,
                                                 BookingEndpoints.BOOKINGS + CommonEndpoints.ID
                                                                 + BookingEndpoints.CANCEL)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.POST,
+                                                BookingEndpoints.BOOKINGS + CommonEndpoints.ID
+                                                                + BookingEndpoints.RESCHEDULE)
                                 .hasAuthority(RoleType.ADMIN.getValue())
 
                                 // C. any other endpoints

@@ -7,6 +7,7 @@ import com.webapp.holidate.constants.api.param.PaginationParams;
 import com.webapp.holidate.constants.api.param.SortingParams;
 import com.webapp.holidate.dto.request.booking.BookingCreationRequest;
 import com.webapp.holidate.dto.request.booking.BookingPricePreviewRequest;
+import com.webapp.holidate.dto.request.booking.BookingRescheduleRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.base.PagedResponse;
 import com.webapp.holidate.dto.response.booking.BookingPriceDetailsResponse;
@@ -96,6 +97,17 @@ public class BookingController {
   @PostMapping(CommonEndpoints.ID + BookingEndpoints.CANCEL)
   public ApiResponse<BookingResponse> cancel(@PathVariable String id) {
     BookingResponse response = service.cancel(id);
+    return ApiResponse.<BookingResponse>builder()
+        .data(response)
+        .build();
+  }
+
+  @PostMapping(CommonEndpoints.ID + BookingEndpoints.RESCHEDULE)
+  public ApiResponse<BookingResponse> reschedule(
+      @PathVariable String id,
+      @RequestBody @Valid BookingRescheduleRequest request,
+      HttpServletRequest httpRequest) {
+    BookingResponse response = service.reschedule(id, request, httpRequest);
     return ApiResponse.<BookingResponse>builder()
         .data(response)
         .build();

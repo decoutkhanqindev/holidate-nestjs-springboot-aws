@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -37,11 +38,21 @@ import java.util.TreeMap;
 @Slf4j
 @Service
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
-@RequiredArgsConstructor
 public class PaymentService {
   PaymentRepository paymentRepository;
   BookingRepository bookingRepository;
   RoomInventoryService roomInventoryService;
+  BookingService bookingService;
+
+  public PaymentService(PaymentRepository paymentRepository,
+      BookingRepository bookingRepository,
+      RoomInventoryService roomInventoryService,
+      @Lazy BookingService bookingService) {
+    this.paymentRepository = paymentRepository;
+    this.bookingRepository = bookingRepository;
+    this.roomInventoryService = roomInventoryService;
+    this.bookingService = bookingService;
+  }
 
   @NonFinal
   @Value(AppProperties.VNPAY_TMN_CODE)
@@ -90,6 +101,111 @@ public class PaymentService {
     vnpParams.put("vnp_CurrCode", "VND");
     vnpParams.put("vnp_TxnRef", savedPayment.getId());
     vnpParams.put("vnp_OrderInfo", "Payment for booking: " + booking.getId());
+    vnpParams.put("vnp_OrderType", "other");
+    vnpParams.put("vnp_Locale", "vn");
+    vnpParams.put("vnp_ReturnUrl", backendUrl + "/payment/callback");
+    vnpParams.put("vnp_IpAddr", ipAddress);
+    vnpParams.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+    vnpParams.put("vnp_ExpireDate",
+        LocalDateTime.now().plusMinutes(15).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+
+    // Build query string with URL encoding
+    StringBuilder queryString = new StringBuilder();
+    for (Map.Entry<String, String> entry : vnpParams.entrySet()) {
+      if (entry.getValue() != null && !entry.getValue().isEmpty()) {
+        queryString.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8));
+        queryString.append("=");
+        queryString.append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
+        queryString.append("&");
+      }
+    }
+
+    // Remove last '&'
+    String query = queryString.toString();
+    if (query.endsWith("&")) {
+      query = query.substring(0, query.length() - 1);
+    }
+
+    // Generate secure hash using the same method as validation
+    String secureHash = hmacSHA512(vnpayHashSecret, query);
+
+    // Build final URL
+    return vnpayApiUrl + "?" + query + "&vnp_SecureHash=" + secureHash;
+  }
+
+  public String createPaymentUrlForAmount(Booking booking, double amount, HttpServletRequest request,
+      String paymentId) {
+    // Get client IP address
+    String ipAddress = getIpAddress(request);
+
+    // Create VNPay parameters
+    Map<String, String> vnpParams = new TreeMap<>();
+    vnpParams.put("vnp_Version", "2.1.0");
+    vnpParams.put("vnp_Command", "pay");
+    vnpParams.put("vnp_TmnCode", vnpayTmnCode);
+    vnpParams.put("vnp_Amount", String.valueOf((long) (amount * 100))); // Convert to cents
+    vnpParams.put("vnp_CurrCode", "VND");
+    vnpParams.put("vnp_TxnRef", paymentId);
+    vnpParams.put("vnp_OrderInfo", "Payment for reschedule booking: " + booking.getId());
+    vnpParams.put("vnp_OrderType", "other");
+    vnpParams.put("vnp_Locale", "vn");
+    vnpParams.put("vnp_ReturnUrl", backendUrl + "/payment/callback");
+    vnpParams.put("vnp_IpAddr", ipAddress);
+    vnpParams.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+    vnpParams.put("vnp_ExpireDate",
+        LocalDateTime.now().plusMinutes(15).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+
+    // Build query string with URL encoding
+    StringBuilder queryString = new StringBuilder();
+    for (Map.Entry<String, String> entry : vnpParams.entrySet()) {
+      if (entry.getValue() != null && !entry.getValue().isEmpty()) {
+        queryString.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8));
+        queryString.append("=");
+        queryString.append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
+        queryString.append("&");
+      }
+    }
+
+    // Remove last '&'
+    String query = queryString.toString();
+    if (query.endsWith("&")) {
+      query = query.substring(0, query.length() - 1);
+    }
+
+    // Generate secure hash using the same method as validation
+    String secureHash = hmacSHA512(vnpayHashSecret, query);
+
+    // Build final URL
+    return vnpayApiUrl + "?" + query + "&vnp_SecureHash=" + secureHash;
+  }
+
+  public String createPaymentUrlForReschedule(Booking booking, double amount, HttpServletRequest request,
+      String tempPaymentId, java.time.LocalDate newCheckInDate, java.time.LocalDate newCheckOutDate,
+      double newFinalPrice, double rescheduleFee, double newOriginalPrice, double discountAmount) {
+    // Get client IP address
+    String ipAddress = getIpAddress(request);
+
+    // Encode reschedule information in orderInfo
+    // Format:
+    // "RESCHEDULE:{bookingId}:{newCheckInDate}:{newCheckOutDate}:{newFinalPrice}:{rescheduleFee}:{newOriginalPrice}:{discountAmount}"
+    String orderInfo = String.format("RESCHEDULE:%s:%s:%s:%.2f:%.2f:%.2f:%.2f",
+        booking.getId(),
+        newCheckInDate.toString(),
+        newCheckOutDate.toString(),
+        newFinalPrice,
+        rescheduleFee,
+        newOriginalPrice,
+        discountAmount);
+
+    // Create VNPay parameters
+    Map<String, String> vnpParams = new TreeMap<>();
+    vnpParams.put("vnp_Version", "2.1.0");
+    vnpParams.put("vnp_Command", "pay");
+    vnpParams.put("vnp_TmnCode", vnpayTmnCode);
+    vnpParams.put("vnp_Amount", String.valueOf((long) (amount * 100))); // Convert to cents
+    vnpParams.put("vnp_CurrCode", "VND");
+    vnpParams.put("vnp_TxnRef", tempPaymentId);
+    vnpParams.put("vnp_OrderInfo", orderInfo);
     vnpParams.put("vnp_OrderType", "other");
     vnpParams.put("vnp_Locale", "vn");
     vnpParams.put("vnp_ReturnUrl", backendUrl + "/payment/callback");
@@ -221,13 +337,20 @@ public class PaymentService {
       return frontendUrl + "/payment/failure?reason=invalid_signature";
     }
 
-    // Get transaction reference (payment ID)
+    // Get transaction reference (payment ID) and order info
     String transactionRef = vnpayParams.get("vnp_TxnRef");
+    String orderInfo = vnpayParams.get("vnp_OrderInfo");
     if (transactionRef == null || transactionRef.isEmpty()) {
       return frontendUrl + "/payment/failure?reason=missing_transaction_ref";
     }
 
-    // Find payment by ID
+    // Check if this is a reschedule payment
+    if (orderInfo != null && orderInfo.startsWith("RESCHEDULE:")) {
+      // Handle reschedule payment callback
+      return handleReschedulePaymentCallback(vnpayParams, orderInfo, transactionRef);
+    }
+
+    // Regular payment flow - find payment by ID
     Payment payment = paymentRepository.findById(transactionRef)
         .orElseThrow(() -> new AppException(ErrorType.BOOKING_NOT_FOUND));
 
@@ -427,5 +550,51 @@ public class PaymentService {
         yield ErrorType.PAYMENT_RESPONSE_INVALID; // Default fallback
       }
     };
+  }
+
+  @Transactional
+  private String handleReschedulePaymentCallback(Map<String, String> vnpayParams, String orderInfo,
+      String transactionRef) {
+    // Parse orderInfo:
+    // "RESCHEDULE:{bookingId}:{newCheckInDate}:{newCheckOutDate}:{newFinalPrice}:{rescheduleFee}:{newOriginalPrice}:{discountAmount}"
+    String[] parts = orderInfo.split(":");
+    if (parts.length < 8) {
+      return frontendUrl + "/payment/failure?reason=invalid_reschedule_info";
+    }
+
+    String bookingId = parts[1];
+    java.time.LocalDate newCheckInDate = java.time.LocalDate.parse(parts[2]);
+    java.time.LocalDate newCheckOutDate = java.time.LocalDate.parse(parts[3]);
+    double newFinalPrice = Double.parseDouble(parts[4]);
+    double rescheduleFee = Double.parseDouble(parts[5]);
+    double newOriginalPrice = Double.parseDouble(parts[6]);
+    double discountAmount = Double.parseDouble(parts[7]);
+
+    // Get response code
+    String responseCode = vnpayParams.get("vnp_ResponseCode");
+    String transactionId = vnpayParams.get("vnp_TransactionNo");
+
+    // Validate response code
+    if (responseCode == null || responseCode.isEmpty()) {
+      return frontendUrl + "/payment/failure?reason=invalid_response";
+    }
+
+    if (!"00".equals(responseCode)) {
+      // Payment failed - don't process reschedule
+      ErrorType errorType = mapVnPayResponseCodeToErrorType(responseCode);
+      String errorTypeParam = errorType != null ? errorType.name() : ErrorType.PAYMENT_RESPONSE_INVALID.name();
+      return frontendUrl + "/payment/failure?reason=payment_failed&code=" + responseCode + "&errorType="
+          + errorTypeParam;
+    }
+
+    // Payment successful - complete reschedule
+    try {
+      bookingService.completeRescheduleAfterPayment(bookingId, newCheckInDate, newCheckOutDate, newFinalPrice,
+          rescheduleFee, newOriginalPrice, discountAmount, transactionRef, transactionId);
+      return frontendUrl + "/payment/success?bookingId=" + bookingId + "&type=reschedule";
+    } catch (Exception e) {
+      log.error("Failed to complete reschedule after payment for booking: {}", bookingId, e);
+      return frontendUrl + "/payment/failure?reason=reschedule_failed";
+    }
   }
 }

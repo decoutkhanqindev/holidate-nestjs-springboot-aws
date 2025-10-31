@@ -267,4 +267,44 @@ public class EmailService {
       throw new AppException(ErrorType.SEND_EMAIL_FAILED);
     }
   }
+
+  public void sendRescheduleNotification(
+      String customerEmail,
+      String customerName,
+      String bookingId,
+      String hotelName,
+      String roomName,
+      String oldCheckInDate,
+      String oldCheckOutDate,
+      String newCheckInDate,
+      String newCheckOutDate,
+      double newFinalPrice,
+      double rescheduleFee,
+      double priceDifference) {
+    Context context = new Context();
+    context.setVariable("customerName", customerName);
+    context.setVariable("bookingId", bookingId);
+    context.setVariable("hotelName", hotelName);
+    context.setVariable("roomName", roomName);
+    context.setVariable("oldCheckInDate", oldCheckInDate);
+    context.setVariable("oldCheckOutDate", oldCheckOutDate);
+    context.setVariable("newCheckInDate", newCheckInDate);
+    context.setVariable("newCheckOutDate", newCheckOutDate);
+    context.setVariable("newFinalPrice", newFinalPrice);
+    context.setVariable("rescheduleFee", rescheduleFee);
+    context.setVariable("priceDifference", priceDifference);
+
+    String htmlContent = templateEngine.process(EmailType.RESCHEDULE_NOTIFICATION.getTemplateName(), context);
+
+    try {
+      MimeMessage mimeMessage = mailSender.createMimeMessage();
+      MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+      mimeMessageHelper.setTo(customerEmail);
+      mimeMessageHelper.setSubject(EmailType.RESCHEDULE_NOTIFICATION.getEmailSubject());
+      mimeMessageHelper.setText(htmlContent, true);
+      mailSender.send(mimeMessage);
+    } catch (MessagingException e) {
+      throw new AppException(ErrorType.SEND_EMAIL_FAILED);
+    }
+  }
 }
