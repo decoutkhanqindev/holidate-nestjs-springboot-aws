@@ -16,7 +16,6 @@ public class BookingExpirationScheduler {
 
   @Scheduled(fixedRate = 300000) // 5 minutes = 300,000 milliseconds
   public void cancelExpiredBookings() {
-    log.debug("Running scheduled task: cancelExpiredBookings");
     bookingService.cancelExpiredBookings();
   }
 
