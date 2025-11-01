@@ -79,7 +79,7 @@ public class AuthController {
     LogoutResponse response = authService.logout(request);
 
     // clear the token cookie
-    ResponseUtil.handleAuthCookiesResponse(httpServletResponse, tokenCookieName, "", 0);
+    ResponseUtil.handleAuthCookiesResponse(httpServletResponse, tokenCookieName, null, 0);
 
     return ApiResponse.<LogoutResponse>builder()
       .data(response)
