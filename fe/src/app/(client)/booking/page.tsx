@@ -48,16 +48,6 @@ function BookingComponent() {
     }, [isLoggedIn, user]);
 
     useEffect(() => {
-        if (isLoggedIn && bookingIntent) {
-            setBookingIntent(false);
-            closeModal();
-            if (validateForm()) {
-                setCurrentStep(2);
-            }
-        }
-    }, [isLoggedIn, bookingIntent, closeModal]);
-
-    useEffect(() => {
         if (roomId) {
             setIsLoading(true);
             hotelService.getRoomById(roomId)
@@ -80,44 +70,6 @@ function BookingComponent() {
             return date.toISOString().split('T')[0];
         } catch { return ''; }
     };
-
-    // const fetchPricePreview = useCallback(async (codeToApply?: string) => {
-    //     if (roomDetails && checkin && nights) {
-    //         setIsPriceLoading(true);
-    //         setDiscountError('');
-    //         setDiscountSuccess('');
-    //         try {
-    //             const payload = {
-    //                 roomId: roomDetails.id.toString(),
-    //                 startDate: checkin,
-    //                 endDate: getCheckoutDateString(checkin, parseInt(nights, 10)),
-    //                 numberOfRooms: 1,
-    //                 numberOfAdults: roomDetails.maxAdults,
-    //                 numberOfChildren: roomDetails.maxChildren || 0,
-    //                 ...(codeToApply && { discountCode: codeToApply })
-    //             };
-    //             const data = await bookingService.getBookingPricePreview(payload);
-    //             setPriceDetails(data);
-
-    //             if (codeToApply && data.appliedDiscount) {
-    //                 setDiscountSuccess(`Áp dụng mã "${data.appliedDiscount.code}" thành công!`);
-    //             } else if (codeToApply && !data.appliedDiscount) {
-    //                 setDiscountError("Mã giảm giá không hợp lệ hoặc không thể áp dụng.");
-    //             }
-
-    //         } catch (error: any) {
-    //             setGeneralError(error.message || "Không thể tính toán giá.");
-    //             if (codeToApply) {
-    //                 setDiscountError(error.message || "Không thể áp dụng mã giảm giá.");
-    //             }
-    //         } finally {
-    //             setIsPriceLoading(false);
-    //         }
-    //     }
-    // }, [roomDetails, checkin, nights]);
-    // Trong file BookingPage.tsx
-
-    // ...
 
     const fetchPricePreview = useCallback(async (codeToApply?: string) => {
         // THÊM CHỐT CHẶN AN TOÀN
@@ -161,15 +113,53 @@ function BookingComponent() {
         }
     }, [roomDetails, checkin, nights]);
 
+    const validateForm = useCallback(() => {
+        const errors = {
+            fullName: '',
+            email: '',
+            phone: ''
+        };
+        let isValid = true;
+
+        if (!customerInfo.fullName.trim()) {
+            errors.fullName = 'Vui lòng nhập họ tên';
+            isValid = false;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!customerInfo.email.trim()) {
+            errors.email = 'Vui lòng nhập email';
+            isValid = false;
+        } else if (!emailRegex.test(customerInfo.email)) {
+            errors.email = 'Email không hợp lệ';
+            isValid = false;
+        }
+
+        const phoneRegex = /^[0-9]{10,11}$/;
+        if (!customerInfo.phone.trim()) {
+            errors.phone = 'Vui lòng nhập số điện thoại';
+            isValid = false;
+        } else if (!phoneRegex.test(customerInfo.phone.replace(/\s/g, ''))) {
+            errors.phone = 'Số điện thoại không hợp lệ (10-11 chữ số)';
+            isValid = false;
+        }
+
+        setFormErrors(errors);
+        return isValid;
+    }, [customerInfo]);
+
+    useEffect(() => {
+        if (isLoggedIn && bookingIntent) {
+            setBookingIntent(false);
+            closeModal();
+            if (validateForm()) {
+                setCurrentStep(2);
+            }
+        }
+    }, [isLoggedIn, bookingIntent, closeModal, validateForm]);
+
     useEffect(() => {
         // Chỉ gọi fetchPricePreview khi có roomDetails
-        if (roomDetails) {
-            fetchPricePreview();
-        }
-    }, [roomDetails, fetchPricePreview]);
-
-    // ...
-    useEffect(() => {
         if (roomDetails) {
             fetchPricePreview(); // Gọi lần đầu để lấy giá gốc
         }
@@ -196,8 +186,6 @@ function BookingComponent() {
             setSpecialRequests(prev => prev.filter(r => r !== request));
         }
     };
-
-    const validateForm = () => { return true; };
 
     const handleSubmitBooking = () => {
         if (isAuthLoading) return;
@@ -455,7 +443,7 @@ function BookingComponent() {
                         <div className={styles.hotelInfo}>
                             <h3 className={styles.hotelName}>{hotelName}</h3>
                             <div className={styles.hotelImage}>
-                                <Image src={hotelImageUrl || '/placeholder.svg'} alt={hotelName || "Hotel Image"} layout="fill" objectFit="cover" />
+                                <Image src={hotelImageUrl || '/placeholder.svg'} alt={hotelName || "Hotel Image"} fill style={{ objectFit: 'cover' }} />
                             </div>
                         </div>
                         <div className={styles.bookingDates}>

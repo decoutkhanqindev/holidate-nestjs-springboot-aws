@@ -416,7 +416,7 @@ export default function HotelDetailPage() {
                 <div className="row g-2 mb-4">
                     <div className="col-lg-7">
                         <div style={{ borderRadius: '16px', overflow: 'hidden', width: '100%', height: '410px', position: 'relative' }}>
-                            <Image src={displayPhotos[0]} layout="fill" objectFit="cover" alt="Hotel main photo" priority />
+                            <Image src={displayPhotos[0]} fill style={{ objectFit: 'cover' }} alt="Hotel main photo" priority />
                         </div>
                     </div>
                     <div className="col-lg-5">
@@ -424,7 +424,7 @@ export default function HotelDetailPage() {
                             {displayPhotos.slice(1, 5).map((url, idx) => (
                                 <div key={idx} className="col-6">
                                     <div style={{ borderRadius: '10px', overflow: 'hidden', width: '100%', height: '201px', position: 'relative' }}>
-                                        <Image src={url} layout="fill" objectFit="cover" alt={`Hotel side photo ${idx + 1}`} />
+                                        <Image src={url} fill style={{ objectFit: 'cover' }} alt={`Hotel side photo ${idx + 1}`} />
                                     </div>
                                 </div>
                             ))}

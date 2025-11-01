@@ -55,7 +55,7 @@ export default function Footer() {
                     <div className="col-lg-3 col-md-6">
                         <h6 className="fw-bold text-white mb-3">Đối tác thanh toán</h6>
                         <div style={{ backgroundColor: 'white', padding: '10px', borderRadius: '8px', maxWidth: '120px' }}>
-                            <Image src="/images/OIP.jpg" alt="VNPAY Logo" width={100} height={30} layout="responsive" />
+                            <Image src="/images/OIP.jpg" alt="VNPAY Logo" width={100} height={30} style={{ width: '100%', height: 'auto' }} />
                         </div>
 
                         <h6 className="fw-bold text-white mb-3 mt-4">Đăng ký nhận tin</h6>
