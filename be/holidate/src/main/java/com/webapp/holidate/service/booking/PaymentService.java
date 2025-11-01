@@ -15,14 +15,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Service;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -44,12 +44,30 @@ public class PaymentService {
   RoomInventoryService roomInventoryService;
   BookingService bookingService;
   EmailService emailService;
+  @NonFinal
+  @Value(AppProperties.VNPAY_TMN_CODE)
+  String vnpayTmnCode;
+  @NonFinal
+  @Value(AppProperties.VNPAY_HASH_SECRET)
+  String vnpayHashSecret;
+  @NonFinal
+  @Value(AppProperties.VNPAY_API_URL)
+  String vnpayApiUrl;
+  @NonFinal
+  @Value(AppProperties.VNPAY_REFUND_URL)
+  String vnpayRefundUrl;
+  @NonFinal
+  @Value(AppProperties.FRONTEND_URL)
+  String frontendUrl;
+  @NonFinal
+  @Value(AppProperties.BACKEND_URL)
+  String backendUrl;
 
   public PaymentService(PaymentRepository paymentRepository,
-      BookingRepository bookingRepository,
-      RoomInventoryService roomInventoryService,
-      @Lazy BookingService bookingService,
-      EmailService emailService) {
+                        BookingRepository bookingRepository,
+                        RoomInventoryService roomInventoryService,
+                        @Lazy BookingService bookingService,
+                        EmailService emailService) {
     this.paymentRepository = paymentRepository;
     this.bookingRepository = bookingRepository;
     this.roomInventoryService = roomInventoryService;
@@ -57,38 +75,14 @@ public class PaymentService {
     this.emailService = emailService;
   }
 
-  @NonFinal
-  @Value(AppProperties.VNPAY_TMN_CODE)
-  String vnpayTmnCode;
-
-  @NonFinal
-  @Value(AppProperties.VNPAY_HASH_SECRET)
-  String vnpayHashSecret;
-
-  @NonFinal
-  @Value(AppProperties.VNPAY_API_URL)
-  String vnpayApiUrl;
-
-  @NonFinal
-  @Value(AppProperties.VNPAY_REFUND_URL)
-  String vnpayRefundUrl;
-
-  @NonFinal
-  @Value(AppProperties.FRONTEND_URL)
-  String frontendUrl;
-
-  @NonFinal
-  @Value(AppProperties.BACKEND_URL)
-  String backendUrl;
-
   public String createPaymentUrl(Booking booking, HttpServletRequest request) {
     // Create payment entity
     Payment payment = Payment.builder()
-        .booking(booking)
-        .amount(booking.getFinalPrice())
-        .paymentMethod("vnpay")
-        .status(PaymentStatusType.PENDING.getValue())
-        .build();
+      .booking(booking)
+      .amount(booking.getFinalPrice())
+      .paymentMethod("vnpay")
+      .status(PaymentStatusType.PENDING.getValue())
+      .build();
 
     Payment savedPayment = paymentRepository.save(payment);
 
@@ -110,7 +104,7 @@ public class PaymentService {
     vnpParams.put("vnp_IpAddr", ipAddress);
     vnpParams.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
     vnpParams.put("vnp_ExpireDate",
-        LocalDateTime.now().plusMinutes(15).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+      LocalDateTime.now().plusMinutes(15).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
 
     // Build query string with URL encoding
     StringBuilder queryString = new StringBuilder();
@@ -137,7 +131,7 @@ public class PaymentService {
   }
 
   public String createPaymentUrlForAmount(Booking booking, double amount, HttpServletRequest request,
-      String paymentId) {
+                                          String paymentId) {
     // Get client IP address
     String ipAddress = getIpAddress(request);
 
@@ -156,7 +150,7 @@ public class PaymentService {
     vnpParams.put("vnp_IpAddr", ipAddress);
     vnpParams.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
     vnpParams.put("vnp_ExpireDate",
-        LocalDateTime.now().plusMinutes(15).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+      LocalDateTime.now().plusMinutes(15).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
 
     // Build query string with URL encoding
     StringBuilder queryString = new StringBuilder();
@@ -183,8 +177,8 @@ public class PaymentService {
   }
 
   public String createPaymentUrlForReschedule(Booking booking, double amount, HttpServletRequest request,
-      String tempPaymentId, java.time.LocalDate newCheckInDate, java.time.LocalDate newCheckOutDate,
-      double newFinalPrice, double rescheduleFee, double newOriginalPrice, double discountAmount) {
+                                              String tempPaymentId, java.time.LocalDate newCheckInDate, java.time.LocalDate newCheckOutDate,
+                                              double newFinalPrice, double rescheduleFee, double newOriginalPrice, double discountAmount) {
     // Get client IP address
     String ipAddress = getIpAddress(request);
 
@@ -192,13 +186,13 @@ public class PaymentService {
     // Format:
     // "RESCHEDULE:{bookingId}:{newCheckInDate}:{newCheckOutDate}:{newFinalPrice}:{rescheduleFee}:{newOriginalPrice}:{discountAmount}"
     String orderInfo = String.format("RESCHEDULE:%s:%s:%s:%.2f:%.2f:%.2f:%.2f",
-        booking.getId(),
-        newCheckInDate.toString(),
-        newCheckOutDate.toString(),
-        newFinalPrice,
-        rescheduleFee,
-        newOriginalPrice,
-        discountAmount);
+      booking.getId(),
+      newCheckInDate.toString(),
+      newCheckOutDate.toString(),
+      newFinalPrice,
+      rescheduleFee,
+      newOriginalPrice,
+      discountAmount);
 
     // Create VNPay parameters
     Map<String, String> vnpParams = new TreeMap<>();
@@ -215,7 +209,7 @@ public class PaymentService {
     vnpParams.put("vnp_IpAddr", ipAddress);
     vnpParams.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
     vnpParams.put("vnp_ExpireDate",
-        LocalDateTime.now().plusMinutes(15).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+      LocalDateTime.now().plusMinutes(15).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
 
     // Build query string with URL encoding
     StringBuilder queryString = new StringBuilder();
@@ -267,7 +261,7 @@ public class PaymentService {
       // This allows testing the cancellation flow without actual refund processing
       log.warn("Sandbox Mode: Skipping VNPay refund API call. Refund would be processed in production. " +
           "Payment ID: {}, Transaction ID: {}, Refund Amount: {}",
-          payment.getId(), payment.getTransactionId(), refundAmount);
+        payment.getId(), payment.getTransactionId(), refundAmount);
       // Continue execution - refund is considered successful in sandbox for testing
       return;
     }
@@ -296,7 +290,7 @@ public class PaymentService {
     // Original transaction date from VNPay (use completedAt if available, otherwise
     // createdAt)
     LocalDateTime transactionDate = payment.getCompletedAt() != null ? payment.getCompletedAt()
-        : payment.getCreatedAt();
+      : payment.getCreatedAt();
     String originalTransDate = transactionDate.format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
     params.put("vnp_TransactionDate", originalTransDate);
     params.put("vnp_IpAddr", "127.0.0.1");
@@ -355,7 +349,7 @@ public class PaymentService {
 
     // Regular payment flow - find payment by ID
     Payment payment = paymentRepository.findById(transactionRef)
-        .orElseThrow(() -> new AppException(ErrorType.BOOKING_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.BOOKING_NOT_FOUND));
 
     // Check if payment is already processed
     if (!PaymentStatusType.PENDING.getValue().equals(payment.getStatus())) {
@@ -382,10 +376,10 @@ public class PaymentService {
 
       // Release room inventory
       roomInventoryService.updateAvailabilityForCancellation(
-          booking.getRoom().getId(),
-          booking.getCheckInDate(),
-          booking.getCheckOutDate(),
-          booking.getNumberOfRooms());
+        booking.getRoom().getId(),
+        booking.getCheckInDate(),
+        booking.getCheckOutDate(),
+        booking.getNumberOfRooms());
 
       bookingRepository.save(booking);
       paymentRepository.save(payment);
@@ -427,10 +421,10 @@ public class PaymentService {
       // IMPORTANT: Release room inventory when payment fails
       // This reverses the room hold from the booking creation process
       roomInventoryService.updateAvailabilityForCancellation(
-          booking.getRoom().getId(),
-          booking.getCheckInDate(),
-          booking.getCheckOutDate(),
-          booking.getNumberOfRooms());
+        booking.getRoom().getId(),
+        booking.getCheckInDate(),
+        booking.getCheckOutDate(),
+        booking.getNumberOfRooms());
 
       bookingRepository.save(booking);
       paymentRepository.save(payment);
@@ -438,7 +432,7 @@ public class PaymentService {
       // Include error code and type in redirect URL for frontend handling
       String errorTypeParam = errorType != null ? errorType.name() : ErrorType.PAYMENT_RESPONSE_INVALID.name();
       return frontendUrl + "/payment/failure?reason=payment_failed&code=" + responseCode + "&errorType="
-          + errorTypeParam;
+        + errorTypeParam;
     }
   }
 
@@ -560,7 +554,7 @@ public class PaymentService {
 
   @Transactional
   private String handleReschedulePaymentCallback(Map<String, String> vnpayParams, String orderInfo,
-      String transactionRef) {
+                                                 String transactionRef) {
     // Parse orderInfo:
     // "RESCHEDULE:{bookingId}:{newCheckInDate}:{newCheckOutDate}:{newFinalPrice}:{rescheduleFee}:{newOriginalPrice}:{discountAmount}"
     String[] parts = orderInfo.split(":");
@@ -590,13 +584,13 @@ public class PaymentService {
       ErrorType errorType = mapVnPayResponseCodeToErrorType(responseCode);
       String errorTypeParam = errorType != null ? errorType.name() : ErrorType.PAYMENT_RESPONSE_INVALID.name();
       return frontendUrl + "/payment/failure?reason=payment_failed&code=" + responseCode + "&errorType="
-          + errorTypeParam;
+        + errorTypeParam;
     }
 
     // Payment successful - complete reschedule
     try {
       bookingService.completeRescheduleAfterPayment(bookingId, newCheckInDate, newCheckOutDate, newFinalPrice,
-          rescheduleFee, newOriginalPrice, discountAmount, transactionRef, transactionId);
+        rescheduleFee, newOriginalPrice, discountAmount, transactionRef, transactionId);
       return frontendUrl + "/payment/success?bookingId=" + bookingId + "&type=reschedule";
     } catch (Exception e) {
       return frontendUrl + "/payment/failure?reason=reschedule_failed";
@@ -606,7 +600,7 @@ public class PaymentService {
   private void sendBookingConfirmationEmail(Booking booking) {
     // Fetch booking with all relations for email
     Booking bookingWithRelations = bookingRepository.findByIdWithAllRelations(booking.getId())
-        .orElse(booking); // Fallback to existing booking if not found
+      .orElse(booking); // Fallback to existing booking if not found
 
     String customerEmail = bookingWithRelations.getContactEmail();
     String customerName = bookingWithRelations.getContactFullName();
@@ -621,27 +615,27 @@ public class PaymentService {
     var roomReschedulePolicy = room != null ? room.getReschedulePolicy() : null;
 
     var hotelPolicy = bookingWithRelations.getHotel() != null
-        ? bookingWithRelations.getHotel().getPolicy()
-        : null;
+      ? bookingWithRelations.getHotel().getPolicy()
+      : null;
     var hotelCancellationPolicy = hotelPolicy != null ? hotelPolicy.getCancellationPolicy() : null;
     var hotelReschedulePolicy = hotelPolicy != null ? hotelPolicy.getReschedulePolicy() : null;
 
     // Get effective policies (room takes priority)
     var effectiveCancellationPolicy = roomCancellationPolicy != null
-        ? roomCancellationPolicy
-        : hotelCancellationPolicy;
+      ? roomCancellationPolicy
+      : hotelCancellationPolicy;
     var effectiveReschedulePolicy = roomReschedulePolicy != null
-        ? roomReschedulePolicy
-        : hotelReschedulePolicy;
+      ? roomReschedulePolicy
+      : hotelReschedulePolicy;
 
     // Get required identification documents from hotel policy
     String requiredDocuments = "";
     if (hotelPolicy != null && hotelPolicy.getRequiredIdentificationDocuments() != null
-        && !hotelPolicy.getRequiredIdentificationDocuments().isEmpty()) {
+      && !hotelPolicy.getRequiredIdentificationDocuments().isEmpty()) {
       requiredDocuments = hotelPolicy.getRequiredIdentificationDocuments().stream()
-          .map(doc -> doc.getIdentificationDocument().getName())
-          .reduce((a, b) -> a + ", " + b)
-          .orElse("");
+        .map(doc -> doc.getIdentificationDocument().getName())
+        .reduce((a, b) -> a + ", " + b)
+        .orElse("");
     }
 
     // Build policy information strings
@@ -649,23 +643,23 @@ public class PaymentService {
     String reschedulePolicyInfo = buildReschedulePolicyInfo(effectiveReschedulePolicy);
 
     emailService.sendBookingConfirmationNotification(
-        customerEmail,
-        customerName,
-        bookingWithRelations.getId(),
-        hotelName,
-        roomName,
-        checkInDate,
-        checkOutDate,
-        bookingWithRelations.getNumberOfNights(),
-        bookingWithRelations.getNumberOfRooms(),
-        bookingWithRelations.getFinalPrice(),
-        cancellationPolicyInfo,
-        reschedulePolicyInfo,
-        requiredDocuments);
+      customerEmail,
+      customerName,
+      bookingWithRelations.getId(),
+      hotelName,
+      roomName,
+      checkInDate,
+      checkOutDate,
+      bookingWithRelations.getNumberOfNights(),
+      bookingWithRelations.getNumberOfRooms(),
+      bookingWithRelations.getFinalPrice(),
+      cancellationPolicyInfo,
+      reschedulePolicyInfo,
+      requiredDocuments);
   }
 
   private String buildCancellationPolicyInfo(
-      com.webapp.holidate.entity.policy.cancelation.CancellationPolicy policy) {
+    com.webapp.holidate.entity.policy.cancelation.CancellationPolicy policy) {
     if (policy == null) {
       return "Không có chính sách hủy phòng cụ thể. Vui lòng liên hệ với khách sạn để biết thêm chi tiết.";
     }
@@ -687,7 +681,7 @@ public class PaymentService {
           info.append("Hủy từ ").append(rule.getDaysBeforeCheckIn()).append(" ngày trước ngày nhận phòng: ");
         } else {
           info.append("Hủy trong vòng ").append(Math.abs(rule.getDaysBeforeCheckIn()))
-              .append(" ngày trước ngày nhận phòng: ");
+            .append(" ngày trước ngày nhận phòng: ");
         }
         if (rule.getPenaltyPercentage() == 0) {
           info.append("Miễn phí");
@@ -705,7 +699,7 @@ public class PaymentService {
   }
 
   private String buildReschedulePolicyInfo(
-      com.webapp.holidate.entity.policy.reschedule.ReschedulePolicy policy) {
+    com.webapp.holidate.entity.policy.reschedule.ReschedulePolicy policy) {
     if (policy == null) {
       return "Không có chính sách đổi lịch cụ thể. Vui lòng liên hệ với khách sạn để biết thêm chi tiết.";
     }
@@ -727,7 +721,7 @@ public class PaymentService {
           info.append("Đổi lịch từ ").append(rule.getDaysBeforeCheckin()).append(" ngày trước ngày nhận phòng: ");
         } else {
           info.append("Đổi lịch trong vòng ").append(Math.abs(rule.getDaysBeforeCheckin()))
-              .append(" ngày trước ngày nhận phòng: ");
+            .append(" ngày trước ngày nhận phòng: ");
         }
         if (rule.getFeePercentage() == 0) {
           info.append("Miễn phí");

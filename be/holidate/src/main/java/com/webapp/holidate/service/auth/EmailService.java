@@ -66,7 +66,7 @@ public class EmailService {
 
   private SendOtpResponse sendOtp(String email, EmailType emailType, boolean requireActive) {
     UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email)
-        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
 
     String authProvider = authInfo.getAuthProvider();
     boolean localAuth = AuthProviderType.LOCAL.getValue().equals(authProvider);
@@ -112,8 +112,8 @@ public class EmailService {
     sendEmail(user.getEmail(), emailType.getTemplateName(), emailType.getEmailSubject(), context);
 
     return SendOtpResponse.builder()
-        .sent(true)
-        .build();
+      .sent(true)
+      .build();
   }
 
   public VerificationResponse verifyEmailVerificationOtp(VerifyEmailVerificationOtpRequest request) {
@@ -126,7 +126,7 @@ public class EmailService {
 
   private VerificationResponse verifyOtp(String email, String inputOtp, EmailType emailType, String newPassword) {
     UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email)
-        .orElseThrow(() -> new AppException(ErrorType.INVALID_OTP));
+      .orElseThrow(() -> new AppException(ErrorType.INVALID_OTP));
 
     String authProvider = authInfo.getAuthProvider();
     boolean localAuth = AuthProviderType.LOCAL.getValue().equals(authProvider);
@@ -186,8 +186,8 @@ public class EmailService {
     authInfoRepository.save(authInfo);
 
     return VerificationResponse.builder()
-        .verified(true)
-        .build();
+      .verified(true)
+      .build();
   }
 
   private String generateVerificationOtp() {
@@ -220,17 +220,17 @@ public class EmailService {
   }
 
   public void sendRefundNotification(
-      String customerEmail,
-      String customerName,
-      String bookingId,
-      String hotelName,
-      String roomName,
-      String checkInDate,
-      String checkOutDate,
-      double totalAmount,
-      double penaltyAmount,
-      double refundAmount,
-      String cancellationPolicyInfo) {
+    String customerEmail,
+    String customerName,
+    String bookingId,
+    String hotelName,
+    String roomName,
+    String checkInDate,
+    String checkOutDate,
+    double totalAmount,
+    double penaltyAmount,
+    double refundAmount,
+    String cancellationPolicyInfo) {
     Context context = new Context();
     context.setVariable("customerName", customerName);
     context.setVariable("bookingId", bookingId);
@@ -247,19 +247,19 @@ public class EmailService {
   }
 
   public void sendRescheduleNotification(
-      String customerEmail,
-      String customerName,
-      String bookingId,
-      String hotelName,
-      String roomName,
-      String oldCheckInDate,
-      String oldCheckOutDate,
-      String newCheckInDate,
-      String newCheckOutDate,
-      double newFinalPrice,
-      double rescheduleFee,
-      double priceDifference,
-      String reschedulePolicyInfo) {
+    String customerEmail,
+    String customerName,
+    String bookingId,
+    String hotelName,
+    String roomName,
+    String oldCheckInDate,
+    String oldCheckOutDate,
+    String newCheckInDate,
+    String newCheckOutDate,
+    double newFinalPrice,
+    double rescheduleFee,
+    double priceDifference,
+    String reschedulePolicyInfo) {
     Context context = new Context();
     context.setVariable("customerName", customerName);
     context.setVariable("bookingId", bookingId);
@@ -278,19 +278,19 @@ public class EmailService {
   }
 
   public void sendBookingConfirmationNotification(
-      String customerEmail,
-      String customerName,
-      String bookingId,
-      String hotelName,
-      String roomName,
-      String checkInDate,
-      String checkOutDate,
-      int numberOfNights,
-      int numberOfRooms,
-      double finalPrice,
-      String cancellationPolicyInfo,
-      String reschedulePolicyInfo,
-      String requiredDocuments) {
+    String customerEmail,
+    String customerName,
+    String bookingId,
+    String hotelName,
+    String roomName,
+    String checkInDate,
+    String checkOutDate,
+    int numberOfNights,
+    int numberOfRooms,
+    double finalPrice,
+    String cancellationPolicyInfo,
+    String reschedulePolicyInfo,
+    String requiredDocuments) {
     Context context = new Context();
     context.setVariable("customerName", customerName);
     context.setVariable("bookingId", bookingId);
@@ -310,18 +310,18 @@ public class EmailService {
   }
 
   public void sendCheckinNotification(
-      String customerEmail,
-      String customerName,
-      String bookingId,
-      String hotelName,
-      String roomName,
-      String checkInDate,
-      String checkOutDate,
-      int numberOfNights,
-      int numberOfRooms,
-      String checkInTime,
-      String checkOutTime,
-      String requiredDocuments) {
+    String customerEmail,
+    String customerName,
+    String bookingId,
+    String hotelName,
+    String roomName,
+    String checkInDate,
+    String checkOutDate,
+    int numberOfNights,
+    int numberOfRooms,
+    String checkInTime,
+    String checkOutTime,
+    String requiredDocuments) {
     Context context = new Context();
     context.setVariable("customerName", customerName);
     context.setVariable("bookingId", bookingId);
@@ -340,16 +340,16 @@ public class EmailService {
   }
 
   public void sendCheckoutNotification(
-      String customerEmail,
-      String customerName,
-      String bookingId,
-      String hotelName,
-      String roomName,
-      String checkInDate,
-      String checkOutDate,
-      int numberOfNights,
-      int numberOfRooms,
-      String reviewUrl) {
+    String customerEmail,
+    String customerName,
+    String bookingId,
+    String hotelName,
+    String roomName,
+    String checkInDate,
+    String checkOutDate,
+    int numberOfNights,
+    int numberOfRooms,
+    String reviewUrl) {
     Context context = new Context();
     context.setVariable("customerName", customerName);
     context.setVariable("bookingId", bookingId);

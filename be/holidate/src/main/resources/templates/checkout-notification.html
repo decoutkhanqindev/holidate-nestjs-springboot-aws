@@ -1,253 +1,253 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-  <head>
-    <meta charset="UTF-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Xác nhận trả phòng</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        line-height: 1.6;
-        color: #333;
-        margin: 0;
-        padding: 0;
-      }
-      .container {
-        max-width: 600px;
-        margin: 0 auto;
-        padding: 20px;
-      }
-      .header {
-        background-color: #9c27b0;
-        color: white;
-        padding: 15px;
-        text-align: center;
-      }
-      .content {
-        padding: 20px;
-        background-color: #f9f9f9;
-      }
-      .info-box {
-        background-color: white;
-        padding: 15px;
-        margin: 10px 0;
-        border-radius: 5px;
-        border-left: 4px solid #9c27b0;
-      }
-      .footer {
-        margin-top: 20px;
-        padding: 10px;
-        text-align: center;
-        font-size: 12px;
-        color: #666;
-      }
-      .success {
-        color: #4caf50;
-        font-weight: bold;
-      }
-      .thank-you {
-        color: #9c27b0;
-        font-weight: bold;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 10px 0;
-      }
-      table td {
-        padding: 8px;
-        border-bottom: 1px solid #ddd;
-      }
-      table td:first-child {
-        font-weight: bold;
-        width: 40%;
-      }
-      .highlight {
-        background-color: #f3e5f5;
-        padding: 10px;
-        border-radius: 5px;
-        margin: 10px 0;
-      }
-      .review-guide {
-        background-color: #e8f5e9;
-        padding: 15px;
-        margin: 10px 0;
-        border-radius: 5px;
-        border-left: 4px solid #4caf50;
-      }
-      .review-guide h4 {
-        margin-top: 0;
-        color: #2e7d32;
-        font-size: 18px;
-      }
-      .review-guide ol,
-      .review-guide ul {
-        margin: 10px 0;
-        padding-left: 25px;
-      }
-      .review-guide li {
-        margin: 8px 0;
-        line-height: 1.8;
-      }
-      .review-button {
-        display: inline-block;
-        background-color: #4caf50;
-        color: white;
-        padding: 12px 30px;
-        text-decoration: none;
-        border-radius: 5px;
-        font-weight: bold;
-        margin: 15px 0;
-        text-align: center;
-      }
-      .review-button:hover {
-        background-color: #45a049;
-      }
-      .review-benefits {
-        background-color: #fff3cd;
-        padding: 15px;
-        margin: 10px 0;
-        border-radius: 5px;
-        border-left: 4px solid #ff9800;
-      }
-      .review-benefits h4 {
-        margin-top: 0;
-        color: #856404;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="header">
-        <h1>Xác nhận trả phòng</h1>
-      </div>
+<head>
+  <meta charset="UTF-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Xác nhận trả phòng</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .header {
+      background-color: #9c27b0;
+      color: white;
+      padding: 15px;
+      text-align: center;
+    }
+    .content {
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+    .info-box {
+      background-color: white;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border-left: 4px solid #9c27b0;
+    }
+    .footer {
+      margin-top: 20px;
+      padding: 10px;
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+    }
+    .success {
+      color: #4caf50;
+      font-weight: bold;
+    }
+    .thank-you {
+      color: #9c27b0;
+      font-weight: bold;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+    }
+    table td {
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+    }
+    table td:first-child {
+      font-weight: bold;
+      width: 40%;
+    }
+    .highlight {
+      background-color: #f3e5f5;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+    .review-guide {
+      background-color: #e8f5e9;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border-left: 4px solid #4caf50;
+    }
+    .review-guide h4 {
+      margin-top: 0;
+      color: #2e7d32;
+      font-size: 18px;
+    }
+    .review-guide ol,
+    .review-guide ul {
+      margin: 10px 0;
+      padding-left: 25px;
+    }
+    .review-guide li {
+      margin: 8px 0;
+      line-height: 1.8;
+    }
+    .review-button {
+      display: inline-block;
+      background-color: #4caf50;
+      color: white;
+      padding: 12px 30px;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+      margin: 15px 0;
+      text-align: center;
+    }
+    .review-button:hover {
+      background-color: #45a049;
+    }
+    .review-benefits {
+      background-color: #fff3cd;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border-left: 4px solid #ff9800;
+    }
+    .review-benefits h4 {
+      margin-top: 0;
+      color: #856404;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Xác nhận trả phòng</h1>
+  </div>
 
-      <div class="content">
-        <p>Xin chào <span th:text="${customerName}">Khách hàng</span>,</p>
+  <div class="content">
+    <p>Xin chào <span th:text="${customerName}">Khách hàng</span>,</p>
 
-        <p class="thank-you">
-          <strong
-            >Cảm ơn bạn đã sử dụng dịch vụ của Holidate! Chúng tôi rất vui được
-            phục vụ bạn trong thời gian vừa qua.</strong
-          >
-        </p>
+    <p class="thank-you">
+      <strong
+      >Cảm ơn bạn đã sử dụng dịch vụ của Holidate! Chúng tôi rất vui được
+        phục vụ bạn trong thời gian vừa qua.</strong
+      >
+    </p>
 
-        <div class="info-box">
-          <h3 style="margin-top: 0">Thông tin đơn đặt phòng</h3>
-          <table>
-            <tr>
-              <td>Mã đơn đặt phòng:</td>
-              <td th:text="${bookingId}">BOOKING-123</td>
-            </tr>
-            <tr>
-              <td>Khách sạn:</td>
-              <td th:text="${hotelName}">Tên khách sạn</td>
-            </tr>
-            <tr>
-              <td>Phòng:</td>
-              <td th:text="${roomName}">Tên phòng</td>
-            </tr>
-            <tr>
-              <td>Ngày nhận phòng:</td>
-              <td th:text="${checkInDate}">2025-01-01</td>
-            </tr>
-            <tr>
-              <td>Ngày trả phòng:</td>
-              <td th:text="${checkOutDate}">2025-01-03</td>
-            </tr>
-            <tr>
-              <td>Số đêm:</td>
-              <td th:text="${numberOfNights} + ' đêm'">2 đêm</td>
-            </tr>
-            <tr>
-              <td>Số phòng:</td>
-              <td th:text="${numberOfRooms} + ' phòng'">1 phòng</td>
-            </tr>
-          </table>
-        </div>
-
-        <div class="review-guide">
-          <h4>⭐ Hướng dẫn đánh giá</h4>
-          <p><strong>Chúng tôi rất mong nhận được đánh giá từ bạn!</strong></p>
-          <p>
-            Trải nghiệm của bạn rất quan trọng với chúng tôi. Hãy chia sẻ ý kiến
-            của bạn về khách sạn và dịch vụ để chúng tôi có thể cải thiện chất
-            lượng phục vụ tốt hơn.
-          </p>
-
-          <p><strong>Cách đánh giá:</strong></p>
-          <ol>
-            <li>
-              Truy cập vào trang đánh giá của đơn đặt phòng này trên website
-              hoặc ứng dụng Holidate
-            </li>
-            <li>
-              Chọn số sao đánh giá (từ 1 đến 5 sao) dựa trên trải nghiệm của bạn
-            </li>
-            <li>
-              Viết nhận xét chi tiết về:
-              <ul>
-                <li>Chất lượng dịch vụ khách sạn</li>
-                <li>Điều kiện phòng và tiện nghi</li>
-                <li>Đội ngũ nhân viên</li>
-                <li>Vị trí và môi trường xung quanh</li>
-                <li>Giá trị đồng tiền</li>
-              </ul>
-            </li>
-            <li>
-              (Tùy chọn) Đính kèm hình ảnh về phòng hoặc khu vực khách sạn
-            </li>
-            <li>Gửi đánh giá của bạn</li>
-          </ol>
-
-          <p style="text-align: center; margin-top: 20px">
-            <a th:href="${reviewUrl}" class="review-button">Đánh giá ngay</a>
-          </p>
-
-          <p style="font-size: 14px; color: #666; margin-top: 10px">
-            Hoặc tìm đơn đặt phòng với mã:
-            <strong th:text="${bookingId}">BOOKING-123</strong>
-            trong phần "Đơn đặt phòng của tôi" để đánh giá.
-          </p>
-        </div>
-
-        <div class="review-benefits">
-          <h4>💡 Tại sao nên đánh giá?</h4>
-          <ul>
-            <li>
-              <strong>Giúp cộng đồng:</strong> Đánh giá của bạn giúp những khách
-              hàng khác có thêm thông tin để đưa ra quyết định đặt phòng phù hợp
-            </li>
-            <li>
-              <strong>Cải thiện dịch vụ:</strong> Phản hồi của bạn giúp chúng
-              tôi và khách sạn cải thiện chất lượng dịch vụ
-            </li>
-            <li>
-              <strong>Xây dựng cộng đồng:</strong> Tham gia xây dựng một cộng
-              đồng du lịch minh bạch và đáng tin cậy
-            </li>
-          </ul>
-        </div>
-
-        <div class="highlight">
-          <p>
-            Chúng tôi hy vọng bạn đã có một kỳ nghỉ tuyệt vời và mong được phục
-            vụ bạn lần sau!
-          </p>
-
-          <p>
-            Nếu bạn có bất kỳ thắc mắc hoặc phản hồi nào, vui lòng liên hệ với
-            bộ phận hỗ trợ khách hàng của chúng tôi.
-          </p>
-
-          <p class="success">Trân trọng cảm ơn!</p>
-        </div>
-      </div>
-
-      <div class="footer">
-        <p>Trân trọng,<br />Đội ngũ Holidate</p>
-        <p>© 2025 Holidate. All rights reserved.</p>
-      </div>
+    <div class="info-box">
+      <h3 style="margin-top: 0">Thông tin đơn đặt phòng</h3>
+      <table>
+        <tr>
+          <td>Mã đơn đặt phòng:</td>
+          <td th:text="${bookingId}">BOOKING-123</td>
+        </tr>
+        <tr>
+          <td>Khách sạn:</td>
+          <td th:text="${hotelName}">Tên khách sạn</td>
+        </tr>
+        <tr>
+          <td>Phòng:</td>
+          <td th:text="${roomName}">Tên phòng</td>
+        </tr>
+        <tr>
+          <td>Ngày nhận phòng:</td>
+          <td th:text="${checkInDate}">2025-01-01</td>
+        </tr>
+        <tr>
+          <td>Ngày trả phòng:</td>
+          <td th:text="${checkOutDate}">2025-01-03</td>
+        </tr>
+        <tr>
+          <td>Số đêm:</td>
+          <td th:text="${numberOfNights} + ' đêm'">2 đêm</td>
+        </tr>
+        <tr>
+          <td>Số phòng:</td>
+          <td th:text="${numberOfRooms} + ' phòng'">1 phòng</td>
+        </tr>
+      </table>
     </div>
-  </body>
+
+    <div class="review-guide">
+      <h4>⭐ Hướng dẫn đánh giá</h4>
+      <p><strong>Chúng tôi rất mong nhận được đánh giá từ bạn!</strong></p>
+      <p>
+        Trải nghiệm của bạn rất quan trọng với chúng tôi. Hãy chia sẻ ý kiến
+        của bạn về khách sạn và dịch vụ để chúng tôi có thể cải thiện chất
+        lượng phục vụ tốt hơn.
+      </p>
+
+      <p><strong>Cách đánh giá:</strong></p>
+      <ol>
+        <li>
+          Truy cập vào trang đánh giá của đơn đặt phòng này trên website
+          hoặc ứng dụng Holidate
+        </li>
+        <li>
+          Chọn số sao đánh giá (từ 1 đến 5 sao) dựa trên trải nghiệm của bạn
+        </li>
+        <li>
+          Viết nhận xét chi tiết về:
+          <ul>
+            <li>Chất lượng dịch vụ khách sạn</li>
+            <li>Điều kiện phòng và tiện nghi</li>
+            <li>Đội ngũ nhân viên</li>
+            <li>Vị trí và môi trường xung quanh</li>
+            <li>Giá trị đồng tiền</li>
+          </ul>
+        </li>
+        <li>
+          (Tùy chọn) Đính kèm hình ảnh về phòng hoặc khu vực khách sạn
+        </li>
+        <li>Gửi đánh giá của bạn</li>
+      </ol>
+
+      <p style="text-align: center; margin-top: 20px">
+        <a class="review-button" th:href="${reviewUrl}">Đánh giá ngay</a>
+      </p>
+
+      <p style="font-size: 14px; color: #666; margin-top: 10px">
+        Hoặc tìm đơn đặt phòng với mã:
+        <strong th:text="${bookingId}">BOOKING-123</strong>
+        trong phần "Đơn đặt phòng của tôi" để đánh giá.
+      </p>
+    </div>
+
+    <div class="review-benefits">
+      <h4>💡 Tại sao nên đánh giá?</h4>
+      <ul>
+        <li>
+          <strong>Giúp cộng đồng:</strong> Đánh giá của bạn giúp những khách
+          hàng khác có thêm thông tin để đưa ra quyết định đặt phòng phù hợp
+        </li>
+        <li>
+          <strong>Cải thiện dịch vụ:</strong> Phản hồi của bạn giúp chúng
+          tôi và khách sạn cải thiện chất lượng dịch vụ
+        </li>
+        <li>
+          <strong>Xây dựng cộng đồng:</strong> Tham gia xây dựng một cộng
+          đồng du lịch minh bạch và đáng tin cậy
+        </li>
+      </ul>
+    </div>
+
+    <div class="highlight">
+      <p>
+        Chúng tôi hy vọng bạn đã có một kỳ nghỉ tuyệt vời và mong được phục
+        vụ bạn lần sau!
+      </p>
+
+      <p>
+        Nếu bạn có bất kỳ thắc mắc hoặc phản hồi nào, vui lòng liên hệ với
+        bộ phận hỗ trợ khách hàng của chúng tôi.
+      </p>
+
+      <p class="success">Trân trọng cảm ơn!</p>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Trân trọng,<br/>Đội ngũ Holidate</p>
+    <p>© 2025 Holidate. All rights reserved.</p>
+  </div>
+</div>
+</body>
 </html>

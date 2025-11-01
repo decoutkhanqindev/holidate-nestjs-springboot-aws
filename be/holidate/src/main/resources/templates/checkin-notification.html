@@ -1,181 +1,181 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-  <head>
-    <meta charset="UTF-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Xác nhận nhận phòng</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        line-height: 1.6;
-        color: #333;
-        margin: 0;
-        padding: 0;
-      }
-      .container {
-        max-width: 600px;
-        margin: 0 auto;
-        padding: 20px;
-      }
-      .header {
-        background-color: #00bcd4;
-        color: white;
-        padding: 15px;
-        text-align: center;
-      }
-      .content {
-        padding: 20px;
-        background-color: #f9f9f9;
-      }
-      .info-box {
-        background-color: white;
-        padding: 15px;
-        margin: 10px 0;
-        border-radius: 5px;
-        border-left: 4px solid #00bcd4;
-      }
-      .footer {
-        margin-top: 20px;
-        padding: 10px;
-        text-align: center;
-        font-size: 12px;
-        color: #666;
-      }
-      .success {
-        color: #4caf50;
-        font-weight: bold;
-      }
-      .welcome {
-        color: #00bcd4;
-        font-weight: bold;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 10px 0;
-      }
-      table td {
-        padding: 8px;
-        border-bottom: 1px solid #ddd;
-      }
-      table td:first-child {
-        font-weight: bold;
-        width: 40%;
-      }
-      .highlight {
-        background-color: #e0f7fa;
-        padding: 10px;
-        border-radius: 5px;
-        margin: 10px 0;
-      }
-      .important-info {
-        background-color: #fff3cd;
-        padding: 15px;
-        margin: 10px 0;
-        border-radius: 5px;
-        border-left: 4px solid #ff9800;
-      }
-      .important-info h4 {
-        margin-top: 0;
-        color: #856404;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="header">
-        <h1>Xác nhận nhận phòng</h1>
-      </div>
+<head>
+  <meta charset="UTF-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Xác nhận nhận phòng</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .header {
+      background-color: #00bcd4;
+      color: white;
+      padding: 15px;
+      text-align: center;
+    }
+    .content {
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+    .info-box {
+      background-color: white;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border-left: 4px solid #00bcd4;
+    }
+    .footer {
+      margin-top: 20px;
+      padding: 10px;
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+    }
+    .success {
+      color: #4caf50;
+      font-weight: bold;
+    }
+    .welcome {
+      color: #00bcd4;
+      font-weight: bold;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+    }
+    table td {
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+    }
+    table td:first-child {
+      font-weight: bold;
+      width: 40%;
+    }
+    .highlight {
+      background-color: #e0f7fa;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+    .important-info {
+      background-color: #fff3cd;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border-left: 4px solid #ff9800;
+    }
+    .important-info h4 {
+      margin-top: 0;
+      color: #856404;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Xác nhận nhận phòng</h1>
+  </div>
 
-      <div class="content">
-        <p>Xin chào <span th:text="${customerName}">Khách hàng</span>,</p>
+  <div class="content">
+    <p>Xin chào <span th:text="${customerName}">Khách hàng</span>,</p>
 
-        <p class="welcome">
-          <strong
-            >Chào mừng bạn đến với Holidate! Chúng tôi rất vui được chào đón bạn
-            tại khách sạn.</strong
-          >
-        </p>
+    <p class="welcome">
+      <strong
+      >Chào mừng bạn đến với Holidate! Chúng tôi rất vui được chào đón bạn
+        tại khách sạn.</strong
+      >
+    </p>
 
-        <div class="info-box">
-          <h3 style="margin-top: 0">Thông tin đơn đặt phòng</h3>
-          <table>
-            <tr>
-              <td>Mã đơn đặt phòng:</td>
-              <td th:text="${bookingId}">BOOKING-123</td>
-            </tr>
-            <tr>
-              <td>Khách sạn:</td>
-              <td th:text="${hotelName}">Tên khách sạn</td>
-            </tr>
-            <tr>
-              <td>Phòng:</td>
-              <td th:text="${roomName}">Tên phòng</td>
-            </tr>
-            <tr>
-              <td>Ngày nhận phòng:</td>
-              <td th:text="${checkInDate}">2025-01-01</td>
-            </tr>
-            <tr>
-              <td>Ngày trả phòng:</td>
-              <td th:text="${checkOutDate}">2025-01-03</td>
-            </tr>
-            <tr>
-              <td>Số đêm:</td>
-              <td th:text="${numberOfNights} + ' đêm'">2 đêm</td>
-            </tr>
-            <tr>
-              <td>Số phòng:</td>
-              <td th:text="${numberOfRooms} + ' phòng'">1 phòng</td>
-            </tr>
-          </table>
-        </div>
-
-        <div th:if="${hasRequiredDocuments}" class="important-info">
-          <h4>📄 Giấy tờ cần thiết</h4>
-          <p>
-            <strong
-              >Vui lòng chuẩn bị các giấy tờ sau để hoàn tất thủ tục nhận
-              phòng:</strong
-            >
-          </p>
-          <p th:text="${requiredDocuments}">CMND/CCCD</p>
-        </div>
-
-        <div class="highlight">
-          <p><strong>Thông tin quan trọng:</strong></p>
-          <ul>
-            <li>
-              Thời gian check-in: <span th:text="${checkInTime}">14:00</span>
-            </li>
-            <li>
-              Thời gian check-out: <span th:text="${checkOutTime}">12:00</span>
-            </li>
-            <li>Vui lòng đến đúng giờ quy định để có trải nghiệm tốt nhất.</li>
-            <li>
-              Nếu bạn có bất kỳ yêu cầu đặc biệt nào, vui lòng liên hệ với lễ
-              tân.
-            </li>
-          </ul>
-        </div>
-
-        <p>
-          Chúng tôi hy vọng bạn sẽ có một kỳ nghỉ tuyệt vời và thoải mái tại
-          <span th:text="${hotelName}">khách sạn</span>!
-        </p>
-
-        <p>
-          Nếu bạn cần hỗ trợ bất kỳ điều gì trong suốt thời gian lưu trú, vui
-          lòng liên hệ với bộ phận dịch vụ khách hàng của chúng tôi.
-        </p>
-
-        <p class="success">Chúc bạn có một kỳ nghỉ tuyệt vời!</p>
-      </div>
-
-      <div class="footer">
-        <p>Trân trọng,<br />Đội ngũ Holidate</p>
-        <p>© 2025 Holidate. All rights reserved.</p>
-      </div>
+    <div class="info-box">
+      <h3 style="margin-top: 0">Thông tin đơn đặt phòng</h3>
+      <table>
+        <tr>
+          <td>Mã đơn đặt phòng:</td>
+          <td th:text="${bookingId}">BOOKING-123</td>
+        </tr>
+        <tr>
+          <td>Khách sạn:</td>
+          <td th:text="${hotelName}">Tên khách sạn</td>
+        </tr>
+        <tr>
+          <td>Phòng:</td>
+          <td th:text="${roomName}">Tên phòng</td>
+        </tr>
+        <tr>
+          <td>Ngày nhận phòng:</td>
+          <td th:text="${checkInDate}">2025-01-01</td>
+        </tr>
+        <tr>
+          <td>Ngày trả phòng:</td>
+          <td th:text="${checkOutDate}">2025-01-03</td>
+        </tr>
+        <tr>
+          <td>Số đêm:</td>
+          <td th:text="${numberOfNights} + ' đêm'">2 đêm</td>
+        </tr>
+        <tr>
+          <td>Số phòng:</td>
+          <td th:text="${numberOfRooms} + ' phòng'">1 phòng</td>
+        </tr>
+      </table>
     </div>
-  </body>
+
+    <div class="important-info" th:if="${hasRequiredDocuments}">
+      <h4>📄 Giấy tờ cần thiết</h4>
+      <p>
+        <strong
+        >Vui lòng chuẩn bị các giấy tờ sau để hoàn tất thủ tục nhận
+          phòng:</strong
+        >
+      </p>
+      <p th:text="${requiredDocuments}">CMND/CCCD</p>
+    </div>
+
+    <div class="highlight">
+      <p><strong>Thông tin quan trọng:</strong></p>
+      <ul>
+        <li>
+          Thời gian check-in: <span th:text="${checkInTime}">14:00</span>
+        </li>
+        <li>
+          Thời gian check-out: <span th:text="${checkOutTime}">12:00</span>
+        </li>
+        <li>Vui lòng đến đúng giờ quy định để có trải nghiệm tốt nhất.</li>
+        <li>
+          Nếu bạn có bất kỳ yêu cầu đặc biệt nào, vui lòng liên hệ với lễ
+          tân.
+        </li>
+      </ul>
+    </div>
+
+    <p>
+      Chúng tôi hy vọng bạn sẽ có một kỳ nghỉ tuyệt vời và thoải mái tại
+      <span th:text="${hotelName}">khách sạn</span>!
+    </p>
+
+    <p>
+      Nếu bạn cần hỗ trợ bất kỳ điều gì trong suốt thời gian lưu trú, vui
+      lòng liên hệ với bộ phận dịch vụ khách hàng của chúng tôi.
+    </p>
+
+    <p class="success">Chúc bạn có một kỳ nghỉ tuyệt vời!</p>
+  </div>
+
+  <div class="footer">
+    <p>Trân trọng,<br/>Đội ngũ Holidate</p>
+    <p>© 2025 Holidate. All rights reserved.</p>
+  </div>
+</div>
+</body>
 </html>
