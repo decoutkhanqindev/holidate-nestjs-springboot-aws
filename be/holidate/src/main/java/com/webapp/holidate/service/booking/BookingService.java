@@ -18,6 +18,8 @@ import com.webapp.holidate.entity.accommodation.room.RoomInventory;
 import com.webapp.holidate.entity.booking.Booking;
 import com.webapp.holidate.entity.booking.Payment;
 import com.webapp.holidate.entity.discount.Discount;
+import com.webapp.holidate.entity.policy.cancelation.CancellationPolicy;
+import com.webapp.holidate.entity.policy.reschedule.ReschedulePolicy;
 import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.PagedMapper;
@@ -1149,8 +1151,7 @@ public class BookingService {
         .build();
   }
 
-  private String buildCancellationPolicyInfo(
-      com.webapp.holidate.entity.policy.cancelation.CancellationPolicy policy) {
+  private String buildCancellationPolicyInfo(CancellationPolicy policy) {
     if (policy == null) {
       return "Không có chính sách hủy phòng cụ thể. Vui lòng liên hệ với khách sạn để biết thêm chi tiết.";
     }
@@ -1189,8 +1190,7 @@ public class BookingService {
     return info.toString();
   }
 
-  private String buildReschedulePolicyInfo(
-      com.webapp.holidate.entity.policy.reschedule.ReschedulePolicy policy) {
+  private String buildReschedulePolicyInfo(ReschedulePolicy policy) {
     if (policy == null) {
       return "Không có chính sách đổi lịch cụ thể. Vui lòng liên hệ với khách sạn để biết thêm chi tiết.";
     }
