@@ -127,7 +127,7 @@ Response Structure: ApiResponse<BookingResponse>
 --------------------------------------------------------------------------------
 1.2. XEM TRƯỚC GIÁ BOOKING
 --------------------------------------------------------------------------------
-Method: GET
+Method: POST
 Endpoint: /bookings/price-preview
 Request Body: BookingPricePreviewRequest
 
@@ -172,11 +172,54 @@ Response Structure: ApiResponse<BookingPriceDetailsResponse>
   }
 }
 
-Lưu ý: Endpoint này sử dụng GET nhưng yêu cầu Request Body (không phải query parameters).
-Đây có thể là một thiết kế không chuẩn RESTful, có thể cần xem xét lại.
+--------------------------------------------------------------------------------
+1.3. LẤY DANH SÁCH BOOKING (CÓ PHÂN TRANG)
+--------------------------------------------------------------------------------
+Method: GET
+Endpoint: /bookings
+
+Query Parameters (Tất cả đều optional):
+- user-id: String - Lọc theo ID người dùng
+- room-id: String - Lọc theo ID phòng
+- hotel-id: String - Lọc theo ID khách sạn
+- status: String - Lọc theo trạng thái booking
+- check-in-date: LocalDate (format: YYYY-MM-DD) - Lọc theo ngày check-in
+- check-out-date: LocalDate (format: YYYY-MM-DD) - Lọc theo ngày check-out
+- created-from: LocalDateTime (format: ISO 8601) - Lọc từ ngày tạo
+- created-to: LocalDateTime (format: ISO 8601) - Lọc đến ngày tạo
+- min-price: Double - Lọc theo giá tối thiểu
+- max-price: Double - Lọc theo giá tối đa
+- contact-email: String - Lọc theo email liên hệ
+- contact-phone: String - Lọc theo số điện thoại liên hệ
+- contact-full-name: String - Lọc theo họ tên liên hệ
+- page: Integer (default: 0) - Số trang (bắt đầu từ 0)
+- size: Integer (default: 10) - Số phần tử mỗi trang
+- sort-by: String (default: "created-at") - Trường để sắp xếp
+  (có thể là: created-at, check-in-date, check-out-date, final-price, status)
+- sort-dir: String (default: "desc") - Hướng sắp xếp: "asc" hoặc "desc"
+
+Response Structure: ApiResponse<PagedResponse<BookingResponse>>
+{
+  "statusCode": Integer (default: 200)
+  "message": String (default: "")
+  "data": {
+    "content": [
+      BookingResponse (cấu trúc giống như response của endpoint 1.1),
+      ...
+    ]
+    "page": Integer - Số trang hiện tại
+    "size": Integer - Số phần tử mỗi trang
+    "totalItems": Long - Tổng số phần tử
+    "totalPages": Integer - Tổng số trang
+    "first": Boolean - Có phải trang đầu tiên không
+    "last": Boolean - Có phải trang cuối cùng không
+    "hasNext": Boolean - Có trang tiếp theo không
+    "hasPrevious": Boolean - Có trang trước đó không
+  }
+}
 
 --------------------------------------------------------------------------------
-1.3. LẤY BOOKING THEO ID
+1.4. LẤY BOOKING THEO ID
 --------------------------------------------------------------------------------
 Method: GET
 Endpoint: /bookings/{id}
@@ -192,7 +235,128 @@ Response Structure: ApiResponse<BookingResponse>
 }
 
 --------------------------------------------------------------------------------
-1.4. XÓA BOOKING
+1.5. HỦY BOOKING
+--------------------------------------------------------------------------------
+Method: POST
+Endpoint: /bookings/{id}/cancel
+
+Path Parameters:
+- id: String (required, format: UUID) - ID của booking
+
+Response Structure: ApiResponse<BookingResponse>
+{
+  "statusCode": Integer (default: 200)
+  "message": String (default: "")
+  "data": BookingResponse (cấu trúc giống như response của endpoint 1.1)
+}
+
+Lưu ý:
+- Chỉ có thể hủy booking có status là CONFIRMED hoặc RESCHEDULED
+- Sau khi hủy, booking sẽ có status là CANCELLED
+- Tiền hoàn trả sẽ được tính theo chính sách hủy phòng
+- Email thông báo hoàn tiền sẽ được gửi tự động
+
+--------------------------------------------------------------------------------
+1.6. ĐỔI LỊCH BOOKING
+--------------------------------------------------------------------------------
+Method: POST
+Endpoint: /bookings/{id}/reschedule
+
+Path Parameters:
+- id: String (required, format: UUID) - ID của booking
+
+Request Body: BookingRescheduleRequest
+{
+  "newCheckInDate": LocalDate (required, not null, format: YYYY-MM-DD) - Ngày check-in mới
+  "newCheckOutDate": LocalDate (required, not null, format: YYYY-MM-DD) - Ngày check-out mới
+}
+
+Response Structure: ApiResponse<BookingRescheduleResponse>
+{
+  "statusCode": Integer (default: 200)
+  "message": String (default: "")
+  "data": {
+    "id": String - ID của booking
+    "user": UserBriefResponse - Thông tin người dùng
+    "room": RoomBriefResponse - Thông tin phòng
+    "hotel": HotelBriefResponse - Thông tin khách sạn
+    "oldCheckInDate": LocalDate - Ngày check-in cũ
+    "oldCheckOutDate": LocalDate - Ngày check-out cũ
+    "oldNumberOfNights": Integer - Số đêm cũ
+    "oldPriceDetails": BookingPriceDetailsResponse - Chi tiết giá cũ
+    "newCheckInDate": LocalDate - Ngày check-in mới
+    "newCheckOutDate": LocalDate - Ngày check-out mới
+    "newNumberOfNights": Integer - Số đêm mới
+    "newPriceDetails": BookingPriceDetailsResponse - Chi tiết giá mới
+    "numberOfRooms": Integer - Số lượng phòng
+    "numberOfAdults": Integer - Số người lớn
+    "numberOfChildren": Integer - Số trẻ em
+    "contactFullName": String - Họ tên liên hệ
+    "contactEmail": String - Email liên hệ
+    "contactPhone": String - Số điện thoại liên hệ
+    "status": String - Trạng thái booking
+    "rescheduleFee": Double - Phí đổi lịch
+    "priceDifference": Double - Chênh lệch giá
+      (dương = khách phải trả thêm, âm = hoàn tiền, 0 = không đổi)
+    "paymentUrl": String hoặc null - URL thanh toán (nếu cần thanh toán thêm)
+    "createdAt": LocalDateTime - Thời gian tạo
+    "updatedAt": LocalDateTime - Thời gian cập nhật
+  }
+}
+
+Lưu ý:
+- Chỉ có thể đổi lịch booking có status là CONFIRMED hoặc RESCHEDULED
+- Ngày mới phải khác ngày cũ
+- Nếu priceDifference > 0: khách cần thanh toán thêm (có paymentUrl)
+- Nếu priceDifference < 0: hệ thống sẽ hoàn tiền tự động
+- Nếu priceDifference = 0: không cần thanh toán thêm
+- Email thông báo đổi lịch sẽ được gửi tự động
+
+--------------------------------------------------------------------------------
+1.7. CHECK-IN BOOKING
+--------------------------------------------------------------------------------
+Method: POST
+Endpoint: /bookings/{id}/checkin
+
+Path Parameters:
+- id: String (required, format: UUID) - ID của booking
+
+Response Structure: ApiResponse<BookingResponse>
+{
+  "statusCode": Integer (default: 200)
+  "message": String (default: "")
+  "data": BookingResponse (cấu trúc giống như response của endpoint 1.1)
+}
+
+Lưu ý:
+- Chỉ có thể check-in booking có status là CONFIRMED hoặc RESCHEDULED
+- Ngày check-in phải là hôm nay hoặc trong quá khứ
+- Email thông báo check-in sẽ được gửi tự động
+
+--------------------------------------------------------------------------------
+1.8. CHECK-OUT BOOKING
+--------------------------------------------------------------------------------
+Method: POST
+Endpoint: /bookings/{id}/checkout
+
+Path Parameters:
+- id: String (required, format: UUID) - ID của booking
+
+Response Structure: ApiResponse<BookingResponse>
+{
+  "statusCode": Integer (default: 200)
+  "message": String (default: "")
+  "data": BookingResponse (cấu trúc giống như response của endpoint 1.1)
+}
+
+Lưu ý:
+- Chỉ có thể check-out booking có status là CONFIRMED hoặc RESCHEDULED
+- Ngày check-out phải là hôm nay hoặc trong quá khứ
+- Sau khi check-out, booking sẽ có status là COMPLETED
+- Email thông báo check-out (kèm hướng dẫn đánh giá) sẽ được gửi tự động
+
+--------------------------------------------------------------------------------
+1.9. XÓA BOOKING
 --------------------------------------------------------------------------------
 Method: DELETE
 Endpoint: /bookings/{id}
@@ -457,9 +621,8 @@ CHÚ Ý CHUNG:
 5. Tất cả các endpoint đều có validation, nếu request không hợp lệ sẽ trả về
    lỗi validation với message tương ứng.
 
-6. Endpoint GET /bookings/price-preview sử dụng Request Body thay vì Query Parameters,
-   đây có thể là thiết kế không chuẩn RESTful. Có thể xem xét chuyển sang POST
-   hoặc chuyển các tham số sang Query Parameters.
+6. Endpoint POST /bookings/price-preview đã được sửa từ GET sang POST để phù hợp
+   với việc sử dụng Request Body.
 
 ================================================================================
 KẾT THÚC TÀI LIỆU
