@@ -2,7 +2,7 @@
 
 import type { Room } from "@/types";
 import Link from 'next/link';
-// Import các icon nếu cần
+import { EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 export default function RoomsTable({ rooms, hotelId }: { rooms: Room[], hotelId: string }) {
     if (rooms.length === 0) {
@@ -33,7 +33,29 @@ export default function RoomsTable({ rooms, hotelId }: { rooms: Room[], hotelId:
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{room.price.toLocaleString('vi-VN')} VNĐ</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{room.status}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                <Link href={`/admin-rooms/${room.id}`} className="text-indigo-600 hover:text-indigo-900">Sửa</Link>
+                                <div className="inline-flex items-center justify-center gap-x-4">
+                                    <button
+                                        onClick={() => alert(`(Giả lập) Xem chi tiết phòng: ${room.name}`)}
+                                        className="text-green-600 hover:text-green-700 transition-colors"
+                                        title="Xem chi tiết"
+                                    >
+                                        <EyeIcon className="h-5 w-5" />
+                                    </button>
+                                    <Link
+                                        href={`/admin-rooms/${room.id}`}
+                                        className="text-blue-600 hover:text-blue-700 transition-colors"
+                                        title="Chỉnh sửa"
+                                    >
+                                        <PencilIcon className="h-5 w-5" />
+                                    </Link>
+                                    <button
+                                        onClick={() => confirm(`Bạn có chắc chắn muốn xóa phòng "${room.name}" không?`) && alert(`(Giả lập) Đã xóa phòng: ${room.name}`)}
+                                        className="text-red-600 hover:text-red-700 transition-colors"
+                                        title="Xóa"
+                                    >
+                                        <TrashIcon className="h-5 w-5" />
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     ))}

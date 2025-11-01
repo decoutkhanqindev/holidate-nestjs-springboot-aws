@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import type { User, UserStatus } from '@/types';
 
 function RoleSelector({ user, currentUser }: { user: User; currentUser: User }) {
@@ -111,11 +111,18 @@ export default function UsersTable({ users, currentUser, onEdit }: UsersTablePro
                                 </td>
 
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <div className="inline-flex items-center gap-x-4">
+                                    <div className="inline-flex items-center justify-end gap-x-4">
+                                        <button
+                                            onClick={() => alert(`(Giả lập) Xem chi tiết người dùng: ${user.username}`)}
+                                            className="text-green-600 hover:text-green-700 transition-colors"
+                                            title="Xem chi tiết"
+                                        >
+                                            <EyeIcon className="h-5 w-5" />
+                                        </button>
                                         <button
                                             onClick={() => onEdit(user)}
                                             disabled={currentUser.id === user.id}
-                                            className="text-indigo-600 hover:text-indigo-800 disabled:text-gray-300"
+                                            className="text-blue-600 hover:text-blue-700 disabled:text-gray-300 disabled:cursor-not-allowed transition-colors"
                                             title="Chỉnh sửa"
                                         >
                                             <PencilIcon className="h-5 w-5" />
@@ -123,7 +130,7 @@ export default function UsersTable({ users, currentUser, onEdit }: UsersTablePro
                                         <button
                                             onClick={() => handleDelete(user.id, user.username)}
                                             disabled={currentUser.id === user.id}
-                                            className="text-red-500 hover:text-red-700 disabled:text-gray-300 items-center"
+                                            className="text-red-600 hover:text-red-700 disabled:text-gray-300 disabled:cursor-not-allowed transition-colors"
                                             title="Xóa"
                                         >
                                             <TrashIcon className="h-5 w-5" />

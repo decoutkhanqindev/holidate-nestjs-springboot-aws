@@ -1,4 +1,4 @@
-/* src/app/terms-and-conditions/Terms.module.css */
+/* src/app/operating-regulations/OperatingRegulations.module.css */
 
 .pageWrapper {
     background-color: #f5f5f5;
@@ -30,12 +30,16 @@
 }
 
 .documentContainer {
-    max-width: 950px; /* Wider for better readability */
+    max-width: 950px;
+    /* Wider than A4 for better readability */
     margin: 0 auto;
     background-color: #ffffff;
-    padding: 40px 90px 80px 90px; /* Top padding reduced, others remain */
+    padding: 40px 90px 80px 90px;
+    /* Top padding reduced for header spacing, others remain */
     font-family: 'Times New Roman', Times, serif;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    min-height: 1123px;
+    /* A4 height at 96 DPI */
     position: relative;
 }
 
@@ -67,48 +71,107 @@
     font-size: 14px;
 }
 
-/* Logo Section */
-.logoContainer {
-    text-align: center;
-    margin-bottom: 30px;
+/* Document Header */
+.documentHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12pt;
 }
 
-.logo {
-    display: inline-block;
-    font-size: 24pt;
-    font-weight: 700;
+.companyInfo {
+    text-align: left;
+}
+
+.companyType {
+    font-size: 13pt;
     color: #1a1a1a;
-    text-decoration: none;
-    letter-spacing: -0.5px;
-    font-family: 'Times New Roman', Times, serif;
+    margin: 0 0 4px 0;
+    font-weight: 400;
 }
 
-.logo:hover {
-    color: #1a1a1a;
-    text-decoration: none;
-}
-
-/* Header */
-.header {
-    text-align: center;
-    margin-bottom: 24pt;
-}
-
-.header h1 {
+.companyName {
     font-size: 14pt;
     font-weight: 700;
     color: #1a1a1a;
+    margin: 0;
+}
+
+.republicInfo {
+    text-align: right;
+}
+
+.republicTitle {
+    font-size: 13pt;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 4px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.republicMotto {
+    font-size: 13pt;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+/* Document Meta (Number and Date) */
+.documentMeta {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12pt;
+    margin-top: 6pt;
+}
+
+.documentNumber {
+    text-align: left;
+}
+
+.documentNumber p {
+    font-size: 13pt;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.documentDate {
+    text-align: right;
+}
+
+.documentDate p {
+    font-size: 13pt;
+    color: #1a1a1a;
+    font-style: italic;
+    margin: 0;
+}
+
+/* Main Title */
+.mainTitle {
+    font-size: 14pt;
+    font-weight: 700;
+    color: #1a1a1a;
+    text-align: center;
+    text-transform: uppercase;
     margin: 0 0 12pt 0;
     letter-spacing: 0.5px;
-    text-transform: uppercase;
     line-height: 1.5;
 }
 
-.lastModified {
-    font-size: 12pt;
-    color: #666;
-    margin: 0;
-    font-weight: 400;
+/* Introduction Section */
+.introSection {
+    margin-bottom: 12pt;
+}
+
+.introSection p {
+    font-size: 13pt;
+    line-height: 1.5;
+    color: #1a1a1a;
+    margin-bottom: 12pt;
+    text-align: justify;
+    text-justify: inter-word;
+    text-indent: 0;
+    word-spacing: normal;
 }
 
 /* Sections */
@@ -123,26 +186,26 @@
     margin-top: 12pt;
     margin-bottom: 6pt;
     text-transform: uppercase;
+    text-align: left;
     letter-spacing: 0.3px;
     line-height: 1.5;
 }
 
-.section p {
+.subsection {
+    margin-bottom: 0;
+}
+
+.paragraph {
     font-size: 13pt;
     line-height: 1.5;
     color: #1a1a1a;
-    margin-bottom: 12pt;
-    text-align: justify;
-    text-justify: inter-word;
-    word-spacing: normal;
-}
-
-/* Subsection styling */
-.subsection {
     margin-bottom: 6pt;
+    margin-top: 0;
     text-align: justify;
     text-justify: inter-word;
+    text-indent: 0;
     word-spacing: normal;
+    padding-left: 0;
 }
 
 .subsectionNumber {
@@ -151,14 +214,13 @@
     display: inline;
 }
 
+.paragraph b {
+    font-weight: 700;
+}
+
 /* Nested Lists */
 .nestedList {
     margin: 6pt 0 6pt 0;
-    padding-left: 0;
-}
-
-.nestedListLevel2 {
-    margin: 6pt 0 6pt 24pt;
     padding-left: 0;
 }
 
@@ -167,26 +229,42 @@
     line-height: 1.5;
     color: #1a1a1a;
     margin-bottom: 6pt;
+    display: flex;
+    align-items: flex-start;
     text-align: justify;
     text-justify: inter-word;
     word-spacing: normal;
 }
 
-.listNumber {
-    font-weight: 400;
-    margin-right: 6px;
-    display: inline;
-}
-
 .listLetter {
     font-weight: 400;
-    margin-right: 6px;
-    display: inline;
+    margin-right: 8px;
+    flex-shrink: 0;
 }
 
-.listItem b {
-    color: #1a1a1a;
+/* Footer */
+.footer {
+    margin-top: 24pt;
+    padding-top: 12pt;
+    border-top: 1px solid #e0e0e0;
+}
+
+.footerSection {
+    text-align: left;
+}
+
+.footerTitle {
+    font-size: 13pt;
     font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 6pt 0;
+}
+
+.footerSection p {
+    font-size: 12pt;
+    color: #1a1a1a;
+    margin: 6pt 0;
+    line-height: 1.5;
 }
 
 /* Responsive */
@@ -202,6 +280,7 @@
     .documentContainer {
         max-width: 100%;
         padding: 20px 30px 40px 30px;
+        min-height: auto;
         box-shadow: none;
     }
 
@@ -220,7 +299,7 @@
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
     .topHeader {
         padding: 10px 12px;
     }
@@ -238,22 +317,55 @@
     .breadcrumbText {
         font-size: 12px;
     }
+}
 
-    .header h1 {
-        font-size: 13pt;
+@media (max-width: 480px) {
+    .breadcrumb {
+        margin-bottom: 10px;
+        gap: 4px;
+    }
+
+    .homeIcon {
+        width: 12px;
+        height: 12px;
+    }
+
+    .breadcrumbSeparator,
+    .breadcrumbText {
+        font-size: 11px;
+    }
+
+    .documentHeader {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .companyInfo,
+    .republicInfo {
+        text-align: left;
+    }
+
+    .documentMeta {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .documentNumber,
+    .documentDate {
+        text-align: left;
+    }
+
+    .mainTitle {
+        font-size: 14pt;
     }
 
     .sectionTitle {
         font-size: 12pt;
     }
 
-    .section p,
+    .paragraph,
     .listItem,
-    .subsection {
+    .introSection p {
         font-size: 12pt;
-    }
-
-    .nestedListLevel2 {
-        margin-left: 18pt;
     }
 }

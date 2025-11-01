@@ -48,7 +48,7 @@ export default function Footer() {
                         <ul className="list-unstyled">
                             <li className="mb-2"><Link href="/privacy" className="text-secondary text-decoration-none">Chính sách bảo mật</Link></li>
                             <li className="mb-2"><Link href="/terms-and-conditions" className="text-secondary text-decoration-none">Điều khoản & Điều kiện</Link></li>
-                            <li className="mb-2"><Link href="/rules" className="text-secondary text-decoration-none">Quy chế hoạt động</Link></li>
+                            <li className="mb-2"><Link href="/operating-regulations" className="text-secondary text-decoration-none">Quy chế hoạt động</Link></li>
                         </ul>
                     </div>
 

@@ -67,11 +67,29 @@ export default function BookingsTable({ bookings }: BookingsTableProps) {
                                 <td className="p-4 whitespace-nowrap text-sm font-semibold text-gray-900">{booking.totalAmount.toLocaleString('vi-VN')} VND</td>
                                 <td className="p-4 whitespace-nowrap"><StatusBadge status={booking.paymentStatus} type="payment" /></td>
                                 <td className="p-4 whitespace-nowrap"><StatusBadge status={booking.bookingStatus} type="booking" /></td>
-                                <td className="p-4 whitespace-nowrap text-right text-sm">
-                                    <div className="inline-flex items-center gap-x-4">
-                                        <button className="text-gray-500 hover:text-blue-600" title="Xem chi tiết"><EyeIcon className="h-5 w-5" /></button>
-                                        <button className="text-gray-500 hover:text-indigo-600" title="Chỉnh sửa"><PencilIcon className="h-5 w-5" /></button>
-                                        <button className="text-gray-500 hover:text-red-600" title="Xóa"><TrashIcon className="h-5 w-5" /></button>
+                                <td className="p-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <div className="inline-flex items-center justify-end gap-x-4">
+                                        <button
+                                            onClick={() => alert(`(Giả lập) Xem chi tiết đặt phòng ID: ${booking.id}`)}
+                                            className="text-green-600 hover:text-green-700 transition-colors"
+                                            title="Xem chi tiết"
+                                        >
+                                            <EyeIcon className="h-5 w-5" />
+                                        </button>
+                                        <button
+                                            onClick={() => alert(`(Giả lập) Chỉnh sửa đặt phòng ID: ${booking.id}`)}
+                                            className="text-blue-600 hover:text-blue-700 transition-colors"
+                                            title="Chỉnh sửa"
+                                        >
+                                            <PencilIcon className="h-5 w-5" />
+                                        </button>
+                                        <button
+                                            onClick={() => confirm(`Bạn có chắc chắn muốn xóa đặt phòng ID: ${booking.id} không?`) && alert(`(Giả lập) Đã xóa đặt phòng ID: ${booking.id}`)}
+                                            className="text-red-600 hover:text-red-700 transition-colors"
+                                            title="Xóa"
+                                        >
+                                            <TrashIcon className="h-5 w-5" />
+                                        </button>
                                     </div>
                                 </td>
                             </tr>

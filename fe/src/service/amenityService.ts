@@ -1,6 +1,6 @@
 // File: src/service/amenityService.ts
 
-import { hotelService } from './hotelService'; // Sử dụng lại axios instance đã tạo
+import { hotelService } from './hotelService';
 import { AxiosInstance } from 'axios';
 
 // Interface cho một tiện ích cụ thể

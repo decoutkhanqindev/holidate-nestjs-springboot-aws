@@ -6,6 +6,22 @@ import Link from 'next/link';
 export default function TermsAndConditionsPage() {
     return (
         <div className={styles.pageWrapper}>
+            {/* Top Header with Breadcrumb */}
+            <header className={styles.topHeader}>
+                <div className={styles.headerContainer}>
+                    <div className={styles.breadcrumb}>
+                        <Link href="/" className={styles.homeLink}>
+                            <svg className={styles.homeIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M9 22V12H15V22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                        </Link>
+                        <span className={styles.breadcrumbSeparator}>/</span>
+                        <span className={styles.breadcrumbText}>Điều khoản & Điều kiện</span>
+                    </div>
+                </div>
+            </header>
+
             <div className={styles.documentContainer}>
                 <header className={styles.header}>
                     <h1>ĐIỀU KHOẢN VÀ ĐIỀU KIỆN SỬ DỤNG</h1>
@@ -30,7 +46,7 @@ export default function TermsAndConditionsPage() {
                         Holidate vận hành và quản lý Trang Web cung cấp một nền tảng trực tuyến để kết nối bạn với các nhà cung cấp...
                     </p>
                     <ul className={styles.list}>
-                        <li><b>“Sản Phẩm Du Lịch”</b>: bao gồm Đặt Chuyến Bay, Vận Chuyển Đường Bộ, Dịch Vụ Lưu Trú, Hoạt Động Du Lịch...</li>
+                        <li><b>“Sản Phẩm Du Lịch”</b>: bao gồm Đặt Khách sạn, Dịch Vụ Lưu Trú, Hoạt Động Du Lịch...</li>
                         <li><b>“Dịch Vụ Tài Chính”</b>: bao gồm tài trợ, bảo hiểm...</li>
                         <li><b>“Hoạt Động”</b>: bao gồm trò chơi, chiến dịch, khuyến mãi...</li>
                         <li><b>“Các Sản Phẩm Khác”</b>: bao gồm phiếu quà tặng, phiếu du lịch...</li>

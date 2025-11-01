@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from 'react';
-import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import type { Discount } from '@/types';
 
 function formatDiscountValue(value: number, type: 'PERCENT' | 'AMOUNT') {
@@ -52,16 +52,23 @@ export default function DiscountsTable({ discounts, onEdit }: DiscountsTableProp
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                     {new Date(discount.expiresAt).toLocaleDateString('vi-VN')}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap  text-sm font-medium">
-                                    <div className="inline-flex items-center gap-x-5">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div className="inline-flex items-center justify-center gap-x-4">
+                                        <button
+                                            onClick={() => alert(`(Giả lập) Xem chi tiết mã giảm giá: ${discount.code}`)}
+                                            className="text-green-600 hover:text-green-700 transition-colors"
+                                            title="Xem chi tiết"
+                                        >
+                                            <EyeIcon className="h-5 w-5" />
+                                        </button>
                                         <button
                                             onClick={() => onEdit(discount)}
-                                            className="text-indigo-600 hover:text-indigo-800"
+                                            className="text-blue-600 hover:text-blue-700 transition-colors"
                                             title="Chỉnh sửa"
                                         >
                                             <PencilIcon className="h-5 w-5" />
                                         </button>
-                                        <button onClick={() => handleDelete(discount.id, discount.code)} disabled={isPending} className="text-red-600 hover:text-red-800 disabled:text-gray-400" title="Xóa">
+                                        <button onClick={() => handleDelete(discount.id, discount.code)} disabled={isPending} className="text-red-600 hover:text-red-700 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors" title="Xóa">
                                             <TrashIcon className="h-5 w-5" />
                                         </button>
                                     </div>
