@@ -1,0 +1,324 @@
+/* src/app/my-bookings/MyBookings.module.css */
+
+.pageContainer {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.centered {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #555;
+}
+
+.bookingCard {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.2s ease-in-out;
+    overflow: hidden;
+}
+
+.bookingCard:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.headerRight {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.cardHeader h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #333;
+}
+
+.status {
+    padding: 5px 12px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.confirmed, .rescheduled {
+    background-color: #d1e7dd;
+    color: #0f5132;
+}
+
+.pending_payment, .pending {
+    background-color: #fff3cd;
+    color: #664d03;
+}
+
+.cancelled, .failed {
+    background-color: #f8d7da;
+    color: #842029;
+}
+
+.completed {
+    background-color: #cfe2ff;
+    color: #052c65;
+}
+
+/* CẬP NHẬT LAYOUT Ở ĐÂY */
+.cardBody {
+    padding: 10px;
+}
+
+.infoGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 24px;
+}
+
+.infoGrid p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #555;
+    line-height: 1.5;
+}
+
+.infoGrid p strong {
+    color: #333;
+    margin-right: 8px;
+    font-weight: 600;
+}
+
+.fullRow {
+    grid-column: 1 / -1;
+    margin-top: 8px !important;
+}
+
+.finalPrice {
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: #d9534f;
+}
+
+.detailsContainer {
+    padding: 0 20px 20px 20px;
+}
+
+.amenityList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 5px;
+}
+
+.amenityTag {
+    background-color: #f0f0f0;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #555;
+}
+
+.divider {
+    border: 0;
+    border-top: 1px dashed #ccc;
+    margin: 15px 0;
+}
+
+.cardActions {
+    padding: 10px 15px;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.actionButton {
+    padding: 4px 14px;
+    border: 1px solid #ccc;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.actionButton:hover {
+    background-color: #e2e6ea;
+}
+
+.reschedule {
+    border-color: #0d6efd;
+    color: #0d6efd;
+}
+
+.reschedule:hover {
+    background-color: #e7f1ff;
+}
+
+.cancel {
+    border-color: #dc3545;
+    color: #dc3545;
+}
+
+.cancel:hover {
+    background-color: #fbebee;
+}
+
+.toggleButton {
+    background: #f0f0f0;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #555;
+    transition: transform 0.3s ease;
+}
+
+.toggleButton.expanded {
+    transform: rotate(180deg);
+}
+
+/* MODAL STYLES */
+/* ... (giữ nguyên) ... */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modalContent {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.modalContent h2 {
+    margin-top: 0;
+    font-size: 1.5rem;
+}
+
+.datePickerGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.datePickerWrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.datePickerWrapper label {
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+    color: #555;
+    font-weight: 500;
+}
+
+.datePickerInput {
+    width: 100%;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
+
+.policyWarning {
+    font-size: 0.85rem;
+    color: #6c757d;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 15px;
+}
+
+.modalError {
+    color: #dc3545;
+    font-size: 0.9rem;
+    margin-top: 15px;
+}
+
+.modalActions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.modalButtonConfirm, .modalButtonCancel {
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.modalButtonConfirm {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.modalButtonConfirm:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.modalButtonCancel {
+    background-color: #f8f9fa;
+    border: 1px solid #ccc;
+}
+
+/* Thêm vào cuối file src/app/my-bookings/MyBookings.module.css */
+
+.expandedContent {
+    display: flex;
+    gap: 20px;
+}
+
+.expandedInfo {
+    display: flex;
+    flex-direction: column;
+}
+
+.expandedInfo h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.expandedInfo p {
+    margin: 5px 0;
+}

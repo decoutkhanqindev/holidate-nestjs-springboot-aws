@@ -1,0 +1,82 @@
+/* src/app/about-us/AboutUs.module.css */
+
+.pageContainer {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    color: #333;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.header h1 {
+    font-size: 2.8rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.header p {
+    font-size: 1.2rem;
+    color: #666;
+}
+
+.section {
+    display: flex;
+    align-items: center;
+    gap: 50px;
+    margin-bottom: 60px;
+}
+
+/* Đảo ngược thứ tự cho section chẵn */
+.section:nth-child(even) {
+    flex-direction: row-reverse;
+}
+
+.textContainer {
+    flex: 1;
+}
+
+.textContainer h2 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.textContainer p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    margin-bottom: 15px;
+    color: #555;
+}
+
+.imageContainer {
+    flex: 1;
+    text-align: center;
+}
+
+.image {
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    object-fit: cover;
+    width: 100%;
+    height: auto;
+}
+
+/* Responsive cho màn hình nhỏ */
+@media (max-width: 768px) {
+    .section, .section:nth-child(even) {
+        flex-direction: column;
+    }
+
+    .header h1 {
+        font-size: 2rem;
+    }
+
+    .textContainer h2 {
+        font-size: 1.5rem;
+    }
+}

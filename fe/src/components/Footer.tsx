@@ -47,7 +47,7 @@ export default function Footer() {
                         <h6 className="fw-bold text-white mb-3">Chính sách</h6>
                         <ul className="list-unstyled">
                             <li className="mb-2"><Link href="/privacy" className="text-secondary text-decoration-none">Chính sách bảo mật</Link></li>
-                            <li className="mb-2"><Link href="/terms" className="text-secondary text-decoration-none">Điều khoản & Điều kiện</Link></li>
+                            <li className="mb-2"><Link href="/terms-and-conditions" className="text-secondary text-decoration-none">Điều khoản & Điều kiện</Link></li>
                             <li className="mb-2"><Link href="/rules" className="text-secondary text-decoration-none">Quy chế hoạt động</Link></li>
                         </ul>
                     </div>
@@ -58,14 +58,7 @@ export default function Footer() {
                             <Image src="/images/OIP.jpg" alt="VNPAY Logo" width={100} height={30} style={{ width: '100%', height: 'auto' }} />
                         </div>
 
-                        <h6 className="fw-bold text-white mb-3 mt-4">Đăng ký nhận tin</h6>
-                        <p className="text-secondary small">Nhận các thông tin khuyến mãi và ưu đãi mới nhất từ chúng tôi.</p>
-                        <form>
-                            <div className="input-group">
-                                <input type="email" className="form-control" placeholder="Email của bạn" />
-                                <button className="btn btn-primary" type="button">Đăng ký</button>
-                            </div>
-                        </form>
+
                     </div>
 
                 </div>
@@ -73,8 +66,8 @@ export default function Footer() {
                 {/* --- Đường kẻ ngang và Copyright --- */}
                 <hr className="mt-5 mb-3" style={{ borderColor: '#4A5568' }} />
                 <div className="text-center text-secondary pb-3 small">
-                    <p className="mb-1">Công ty TNHH YourHotel Việt Nam. MSỐ DN: 123456789</p>
-                    <p className="mb-0">Copyright © {new Date().getFullYear()} YourHotel. All rights reserved.</p>
+                    <p className="mb-1">Công ty TNHH Đại Học Công Nghiệp Thành phố Hồ Chí Minh. MSỐ DN: 123456789</p>
+                    <p className="mb-0">Copyright © {new Date().getFullYear()} CNTT-K17. All rights reserved.</p>
                 </div>
             </div>
         </footer>

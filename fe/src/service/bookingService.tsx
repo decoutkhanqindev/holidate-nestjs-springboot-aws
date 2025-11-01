@@ -1,96 +1,113 @@
+// src/service/bookingService.ts
+
 import apiClient, { ApiResponse } from './apiClient';
 
-// === INTERFACES CHO BOOKING ===
-export interface CreateBookingPayload {
-    userId: string;
-    roomId: string;
-    hotelId: string;
+// === INTERFACES CHUNG ===
+export interface PagedResponse<T> {
+    content: T[];
+    page: number;
+    size: number;
+    totalItems: number;
+    totalPages: number;
+}
+
+// CẬP NHẬT: Interface BookingResponse bây giờ sẽ chứa đầy đủ thông tin chi tiết
+export interface BookingResponse {
+    id: string;
+    hotel: {
+        id: string;
+        name: string;
+    };
+    room: {
+        id: string;
+        name: string;
+        photos?: { photos: { url: string }[] }[]; // Mảng ảnh
+        amenities?: { name: string, amenities: { name: string }[] }[]; // Mảng tiện nghi
+    };
     checkInDate: string;
     checkOutDate: string;
-    numberOfRooms: number;
-    numberOfAdults: number;
-    numberOfChildren: number;
-    contactFullName: string;
-    contactEmail: string;
-    contactPhone: string;
-    discountCode?: string;
-}
-
-export interface CreateBookingResponse {
-    id: string;
-    paymentUrl: string;
     status: string;
-}
-
-// === INTERFACES CHO XEM TRƯỚC GIÁ ===
-export interface BookingPricePreviewPayload {
-    roomId: string;
-    startDate: string;
-    endDate: string;
-    numberOfRooms: number;
+    createdAt: string;
     numberOfAdults: number;
     numberOfChildren: number;
-    discountCode?: string;
+    priceDetails: {
+        finalPrice: number;
+    };
 }
 
-export interface BookingPriceDetailsResponse {
-    originalPrice: number;
-    discountAmount: number;
-    netPriceAfterDiscount: number;
-    tax: { name: string; percentage: number; amount: number };
-    serviceFee: { name: string; percentage: number; amount: number };
-    finalPrice: number;
-    appliedDiscount: { code: string; } | null;
-}
+// === INTERFACES CHO TỪNG API ===
+
+export interface CreateBookingPayload { userId: string; roomId: string; hotelId: string; checkInDate: string; checkOutDate: string; numberOfRooms: number; numberOfAdults: number; numberOfChildren: number; contactFullName: string; contactEmail: string; contactPhone: string; discountCode?: string; }
+export interface CreateBookingResponse { id: string; paymentUrl: string; status: string; }
+export interface BookingPricePreviewPayload { roomId: string; startDate: string; endDate: string; numberOfRooms: number; numberOfAdults: number; numberOfChildren: number; discountCode?: string; }
+export interface BookingPriceDetailsResponse { originalPrice: number; discountAmount: number; netPriceAfterDiscount: number; tax: { name: string; percentage: number; amount: number }; serviceFee: { name: string; percentage: number; amount: number }; finalPrice: number; appliedDiscount: { code: string; } | null; }
+export interface RescheduleBookingPayload { newCheckInDate: string; newCheckOutDate: string; }
+export interface RescheduleBookingResponse { id: string; status: string; priceDifference: number; paymentUrl?: string; }
+
+
+// === SERVICE CLASS ===
 
 class BookingService {
     private api = apiClient;
 
-    // API TẠO BOOKING (1.1)
     async createBooking(payload: CreateBookingPayload): Promise<CreateBookingResponse> {
         try {
             const response = await this.api.post<ApiResponse<CreateBookingResponse>>('/bookings', payload);
-            if (response.data?.data?.paymentUrl) {
-                return response.data.data;
-            }
-            throw new Error("Phản hồi từ server không hợp lệ hoặc không chứa URL thanh toán.");
+            if (response.data?.data?.paymentUrl) { return response.data.data; }
+            throw new Error("Phản hồi không hợp lệ.");
         } catch (error: any) {
-            const errorMessage = error.response?.data?.message || 'Không thể tạo yêu cầu đặt phòng. Vui lòng thử lại.';
-            throw new Error(errorMessage);
+            throw new Error(error.response?.data?.message || 'Không thể tạo yêu cầu đặt phòng.');
         }
     }
 
-    // API XEM TRƯỚC GIÁ (1.2) - ĐÃ SỬA LỖI
     async getBookingPricePreview(payload: BookingPricePreviewPayload): Promise<BookingPriceDetailsResponse> {
         try {
-            console.log("🕵️ [DEBUG] Payload gửi đến API price-preview:", JSON.stringify(payload, null, 2));
-            const response = await this.api.request<ApiResponse<BookingPriceDetailsResponse>>({
-                method: 'GET',
-                url: '/bookings/price-preview',
-                data: payload // 'data' chính là Request Body
-            });
-
-            if (response.data && response.data.data) {
-                return response.data.data;
-            }
-            throw new Error("Cấu trúc phản hồi xem trước giá không hợp lệ.");
+            console.log("debug payload", payload);
+            const response = await this.api.post<ApiResponse<BookingPriceDetailsResponse>>('/bookings/price-preview', payload);
+            if (response.data && response.data.data) { return response.data.data; }
+            throw new Error("Cấu trúc phản hồi không hợp lệ.");
         } catch (error: any) {
-            const errorMessage = error.response?.data?.message || 'Không thể xem trước giá phòng.';
-            throw new Error(errorMessage);
+            throw new Error(error.response?.data?.message || 'Không thể xem trước giá phòng.');
         }
     }
 
-    // API LẤY CHI TIẾT BOOKING (1.3)
+    async getBookings(params: { 'user-id'?: string; page?: number; size?: number; 'sort-by'?: string, 'sort-dir'?: string }): Promise<PagedResponse<BookingResponse>> {
+        try {
+            const response = await this.api.get<ApiResponse<PagedResponse<BookingResponse>>>('/bookings', { params });
+            if (response.data && response.data.data) { return response.data.data; }
+            throw new Error("Không thể tải danh sách đặt phòng.");
+        } catch (error: any) {
+            throw new Error(error.response?.data?.message || 'Lỗi khi tải lịch sử đặt phòng.');
+        }
+    }
+
     async getBookingById(bookingId: string): Promise<any> {
         try {
             const response = await this.api.get<ApiResponse<any>>(`/bookings/${bookingId}`);
-            if (response.data && response.data.data) {
-                return response.data.data;
-            }
-            throw new Error("Không tìm thấy dữ liệu cho đơn hàng này.");
+            if (response.data && response.data.data) { return response.data.data; }
+            throw new Error("Không tìm thấy đơn hàng.");
         } catch (error: any) {
-            console.error(`Lỗi khi lấy booking theo ID ${bookingId}:`, error);
-            throw new Error('Không thể tìm thấy thông tin đơn hàng.');
+            throw new Error(error.response?.data?.message || 'Không thể tìm thông tin đơn hàng.');
+        }
+    }
+
+    async cancelBooking(bookingId: string): Promise<BookingResponse> {
+        try {
+            const response = await this.api.post<ApiResponse<BookingResponse>>(`/bookings/${bookingId}/cancel`);
+            if (response.data && response.data.data) { return response.data.data; }
+            throw new Error("Phản hồi hủy phòng không hợp lệ.");
+        } catch (error: any) {
+            throw new Error(error.response?.data?.message || 'Không thể hủy phòng. Vui lòng thử lại.');
+        }
+    }
+
+    async rescheduleBooking(bookingId: string, payload: RescheduleBookingPayload): Promise<RescheduleBookingResponse> {
+        try {
+            const response = await this.api.post<ApiResponse<RescheduleBookingResponse>>(`/bookings/${bookingId}/reschedule`, payload);
+            if (response.data && response.data.data) { return response.data.data; }
+            throw new Error("Phản hồi đổi lịch không hợp lệ.");
+        } catch (error: any) {
+            throw new Error(error.response?.data?.message || 'Không thể đổi lịch. Vui lòng thử lại.');
         }
     }
 }

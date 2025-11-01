@@ -524,3 +524,57 @@
     padding: 0;
     font: inherit;
 }
+
+/* Thêm vào file BookingPage.module.css */
+.discountForm {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.discountInput {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    text-transform: uppercase;
+    /* Tự động viết hoa mã */
+}
+
+.discountButton {
+    padding: 10px 20px;
+    background-color: #0d6efd;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    /* Ngăn chữ bị xuống dòng */
+}
+
+.discountButton:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.discountSuccess {
+    color: #198754;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.discountError {
+    color: #dc3545;
+    margin-top: 10px;
+}
+
+/* Style cho nút đăng nhập nếu bạn chưa có */
+.loginLink {
+    background: none;
+    border: none;
+    color: #0d6efd;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+    font: inherit;
+}

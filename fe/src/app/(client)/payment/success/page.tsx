@@ -7,7 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { bookingService } from '@/service/bookingService';
 
-// THAY ĐỔI 1: Cập nhật interface, thêm contactEmail
+// Định nghĩa kiểu dữ liệu cho chi tiết booking
 interface BookingDetails {
     id: string;
     status: 'confirmed' | 'pending' | 'failed' | 'cancelled';
@@ -28,7 +28,7 @@ interface BookingDetails {
     numberOfAdults: number;
     numberOfChildren: number;
     contactFullName: string;
-    contactEmail: string;    // Thêm email
+    contactEmail: string;
     contactPhone: string;
     createdAt: string;
     priceDetails: {
@@ -82,7 +82,8 @@ function SuccessComponent() {
     const headerStyle: React.CSSProperties = { textAlign: 'center', color: '#28a745', marginBottom: '40px' };
     const cardStyle: React.CSSProperties = { backgroundColor: '#fff', border: '1px solid #e0e0e0', borderRadius: '8px', padding: '30px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' };
     const infoRowStyle: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', padding: '12px 0', alignItems: 'center' };
-    const buttonStyle: React.CSSProperties = { display: 'inline-block', marginTop: '20px', padding: '12px 24px', backgroundColor: '#007bff', color: 'white', textDecoration: 'none', borderRadius: '5px', fontWeight: 'bold' };
+    const buttonStyle: React.CSSProperties = { display: 'inline-block', padding: '12px 24px', backgroundColor: '#007bff', color: 'white', textDecoration: 'none', borderRadius: '5px', fontWeight: 'bold', border: '1px solid #007bff' };
+    const secondaryButtonStyle: React.CSSProperties = { display: 'inline-block', padding: '12px 24px', backgroundColor: 'transparent', color: '#007bff', textDecoration: 'none', borderRadius: '5px', fontWeight: 'bold', border: '1px solid #007bff' };
     const actionsStyle: React.CSSProperties = { textAlign: 'center', marginTop: '40px', display: 'flex', justifyContent: 'center', gap: '20px' };
 
     if (isLoading) {
@@ -117,7 +118,6 @@ function SuccessComponent() {
                     <span>Họ và tên:</span>
                     <strong>{bookingDetails.contactFullName}</strong>
                 </div>
-                {/* THAY ĐỔI 2: Thêm dòng hiển thị email */}
                 <div style={infoRowStyle}>
                     <span>Email:</span>
                     <strong>{bookingDetails.contactEmail}</strong>
@@ -164,8 +164,10 @@ function SuccessComponent() {
                 </div>
             </div>
 
+            {/* THAY ĐỔI Ở ĐÂY */}
             <div style={actionsStyle}>
                 <Link href="/" style={buttonStyle}>Về trang chủ</Link>
+                <Link href="/my-booking" style={secondaryButtonStyle}>Xem lịch sử đặt phòng</Link>
             </div>
         </div>
     );
