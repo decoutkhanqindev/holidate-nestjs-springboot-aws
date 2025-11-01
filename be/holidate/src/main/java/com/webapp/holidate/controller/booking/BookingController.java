@@ -12,6 +12,7 @@ import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.base.PagedResponse;
 import com.webapp.holidate.dto.response.booking.BookingPriceDetailsResponse;
 import com.webapp.holidate.dto.response.booking.BookingResponse;
+import com.webapp.holidate.dto.response.booking.BookingRescheduleResponse;
 import com.webapp.holidate.service.booking.BookingService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -103,11 +104,27 @@ public class BookingController {
   }
 
   @PostMapping(CommonEndpoints.ID + BookingEndpoints.RESCHEDULE)
-  public ApiResponse<BookingResponse> reschedule(
+  public ApiResponse<BookingRescheduleResponse> reschedule(
       @PathVariable String id,
       @RequestBody @Valid BookingRescheduleRequest request,
       HttpServletRequest httpRequest) {
-    BookingResponse response = service.reschedule(id, request, httpRequest);
+    BookingRescheduleResponse response = service.reschedule(id, request, httpRequest);
+    return ApiResponse.<BookingRescheduleResponse>builder()
+        .data(response)
+        .build();
+  }
+
+  @PostMapping(CommonEndpoints.ID + BookingEndpoints.CHECKIN)
+  public ApiResponse<BookingResponse> checkin(@PathVariable String id) {
+    BookingResponse response = service.checkin(id);
+    return ApiResponse.<BookingResponse>builder()
+        .data(response)
+        .build();
+  }
+
+  @PostMapping(CommonEndpoints.ID + BookingEndpoints.CHECKOUT)
+  public ApiResponse<BookingResponse> checkout(@PathVariable String id) {
+    BookingResponse response = service.checkout(id);
     return ApiResponse.<BookingResponse>builder()
         .data(response)
         .build();

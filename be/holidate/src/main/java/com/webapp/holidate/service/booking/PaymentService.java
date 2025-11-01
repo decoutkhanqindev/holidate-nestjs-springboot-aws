@@ -7,12 +7,12 @@ import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.repository.booking.BookingRepository;
 import com.webapp.holidate.repository.booking.PaymentRepository;
 import com.webapp.holidate.service.accommodation.room.RoomInventoryService;
+import com.webapp.holidate.service.auth.EmailService;
 import com.webapp.holidate.type.ErrorType;
 import com.webapp.holidate.type.booking.BookingStatusType;
 import com.webapp.holidate.type.booking.PaymentStatusType;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,15 +43,18 @@ public class PaymentService {
   BookingRepository bookingRepository;
   RoomInventoryService roomInventoryService;
   BookingService bookingService;
+  EmailService emailService;
 
   public PaymentService(PaymentRepository paymentRepository,
       BookingRepository bookingRepository,
       RoomInventoryService roomInventoryService,
-      @Lazy BookingService bookingService) {
+      @Lazy BookingService bookingService,
+      EmailService emailService) {
     this.paymentRepository = paymentRepository;
     this.bookingRepository = bookingRepository;
     this.roomInventoryService = roomInventoryService;
     this.bookingService = bookingService;
+    this.emailService = emailService;
   }
 
   @NonFinal
@@ -404,6 +407,9 @@ public class PaymentService {
       bookingRepository.save(booking);
       paymentRepository.save(payment);
 
+      // Send booking confirmation email
+      sendBookingConfirmationEmail(booking);
+
       return frontendUrl + "/payment/success?bookingId=" + booking.getId();
     } else {
       // Payment failed - get specific error type
@@ -595,5 +601,144 @@ public class PaymentService {
     } catch (Exception e) {
       return frontendUrl + "/payment/failure?reason=reschedule_failed";
     }
+  }
+
+  private void sendBookingConfirmationEmail(Booking booking) {
+    // Fetch booking with all relations for email
+    Booking bookingWithRelations = bookingRepository.findByIdWithAllRelations(booking.getId())
+        .orElse(booking); // Fallback to existing booking if not found
+
+    String customerEmail = bookingWithRelations.getContactEmail();
+    String customerName = bookingWithRelations.getContactFullName();
+    String hotelName = bookingWithRelations.getHotel() != null ? bookingWithRelations.getHotel().getName() : "N/A";
+    String roomName = bookingWithRelations.getRoom() != null ? bookingWithRelations.getRoom().getName() : "N/A";
+    String checkInDate = bookingWithRelations.getCheckInDate().toString();
+    String checkOutDate = bookingWithRelations.getCheckOutDate().toString();
+
+    // Get effective policies: prioritize room policy, fallback to hotel policy
+    var room = bookingWithRelations.getRoom();
+    var roomCancellationPolicy = room != null ? room.getCancellationPolicy() : null;
+    var roomReschedulePolicy = room != null ? room.getReschedulePolicy() : null;
+
+    var hotelPolicy = bookingWithRelations.getHotel() != null
+        ? bookingWithRelations.getHotel().getPolicy()
+        : null;
+    var hotelCancellationPolicy = hotelPolicy != null ? hotelPolicy.getCancellationPolicy() : null;
+    var hotelReschedulePolicy = hotelPolicy != null ? hotelPolicy.getReschedulePolicy() : null;
+
+    // Get effective policies (room takes priority)
+    var effectiveCancellationPolicy = roomCancellationPolicy != null
+        ? roomCancellationPolicy
+        : hotelCancellationPolicy;
+    var effectiveReschedulePolicy = roomReschedulePolicy != null
+        ? roomReschedulePolicy
+        : hotelReschedulePolicy;
+
+    // Get required identification documents from hotel policy
+    String requiredDocuments = "";
+    if (hotelPolicy != null && hotelPolicy.getRequiredIdentificationDocuments() != null
+        && !hotelPolicy.getRequiredIdentificationDocuments().isEmpty()) {
+      requiredDocuments = hotelPolicy.getRequiredIdentificationDocuments().stream()
+          .map(doc -> doc.getIdentificationDocument().getName())
+          .reduce((a, b) -> a + ", " + b)
+          .orElse("");
+    }
+
+    // Build policy information strings
+    String cancellationPolicyInfo = buildCancellationPolicyInfo(effectiveCancellationPolicy);
+    String reschedulePolicyInfo = buildReschedulePolicyInfo(effectiveReschedulePolicy);
+
+    emailService.sendBookingConfirmationNotification(
+        customerEmail,
+        customerName,
+        bookingWithRelations.getId(),
+        hotelName,
+        roomName,
+        checkInDate,
+        checkOutDate,
+        bookingWithRelations.getNumberOfNights(),
+        bookingWithRelations.getNumberOfRooms(),
+        bookingWithRelations.getFinalPrice(),
+        cancellationPolicyInfo,
+        reschedulePolicyInfo,
+        requiredDocuments);
+  }
+
+  private String buildCancellationPolicyInfo(
+      com.webapp.holidate.entity.policy.cancelation.CancellationPolicy policy) {
+    if (policy == null) {
+      return "Không có chính sách hủy phòng cụ thể. Vui lòng liên hệ với khách sạn để biết thêm chi tiết.";
+    }
+
+    StringBuilder info = new StringBuilder();
+    info.append("<strong>").append(policy.getName()).append("</strong>");
+    if (policy.getDescription() != null && !policy.getDescription().trim().isEmpty()) {
+      info.append("<br/>").append(policy.getDescription());
+    }
+
+    if (policy.getRules() != null && !policy.getRules().isEmpty()) {
+      info.append("<br/><br/><strong>Chi tiết:</strong><ul>");
+      var sortedRules = new java.util.ArrayList<>(policy.getRules());
+      sortedRules.sort((a, b) -> Integer.compare(b.getDaysBeforeCheckIn(), a.getDaysBeforeCheckIn()));
+
+      for (var rule : sortedRules) {
+        info.append("<li>");
+        if (rule.getDaysBeforeCheckIn() > 0) {
+          info.append("Hủy từ ").append(rule.getDaysBeforeCheckIn()).append(" ngày trước ngày nhận phòng: ");
+        } else {
+          info.append("Hủy trong vòng ").append(Math.abs(rule.getDaysBeforeCheckIn()))
+              .append(" ngày trước ngày nhận phòng: ");
+        }
+        if (rule.getPenaltyPercentage() == 0) {
+          info.append("Miễn phí");
+        } else if (rule.getPenaltyPercentage() == 100) {
+          info.append("Không hoàn tiền");
+        } else {
+          info.append("Phí hủy ").append(rule.getPenaltyPercentage()).append("%");
+        }
+        info.append("</li>");
+      }
+      info.append("</ul>");
+    }
+
+    return info.toString();
+  }
+
+  private String buildReschedulePolicyInfo(
+      com.webapp.holidate.entity.policy.reschedule.ReschedulePolicy policy) {
+    if (policy == null) {
+      return "Không có chính sách đổi lịch cụ thể. Vui lòng liên hệ với khách sạn để biết thêm chi tiết.";
+    }
+
+    StringBuilder info = new StringBuilder();
+    info.append("<strong>").append(policy.getName()).append("</strong>");
+    if (policy.getDescription() != null && !policy.getDescription().trim().isEmpty()) {
+      info.append("<br/>").append(policy.getDescription());
+    }
+
+    if (policy.getRules() != null && !policy.getRules().isEmpty()) {
+      info.append("<br/><br/><strong>Chi tiết:</strong><ul>");
+      var sortedRules = new java.util.ArrayList<>(policy.getRules());
+      sortedRules.sort((a, b) -> Integer.compare(b.getDaysBeforeCheckin(), a.getDaysBeforeCheckin()));
+
+      for (var rule : sortedRules) {
+        info.append("<li>");
+        if (rule.getDaysBeforeCheckin() > 0) {
+          info.append("Đổi lịch từ ").append(rule.getDaysBeforeCheckin()).append(" ngày trước ngày nhận phòng: ");
+        } else {
+          info.append("Đổi lịch trong vòng ").append(Math.abs(rule.getDaysBeforeCheckin()))
+              .append(" ngày trước ngày nhận phòng: ");
+        }
+        if (rule.getFeePercentage() == 0) {
+          info.append("Miễn phí");
+        } else {
+          info.append("Phí đổi lịch ").append(rule.getFeePercentage()).append("%");
+        }
+        info.append("</li>");
+      }
+      info.append("</ul>");
+    }
+
+    return info.toString();
   }
 }

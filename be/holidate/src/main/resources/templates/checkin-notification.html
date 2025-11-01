@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Thông báo hoàn tiền</title>
+    <title>Xác nhận nhận phòng</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -18,7 +18,7 @@
         padding: 20px;
       }
       .header {
-        background-color: #4caf50;
+        background-color: #00bcd4;
         color: white;
         padding: 15px;
         text-align: center;
@@ -32,17 +32,7 @@
         padding: 15px;
         margin: 10px 0;
         border-radius: 5px;
-        border-left: 4px solid #4caf50;
-      }
-      .amount-box {
-        display: inline-block;
-        padding: 15px 25px;
-        background-color: #4caf50;
-        color: white !important;
-        font-size: 20px;
-        font-weight: bold;
-        border-radius: 5px;
-        margin: 10px 0;
+        border-left: 4px solid #00bcd4;
       }
       .footer {
         margin-top: 20px;
@@ -55,8 +45,8 @@
         color: #4caf50;
         font-weight: bold;
       }
-      .warning {
-        color: #ff9800;
+      .welcome {
+        color: #00bcd4;
         font-weight: bold;
       }
       table {
@@ -73,53 +63,45 @@
         width: 40%;
       }
       .highlight {
-        background-color: #e8f5e9;
+        background-color: #e0f7fa;
         padding: 10px;
         border-radius: 5px;
         margin: 10px 0;
       }
-      .policy-box {
+      .important-info {
         background-color: #fff3cd;
         padding: 15px;
         margin: 10px 0;
         border-radius: 5px;
         border-left: 4px solid #ff9800;
       }
-      .policy-box h4 {
+      .important-info h4 {
         margin-top: 0;
         color: #856404;
-      }
-      .policy-content {
-        margin-top: 10px;
-      }
-      .policy-content ul {
-        margin: 5px 0;
-        padding-left: 20px;
-      }
-      .policy-content li {
-        margin: 5px 0;
       }
     </style>
   </head>
   <body>
     <div class="container">
       <div class="header">
-        <h1>Thông báo hoàn tiền đơn đặt phòng</h1>
+        <h1>Xác nhận nhận phòng</h1>
       </div>
 
       <div class="content">
         <p>Xin chào <span th:text="${customerName}">Khách hàng</span>,</p>
 
-        <p>
-          Chúng tôi xin thông báo đơn đặt phòng của bạn đã được hủy và tiền hoàn
-          trả đã được xử lý.
+        <p class="welcome">
+          <strong
+            >Chào mừng bạn đến với Holidate! Chúng tôi rất vui được chào đón bạn
+            tại khách sạn.</strong
+          >
         </p>
 
         <div class="info-box">
           <h3 style="margin-top: 0">Thông tin đơn đặt phòng</h3>
           <table>
             <tr>
-              <td>Mã đơn hàng:</td>
+              <td>Mã đơn đặt phòng:</td>
               <td th:text="${bookingId}">BOOKING-123</td>
             </tr>
             <tr>
@@ -138,67 +120,56 @@
               <td>Ngày trả phòng:</td>
               <td th:text="${checkOutDate}">2025-01-03</td>
             </tr>
-          </table>
-        </div>
-
-        <div class="info-box">
-          <h3 style="margin-top: 0">Chi tiết hoàn tiền</h3>
-          <table>
             <tr>
-              <td>Tổng tiền đã thanh toán:</td>
-              <td
-                th:text="${#numbers.formatDecimal(totalAmount, 1, 'POINT', 0, 'COMMA')} + ' VNĐ'"
-              >
-                0 VNĐ
-              </td>
-            </tr>
-            <tr th:if="${penaltyAmount > 0}">
-              <td>Phí hủy phòng:</td>
-              <td
-                class="warning"
-                th:text="'-' + ${#numbers.formatDecimal(penaltyAmount, 1, 'POINT', 0, 'COMMA')} + ' VNĐ'"
-              >
-                0 VNĐ
-              </td>
+              <td>Số đêm:</td>
+              <td th:text="${numberOfNights} + ' đêm'">2 đêm</td>
             </tr>
             <tr>
-              <td><strong>Số tiền hoàn trả:</strong></td>
-              <td>
-                <span
-                  class="amount-box"
-                  th:text="${#numbers.formatDecimal(refundAmount, 1, 'POINT', 0, 'COMMA')} + ' VNĐ'"
-                  >0 VNĐ</span
-                >
-              </td>
+              <td>Số phòng:</td>
+              <td th:text="${numberOfRooms} + ' phòng'">1 phòng</td>
             </tr>
           </table>
         </div>
 
-        <div class="policy-box">
-          <h4>❌ Chính sách hủy phòng đã áp dụng</h4>
-          <div class="policy-content" th:utext="${cancellationPolicyInfo}">
-            Chính sách hủy phòng sẽ được hiển thị ở đây.
-          </div>
+        <div th:if="${hasRequiredDocuments}" class="important-info">
+          <h4>📄 Giấy tờ cần thiết</h4>
+          <p>
+            <strong
+              >Vui lòng chuẩn bị các giấy tờ sau để hoàn tất thủ tục nhận
+              phòng:</strong
+            >
+          </p>
+          <p th:text="${requiredDocuments}">CMND/CCCD</p>
         </div>
 
         <div class="highlight">
-          <p th:if="${penaltyAmount > 0}" class="warning">
-            <strong>Lưu ý:</strong> Đơn đặt phòng của bạn đã bị áp dụng phí hủy
-            theo chính sách của khách sạn. Số tiền hoàn trả đã trừ đi phí này.
-          </p>
-
-          <p class="success">
-            <strong
-              >Số tiền hoàn trả sẽ được chuyển về tài khoản của bạn trong vòng 5-7
-              ngày làm việc.</strong
-            >
-          </p>
+          <p><strong>Thông tin quan trọng:</strong></p>
+          <ul>
+            <li>
+              Thời gian check-in: <span th:text="${checkInTime}">14:00</span>
+            </li>
+            <li>
+              Thời gian check-out: <span th:text="${checkOutTime}">12:00</span>
+            </li>
+            <li>Vui lòng đến đúng giờ quy định để có trải nghiệm tốt nhất.</li>
+            <li>
+              Nếu bạn có bất kỳ yêu cầu đặc biệt nào, vui lòng liên hệ với lễ
+              tân.
+            </li>
+          </ul>
         </div>
 
         <p>
-          Nếu bạn có bất kỳ thắc mắc nào, vui lòng liên hệ với bộ phận hỗ trợ
-          khách hàng của chúng tôi.
+          Chúng tôi hy vọng bạn sẽ có một kỳ nghỉ tuyệt vời và thoải mái tại
+          <span th:text="${hotelName}">khách sạn</span>!
         </p>
+
+        <p>
+          Nếu bạn cần hỗ trợ bất kỳ điều gì trong suốt thời gian lưu trú, vui
+          lòng liên hệ với bộ phận dịch vụ khách hàng của chúng tôi.
+        </p>
+
+        <p class="success">Chúc bạn có một kỳ nghỉ tuyệt vời!</p>
       </div>
 
       <div class="footer">

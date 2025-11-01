@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Thông báo đổi lịch</title>
+    <title>Xác nhận đặt phòng</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -18,7 +18,7 @@
         padding: 20px;
       }
       .header {
-        background-color: #2196f3;
+        background-color: #4caf50;
         color: white;
         padding: 15px;
         text-align: center;
@@ -32,12 +32,12 @@
         padding: 15px;
         margin: 10px 0;
         border-radius: 5px;
-        border-left: 4px solid #2196f3;
+        border-left: 4px solid #4caf50;
       }
       .amount-box {
         display: inline-block;
         padding: 15px 25px;
-        background-color: #2196f3;
+        background-color: #4caf50;
         color: white !important;
         font-size: 20px;
         font-weight: bold;
@@ -55,10 +55,6 @@
         color: #4caf50;
         font-weight: bold;
       }
-      .warning {
-        color: #ff9800;
-        font-weight: bold;
-      }
       table {
         width: 100%;
         border-collapse: collapse;
@@ -73,7 +69,7 @@
         width: 40%;
       }
       .highlight {
-        background-color: #e3f2fd;
+        background-color: #e8f5e9;
         padding: 10px;
         border-radius: 5px;
         margin: 10px 0;
@@ -99,35 +95,40 @@
       .policy-content li {
         margin: 5px 0;
       }
-      .old-date {
-        color: #999;
-        text-decoration: line-through;
+      .documents-box {
+        background-color: #d1ecf1;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 5px;
+        border-left: 4px solid #0c5460;
       }
-      .new-date {
-        color: #2196f3;
-        font-weight: bold;
+      .documents-box h4 {
+        margin-top: 0;
+        color: #0c5460;
       }
     </style>
   </head>
   <body>
     <div class="container">
       <div class="header">
-        <h1>Thông báo đổi lịch đặt phòng</h1>
+        <h1>Xác nhận đặt phòng thành công</h1>
       </div>
 
       <div class="content">
         <p>Xin chào <span th:text="${customerName}">Khách hàng</span>,</p>
 
-        <p>
-          Chúng tôi xin thông báo đơn đặt phòng của bạn đã được đổi lịch thành
-          công.
+        <p class="success">
+          <strong
+            >Cảm ơn bạn đã đặt phòng với Holidate! Đơn đặt phòng của bạn đã được
+            xác nhận thành công.</strong
+          >
         </p>
 
         <div class="info-box">
           <h3 style="margin-top: 0">Thông tin đơn đặt phòng</h3>
           <table>
             <tr>
-              <td>Mã đơn hàng:</td>
+              <td>Mã đơn đặt phòng:</td>
               <td th:text="${bookingId}">BOOKING-123</td>
             </tr>
             <tr>
@@ -138,43 +139,21 @@
               <td>Phòng:</td>
               <td th:text="${roomName}">Tên phòng</td>
             </tr>
-          </table>
-        </div>
-
-        <div class="info-box">
-          <h3 style="margin-top: 0">Thông tin đổi lịch</h3>
-          <table>
             <tr>
-              <td>Ngày check-in cũ:</td>
-              <td>
-                <span class="old-date" th:text="${oldCheckInDate}"
-                  >2024-01-01</span
-                >
-              </td>
+              <td>Ngày nhận phòng:</td>
+              <td th:text="${checkInDate}">2025-01-01</td>
             </tr>
             <tr>
-              <td>Ngày check-out cũ:</td>
-              <td>
-                <span class="old-date" th:text="${oldCheckOutDate}"
-                  >2024-01-05</span
-                >
-              </td>
+              <td>Ngày trả phòng:</td>
+              <td th:text="${checkOutDate}">2025-01-03</td>
             </tr>
             <tr>
-              <td>Ngày check-in mới:</td>
-              <td>
-                <span class="new-date" th:text="${newCheckInDate}"
-                  >2024-01-10</span
-                >
-              </td>
+              <td>Số đêm:</td>
+              <td th:text="${numberOfNights} + ' đêm'">2 đêm</td>
             </tr>
             <tr>
-              <td>Ngày check-out mới:</td>
-              <td>
-                <span class="new-date" th:text="${newCheckOutDate}"
-                  >2024-01-14</span
-                >
-              </td>
+              <td>Số phòng:</td>
+              <td th:text="${numberOfRooms} + ' phòng'">1 phòng</td>
             </tr>
           </table>
         </div>
@@ -183,75 +162,71 @@
           <h3 style="margin-top: 0">Chi tiết thanh toán</h3>
           <table>
             <tr>
-              <td>Giá mới:</td>
+              <td><strong>Tổng tiền đã thanh toán:</strong></td>
               <td>
                 <span
-                  th:text="${#numbers.formatDecimal(newFinalPrice, 0, 'COMMA', 0, 'POINT')}"
-                  >0</span
+                  class="amount-box"
+                  th:text="${#numbers.formatDecimal(finalPrice, 1, 'POINT', 0, 'COMMA')} + ' VNĐ'"
+                  >0 VNĐ</span
                 >
-                VND
               </td>
-            </tr>
-            <tr th:if="${rescheduleFee > 0}">
-              <td>Phí đổi lịch:</td>
-              <td>
-                <span
-                  th:text="${#numbers.formatDecimal(rescheduleFee, 0, 'COMMA', 0, 'POINT')}"
-                  >0</span
-                >
-                VND
-              </td>
-            </tr>
-            <tr th:if="${priceDifference > 0}">
-              <td>Số tiền cần thanh toán thêm:</td>
-              <td class="warning">
-                <span
-                  th:text="${#numbers.formatDecimal(priceDifference, 0, 'COMMA', 0, 'POINT')}"
-                  >0</span
-                >
-                VND
-              </td>
-            </tr>
-            <tr th:if="${priceDifference < 0}">
-              <td>Số tiền được hoàn trả:</td>
-              <td class="success">
-                <span
-                  th:text="${#numbers.formatDecimal(-priceDifference, 0, 'COMMA', 0, 'POINT')}"
-                  >0</span
-                >
-                VND
-              </td>
-            </tr>
-            <tr th:if="${priceDifference == 0}">
-              <td>Chênh lệch giá:</td>
-              <td class="success">Không có</td>
             </tr>
           </table>
         </div>
 
+        <div th:if="${hasRequiredDocuments}" class="documents-box">
+          <h4>📄 Giấy tờ cần thiết</h4>
+          <p>
+            <strong
+              >Khi đến nhận phòng, vui lòng mang theo các giấy tờ sau:</strong
+            >
+          </p>
+          <p th:text="${requiredDocuments}">CMND/CCCD</p>
+        </div>
+
         <div class="policy-box">
-          <h4>🔄 Chính sách đổi lịch đã áp dụng</h4>
+          <h4>❌ Chính sách hủy phòng</h4>
+          <div class="policy-content" th:utext="${cancellationPolicyInfo}">
+            Chính sách hủy phòng sẽ được hiển thị ở đây.
+          </div>
+        </div>
+
+        <div class="policy-box">
+          <h4>🔄 Chính sách đổi lịch</h4>
           <div class="policy-content" th:utext="${reschedulePolicyInfo}">
             Chính sách đổi lịch sẽ được hiển thị ở đây.
           </div>
         </div>
 
         <div class="highlight">
-          <p th:if="${priceDifference > 0}">
-            <strong>Lưu ý:</strong> Bạn cần thanh toán thêm số tiền chênh lệch để
-            hoàn tất đổi lịch.
-          </p>
-
-          <p th:if="${priceDifference < 0}">
-            <strong>Lưu ý:</strong> Số tiền chênh lệch sẽ được hoàn trả vào tài
-            khoản của bạn trong vòng vài ngày làm việc.
-          </p>
+          <p><strong>Lưu ý quan trọng:</strong></p>
+          <ul>
+            <li>
+              Vui lòng đến đúng ngày check-in đã đặt. Nếu có thay đổi, vui lòng
+              liên hệ với chúng tôi trước.
+            </li>
+            <li th:if="${!hasRequiredDocuments}">
+              Mang theo CMND/CCCD khi đến nhận phòng để đối chiếu thông tin.
+            </li>
+            <li>Email này được dùng làm voucher xác nhận đặt phòng của bạn.</li>
+            <li>
+              Nếu bạn cần hủy hoặc đổi lịch, vui lòng tham khảo các chính sách
+              trên.
+            </li>
+          </ul>
         </div>
 
         <p>
-          Vui lòng kiểm tra lại thông tin và liên hệ với chúng tôi nếu có bất kỳ
-          thắc mắc nào.
+          Chúng tôi rất mong được đón tiếp bạn tại
+          <span th:text="${hotelName}">khách sạn</span>.
         </p>
+
+        <p>
+          Nếu bạn có bất kỳ thắc mắc nào, vui lòng liên hệ với bộ phận hỗ trợ
+          khách hàng của chúng tôi.
+        </p>
+
+        <p>Chúc bạn có một chuyến đi tuyệt vời!</p>
       </div>
 
       <div class="footer">

@@ -10,6 +10,7 @@ import com.webapp.holidate.dto.response.acommodation.room.inventory.RoomInventor
 import com.webapp.holidate.dto.response.base.PagedResponse;
 import com.webapp.holidate.dto.response.booking.BookingPriceDetailsResponse;
 import com.webapp.holidate.dto.response.booking.BookingResponse;
+import com.webapp.holidate.dto.response.booking.BookingRescheduleResponse;
 import com.webapp.holidate.dto.response.booking.FeeResponse;
 import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.entity.accommodation.room.Room;
@@ -47,8 +48,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
@@ -76,6 +79,10 @@ public class BookingService {
   @NonFinal
   @Value(AppProperties.SERVICE_FEE_RATE)
   double serviceFeeRate;
+
+  @NonFinal
+  @Value(AppProperties.FRONTEND_URL)
+  String frontendUrl;
 
   @Transactional
   public BookingResponse create(BookingCreationRequest request, HttpServletRequest httpRequest) {
@@ -168,7 +175,7 @@ public class BookingService {
     booking.setUser(user);
     booking.setRoom(room);
     booking.setHotel(hotel);
-    booking.setNumberOfNights((int) java.time.temporal.ChronoUnit.DAYS.between(checkInDate, checkOutDate));
+    booking.setNumberOfNights((int) ChronoUnit.DAYS.between(checkInDate, checkOutDate));
     booking.setOriginalPrice(originalPrice);
     booking.setDiscountAmount(discountAmount);
     booking.setFinalPrice(finalPrice);
@@ -363,8 +370,13 @@ public class BookingService {
     Booking booking = bookingRepository.findByIdWithAllRelations(bookingId)
         .orElseThrow(() -> new AppException(ErrorType.BOOKING_NOT_FOUND));
 
-    // Only allow cancellation if the booking is confirmed
-    if (!BookingStatusType.CONFIRMED.getValue().equals(booking.getStatus())) {
+    // Allow cancellation if the booking is confirmed or rescheduled
+    // Both statuses represent active, paid bookings that can be cancelled
+    String status = booking.getStatus();
+    boolean isCancellable = BookingStatusType.CONFIRMED.getValue().equals(status)
+        || BookingStatusType.RESCHEDULED.getValue().equals(status);
+
+    if (!isCancellable) {
       throw new AppException(ErrorType.BOOKING_NOT_CONFIRMED);
     }
 
@@ -536,14 +548,19 @@ public class BookingService {
   }
 
   @Transactional
-  public BookingResponse reschedule(String bookingId, BookingRescheduleRequest request,
+  public BookingRescheduleResponse reschedule(String bookingId, BookingRescheduleRequest request,
       HttpServletRequest httpRequest) {
     // Step 1: Validate and fetch booking with all relations
     Booking booking = bookingRepository.findByIdWithAllRelations(bookingId)
         .orElseThrow(() -> new AppException(ErrorType.BOOKING_NOT_FOUND));
 
-    // Only allow reschedule if the booking is confirmed
-    if (!BookingStatusType.CONFIRMED.getValue().equals(booking.getStatus())) {
+    // Allow reschedule if the booking is confirmed or rescheduled
+    // A rescheduled booking can be rescheduled again
+    String status = booking.getStatus();
+    boolean isReschedulable = BookingStatusType.CONFIRMED.getValue().equals(status)
+        || BookingStatusType.RESCHEDULED.getValue().equals(status);
+
+    if (!isReschedulable) {
       throw new AppException(ErrorType.BOOKING_NOT_CONFIRMED);
     }
 
@@ -566,6 +583,10 @@ public class BookingService {
     if (newCheckInDate.equals(oldCheckInDate) && newCheckOutDate.equals(oldCheckOutDate)) {
       throw new AppException(ErrorType.CHECK_IN_DATE_INVALID);
     }
+
+    // Store old booking information for response
+    int oldNumberOfNights = booking.getNumberOfNights();
+    BookingPriceDetailsResponse oldPriceDetails = calculatePriceDetails(booking);
 
     // Step 2: Get reschedule policy: prioritize room policy, if not available use
     // hotel policy
@@ -633,6 +654,11 @@ public class BookingService {
 
     String paymentUrl = null;
 
+    // Calculate new price details for response
+    BookingPriceDetailsResponse newPriceDetails = calculatePriceDetailsFromValues(
+        newOriginalPrice, discountAmount, appliedDiscount, newFinalPrice + rescheduleFee);
+    int newNumberOfNights = (int) ChronoUnit.DAYS.between(newCheckInDate, newCheckOutDate);
+
     // Step 7: Handle payment/refund based on price difference
     if (priceDifference > 0) {
       // Case 1: Customer needs to pay more
@@ -640,7 +666,7 @@ public class BookingService {
       // We'll use a temporary UUID for payment ID and store reschedule data in
       // orderInfo
       // Create temporary payment ID (UUID) - don't save to DB yet
-      String tempPaymentId = java.util.UUID.randomUUID().toString();
+      String tempPaymentId = UUID.randomUUID().toString();
 
       // Store reschedule data in orderInfo format:
       // "reschedule:{bookingId}:{newCheckInDate}:{newCheckOutDate}:{newFinalPrice}:{rescheduleFee}:{newOriginalPrice}:{discountAmount}"
@@ -649,28 +675,10 @@ public class BookingService {
           newCheckInDate, newCheckOutDate, newFinalPrice, rescheduleFee,
           newOriginalPrice, discountAmount);
 
-      // Return response with payment URL - database update will happen after payment
-      // success via callback
-      // But update response to show reschedule information (new dates and prices)
-      BookingResponse response = bookingMapper.toBookingResponse(booking, paymentUrl);
-
-      // Update response with new reschedule information
-      response.setCheckInDate(newCheckInDate);
-      response.setCheckOutDate(newCheckOutDate);
-      response.setNumberOfNights((int) java.time.temporal.ChronoUnit.DAYS.between(newCheckInDate, newCheckOutDate));
-
-      // Calculate and set new price details
-      BookingPriceDetailsResponse newPriceDetails = calculatePriceDetailsFromValues(
-          newOriginalPrice, discountAmount, appliedDiscount, newFinalPrice + rescheduleFee);
-      response.setPriceDetails(newPriceDetails);
-
-      // Set pricesByDateRange for new dates
-      if (response.getRoom() != null) {
-        List<RoomInventoryPriceByDateResponse> pricesByDate = roomInventoryService.getPricesByDateRange(
-            booking.getRoom().getId(), newCheckInDate, newCheckOutDate);
-        response.getRoom().setPricesByDateRange(pricesByDate);
-      }
-      return response;
+      // Build and return BookingRescheduleResponse with payment URL
+      return buildRescheduleResponse(booking, oldCheckInDate, oldCheckOutDate, oldNumberOfNights,
+          oldPriceDetails, newCheckInDate, newCheckOutDate, newNumberOfNights, newPriceDetails,
+          rescheduleFee, priceDifference, paymentUrl);
     } else if (priceDifference < 0) {
       // Case 2: System refunds customer
       double refundAmount = Math.abs(priceDifference);
@@ -694,7 +702,7 @@ public class BookingService {
     // Update booking with new dates and prices
     booking.setCheckInDate(newCheckInDate);
     booking.setCheckOutDate(newCheckOutDate);
-    booking.setNumberOfNights((int) java.time.temporal.ChronoUnit.DAYS.between(newCheckInDate, newCheckOutDate));
+    booking.setNumberOfNights(newNumberOfNights);
     booking.setOriginalPrice(newOriginalPrice);
     booking.setDiscountAmount(discountAmount);
     booking.setFinalPrice(newFinalPrice + rescheduleFee);
@@ -706,15 +714,10 @@ public class BookingService {
     sendRescheduleEmail(booking, oldCheckInDate, oldCheckOutDate, newCheckInDate, newCheckOutDate,
         booking.getFinalPrice(), rescheduleFee, priceDifference);
 
-    BookingResponse response = bookingMapper.toBookingResponse(booking, null);
-    BookingPriceDetailsResponse priceDetails = calculatePriceDetails(booking);
-    response.setPriceDetails(priceDetails);
-    if (response.getRoom() != null) {
-      List<RoomInventoryPriceByDateResponse> pricesByDate = roomInventoryService.getPricesByDateRange(
-          booking.getRoom().getId(), booking.getCheckInDate(), booking.getCheckOutDate());
-      response.getRoom().setPricesByDateRange(pricesByDate);
-    }
-    return response;
+    // Build and return BookingRescheduleResponse
+    return buildRescheduleResponse(booking, oldCheckInDate, oldCheckOutDate, oldNumberOfNights,
+        oldPriceDetails, newCheckInDate, newCheckOutDate, newNumberOfNights, newPriceDetails,
+        rescheduleFee, priceDifference, null);
   }
 
   @Transactional
@@ -767,6 +770,97 @@ public class BookingService {
   }
 
   @Transactional
+  public BookingResponse checkin(String bookingId) {
+    Booking booking = bookingRepository.findByIdWithAllRelations(bookingId)
+        .orElseThrow(() -> new AppException(ErrorType.BOOKING_NOT_FOUND));
+
+    // Allow check-in if the booking is confirmed or rescheduled
+    // and check-in date has arrived (today or in the past)
+    String status = booking.getStatus();
+    boolean isCheckinable = BookingStatusType.CONFIRMED.getValue().equals(status)
+        || BookingStatusType.RESCHEDULED.getValue().equals(status);
+
+    if (!isCheckinable) {
+      throw new AppException(ErrorType.BOOKING_NOT_CONFIRMED);
+    }
+
+    // Validate check-in date (can check-in if check-in date is today or in the
+    // past)
+    LocalDate today = LocalDate.now();
+    LocalDate checkInDate = booking.getCheckInDate();
+
+    if (checkInDate.isAfter(today)) {
+      throw new AppException(ErrorType.CHECK_IN_DATE_INVALID);
+    }
+
+    // Note: We don't change status after check-in, booking remains CONFIRMED or
+    // RESCHEDULED
+    // Status only changes to COMPLETED after checkout
+    booking.setUpdatedAt(LocalDateTime.now());
+    bookingRepository.save(booking);
+
+    // Send check-in notification email
+    sendCheckinEmail(booking);
+
+    BookingResponse response = bookingMapper.toBookingResponse(booking, null);
+    BookingPriceDetailsResponse priceDetails = calculatePriceDetails(booking);
+    response.setPriceDetails(priceDetails);
+
+    if (response.getRoom() != null) {
+      List<RoomInventoryPriceByDateResponse> pricesByDate = roomInventoryService.getPricesByDateRange(
+          booking.getRoom().getId(), booking.getCheckInDate(), booking.getCheckOutDate());
+      response.getRoom().setPricesByDateRange(pricesByDate);
+    }
+
+    return response;
+  }
+
+  @Transactional
+  public BookingResponse checkout(String bookingId) {
+    Booking booking = bookingRepository.findByIdWithAllRelations(bookingId)
+        .orElseThrow(() -> new AppException(ErrorType.BOOKING_NOT_FOUND));
+
+    // Allow checkout if the booking is confirmed or rescheduled
+    // and check-out date has passed or is today
+    String status = booking.getStatus();
+    boolean isCheckoutable = BookingStatusType.CONFIRMED.getValue().equals(status)
+        || BookingStatusType.RESCHEDULED.getValue().equals(status);
+
+    if (!isCheckoutable) {
+      throw new AppException(ErrorType.BOOKING_NOT_CONFIRMED);
+    }
+
+    // Validate check-out date (can checkout if check-out date is today or in the
+    // past)
+    LocalDate today = LocalDate.now();
+    LocalDate checkOutDate = booking.getCheckOutDate();
+
+    if (checkOutDate.isAfter(today)) {
+      throw new AppException(ErrorType.CHECK_OUT_DATE_INVALID);
+    }
+
+    // Update booking status to completed
+    booking.setStatus(BookingStatusType.COMPLETED.getValue());
+    booking.setUpdatedAt(LocalDateTime.now());
+    bookingRepository.save(booking);
+
+    // Send checkout notification email
+    sendCheckoutEmail(booking);
+
+    BookingResponse response = bookingMapper.toBookingResponse(booking, null);
+    BookingPriceDetailsResponse priceDetails = calculatePriceDetails(booking);
+    response.setPriceDetails(priceDetails);
+
+    if (response.getRoom() != null) {
+      List<RoomInventoryPriceByDateResponse> pricesByDate = roomInventoryService.getPricesByDateRange(
+          booking.getRoom().getId(), booking.getCheckInDate(), booking.getCheckOutDate());
+      response.getRoom().setPricesByDateRange(pricesByDate);
+    }
+
+    return response;
+  }
+
+  @Transactional
   public void cancelExpiredBookings() {
     LocalDateTime expiredTime = LocalDateTime.now().minusMinutes(15);
 
@@ -813,6 +907,18 @@ public class BookingService {
     String checkInDate = booking.getCheckInDate().toString();
     String checkOutDate = booking.getCheckOutDate().toString();
 
+    // Get effective cancellation policy: prioritize room policy, fallback to hotel
+    // policy
+    var room = booking.getRoom();
+    var roomCancellationPolicy = room != null ? room.getCancellationPolicy() : null;
+    var hotelPolicy = booking.getHotel() != null ? booking.getHotel().getPolicy() : null;
+    var hotelCancellationPolicy = hotelPolicy != null ? hotelPolicy.getCancellationPolicy() : null;
+    var effectiveCancellationPolicy = roomCancellationPolicy != null
+        ? roomCancellationPolicy
+        : hotelCancellationPolicy;
+
+    String cancellationPolicyInfo = buildCancellationPolicyInfo(effectiveCancellationPolicy);
+
     emailService.sendRefundNotification(
         customerEmail,
         customerName,
@@ -823,7 +929,80 @@ public class BookingService {
         checkOutDate,
         totalAmount,
         penaltyAmount,
-        refundAmount);
+        refundAmount,
+        cancellationPolicyInfo);
+  }
+
+  private void sendCheckinEmail(Booking booking) {
+    String customerEmail = booking.getContactEmail();
+    String customerName = booking.getContactFullName();
+    String hotelName = booking.getHotel() != null ? booking.getHotel().getName() : "N/A";
+    String roomName = booking.getRoom() != null ? booking.getRoom().getName() : "N/A";
+    String checkInDate = booking.getCheckInDate().toString();
+    String checkOutDate = booking.getCheckOutDate().toString();
+
+    // Get check-in/check-out time and required documents from hotel policy
+    var hotelPolicy = booking.getHotel() != null ? booking.getHotel().getPolicy() : null;
+    String checkInTime = "14:00"; // Default
+    String checkOutTime = "12:00"; // Default
+
+    if (hotelPolicy != null) {
+      if (hotelPolicy.getCheckInTime() != null) {
+        checkInTime = hotelPolicy.getCheckInTime().toString();
+      }
+      if (hotelPolicy.getCheckOutTime() != null) {
+        checkOutTime = hotelPolicy.getCheckOutTime().toString();
+      }
+    }
+
+    // Get required identification documents from hotel policy
+    String requiredDocuments = "";
+    if (hotelPolicy != null && hotelPolicy.getRequiredIdentificationDocuments() != null
+        && !hotelPolicy.getRequiredIdentificationDocuments().isEmpty()) {
+      requiredDocuments = hotelPolicy.getRequiredIdentificationDocuments().stream()
+          .map(doc -> doc.getIdentificationDocument().getName())
+          .reduce((a, b) -> a + ", " + b)
+          .orElse("");
+    }
+
+    emailService.sendCheckinNotification(
+        customerEmail,
+        customerName,
+        booking.getId(),
+        hotelName,
+        roomName,
+        checkInDate,
+        checkOutDate,
+        booking.getNumberOfNights(),
+        booking.getNumberOfRooms(),
+        checkInTime,
+        checkOutTime,
+        requiredDocuments);
+  }
+
+  private void sendCheckoutEmail(Booking booking) {
+    String customerEmail = booking.getContactEmail();
+    String customerName = booking.getContactFullName();
+    String hotelName = booking.getHotel() != null ? booking.getHotel().getName() : "N/A";
+    String roomName = booking.getRoom() != null ? booking.getRoom().getName() : "N/A";
+    String checkInDate = booking.getCheckInDate().toString();
+    String checkOutDate = booking.getCheckOutDate().toString();
+
+    // Generate review URL - frontend should have a review page that accepts
+    // bookingId
+    String reviewUrl = frontendUrl + "/bookings/" + booking.getId() + "/review";
+
+    emailService.sendCheckoutNotification(
+        customerEmail,
+        customerName,
+        booking.getId(),
+        hotelName,
+        roomName,
+        checkInDate,
+        checkOutDate,
+        booking.getNumberOfNights(),
+        booking.getNumberOfRooms(),
+        reviewUrl);
   }
 
   private void sendRescheduleEmail(Booking booking, LocalDate oldCheckInDate, LocalDate oldCheckOutDate,
@@ -833,6 +1012,18 @@ public class BookingService {
     String customerName = booking.getContactFullName();
     String hotelName = booking.getHotel() != null ? booking.getHotel().getName() : "N/A";
     String roomName = booking.getRoom() != null ? booking.getRoom().getName() : "N/A";
+
+    // Get effective reschedule policy: prioritize room policy, fallback to hotel
+    // policy
+    var room = booking.getRoom();
+    var roomReschedulePolicy = room != null ? room.getReschedulePolicy() : null;
+    var hotelPolicy = booking.getHotel() != null ? booking.getHotel().getPolicy() : null;
+    var hotelReschedulePolicy = hotelPolicy != null ? hotelPolicy.getReschedulePolicy() : null;
+    var effectiveReschedulePolicy = roomReschedulePolicy != null
+        ? roomReschedulePolicy
+        : hotelReschedulePolicy;
+
+    String reschedulePolicyInfo = buildReschedulePolicyInfo(effectiveReschedulePolicy);
 
     emailService.sendRescheduleNotification(
         customerEmail,
@@ -846,7 +1037,137 @@ public class BookingService {
         newCheckOutDate.toString(),
         newFinalPrice,
         rescheduleFee,
-        priceDifference);
+        priceDifference,
+        reschedulePolicyInfo);
+  }
+
+  private BookingRescheduleResponse buildRescheduleResponse(
+      Booking booking,
+      LocalDate oldCheckInDate,
+      LocalDate oldCheckOutDate,
+      int oldNumberOfNights,
+      BookingPriceDetailsResponse oldPriceDetails,
+      LocalDate newCheckInDate,
+      LocalDate newCheckOutDate,
+      int newNumberOfNights,
+      BookingPriceDetailsResponse newPriceDetails,
+      double rescheduleFee,
+      double priceDifference,
+      String paymentUrl) {
+
+    BookingResponse baseResponse = bookingMapper.toBookingResponse(booking, paymentUrl);
+
+    // Set pricesByDateRange for new dates
+    if (baseResponse.getRoom() != null) {
+      List<RoomInventoryPriceByDateResponse> pricesByDate = roomInventoryService.getPricesByDateRange(
+          booking.getRoom().getId(), newCheckInDate, newCheckOutDate);
+      baseResponse.getRoom().setPricesByDateRange(pricesByDate);
+    }
+
+    return BookingRescheduleResponse.builder()
+        .id(booking.getId())
+        .user(baseResponse.getUser())
+        .room(baseResponse.getRoom())
+        .hotel(baseResponse.getHotel())
+        .oldCheckInDate(oldCheckInDate)
+        .oldCheckOutDate(oldCheckOutDate)
+        .oldNumberOfNights(oldNumberOfNights)
+        .oldPriceDetails(oldPriceDetails)
+        .newCheckInDate(newCheckInDate)
+        .newCheckOutDate(newCheckOutDate)
+        .newNumberOfNights(newNumberOfNights)
+        .newPriceDetails(newPriceDetails)
+        .numberOfRooms(booking.getNumberOfRooms())
+        .numberOfAdults(booking.getNumberOfAdults())
+        .numberOfChildren(booking.getNumberOfChildren())
+        .contactFullName(booking.getContactFullName())
+        .contactEmail(booking.getContactEmail())
+        .contactPhone(booking.getContactPhone())
+        .status(booking.getStatus())
+        .rescheduleFee(rescheduleFee)
+        .priceDifference(priceDifference)
+        .paymentUrl(paymentUrl)
+        .createdAt(booking.getCreatedAt())
+        .updatedAt(booking.getUpdatedAt())
+        .build();
+  }
+
+  private String buildCancellationPolicyInfo(
+      com.webapp.holidate.entity.policy.cancelation.CancellationPolicy policy) {
+    if (policy == null) {
+      return "Không có chính sách hủy phòng cụ thể. Vui lòng liên hệ với khách sạn để biết thêm chi tiết.";
+    }
+
+    StringBuilder info = new StringBuilder();
+    info.append("<strong>").append(policy.getName()).append("</strong>");
+    if (policy.getDescription() != null && !policy.getDescription().trim().isEmpty()) {
+      info.append("<br/>").append(policy.getDescription());
+    }
+
+    if (policy.getRules() != null && !policy.getRules().isEmpty()) {
+      info.append("<br/><br/><strong>Chi tiết:</strong><ul>");
+      var sortedRules = new ArrayList<>(policy.getRules());
+      sortedRules.sort((a, b) -> Integer.compare(b.getDaysBeforeCheckIn(), a.getDaysBeforeCheckIn()));
+
+      for (var rule : sortedRules) {
+        info.append("<li>");
+        if (rule.getDaysBeforeCheckIn() > 0) {
+          info.append("Hủy từ ").append(rule.getDaysBeforeCheckIn()).append(" ngày trước ngày nhận phòng: ");
+        } else {
+          info.append("Hủy trong vòng ").append(Math.abs(rule.getDaysBeforeCheckIn()))
+              .append(" ngày trước ngày nhận phòng: ");
+        }
+        if (rule.getPenaltyPercentage() == 0) {
+          info.append("Miễn phí");
+        } else if (rule.getPenaltyPercentage() == 100) {
+          info.append("Không hoàn tiền");
+        } else {
+          info.append("Phí hủy ").append(rule.getPenaltyPercentage()).append("%");
+        }
+        info.append("</li>");
+      }
+      info.append("</ul>");
+    }
+
+    return info.toString();
+  }
+
+  private String buildReschedulePolicyInfo(
+      com.webapp.holidate.entity.policy.reschedule.ReschedulePolicy policy) {
+    if (policy == null) {
+      return "Không có chính sách đổi lịch cụ thể. Vui lòng liên hệ với khách sạn để biết thêm chi tiết.";
+    }
+
+    StringBuilder info = new StringBuilder();
+    info.append("<strong>").append(policy.getName()).append("</strong>");
+    if (policy.getDescription() != null && !policy.getDescription().trim().isEmpty()) {
+      info.append("<br/>").append(policy.getDescription());
+    }
+
+    if (policy.getRules() != null && !policy.getRules().isEmpty()) {
+      info.append("<br/><br/><strong>Chi tiết:</strong><ul>");
+      var sortedRules = new ArrayList<>(policy.getRules());
+      sortedRules.sort((a, b) -> Integer.compare(b.getDaysBeforeCheckin(), a.getDaysBeforeCheckin()));
+
+      for (var rule : sortedRules) {
+        info.append("<li>");
+        if (rule.getDaysBeforeCheckin() > 0) {
+          info.append("Đổi lịch từ ").append(rule.getDaysBeforeCheckin()).append(" ngày trước ngày nhận phòng: ");
+        } else {
+          info.append("Đổi lịch trong vòng ").append(Math.abs(rule.getDaysBeforeCheckin()))
+              .append(" ngày trước ngày nhận phòng: ");
+        }
+        if (rule.getFeePercentage() == 0) {
+          info.append("Miễn phí");
+        } else {
+          info.append("Phí đổi lịch ").append(rule.getFeePercentage()).append("%");
+        }
+        info.append("</li>");
+      }
+      info.append("</ul>");
+    }
+
+    return info.toString();
   }
 
   private BookingPriceDetailsResponse calculatePriceDetailsFromValues(
