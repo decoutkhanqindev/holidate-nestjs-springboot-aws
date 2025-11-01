@@ -119,6 +119,14 @@ public class SecurityConfig {
                                 .hasAuthority(RoleType.USER.getValue())
                                 .requestMatchers(HttpMethod.GET, BookingEndpoints.BOOKINGS + CommonEndpoints.ID)
                                 .hasAuthority(RoleType.USER.getValue())
+                                .requestMatchers(HttpMethod.POST,
+                                                BookingEndpoints.BOOKINGS + CommonEndpoints.ID
+                                                                + BookingEndpoints.CHECKIN)
+                                .hasAuthority(RoleType.USER.getValue())
+                                .requestMatchers(HttpMethod.POST,
+                                                BookingEndpoints.BOOKINGS + CommonEndpoints.ID
+                                                                + BookingEndpoints.CHECKOUT)
+                                .hasAuthority(RoleType.USER.getValue())
 
                                 // II. partner role
                                 // 1. profile endpoints
@@ -177,6 +185,16 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET, BookingEndpoints.BOOKINGS)
                                 .hasAuthority(RoleType.PARTNER.getValue())
                                 .requestMatchers(HttpMethod.GET, BookingEndpoints.BOOKINGS + CommonEndpoints.ID)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                .requestMatchers(HttpMethod.DELETE, BookingEndpoints.BOOKINGS + CommonEndpoints.ID)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                .requestMatchers(HttpMethod.POST,
+                                                BookingEndpoints.BOOKINGS + CommonEndpoints.ID
+                                                                + BookingEndpoints.CHECKIN)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                .requestMatchers(HttpMethod.POST,
+                                                BookingEndpoints.BOOKINGS + CommonEndpoints.ID
+                                                                + BookingEndpoints.CHECKOUT)
                                 .hasAuthority(RoleType.PARTNER.getValue())
 
                                 // III. admin role
@@ -277,6 +295,14 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.POST,
                                                 BookingEndpoints.BOOKINGS + CommonEndpoints.ID
                                                                 + BookingEndpoints.RESCHEDULE)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.POST,
+                                                BookingEndpoints.BOOKINGS + CommonEndpoints.ID
+                                                                + BookingEndpoints.CHECKIN)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.POST,
+                                                BookingEndpoints.BOOKINGS + CommonEndpoints.ID
+                                                                + BookingEndpoints.CHECKOUT)
                                 .hasAuthority(RoleType.ADMIN.getValue())
 
                                 // C. any other endpoints
