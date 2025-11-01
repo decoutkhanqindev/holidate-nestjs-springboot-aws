@@ -12,7 +12,7 @@ import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.repository.user.UserAuthInfoRepository;
 import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.type.ErrorType;
-import com.webapp.holidate.type.auth.OtpType;
+import com.webapp.holidate.type.email.EmailType;
 import com.webapp.holidate.type.user.AuthProviderType;
 import com.webapp.holidate.utils.DateTimeUtil;
 import jakarta.mail.MessagingException;
@@ -57,14 +57,14 @@ public class EmailService {
   long otpBlockTimeMillis;
 
   public SendOtpResponse sendEmailVerificationOtp(SendOtpRequest request) {
-    return sendOtp(request.getEmail(), OtpType.EMAIL_VERIFICATION, false);
+    return sendOtp(request.getEmail(), EmailType.EMAIL_VERIFICATION, false);
   }
 
   public SendOtpResponse sendPasswordResetOtp(SendOtpRequest request) {
-    return sendOtp(request.getEmail(), OtpType.PASSWORD_RESET, true);
+    return sendOtp(request.getEmail(), EmailType.PASSWORD_RESET, true);
   }
 
-  private SendOtpResponse sendOtp(String email, OtpType otpType, boolean requireActive) {
+  private SendOtpResponse sendOtp(String email, EmailType emailType, boolean requireActive) {
     UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email)
       .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
 
@@ -108,20 +108,8 @@ public class EmailService {
     int otpExpirationMinutes = (int) (otpExpirationMillis / 60000);
     context.setVariable("expiryMinutes", otpExpirationMinutes);
 
-    // generate the HTML content
-    String htmlContent = templateEngine.process(otpType.getTemplateName(), context);
-
-    // send the email
-    try {
-      MimeMessage mimeMessage = mailSender.createMimeMessage();
-      MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-      mimeMessageHelper.setTo(user.getEmail());
-      mimeMessageHelper.setSubject(otpType.getEmailSubject());
-      mimeMessageHelper.setText(htmlContent, true);
-      mailSender.send(mimeMessage);
-    } catch (MessagingException e) {
-      throw new AppException(ErrorType.SEND_EMAIL_FAILED);
-    }
+    // send the email using helper method
+    sendEmail(user.getEmail(), emailType.getTemplateName(), emailType.getEmailSubject(), context);
 
     return SendOtpResponse.builder()
       .sent(true)
@@ -129,14 +117,14 @@ public class EmailService {
   }
 
   public VerificationResponse verifyEmailVerificationOtp(VerifyEmailVerificationOtpRequest request) {
-    return verifyOtp(request.getEmail(), request.getOtp(), OtpType.EMAIL_VERIFICATION, null);
+    return verifyOtp(request.getEmail(), request.getOtp(), EmailType.EMAIL_VERIFICATION, null);
   }
 
   public VerificationResponse verifyPasswordResetOtp(VerifyPasswordResetOtpRequest request) {
-    return verifyOtp(request.getEmail(), request.getOtp(), OtpType.PASSWORD_RESET, request.getNewPassword());
+    return verifyOtp(request.getEmail(), request.getOtp(), EmailType.PASSWORD_RESET, request.getNewPassword());
   }
 
-  private VerificationResponse verifyOtp(String email, String inputOtp, OtpType otpType, String newPassword) {
+  private VerificationResponse verifyOtp(String email, String inputOtp, EmailType emailType, String newPassword) {
     UserAuthInfo authInfo = authInfoRepository.findByUserEmail(email)
       .orElseThrow(() -> new AppException(ErrorType.INVALID_OTP));
 
@@ -146,11 +134,11 @@ public class EmailService {
       throw new AppException(ErrorType.ONLY_LOCAL_AUTH);
     }
 
-    if (otpType == OtpType.EMAIL_VERIFICATION) {
+    if (emailType == EmailType.EMAIL_VERIFICATION) {
       if (authInfo.isActive()) {
         throw new AppException(ErrorType.USER_EXISTS);
       }
-    } else if (otpType == OtpType.PASSWORD_RESET) {
+    } else if (emailType == EmailType.PASSWORD_RESET) {
       if (!authInfo.isActive()) {
         throw new AppException(ErrorType.UNAUTHORIZED);
       }
@@ -179,9 +167,9 @@ public class EmailService {
       throw new AppException(ErrorType.INVALID_OTP);
     }
 
-    if (otpType == OtpType.EMAIL_VERIFICATION) {
+    if (emailType == EmailType.EMAIL_VERIFICATION) {
       authInfo.setActive(true);
-    } else if (otpType == OtpType.PASSWORD_RESET) {
+    } else if (emailType == EmailType.PASSWORD_RESET) {
       User user = authInfo.getUser();
       String encodedPassword = passwordEncoder.encode(newPassword);
       user.setPassword(encodedPassword);
@@ -229,5 +217,169 @@ public class EmailService {
     }
 
     authInfoRepository.save(authInfo);
+  }
+
+  public void sendRefundNotification(
+    String customerEmail,
+    String customerName,
+    String bookingId,
+    String hotelName,
+    String roomName,
+    String checkInDate,
+    String checkOutDate,
+    double totalAmount,
+    double penaltyAmount,
+    double refundAmount,
+    String cancellationPolicyInfo) {
+    Context context = new Context();
+    context.setVariable("customerName", customerName);
+    context.setVariable("bookingId", bookingId);
+    context.setVariable("hotelName", hotelName);
+    context.setVariable("roomName", roomName);
+    context.setVariable("checkInDate", checkInDate);
+    context.setVariable("checkOutDate", checkOutDate);
+    context.setVariable("totalAmount", totalAmount);
+    context.setVariable("penaltyAmount", penaltyAmount);
+    context.setVariable("refundAmount", refundAmount);
+    context.setVariable("cancellationPolicyInfo", cancellationPolicyInfo);
+
+    sendBookingEmail(customerEmail, EmailType.REFUND_NOTIFICATION, context);
+  }
+
+  public void sendRescheduleNotification(
+    String customerEmail,
+    String customerName,
+    String bookingId,
+    String hotelName,
+    String roomName,
+    String oldCheckInDate,
+    String oldCheckOutDate,
+    String newCheckInDate,
+    String newCheckOutDate,
+    double newFinalPrice,
+    double rescheduleFee,
+    double priceDifference,
+    String reschedulePolicyInfo) {
+    Context context = new Context();
+    context.setVariable("customerName", customerName);
+    context.setVariable("bookingId", bookingId);
+    context.setVariable("hotelName", hotelName);
+    context.setVariable("roomName", roomName);
+    context.setVariable("oldCheckInDate", oldCheckInDate);
+    context.setVariable("oldCheckOutDate", oldCheckOutDate);
+    context.setVariable("newCheckInDate", newCheckInDate);
+    context.setVariable("newCheckOutDate", newCheckOutDate);
+    context.setVariable("newFinalPrice", newFinalPrice);
+    context.setVariable("rescheduleFee", rescheduleFee);
+    context.setVariable("priceDifference", priceDifference);
+    context.setVariable("reschedulePolicyInfo", reschedulePolicyInfo);
+
+    sendBookingEmail(customerEmail, EmailType.RESCHEDULE_NOTIFICATION, context);
+  }
+
+  public void sendBookingConfirmationNotification(
+    String customerEmail,
+    String customerName,
+    String bookingId,
+    String hotelName,
+    String roomName,
+    String checkInDate,
+    String checkOutDate,
+    int numberOfNights,
+    int numberOfRooms,
+    double finalPrice,
+    String cancellationPolicyInfo,
+    String reschedulePolicyInfo,
+    String requiredDocuments) {
+    Context context = new Context();
+    context.setVariable("customerName", customerName);
+    context.setVariable("bookingId", bookingId);
+    context.setVariable("hotelName", hotelName);
+    context.setVariable("roomName", roomName);
+    context.setVariable("checkInDate", checkInDate);
+    context.setVariable("checkOutDate", checkOutDate);
+    context.setVariable("numberOfNights", numberOfNights);
+    context.setVariable("numberOfRooms", numberOfRooms);
+    context.setVariable("finalPrice", finalPrice);
+    context.setVariable("cancellationPolicyInfo", cancellationPolicyInfo);
+    context.setVariable("reschedulePolicyInfo", reschedulePolicyInfo);
+    context.setVariable("requiredDocuments", requiredDocuments);
+    context.setVariable("hasRequiredDocuments", requiredDocuments != null && !requiredDocuments.trim().isEmpty());
+
+    sendBookingEmail(customerEmail, EmailType.BOOKING_CONFIRMATION, context);
+  }
+
+  public void sendCheckinNotification(
+    String customerEmail,
+    String customerName,
+    String bookingId,
+    String hotelName,
+    String roomName,
+    String checkInDate,
+    String checkOutDate,
+    int numberOfNights,
+    int numberOfRooms,
+    String checkInTime,
+    String checkOutTime,
+    String requiredDocuments) {
+    Context context = new Context();
+    context.setVariable("customerName", customerName);
+    context.setVariable("bookingId", bookingId);
+    context.setVariable("hotelName", hotelName);
+    context.setVariable("roomName", roomName);
+    context.setVariable("checkInDate", checkInDate);
+    context.setVariable("checkOutDate", checkOutDate);
+    context.setVariable("numberOfNights", numberOfNights);
+    context.setVariable("numberOfRooms", numberOfRooms);
+    context.setVariable("checkInTime", checkInTime);
+    context.setVariable("checkOutTime", checkOutTime);
+    context.setVariable("requiredDocuments", requiredDocuments);
+    context.setVariable("hasRequiredDocuments", requiredDocuments != null && !requiredDocuments.trim().isEmpty());
+
+    sendBookingEmail(customerEmail, EmailType.CHECKIN_NOTIFICATION, context);
+  }
+
+  public void sendCheckoutNotification(
+    String customerEmail,
+    String customerName,
+    String bookingId,
+    String hotelName,
+    String roomName,
+    String checkInDate,
+    String checkOutDate,
+    int numberOfNights,
+    int numberOfRooms,
+    String reviewUrl) {
+    Context context = new Context();
+    context.setVariable("customerName", customerName);
+    context.setVariable("bookingId", bookingId);
+    context.setVariable("hotelName", hotelName);
+    context.setVariable("roomName", roomName);
+    context.setVariable("checkInDate", checkInDate);
+    context.setVariable("checkOutDate", checkOutDate);
+    context.setVariable("numberOfNights", numberOfNights);
+    context.setVariable("numberOfRooms", numberOfRooms);
+    context.setVariable("reviewUrl", reviewUrl);
+
+    sendBookingEmail(customerEmail, EmailType.CHECKOUT_NOTIFICATION, context);
+  }
+
+  private void sendBookingEmail(String customerEmail, EmailType emailType, Context context) {
+    sendEmail(customerEmail, emailType.getTemplateName(), emailType.getEmailSubject(), context);
+  }
+
+  private void sendEmail(String recipientEmail, String templateName, String emailSubject, Context context) {
+    String htmlContent = templateEngine.process(templateName, context);
+
+    try {
+      MimeMessage mimeMessage = mailSender.createMimeMessage();
+      MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+      mimeMessageHelper.setTo(recipientEmail);
+      mimeMessageHelper.setSubject(emailSubject);
+      mimeMessageHelper.setText(htmlContent, true);
+      mailSender.send(mimeMessage);
+    } catch (MessagingException e) {
+      throw new AppException(ErrorType.SEND_EMAIL_FAILED);
+    }
   }
 }

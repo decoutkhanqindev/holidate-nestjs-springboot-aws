@@ -269,6 +269,54 @@ public class RoomInventoryService {
   }
 
   @Transactional
+  public void updateAvailabilityForReschedule(String roomId, LocalDate oldCheckInDate, LocalDate oldCheckOutDate,
+                                              LocalDate newCheckInDate, LocalDate newCheckOutDate,
+                                              int numberOfRooms) {
+    // Step 1: Release old dates (restore availability)
+    List<RoomInventory> oldInventories = roomInventoryRepository.findAllByRoomIdAndDateBetweenWithLock(
+      roomId, oldCheckInDate, oldCheckOutDate.minusDays(1));
+
+    long oldDaysRequested = oldCheckInDate.until(oldCheckOutDate).getDays();
+    if (oldInventories.size() == oldDaysRequested) {
+      // Restore availability for old dates
+      for (RoomInventory inventory : oldInventories) {
+        int newAvailableRooms = inventory.getAvailableRooms() + numberOfRooms;
+        inventory.setAvailableRooms(newAvailableRooms);
+
+        if (inventory.getStatus().equals(RoomInventoryStatusType.UNAVAILABLE.getValue()) && newAvailableRooms > 0) {
+          inventory.setStatus(RoomInventoryStatusType.AVAILABLE.getValue());
+        }
+      }
+      roomInventoryRepository.saveAll(oldInventories);
+    }
+
+    // Step 2: Reserve new dates (reduce availability)
+    List<RoomInventory> newInventories = roomInventoryRepository.findAllByRoomIdAndDateBetweenWithLock(
+      roomId, newCheckInDate, newCheckOutDate.minusDays(1));
+
+    long newDaysRequested = newCheckInDate.until(newCheckOutDate).getDays();
+    if (newInventories.size() != newDaysRequested) {
+      throw new AppException(ErrorType.ROOM_NOT_AVAILABLE);
+    }
+
+    // Check availability and update inventory for new dates
+    for (RoomInventory inventory : newInventories) {
+      if (inventory.getAvailableRooms() < numberOfRooms) {
+        throw new AppException(ErrorType.INSUFFICIENT_ROOM_QUANTITY);
+      }
+
+      int newAvailableRooms = inventory.getAvailableRooms() - numberOfRooms;
+      inventory.setAvailableRooms(newAvailableRooms);
+
+      if (newAvailableRooms == 0) {
+        inventory.setStatus(RoomInventoryStatusType.UNAVAILABLE.getValue());
+      }
+    }
+
+    roomInventoryRepository.saveAll(newInventories);
+  }
+
+  @Transactional
   public void updatePriceForDateBetween(RoomInventoryPriceUpdateRequest request) {
     String roomId = request.getRoomId();
     LocalDate startDate = request.getStartDate();

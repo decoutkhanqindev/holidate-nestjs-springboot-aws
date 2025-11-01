@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Xác nhận đặt phòng</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .header {
+      background-color: #4caf50;
+      color: white;
+      padding: 15px;
+      text-align: center;
+    }
+    .content {
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+    .info-box {
+      background-color: white;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border-left: 4px solid #4caf50;
+    }
+    .amount-box {
+      display: inline-block;
+      padding: 15px 25px;
+      background-color: #4caf50;
+      color: white !important;
+      font-size: 20px;
+      font-weight: bold;
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+    .footer {
+      margin-top: 20px;
+      padding: 10px;
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+    }
+    .success {
+      color: #4caf50;
+      font-weight: bold;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+    }
+    table td {
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+    }
+    table td:first-child {
+      font-weight: bold;
+      width: 40%;
+    }
+    .highlight {
+      background-color: #e8f5e9;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+    .policy-box {
+      background-color: #fff3cd;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border-left: 4px solid #ff9800;
+    }
+    .policy-box h4 {
+      margin-top: 0;
+      color: #856404;
+    }
+    .policy-content {
+      margin-top: 10px;
+    }
+    .policy-content ul {
+      margin: 5px 0;
+      padding-left: 20px;
+    }
+    .policy-content li {
+      margin: 5px 0;
+    }
+    .documents-box {
+      background-color: #d1ecf1;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border-left: 4px solid #0c5460;
+    }
+    .documents-box h4 {
+      margin-top: 0;
+      color: #0c5460;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Xác nhận đặt phòng thành công</h1>
+  </div>
+
+  <div class="content">
+    <p>Xin chào <span th:text="${customerName}">Khách hàng</span>,</p>
+
+    <p class="success">
+      <strong
+      >Cảm ơn bạn đã đặt phòng với Holidate! Đơn đặt phòng của bạn đã được
+        xác nhận thành công.</strong
+      >
+    </p>
+
+    <div class="info-box">
+      <h3 style="margin-top: 0">Thông tin đơn đặt phòng</h3>
+      <table>
+        <tr>
+          <td>Mã đơn đặt phòng:</td>
+          <td th:text="${bookingId}">BOOKING-123</td>
+        </tr>
+        <tr>
+          <td>Khách sạn:</td>
+          <td th:text="${hotelName}">Tên khách sạn</td>
+        </tr>
+        <tr>
+          <td>Phòng:</td>
+          <td th:text="${roomName}">Tên phòng</td>
+        </tr>
+        <tr>
+          <td>Ngày nhận phòng:</td>
+          <td th:text="${checkInDate}">2025-01-01</td>
+        </tr>
+        <tr>
+          <td>Ngày trả phòng:</td>
+          <td th:text="${checkOutDate}">2025-01-03</td>
+        </tr>
+        <tr>
+          <td>Số đêm:</td>
+          <td th:text="${numberOfNights} + ' đêm'">2 đêm</td>
+        </tr>
+        <tr>
+          <td>Số phòng:</td>
+          <td th:text="${numberOfRooms} + ' phòng'">1 phòng</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="info-box">
+      <h3 style="margin-top: 0">Chi tiết thanh toán</h3>
+      <table>
+        <tr>
+          <td><strong>Tổng tiền đã thanh toán:</strong></td>
+          <td>
+                <span
+                    class="amount-box"
+                    th:text="${#numbers.formatDecimal(finalPrice, 1, 'POINT', 0, 'COMMA')} + ' VNĐ'"
+                >0 VNĐ</span
+                >
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="documents-box" th:if="${hasRequiredDocuments}">
+      <h4>📄 Giấy tờ cần thiết</h4>
+      <p>
+        <strong
+        >Khi đến nhận phòng, vui lòng mang theo các giấy tờ sau:</strong
+        >
+      </p>
+      <p th:text="${requiredDocuments}">CMND/CCCD</p>
+    </div>
+
+    <div class="policy-box">
+      <h4>❌ Chính sách hủy phòng</h4>
+      <div class="policy-content" th:utext="${cancellationPolicyInfo}">
+        Chính sách hủy phòng sẽ được hiển thị ở đây.
+      </div>
+    </div>
+
+    <div class="policy-box">
+      <h4>🔄 Chính sách đổi lịch</h4>
+      <div class="policy-content" th:utext="${reschedulePolicyInfo}">
+        Chính sách đổi lịch sẽ được hiển thị ở đây.
+      </div>
+    </div>
+
+    <div class="highlight">
+      <p><strong>Lưu ý quan trọng:</strong></p>
+      <ul>
+        <li>
+          Vui lòng đến đúng ngày check-in đã đặt. Nếu có thay đổi, vui lòng
+          liên hệ với chúng tôi trước.
+        </li>
+        <li th:if="${!hasRequiredDocuments}">
+          Mang theo CMND/CCCD khi đến nhận phòng để đối chiếu thông tin.
+        </li>
+        <li>Email này được dùng làm voucher xác nhận đặt phòng của bạn.</li>
+        <li>
+          Nếu bạn cần hủy hoặc đổi lịch, vui lòng tham khảo các chính sách
+          trên.
+        </li>
+      </ul>
+    </div>
+
+    <p>
+      Chúng tôi rất mong được đón tiếp bạn tại
+      <span th:text="${hotelName}">khách sạn</span>.
+    </p>
+
+    <p>
+      Nếu bạn có bất kỳ thắc mắc nào, vui lòng liên hệ với bộ phận hỗ trợ
+      khách hàng của chúng tôi.
+    </p>
+
+    <p>Chúc bạn có một chuyến đi tuyệt vời!</p>
+  </div>
+
+  <div class="footer">
+    <p>Trân trọng,<br/>Đội ngũ Holidate</p>
+    <p>© 2025 Holidate. All rights reserved.</p>
+  </div>
+</div>
+</body>
+</html>

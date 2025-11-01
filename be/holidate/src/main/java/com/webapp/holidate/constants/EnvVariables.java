@@ -35,4 +35,5 @@ public class EnvVariables {
   public static final String VNPAY_TMN_CODE = "VNPAY_TMN_CODE";
   public static final String VNPAY_HASH_SECRET = "VNPAY_HASH_SECRET";
   public static final String VNPAY_API_URL = "VNPAY_API_URL";
+  public static final String VNPAY_REFUND_URL = "VNPAY_REFUND_URL";
 }
