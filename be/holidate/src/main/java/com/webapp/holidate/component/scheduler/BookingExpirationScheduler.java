@@ -14,8 +14,20 @@ import org.springframework.stereotype.Component;
 public class BookingExpirationScheduler {
   BookingService bookingService;
 
+  /**
+   * Cancel expired bookings that are still in PENDING_PAYMENT status after 15
+   * minutes.
+   * Runs every 5 minutes.
+   */
   @Scheduled(fixedRate = 300000) // 5 minutes = 300,000 milliseconds
   public void cancelExpiredBookings() {
+    log.debug("Running scheduled task: cancelExpiredBookings");
     bookingService.cancelExpiredBookings();
+  }
+
+
+  @Scheduled(cron = "0 0 12 * * *") // runs daily at 12:00 PM (noon)
+  public void cancelNoShowBookings() {
+    bookingService.cancelNoShowBookings();
   }
 }

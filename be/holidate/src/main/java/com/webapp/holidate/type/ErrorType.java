@@ -153,6 +153,8 @@ public enum ErrorType {
   // booking errors
   BOOKING_NOT_FOUND(404, "Booking not found"),
   BOOKING_NOT_CONFIRMED(400, "Booking is not confirmed"),
+  BOOKING_ALREADY_COMPLETED(400, "Cannot check-in. Booking has already been completed"),
+  BOOKING_NOT_CHECKED_IN(400, "Cannot checkout. Booking must be checked in first"),
   ROOM_NOT_AVAILABLE(400, "Room is not available for the selected dates"),
   CONCURRENT_BOOKING_FAILED(409, "Booking failed due to concurrent access. Please try again"),
   INVALID_DISCOUNT_CODE(400, "Discount code is invalid or expired"),
