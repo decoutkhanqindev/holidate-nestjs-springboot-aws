@@ -83,6 +83,9 @@ public class SecurityConfig {
       .hasAnyAuthority(RoleType.ADMIN.getValue(), RoleType.PARTNER.getValue())
       // 4. amenity endpoints
       .requestMatchers(HttpMethod.GET, AmenityEndpoints.AMENITY + ALL_ENDPOINTS).permitAll()
+      // 4.1. image/photo category endpoints
+      .requestMatchers(HttpMethod.GET, ImageEndpoints.IMAGE + ImageEndpoints.PHOTO_CATEGORIES + ALL_ENDPOINTS)
+      .permitAll()
       // 5. special day endpoints
       .requestMatchers(HttpMethod.GET, SpecialDayEndpoints.SPECIAL_DAYS + ALL_ENDPOINTS)
       .permitAll()
