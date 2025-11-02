@@ -24,7 +24,7 @@ export default function SuperAdminHeader({ onToggleSidebar }: SuperAdminHeaderPr
                 >
                     <FaBars size={20} />
                 </button>
-                <h5 className="m-0 fw-semibold text-dark">Super Admin Dashboard</h5>
+                <h5 className="m-0 fw-semibold text-dark"> Admin Dashboard</h5>
             </div>
             <div className="d-flex align-items-center gap-3">
                 <span className="text-secondary">

@@ -3,6 +3,7 @@
 "use client";
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useTransition } from 'react';
 import { EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 // Hãy chắc chắn rằng bạn có định nghĩa type này
@@ -50,10 +51,16 @@ export default function HotelsTable({ hotels }: HotelsTableProps) {
                     <thead className="bg-gray-50">
                         <tr>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                STT
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 TÊN KHÁCH SẠN
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 ĐỊA CHỈ
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Ảnh
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 TRẠNG THÁI
@@ -65,8 +72,11 @@ export default function HotelsTable({ hotels }: HotelsTableProps) {
                     </thead>
 
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {hotels.map((hotel) => (
+                        {hotels.map((hotel, index) => (
                             <tr key={hotel.id} className="hover:bg-gray-50 transition-colors duration-200">
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm font-medium text-gray-900">{index + 1}</div>
+                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="text-sm font-medium text-gray-900">{hotel.name}</div>
                                 </td>
@@ -76,35 +86,51 @@ export default function HotelsTable({ hotels }: HotelsTableProps) {
                                 </td>
 
                                 <td className="px-6 py-4 whitespace-nowrap">
+                                    {hotel.imageUrl ? (
+                                        <div className="flex-shrink-0 h-16 w-24 flex items-center justify-center">
+                                            <Image
+                                                className="h-full w-full rounded-md object-cover"
+                                                src={hotel.imageUrl}
+                                                alt={hotel.name}
+                                                width={96}
+                                                height={64}
+                                                unoptimized
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="flex-shrink-0 h-16 w-24 flex items-center justify-center bg-gray-100 rounded-md">
+                                            <span className="text-xs text-gray-400">No image</span>
+                                        </div>
+                                    )}
+                                </td>
+
+                                <td className="px-6 py-4 whitespace-nowrap">
                                     <StatusBadge status={hotel.status} />
                                 </td>
 
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div className="flex items-center justify-end gap-x-2">
+                                <td className="px-6 py-4 whitespace-nowrap  text-sm font-medium">
+                                    <div className="flex items-center  gap-x-2">
                                         <Link
                                             href={`/admin-hotels/${hotel.id}`}
-                                            className="px-3 py-1.5 bg-gray-100 text-green-600 hover:bg-gray-200 rounded-md transition-colors text-sm font-medium flex items-center gap-1.5"
+                                            className="p-2 bg-gray-100 text-green-600 hover:bg-gray-200 rounded-md transition-colors"
                                             title="Xem chi tiết"
                                         >
-                                            <EyeIcon className="h-4 w-4" />
-                                            <span>Xem</span>
+                                            <EyeIcon className="h-5 w-5" />
                                         </Link>
                                         <Link
                                             href={`/admin-hotels/${hotel.id}/edit`}
-                                            className="px-3 py-1.5 bg-gray-100 text-blue-600 hover:bg-gray-200 rounded-md transition-colors text-sm font-medium flex items-center gap-1.5"
+                                            className="p-2 bg-gray-100 text-blue-600 hover:bg-gray-200 rounded-md transition-colors"
                                             title="Chỉnh sửa"
                                         >
-                                            <PencilIcon className="h-4 w-4" />
-                                            <span>Sửa</span>
+                                            <PencilIcon className="h-5 w-5" />
                                         </Link>
                                         <button
                                             onClick={() => handleDelete(hotel.id, hotel.name)}
                                             disabled={isPending}
-                                            className="px-3 py-1.5 bg-gray-100 text-red-600 hover:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed disabled:hover:bg-gray-100 rounded-md transition-colors text-sm font-medium flex items-center gap-1.5"
+                                            className="p-2 bg-gray-100 text-red-600 hover:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed disabled:hover:bg-gray-100 rounded-md transition-colors"
                                             title="Xóa"
                                         >
-                                            <TrashIcon className="h-4 w-4" />
-                                            <span>Xóa</span>
+                                            <TrashIcon className="h-5 w-5" />
                                         </button>
                                     </div>
                                 </td>

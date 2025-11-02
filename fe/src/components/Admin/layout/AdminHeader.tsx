@@ -16,7 +16,7 @@ export default function AdminHeader({ onToggleSidebar }: AdminHeaderProps) {
             </button>
             <div className="flex items-center gap-x-4">
                 <span className="text-sm text-gray-600">
-                    Chào, <span className="font-semibold text-gray-800">Admin</span>!
+                    Chào, <span className="font-semibold text-gray-800">Partner</span>!
                 </span>
                 <button
                     className="flex items-center gap-x-2 text-sm font-medium text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50"

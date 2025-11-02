@@ -19,7 +19,7 @@ const navLinks = [
     { href: '/admin-discounts', label: 'Mã giảm giá', icon: TicketIcon },
     { href: '/admin-users', label: 'Người dùng', icon: UserGroupIcon },
     { href: '/admin-reviews', label: 'Đánh giá', icon: ChatBubbleLeftRightIcon },
-    { href: '/admin-marketing', label: 'Marketing', icon: MegaphoneIcon },
+    { href: '/admin-tickets', label: 'Trợ giúp', icon: MegaphoneIcon },
 ];
 
 interface AdminSidebarProps {

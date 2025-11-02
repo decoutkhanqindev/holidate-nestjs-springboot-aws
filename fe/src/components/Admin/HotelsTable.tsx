@@ -1,75 +1,133 @@
 "use client";
 import Link from 'next/link';
-import { Hotel } from '@/types';
+import Image from 'next/image';
+import { useTransition } from 'react';
+import { EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { Hotel, HotelStatus } from '@/types';
+import { deleteHotelAction } from '@/lib/actions/hotelActions';
 import { useAuth } from '@/components/Admin/AuthContext_Admin/AuthContextAdmin';
 
-function StatusBadge({ status }: { status: Hotel['status'] }) {
-    const styles = {
-        ACTIVE: 'bg-green-100 text-green-800',
-        PENDING: 'bg-yellow-100 text-yellow-800',
-        HIDDEN: 'bg-gray-100 text-gray-800',
+function StatusBadge({ status }: { status: HotelStatus }) {
+    const statusStyles: Record<HotelStatus, string> = {
+        ACTIVE: "bg-green-100 text-green-800",
+        PENDING: "bg-yellow-100 text-yellow-800",
+        HIDDEN: "bg-gray-100 text-gray-800",
+    };
+    const statusText: Record<HotelStatus, string> = {
+        ACTIVE: "ACTIVE",
+        PENDING: "PENDING",
+        HIDDEN: "HIDDEN",
     };
     return (
-        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${styles[status]}`}>
-            {status}
+        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${statusStyles[status]}`}>
+            {statusText[status]}
         </span>
     );
 }
+
 export default function HotelsTable({ hotels }: { hotels: Hotel[] }) {
+    const [isPending, startTransition] = useTransition();
     const { startImpersonation } = useAuth();
 
-    const handleDelete = (id: string) => {
-        alert(`Xóa khách sạn id: ${id}`);
+    const handleDelete = (id: string, name: string) => {
+        if (confirm(`Bạn có chắc chắn muốn xóa khách sạn "${name}" không?`)) {
+            startTransition(async () => {
+                await deleteHotelAction(id);
+            });
+        }
     };
 
     return (
-        <div className="overflow-x-auto">
-            <table className="min-w-full bg-white">
-                <thead className="bg-gray-100">
-                    <tr>
-                        <th className="py-3 px-6 text-left text-sm font-bold text-blue-700 uppercase">Tên khách sạn</th>
-                        <th className="py-3 px-6 text-left text-sm font-bold text-blue-700 uppercase">Địa chỉ</th>
-                        <th className="py-3 px-6 text-left text-sm font-bold text-blue-700 uppercase">Trạng thái</th>
-                        <th className="py-3 px-6 text-center text-sm font-bold text-blue-700 uppercase">Hành động</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                    {hotels.map((hotel) => (
-                        <tr key={hotel.id}>
-                            <td className="py-4 px-6 whitespace-nowrap text-gray-900 font-semibold text-base">{hotel.name}</td>
-                            <td className="py-4 px-6 whitespace-nowrap text-gray-900 text-base">{hotel.address}</td>
-                            <td className="py-4 px-6 whitespace-nowrap">
-                                <StatusBadge status={hotel.status} />
-                            </td>
-                            <td className="py-4 px-6 whitespace-nowrap text-center">
-                                <div className="flex items-center justify-center gap-2">
-                                    {/* NÚT XEM NHANH MỚI */}
-                                    <button
-                                        type="button"
-                                        className="text-green-600 font-bold hover:text-white hover:bg-green-600 px-2 py-1 rounded border border-green-500 transition"
-                                        onClick={() => startImpersonation({ id: hotel.id, name: hotel.name })}
-                                    >
-                                        Xem
-                                    </button>
-                                    <Link
-                                        href={`/admin-hotels/${hotel.id}`} // << Đảm bảo nó chính xác là thế này
-                                        className="text-blue-600 font-bold hover:text-pink-500 underline px-2 py-1 rounded transition"
-                                    >
-                                        Sửa
-                                    </Link>
-                                    <button
-                                        type="button"
-                                        className="text-red-600 font-bold hover:text-white hover:bg-red-600 px-2 py-1 rounded border border-red-500 transition"
-                                        onClick={() => handleDelete(hotel.id)}
-                                    >
-                                        Xóa
-                                    </button>
-                                </div>
-                            </td>
+        <div className={`mt-6 bg-white rounded-lg shadow-md overflow-hidden transition-opacity ${isPending ? "opacity-50" : "opacity-100"}`}>
+            <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                STT
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                TÊN KHÁCH SẠN
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                ĐỊA CHỈ
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Ảnh
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                TRẠNG THÁI
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                HÀNH ĐỘNG
+                            </th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {hotels.map((hotel, index) => (
+                            <tr key={hotel.id} className="hover:bg-gray-50 transition-colors duration-200">
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm font-medium text-gray-900">{index + 1}</div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm font-medium text-gray-900">{hotel.name}</div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 max-w-xs truncate" title={hotel.address}>
+                                    {hotel.address}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    {hotel.imageUrl ? (
+                                        <div className="flex-shrink-0 h-16 w-24 flex items-center justify-center">
+                                            <Image
+                                                className="h-full w-full rounded-md object-cover"
+                                                src={hotel.imageUrl}
+                                                alt={hotel.name}
+                                                width={96}
+                                                height={64}
+                                                unoptimized
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="flex-shrink-0 h-16 w-24 flex items-center justify-center bg-gray-100 rounded-md">
+                                            <span className="text-xs text-gray-400">No image</span>
+                                        </div>
+                                    )}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <StatusBadge status={hotel.status} />
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <div className="flex items-center justify-end gap-x-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => startImpersonation({ id: hotel.id, name: hotel.name })}
+                                            className="p-2 bg-gray-100 text-green-600 hover:bg-gray-200 rounded-md transition-colors"
+                                            title="Xem chi tiết"
+                                        >
+                                            <EyeIcon className="h-5 w-5" />
+                                        </button>
+                                        <Link
+                                            href={`/admin-hotels/${hotel.id}/edit`}
+                                            className="p-2 bg-gray-100 text-blue-600 hover:bg-gray-200 rounded-md transition-colors"
+                                            title="Chỉnh sửa"
+                                        >
+                                            <PencilIcon className="h-5 w-5" />
+                                        </Link>
+                                        <button
+                                            onClick={() => handleDelete(hotel.id, hotel.name)}
+                                            disabled={isPending}
+                                            className="p-2 bg-gray-100 text-red-600 hover:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed disabled:hover:bg-gray-100 rounded-md transition-colors"
+                                            title="Xóa"
+                                        >
+                                            <TrashIcon className="h-5 w-5" />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }
