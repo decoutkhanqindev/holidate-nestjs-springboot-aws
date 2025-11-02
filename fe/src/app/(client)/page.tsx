@@ -106,6 +106,118 @@ export default function HomePage() {
 
   return (
     <>
+      {/* CSS cục bộ chỉ cho LocationSearchInput ở homepage */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          /* CSS cục bộ chỉ áp dụng cho LocationSearchInput trong homepage */
+          .homepage-location-popup {
+            padding: 3px !important;
+           
+          }
+          
+          /* Loại bỏ wrapper div không cần thiết */
+          .homepage-location-popup > div {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0 !important;
+             left:15px !important;
+          }
+          
+          /* Style cho input field - loại bỏ box riêng biệt */
+          .homepage-location-popup input[type="text"] {
+            border: none !important;
+            border-bottom: 1px solid #e5e7eb !important;
+            border-radius: 0 !important;
+            padding: 10px 8px !important;
+            margin: 0 !important;
+            margin-bottom: 8px !important;
+            background: transparent !important;
+            font-size: 15px !important;
+            font-weight: 500 !important;
+            color: #111827 !important;
+            width: 100% !important;
+            outline: none !important;
+                left:35px !important;
+            box-shadow: none !important;
+          }
+          
+          .homepage-location-popup input[type="text"]:focus {
+            border-bottom-color: #3b82f6 !important;
+          }
+          
+          /* Style cho suggestions list - gọn gàng, không có box riêng */
+          .homepage-location-popup ul {
+            list-style: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            max-height: 380px !important;
+            overflow-y: auto !important;
+            border: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+          }
+          
+          .homepage-location-popup ul li {
+            padding: 10px 8px !important;
+            cursor: pointer !important;
+            border-radius: 6px !important;
+            margin-bottom: 2px !important;
+            transition: background-color 0.15s ease !important;
+            border: none !important;
+          }
+          
+          .homepage-location-popup ul li:hover {
+            background-color: #f3f4f6 !important;
+          }
+          
+          .homepage-location-popup ul li:last-child {
+            margin-bottom: 0 !important;
+          }
+          
+          /* Ẩn border-bottom của suggestionItem nếu có */
+          .homepage-location-popup ul li:not(:last-child) {
+            border-bottom: none !important;
+          }
+          
+          /* CSS cục bộ cho phần Khách và Phòng - dịch sang phải 30px */
+          .homepage-guest-section {
+            margin-left: 30px !important;
+          }
+          
+          /* Lùi icon người vào trái một chút */
+          .homepage-guest-section .flex.items-center > svg {
+            margin-left: -35px !important;
+          }
+          
+          /* Popup của GuestPicker - override CSS từ module để dịch sang phải 30px */
+          .homepage-guest-popup > div[class*="pickerContainer"],
+          .homepage-guest-popup > div {
+            position: absolute !important;
+            right: 10px !important; /* 100px (mặc định từ module) + 30px */
+            left: auto !important;
+            top: calc(100% + 3px) !important;
+            transform: none !important;
+            width:280px !important;
+          }
+          
+          @media (max-width: 768px) {
+            /* Trên mobile, không dịch sang phải */
+            .homepage-guest-section {
+              margin-left: 0 !important;
+              
+            }
+            .homepage-guest-popup {
+              right: 25px !important;
+
+            }
+            .homepage-guest-popup > div {
+              right: 50% !important;
+              left: unset !important;
+              transform: translateX(50%) !important;
+            }
+          }
+        `
+      }} />
       <div className="relative h-screen bg-gray-800">
         <div
           className="absolute inset-0 z-0 bg-cover bg-center"
@@ -123,7 +235,7 @@ export default function HomePage() {
           {/* ==================================================================== */}
           {/* BẮT ĐẦU PHẦN CODE GIAO DIỆN THANH TÌM KIẾM MỚI                 */}
           {/* ==================================================================== */}
-          <div ref={searchBarRef} className="w-full max-w-5xl text-black">
+          <div ref={searchBarRef} className="w-full max-w-6xl text-black">
             {/* Các label phía trên thanh tìm kiếm */}
             <div className="hidden md:flex mb-2 px-4">
               <label className="w-5/12 text-sm font-semibold text-white">Thành phố, địa điểm hoặc tên khách sạn:</label>
@@ -145,11 +257,12 @@ export default function HomePage() {
                   </span>
                 </div>
                 {activePopup === 'location' && (
-                  <div className="absolute left-0 top-full mt-2 w-full rounded-lg border bg-white p-2 shadow-lg z-20 md:w-[500px]">
+                  <div className="homepage-location-popup absolute top-full mt-1 w-full rounded-lg border bg-white shadow-lg z-20 md:w-[500px]">
                     <LocationSearchInput
                       initialValue={currentQuery}
                       onQueryChange={setCurrentQuery}
                       onLocationSelect={handleLocationSelect}
+                      mode="embedded"
                     />
                   </div>
                 )}
@@ -190,7 +303,7 @@ export default function HomePage() {
               <div className="w-full h-px bg-gray-200 md:h-8 md:w-px" />
 
               {/* --- Ô CHỌN KHÁCH --- */}
-              <div className="relative w-full md:w-3/12">
+              <div className="homepage-guest-section relative w-full md:w-3/12">
                 <div
                   className="flex items-center gap-x-3 w-full h-14 px-4 cursor-pointer"
                   onClick={() => setActivePopup(activePopup === 'guest' ? null : 'guest')}
@@ -199,7 +312,7 @@ export default function HomePage() {
                   <span className="font-medium text-gray-700 truncate">{displayGuests}</span>
                 </div>
                 {activePopup === 'guest' && (
-                  <div className="absolute top-full right-0 mt-2 z-20 w-full max-w-sm md:w-auto">
+                  <div className="homepage-guest-popup absolute top-full right-0 mt-2 z-20 w-full max-w-sm md:w-auto">
                     <GuestPicker
                       adults={adults} children={children} rooms={rooms}
                       setAdults={setAdults} setChildren={setChildren} setRooms={setRooms}

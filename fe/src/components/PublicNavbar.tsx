@@ -109,7 +109,7 @@ export default function PublicNavbar() {
                                 <>
                                     <hr />
                                     <li><Link href="/account/settings" onClick={toggleMenu}>👤 Chỉnh sửa hồ sơ</Link></li>
-                                    <li><Link href="#" onClick={toggleMenu}>🧾 Đặt chỗ của tôi</Link></li>
+                                    <li><Link href="/my-booking" onClick={toggleMenu}>🧾 Đặt chỗ của tôi</Link></li>
                                     <li><Link href="#" onClick={toggleMenu}>💸 Hoàn tiền</Link></li>
                                 </>
                             )}

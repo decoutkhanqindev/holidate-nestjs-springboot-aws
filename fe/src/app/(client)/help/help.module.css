@@ -1,6 +1,5 @@
 .helpPage {
     min-height: 100vh;
-    padding-top: 64px;
     /* Account for fixed navbar */
 }
 
@@ -103,6 +102,8 @@
     border-bottom: 1px solid #f3f4f6;
     cursor: pointer;
     transition: all 0.2s ease;
+    text-decoration: none;
+    color: inherit;
 }
 
 .topicItem:last-child {
@@ -136,9 +137,56 @@
 
 /* Product Categories */
 .categoriesGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 20px;
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+    gap: 20px !important;
+}
+
+/* Mobile và màn hình nhỏ - hiển thị 2 cột */
+@media screen and (max-width: 991px) {
+    .categoriesGrid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+    }
+
+    .categoryItem {
+        padding: 16px 12px !important;
+    }
+
+    .categoryIcon {
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 18px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .categoryTitle {
+        font-size: 0.85rem !important;
+    }
+}
+
+@media screen and (max-width: 576px) {
+    .categoriesGrid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+    }
+
+    .categoryItem {
+        padding: 14px 10px !important;
+        min-width: 0 !important;
+    }
+
+    .categoryIcon {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 16px !important;
+        margin-bottom: 6px !important;
+    }
+
+    .categoryTitle {
+        font-size: 0.8rem !important;
+        word-break: break-word !important;
+    }
 }
 
 .categoryItem {
@@ -152,6 +200,10 @@
     transition: all 0.2s ease;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
+    text-decoration: none;
+    color: inherit;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .categoryItem:hover {

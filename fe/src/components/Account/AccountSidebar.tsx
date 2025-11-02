@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 
 const navItems = [
     { href: '/account/settings', label: 'Tài khoản' },
-    { href: '/account/bookings', label: 'Đặt chỗ của tôi' },
+    { href: '/my-booking', label: 'Đặt chỗ của tôi' },
     { href: '/account/transactions', label: 'Danh sách giao dịch' },
     { href: '/account/refunds', label: 'Refunds' },
 ];
