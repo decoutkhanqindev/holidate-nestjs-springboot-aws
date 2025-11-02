@@ -15,9 +15,10 @@ Base URL: `http://localhost:8080`
 10. [Accommodation - Room Inventories](#accommodation---room-inventories)
 11. [Amenities](#amenities)
 12. [Amenity Categories](#amenity-categories)
-13. [Locations](#locations)
-14. [Discounts](#discounts)
-15. [Special Days](#special-days)
+13. [Photo Categories](#photo-categories)
+14. [Locations](#locations)
+15. [Discounts](#discounts)
+16. [Special Days](#special-days)
 
 ---
 
@@ -1107,6 +1108,27 @@ Base URL: `http://localhost:8080`
 - **Path Parameters**:
   - `id`: string (UUID format)
 - **Response**: Same as Create Amenity Category response
+
+---
+
+## Photo Categories
+
+### 1. Get All Photo Categories
+**GET** `/image/photo-categories`
+- **Role Required**: Public
+- **Response**:
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": [
+    {
+      "id": "string",
+      "name": "string"
+    }
+  ]
+}
+```
 
 ---
 
