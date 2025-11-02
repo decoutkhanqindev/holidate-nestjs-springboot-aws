@@ -67,8 +67,8 @@ export default async function HotelDetailPage({ params }: HotelDetailPageProps) 
                         <div>
                             <h3 className="text-sm font-medium text-gray-500">Trạng thái</h3>
                             <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${hotel.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
-                                    hotel.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                                        'bg-gray-100 text-gray-800'
+                                hotel.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-gray-100 text-gray-800'
                                 }`}>
                                 {hotel.status}
                             </span>
