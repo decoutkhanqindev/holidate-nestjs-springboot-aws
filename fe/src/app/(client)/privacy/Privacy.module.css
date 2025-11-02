@@ -1,0 +1,615 @@
+/* src/app/privacy/Privacy.module.css */
+
+.pageWrapper {
+    background-color: #f5f5f5;
+    padding: 0;
+    min-height: calc(100vh - 64px);
+}
+
+/* Top Header with Breadcrumb */
+.topHeader {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 16px 20px;
+    position: sticky;
+    top: 64px;
+    z-index: 10;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.headerContainer {
+    max-width: 950px;
+    margin: 0 auto;
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.documentContainer {
+    max-width: 950px; /* Wider than A4 for better readability */
+    margin: 0 auto;
+    background-color: #ffffff;
+    padding: 40px 90px 80px 90px; /* Top padding reduced, others remain */
+    font-family: 'Times New Roman', Times, serif;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    min-height: 1123px; /* A4 height at 96 DPI */
+    position: relative;
+}
+
+.homeLink {
+    display: flex;
+    align-items: center;
+    color: #2563eb;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.homeLink:hover {
+    color: #1d4ed8;
+}
+
+.homeIcon {
+    width: 18px;
+    height: 18px;
+    color: currentColor;
+}
+
+.breadcrumbSeparator {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.breadcrumbText {
+    color: #374151;
+    font-size: 14px;
+}
+
+/* Document Header */
+.documentHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12pt;
+}
+
+.companyInfo {
+    text-align: left;
+}
+
+.companyType {
+    font-size: 13pt;
+    color: #1a1a1a;
+    margin: 0 0 4px 0;
+    font-weight: 400;
+}
+
+.companyName {
+    font-size: 14pt;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.republicInfo {
+    text-align: right;
+}
+
+.republicTitle {
+    font-size: 13pt;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 4px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.republicMotto {
+    font-size: 13pt;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+/* Document Meta (Number and Date) */
+.documentMeta {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12pt;
+    margin-top: 6pt;
+}
+
+.documentNumber {
+    text-align: left;
+}
+
+.documentNumber p {
+    font-size: 13pt;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.documentDate {
+    text-align: right;
+}
+
+.documentDate p {
+    font-size: 13pt;
+    color: #1a1a1a;
+    font-style: italic;
+    margin: 0;
+}
+
+/* Main Title */
+.mainTitle {
+    font-size: 14pt;
+    font-weight: 700;
+    color: #1a1a1a;
+    text-align: center;
+    text-transform: uppercase;
+    margin: 0 0 12pt 0;
+    letter-spacing: 0.5px;
+    line-height: 1.5;
+}
+
+/* Introduction Section */
+.introSection {
+    margin-bottom: 12pt;
+}
+
+.introSection p {
+    font-size: 13pt;
+    line-height: 1.5;
+    color: #1a1a1a;
+    margin-bottom: 12pt;
+    text-align: justify;
+    text-justify: inter-word;
+    text-indent: 0;
+    word-spacing: normal;
+}
+
+/* Sections */
+.section {
+    margin-bottom: 12pt;
+}
+
+.sectionTitle {
+    font-size: 13pt;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-top: 12pt;
+    margin-bottom: 6pt;
+    text-transform: uppercase;
+    text-align: left;
+    letter-spacing: 0.3px;
+    line-height: 1.5;
+}
+
+.subsection {
+    margin-bottom: 0;
+}
+
+.paragraph {
+    font-size: 13pt;
+    line-height: 1.5;
+    color: #1a1a1a;
+    margin-bottom: 6pt;
+    margin-top: 0;
+    text-align: justify;
+    text-justify: inter-word;
+    text-indent: 0;
+    word-spacing: normal;
+    padding-left: 0;
+}
+
+.subsectionNumber {
+    font-weight: 600;
+    margin-right: 6px;
+    display: inline;
+}
+
+.paragraph b {
+    font-weight: 700;
+}
+
+/* Nested Lists */
+.nestedList {
+    margin: 6pt 0 6pt 0;
+    padding-left: 0;
+}
+
+.listItem {
+    font-size: 13pt;
+    line-height: 1.5;
+    color: #1a1a1a;
+    margin-bottom: 6pt;
+    text-align: justify;
+    text-justify: inter-word;
+    word-spacing: normal;
+}
+
+.listLetter {
+    font-weight: 400;
+    margin-right: 6px;
+    display: inline;
+}
+
+.listItem b {
+    font-weight: 700;
+}
+
+/* Footer */
+.footer {
+    margin-top: 24pt;
+    padding-top: 12pt;
+    border-top: 1px solid #e0e0e0;
+}
+
+.footerSection {
+    text-align: left;
+}
+
+.footerTitle {
+    font-size: 13pt;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 6pt 0;
+}
+
+.footerSection p {
+    font-size: 12pt;
+    color: #1a1a1a;
+    margin: 6pt 0;
+    line-height: 1.5;
+}
+
+/* Responsive - Tablet */
+@media (max-width: 900px) {
+    .pageWrapper {
+        padding: 20px 10px;
+    }
+
+    .documentContainer {
+        max-width: 100%;
+        padding: 40px 30px;
+        min-height: auto;
+        box-shadow: none;
+    }
+
+    .documentHeader {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .companyInfo,
+    .republicInfo {
+        text-align: left;
+    }
+
+    .documentMeta {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .documentNumber,
+    .documentDate {
+        text-align: left;
+    }
+
+    .mainTitle {
+        font-size: 13pt;
+        line-height: 1.4;
+    }
+
+    .sectionTitle {
+        font-size: 12pt;
+    }
+
+    .paragraph,
+    .listItem,
+    .introSection p {
+        font-size: 12pt;
+    }
+}
+
+/* Responsive - Mobile (Tablet portrait and smaller) */
+@media (max-width: 768px) {
+    .topHeader {
+        padding: 12px 15px;
+    }
+
+    .headerContainer {
+        max-width: 100%;
+    }
+
+    .documentContainer {
+        padding: 20px 20px 30px 20px;
+    }
+
+    .breadcrumb {
+        gap: 6px;
+    }
+
+    .homeIcon {
+        width: 16px;
+        height: 16px;
+    }
+
+    .breadcrumbSeparator,
+    .breadcrumbText {
+        font-size: 13px;
+    }
+
+    .documentHeader {
+        flex-direction: column;
+        gap: 15px;
+        margin-bottom: 15px;
+        align-items: flex-start;
+    }
+
+    .companyInfo {
+        width: 100%;
+        text-align: left;
+    }
+
+    .companyType {
+        font-size: 11pt;
+        margin: 0 0 4px 0;
+    }
+
+    .companyName {
+        font-size: 12pt;
+        margin: 0;
+    }
+
+    .republicInfo {
+        width: 100%;
+        text-align: left;
+    }
+
+    .republicTitle {
+        font-size: 11pt;
+        margin: 0 0 4px 0;
+    }
+
+    .republicMotto {
+        font-size: 11pt;
+        margin: 0;
+    }
+
+    .documentMeta {
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 15px;
+        margin-top: 0;
+        width: 100%;
+    }
+
+    .documentNumber {
+        width: 100%;
+        text-align: left;
+    }
+
+    .documentNumber p {
+        font-size: 11pt;
+        margin: 0;
+    }
+
+    .documentDate {
+        width: 100%;
+        text-align: left;
+    }
+
+    .documentDate p {
+        font-size: 11pt;
+        margin: 0;
+        font-style: italic;
+    }
+
+    .mainTitle {
+        font-size: 12pt;
+        margin-bottom: 15px;
+        line-height: 1.4;
+        padding: 0 10px;
+    }
+
+    .sectionTitle {
+        font-size: 11pt;
+        margin-top: 15px;
+        margin-bottom: 8px;
+    }
+
+    .introSection p {
+        font-size: 11pt;
+        margin-bottom: 12px;
+        text-align: left; /* Left align on mobile for better readability */
+    }
+
+    .paragraph {
+        font-size: 11pt;
+        margin-bottom: 8px;
+        text-align: left; /* Left align on mobile */
+    }
+
+    .listItem {
+        font-size: 11pt;
+        margin-bottom: 8px;
+        text-align: left; /* Left align on mobile */
+    }
+
+    .footer {
+        margin-top: 20px;
+        padding-top: 15px;
+    }
+
+    .footerTitle {
+        font-size: 11pt;
+    }
+
+    .footerSection p {
+        font-size: 10pt;
+    }
+}
+
+/* Responsive - Small Mobile */
+@media (max-width: 480px) {
+    .topHeader {
+        padding: 10px 12px;
+    }
+
+    .documentContainer {
+        padding: 15px 15px 20px 15px;
+    }
+
+    .breadcrumb {
+        gap: 5px;
+    }
+
+    .homeIcon {
+        width: 14px;
+        height: 14px;
+    }
+
+    .breadcrumbSeparator,
+    .breadcrumbText {
+        font-size: 12px;
+    }
+
+    .documentHeader {
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 12px;
+        align-items: flex-start;
+    }
+
+    .companyInfo {
+        width: 100%;
+        text-align: left;
+    }
+
+    .companyType {
+        font-size: 10pt;
+        margin: 0 0 3px 0;
+    }
+
+    .companyName {
+        font-size: 11pt;
+        margin: 0;
+    }
+
+    .republicInfo {
+        width: 100%;
+        text-align: left;
+    }
+
+    .republicTitle {
+        font-size: 10pt;
+        letter-spacing: 0.3px;
+        margin: 0 0 3px 0;
+    }
+
+    .republicMotto {
+        font-size: 10pt;
+        margin: 0;
+    }
+
+    .documentMeta {
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 12px;
+        margin-top: 0;
+        width: 100%;
+    }
+
+    .documentNumber {
+        width: 100%;
+        text-align: left;
+    }
+
+    .documentNumber p {
+        font-size: 10pt;
+        margin: 0;
+    }
+
+    .documentDate {
+        width: 100%;
+        text-align: left;
+    }
+
+    .documentDate p {
+        font-size: 10pt;
+        margin: 0;
+        font-style: italic;
+    }
+
+    .mainTitle {
+        font-size: 11pt;
+        margin-bottom: 12px;
+        padding: 0 5px;
+        letter-spacing: 0.3px;
+    }
+
+    .sectionTitle {
+        font-size: 10pt;
+        margin-top: 12px;
+        margin-bottom: 6px;
+        letter-spacing: 0.2px;
+    }
+
+    .introSection {
+        margin-bottom: 10px;
+    }
+
+    .introSection p {
+        font-size: 10pt;
+        margin-bottom: 10px;
+        line-height: 1.6;
+    }
+
+    .section {
+        margin-bottom: 10px;
+    }
+
+    .paragraph {
+        font-size: 10pt;
+        margin-bottom: 6px;
+        line-height: 1.6;
+    }
+
+    .subsectionNumber {
+        margin-right: 4px;
+    }
+
+    .nestedList {
+        margin: 6px 0;
+    }
+
+    .listItem {
+        font-size: 10pt;
+        margin-bottom: 6px;
+        line-height: 1.6;
+    }
+
+    .listLetter {
+        margin-right: 4px;
+    }
+
+    .footer {
+        margin-top: 15px;
+        padding-top: 12px;
+    }
+
+    .footerTitle {
+        font-size: 10pt;
+        margin-bottom: 4px;
+    }
+
+    .footerSection p {
+        font-size: 9pt;
+        margin: 4px 0;
+    }
+}
+

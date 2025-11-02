@@ -1,0 +1,83 @@
+.main {
+    background-color: #ffffff;
+    padding-top: 64px;
+}
+
+.header {
+    background-color: #0d6efd;
+    color: white;
+    padding: 3rem 0;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 50px;
+    background-color: #ffffff;
+    border-top-left-radius: 100%;
+    border-top-right-radius: 100%;
+}
+
+.contactTabsWrapper {
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 2rem;
+}
+
+.tabLink {
+    color: #6c757d;
+    font-weight: bold;
+    padding: 1rem 1.5rem;
+    border-bottom: 3px solid transparent;
+}
+
+.tabLink.active {
+    color: #000;
+    border-bottom-color: #05d360;
+}
+
+.supportImage {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    height: auto;
+}
+
+.infoBox {
+    background-color: #f7f9fa;
+}
+
+/* Topic tabs */
+.topicTabsContainer {
+    overflow-x: auto;
+    padding-bottom: 10px;
+}
+
+.topicTab {
+    color: #333;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.topicTab.active {
+    background-color: #e7f3ff !important;
+    color: #0d6efd !important;
+    font-weight: bold;
+}
+
+.topicItem {
+    background: #fff;
+}
+
+.topicArrow {
+    color: #6c757d;
+    font-size: 1.2rem;
+}
+
+.emoji {
+    font-size: 40px;
+}

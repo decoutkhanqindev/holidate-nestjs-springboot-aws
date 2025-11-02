@@ -1,0 +1,138 @@
+.standaloneWrapper {
+    position: relative;
+    width: 100%;
+}
+
+.locationInput {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-bottom: 1px solid #d1d5db;
+    border-radius: 0;
+    padding: 0.75rem 0.25rem;
+    background: transparent;
+    outline: none;
+    font-size: 1rem;
+    color: #111827;
+    transition: border-color 0.2s;
+}
+
+.locationInput:focus {
+    border-color: #3b82f6;
+}
+
+
+.suggestionsListStandalone {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: -26px;
+    width: 100%;
+    min-width: 500px;
+    background: white;
+    border: 1px solid #f3f4f6;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    list-style: none;
+    padding: 4px;
+    margin: 0;
+    max-height: 450px;
+    overflow-y: auto;
+    z-index: 1001;
+}
+
+.suggestionsListEmbedded {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+
+.suggestionItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    cursor: pointer;
+    border-radius: 8px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.suggestionItem:last-child {
+    border-bottom: none;
+}
+
+.suggestionItem:hover {
+    background-color: #f9fafb;
+}
+
+.suggestionContent {
+    display: flex;
+    flex-direction: column;
+    margin-right: 16px;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.suggestionName {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #111827;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.4;
+}
+
+.suggestionDescription {
+    font-size: 11px !important;
+    color: #6b7280;
+    margin-top: 2px;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.4;
+}
+
+.suggestionMeta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    white-space: nowrap;
+    flex-shrink: 0;
+    gap: 4px;
+}
+
+.suggestionTypeLabel {
+    background-color: #e0f2fe;
+    color: #0284c7;
+    border-radius: 9999px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    border: none;
+}
+
+.suggestionHotelCount {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.suggestionInfo {
+    padding: 16px;
+    color: #6b7280;
+    text-align: center;
+}
+
+@media (max-width: 767px) {
+    .suggestionsListStandalone {
+        left: 50%;
+        transform: translateX(-50%);
+
+        width: calc(100vw - 32px);
+
+        min-width: unset;
+        max-width: 450px;
+    }
+}
