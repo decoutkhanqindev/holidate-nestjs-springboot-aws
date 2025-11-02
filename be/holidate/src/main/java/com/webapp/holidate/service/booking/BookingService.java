@@ -2,6 +2,7 @@ package com.webapp.holidate.service.booking;
 
 import com.webapp.holidate.constants.AppProperties;
 import com.webapp.holidate.constants.api.param.BookingParams;
+import com.webapp.holidate.constants.api.param.CommonParams;
 import com.webapp.holidate.constants.api.param.SortingParams;
 import com.webapp.holidate.dto.request.booking.BookingCreationRequest;
 import com.webapp.holidate.dto.request.booking.BookingPricePreviewRequest;
@@ -286,7 +287,7 @@ public class BookingService {
 
     // Check if sort field is valid
     boolean hasSortBy = sortBy != null && !sortBy.isEmpty()
-        && (BookingParams.CREATED_AT.equals(sortBy) ||
+        && (CommonParams.CREATED_AT.equals(sortBy) ||
             BookingParams.CHECK_IN_DATE_SORT.equals(sortBy) ||
             BookingParams.CHECK_OUT_DATE_SORT.equals(sortBy) ||
             BookingParams.FINAL_PRICE.equals(sortBy) ||
@@ -362,7 +363,7 @@ public class BookingService {
       case BookingParams.CHECK_OUT_DATE_SORT -> "checkOutDate";
       case BookingParams.FINAL_PRICE -> "finalPrice";
       case BookingParams.STATUS_SORT -> "status";
-      case BookingParams.CREATED_AT -> "createdAt";
+      case CommonParams.CREATED_AT -> "createdAt";
       default -> "createdAt"; // Default sorting
     };
   }

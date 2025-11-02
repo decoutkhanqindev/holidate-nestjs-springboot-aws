@@ -8,10 +8,6 @@ public class DiscountParams {
   public static final String VALID_TO = "valid-to";
   public static final String CURRENTLY_VALID = "currently-valid";
 
-  // Percentage filters
-  public static final String MIN_PERCENTAGE = "min-percentage";
-  public static final String MAX_PERCENTAGE = "max-percentage";
-
   // Booking price filters
   public static final String MIN_BOOKING_PRICE = "min-booking-price";
   public static final String MAX_BOOKING_PRICE = "max-booking-price";
@@ -27,12 +23,10 @@ public class DiscountParams {
   public static final String MAX_TIMES_USED = "max-times-used";
 
   // Relationship filters
-  public static final String HOTEL_ID = "hotel-id";
   public static final String SPECIAL_DAY_ID = "special-day-id";
 
-  // Sort fields (reusing filter field names where applicable)
+  // Sort fields
   public static final String PERCENTAGE = "percentage";
   public static final String USAGE_LIMIT = "usage-limit";
   public static final String TIMES_USED = "times-used";
-  public static final String CREATED_AT = "created-at";
 }

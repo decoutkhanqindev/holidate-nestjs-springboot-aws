@@ -44,6 +44,8 @@ public enum ErrorType {
   INVALID_OTP(400, "OTP is invalid"),
   OTP_BLOCKED(429, "Too many failed attempts. Please try again later"),
   OTP_EXPIRED(400, "OTP has expired"),
+  SCORE_NOT_BLANK(400, "Score is required"),
+  SCORE_INVALID(400, "Score must be between 1 and 10"),
 
   // date errors
   DATE_UTC_NOT_BLANK(400, "Date is required"),
@@ -155,6 +157,8 @@ public enum ErrorType {
   BOOKING_NOT_CONFIRMED(400, "Booking is not confirmed"),
   BOOKING_ALREADY_COMPLETED(400, "Cannot check-in. Booking has already been completed"),
   BOOKING_NOT_CHECKED_IN(400, "Cannot checkout. Booking must be checked in first"),
+  BOOKING_ID_NOT_BLANK(400, "Booking ID is required"),
+  REVIEW_NOT_FOUND(404, "Review not found"),
   ROOM_NOT_AVAILABLE(400, "Room is not available for the selected dates"),
   CONCURRENT_BOOKING_FAILED(409, "Booking failed due to concurrent access. Please try again"),
   INVALID_DISCOUNT_CODE(400, "Discount code is invalid or expired"),

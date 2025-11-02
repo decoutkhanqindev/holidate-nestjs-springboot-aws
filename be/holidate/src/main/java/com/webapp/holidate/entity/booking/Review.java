@@ -44,7 +44,7 @@ public class Review {
   Booking booking;
 
   @Column(nullable = false)
-  int score; // 1-5 or 1-10 depending on your rating system
+  int score; // 1-10
 
   @Column(nullable = true, columnDefinition = "TEXT")
   String comment;
@@ -59,5 +59,5 @@ public class Review {
   LocalDateTime createdAt = LocalDateTime.now();
 
   @Column(nullable = true)
-  LocalDateTime updateAt;
+  LocalDateTime updatedAt;
 }

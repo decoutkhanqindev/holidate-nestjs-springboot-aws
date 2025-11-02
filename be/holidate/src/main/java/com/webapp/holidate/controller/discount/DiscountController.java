@@ -2,7 +2,13 @@ package com.webapp.holidate.controller.discount;
 
 import com.webapp.holidate.constants.api.endpoint.CommonEndpoints;
 import com.webapp.holidate.constants.api.endpoint.DiscountEndpoints;
-import com.webapp.holidate.constants.api.param.*;
+import com.webapp.holidate.constants.api.param.CommonParams;
+import com.webapp.holidate.constants.api.param.DiscountParams;
+import com.webapp.holidate.constants.api.param.FilterParams;
+import com.webapp.holidate.constants.api.param.HotelParams;
+import com.webapp.holidate.constants.api.param.PaginationParams;
+import com.webapp.holidate.constants.api.param.SortingParams;
+import com.webapp.holidate.constants.api.param.SpecialDayParams;
 import com.webapp.holidate.dto.request.discount.DiscountCreationRequest;
 import com.webapp.holidate.dto.request.discount.DiscountUpdateRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
@@ -43,8 +49,8 @@ public class DiscountController {
     @RequestParam(name = DiscountParams.CURRENTLY_VALID, required = false) Boolean currentlyValid,
     @RequestParam(name = DiscountParams.VALID_FROM, required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate validFrom,
     @RequestParam(name = DiscountParams.VALID_TO, required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate validTo,
-    @RequestParam(name = DiscountParams.MIN_PERCENTAGE, required = false) Double minPercentage,
-    @RequestParam(name = DiscountParams.MAX_PERCENTAGE, required = false) Double maxPercentage,
+    @RequestParam(name = FilterParams.MIN_PERCENTAGE, required = false) Double minPercentage,
+    @RequestParam(name = FilterParams.MAX_PERCENTAGE, required = false) Double maxPercentage,
     @RequestParam(name = DiscountParams.MIN_BOOKING_PRICE, required = false) Integer minBookingPrice,
     @RequestParam(name = DiscountParams.MAX_BOOKING_PRICE, required = false) Integer maxBookingPrice,
     @RequestParam(name = DiscountParams.MIN_BOOKING_COUNT, required = false) Integer minBookingCount,
@@ -53,11 +59,11 @@ public class DiscountController {
     @RequestParam(name = DiscountParams.EXHAUSTED, required = false) Boolean exhausted,
     @RequestParam(name = DiscountParams.MIN_TIMES_USED, required = false) Integer minTimesUsed,
     @RequestParam(name = DiscountParams.MAX_TIMES_USED, required = false) Integer maxTimesUsed,
-    @RequestParam(name = DiscountParams.HOTEL_ID, required = false) String hotelId,
+    @RequestParam(name = HotelParams.HOTEL_ID, required = false) String hotelId,
     @RequestParam(name = DiscountParams.SPECIAL_DAY_ID, required = false) String specialDayId,
     @RequestParam(name = PaginationParams.PAGE, defaultValue = PaginationParams.DEFAULT_PAGE) int page,
     @RequestParam(name = PaginationParams.SIZE, defaultValue = PaginationParams.DEFAULT_SIZE) int size,
-    @RequestParam(name = SortingParams.SORT_BY, defaultValue = DiscountParams.CREATED_AT) String sortBy,
+    @RequestParam(name = SortingParams.SORT_BY, defaultValue = CommonParams.CREATED_AT) String sortBy,
     @RequestParam(name = SortingParams.SORT_DIR, defaultValue = SortingParams.SORT_DIR_ASC) String sortDir) {
     PagedResponse<DiscountResponse> response = service.getAll(
       code, active, currentlyValid, validFrom, validTo,
