@@ -17,4 +17,6 @@ public interface StreetRepository extends JpaRepository<Street, String> {
   List<Street> findAllByWardId(String wardId);
 
   List<Street> findAllByNameContainingIgnoreCaseAndWardId(String name, String wardId);
+
+  long countByWardId(String wardId);
 }

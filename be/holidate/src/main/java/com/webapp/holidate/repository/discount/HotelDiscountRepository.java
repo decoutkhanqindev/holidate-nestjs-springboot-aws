@@ -12,4 +12,6 @@ import java.util.Optional;
 public interface HotelDiscountRepository extends JpaRepository<HotelDiscount, String> {
   @Query(DiscountQueries.FIND_BY_DISCOUNT_ID_WITH_HOTEL)
   Optional<HotelDiscount> findByDiscountId(String discountId);
+
+  long countByDiscountId(String discountId);
 }

@@ -6,6 +6,8 @@ import com.webapp.holidate.entity.amenity.Amenity;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.amenity.AmenityMapper;
 import com.webapp.holidate.repository.amenity.AmenityRepository;
+import com.webapp.holidate.repository.amenity.HotelAmenityRepository;
+import com.webapp.holidate.repository.amenity.RoomAmenityRepository;
 import com.webapp.holidate.type.ErrorType;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,8 @@ import java.util.List;
 public class AmenityService {
   AmenityRepository repository;
   AmenityMapper mapper;
+  HotelAmenityRepository hotelAmenityRepository;
+  RoomAmenityRepository roomAmenityRepository;
 
   public AmenityDetailsResponse create(AmenityCreationRequest request) {
     String name = request.getName();
@@ -45,5 +49,26 @@ public class AmenityService {
       .stream()
       .map(mapper::toAmenityDetailsResponse)
       .toList();
+  }
+
+  public AmenityDetailsResponse delete(String id) {
+    Amenity amenity = repository.findById(id)
+        .orElseThrow(() -> new AppException(ErrorType.AMENITY_NOT_FOUND));
+    
+    // Check if amenity is referenced by hotels
+    long hotelAmenityCount = hotelAmenityRepository.countByAmenityId(id);
+    if (hotelAmenityCount > 0) {
+      throw new AppException(ErrorType.CANNOT_DELETE_AMENITY_HAS_REFERENCES);
+    }
+    
+    // Check if amenity is referenced by rooms
+    long roomAmenityCount = roomAmenityRepository.countByAmenityId(id);
+    if (roomAmenityCount > 0) {
+      throw new AppException(ErrorType.CANNOT_DELETE_AMENITY_HAS_REFERENCES);
+    }
+    
+    AmenityDetailsResponse response = mapper.toAmenityDetailsResponse(amenity);
+    repository.delete(amenity);
+    return response;
   }
 }

@@ -94,4 +94,12 @@ public class HotelController {
         .data(response)
         .build();
   }
+
+  @DeleteMapping(CommonEndpoints.ID)
+  public ApiResponse<HotelDetailsResponse> delete(@PathVariable String id) {
+    HotelDetailsResponse response = hotelService.delete(id);
+    return ApiResponse.<HotelDetailsResponse>builder()
+        .data(response)
+        .build();
+  }
 }

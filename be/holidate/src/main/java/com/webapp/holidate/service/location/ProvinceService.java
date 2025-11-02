@@ -9,6 +9,8 @@ import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.location.ProvinceMapper;
 import com.webapp.holidate.repository.location.CountryRepository;
 import com.webapp.holidate.repository.location.ProvinceRepository;
+import com.webapp.holidate.repository.location.CityRepository;
+import com.webapp.holidate.repository.accommodation.HotelRepository;
 import com.webapp.holidate.type.ErrorType;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,8 @@ public class ProvinceService {
   ProvinceRepository provinceRepository;
   CountryRepository countryRepository;
   ProvinceMapper provinceMapper;
+  CityRepository cityRepository;
+  HotelRepository hotelRepository;
 
   public ProvinceResponse create(ProvinceCreationRequest request) {
     String name = request.getName();
@@ -97,5 +101,26 @@ public class ProvinceService {
       .stream()
       .map(provinceMapper::toLocationResponse)
       .toList();
+  }
+
+  public ProvinceResponse delete(String id) {
+    Province province = provinceRepository.findById(id)
+        .orElseThrow(() -> new AppException(ErrorType.PROVINCE_NOT_FOUND));
+    
+    // Check if province has cities
+    long cityCount = cityRepository.countByProvinceId(id);
+    if (cityCount > 0) {
+      throw new AppException(ErrorType.CANNOT_DELETE_PROVINCE_HAS_CITIES);
+    }
+    
+    // Check if province has hotels
+    long hotelCount = hotelRepository.countByProvinceId(id);
+    if (hotelCount > 0) {
+      throw new AppException(ErrorType.CANNOT_DELETE_PROVINCE_HAS_HOTELS);
+    }
+    
+    ProvinceResponse response = provinceMapper.toProvinceResponse(province);
+    provinceRepository.delete(province);
+    return response;
   }
 }

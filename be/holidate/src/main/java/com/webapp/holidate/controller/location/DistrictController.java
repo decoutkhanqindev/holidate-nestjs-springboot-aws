@@ -1,5 +1,6 @@
 package com.webapp.holidate.controller.location;
 
+import com.webapp.holidate.constants.api.endpoint.CommonEndpoints;
 import com.webapp.holidate.constants.api.endpoint.LocationEndpoints;
 import com.webapp.holidate.constants.api.param.CommonParams;
 import com.webapp.holidate.constants.api.param.LocationParams;
@@ -37,6 +38,14 @@ public class DistrictController {
     List<LocationResponse> responses = service.getAll(name, cityId);
     return ApiResponse.<List<LocationResponse>>builder()
       .data(responses)
+      .build();
+  }
+
+  @DeleteMapping(CommonEndpoints.ID)
+  public ApiResponse<DistrictResponse> delete(@PathVariable String id) {
+    DistrictResponse response = service.delete(id);
+    return ApiResponse.<DistrictResponse>builder()
+      .data(response)
       .build();
   }
 }

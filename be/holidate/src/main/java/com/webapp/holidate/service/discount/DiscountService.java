@@ -351,10 +351,30 @@ public class DiscountService {
   }
 
   public DiscountDetailsResponse delete(String id) {
-    Discount discount = discountRepository.findById(id)
+    Discount discount = discountRepository.findByIdWithDetails(id)
         .orElseThrow(() -> new AppException(ErrorType.DISCOUNT_NOT_FOUND));
+    
+    // Check if discount is referenced by hotels
+    long hotelDiscountCount = hotelDiscountRepository.countByDiscountId(id);
+    if (hotelDiscountCount > 0) {
+      throw new AppException(ErrorType.CANNOT_DELETE_DISCOUNT_HAS_REFERENCES);
+    }
+    
+    // Check if discount is referenced by special days
+    long specialDayDiscountCount = specialDayDiscountRepository.countByDiscountId(id);
+    if (specialDayDiscountCount > 0) {
+      throw new AppException(ErrorType.CANNOT_DELETE_DISCOUNT_HAS_REFERENCES);
+    }
+    
+    // Check if discount is used in bookings
+    long bookingCount = bookingRepository.countByAppliedDiscountId(id);
+    if (bookingCount > 0) {
+      throw new AppException(ErrorType.CANNOT_DELETE_DISCOUNT_HAS_REFERENCES);
+    }
+    
+    DiscountDetailsResponse response = mapper.toDiscountDetailsResponse(discount);
     discountRepository.delete(discount);
-    return getById(id);
+    return response;
   }
 
   public Discount validateDiscount(String discountCode, double originalPrice) {

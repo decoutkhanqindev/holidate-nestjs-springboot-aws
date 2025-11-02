@@ -35,6 +35,7 @@ import com.webapp.holidate.mapper.PagedMapper;
 import com.webapp.holidate.mapper.acommodation.HotelMapper;
 import com.webapp.holidate.repository.accommodation.HotelRepository;
 import com.webapp.holidate.repository.accommodation.room.RoomRepository;
+import com.webapp.holidate.repository.booking.BookingRepository;
 import com.webapp.holidate.repository.amenity.AmenityRepository;
 import com.webapp.holidate.repository.amenity.HotelAmenityRepository;
 import com.webapp.holidate.repository.document.HotelPolicyIdentificationDocumentRepository;
@@ -81,6 +82,7 @@ import java.util.stream.Collectors;
 public class HotelService {
   HotelRepository hotelRepository;
   RoomRepository roomRepository;
+  BookingRepository bookingRepository;
 
   PhotoCategoryRepository photoCategoryRepository;
   PhotoRepository photoRepository;
@@ -1142,5 +1144,27 @@ public class HotelService {
     }
 
     policy.setRequiredIdentificationDocuments(currentDocuments);
+  }
+
+  @Transactional
+  public HotelDetailsResponse delete(String id) {
+    Hotel hotel = hotelRepository.findByIdWithDetails(id)
+        .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
+
+    // Check if hotel has rooms
+    long roomCount = roomRepository.countByHotelId(id);
+    if (roomCount > 0) {
+      throw new AppException(ErrorType.CANNOT_DELETE_HOTEL_HAS_ROOMS);
+    }
+
+    // Check if hotel has bookings
+    long bookingCount = bookingRepository.countByHotelId(id);
+    if (bookingCount > 0) {
+      throw new AppException(ErrorType.CANNOT_DELETE_HOTEL_HAS_BOOKINGS);
+    }
+
+    HotelDetailsResponse response = hotelMapper.toHotelDetailsResponse(hotel);
+    hotelRepository.delete(hotel);
+    return response;
   }
 }

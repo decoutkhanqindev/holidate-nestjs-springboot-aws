@@ -17,4 +17,6 @@ public interface CityRepository extends JpaRepository<City, String> {
   List<City> findAllByProvinceId(String provinceId);
 
   List<City> findAllByNameContainingIgnoreCaseAndProvinceId(String name, String provinceId);
+
+  long countByProvinceId(String provinceId);
 }

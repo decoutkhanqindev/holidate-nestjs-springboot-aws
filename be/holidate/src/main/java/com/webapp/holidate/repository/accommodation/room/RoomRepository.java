@@ -37,4 +37,6 @@ public interface RoomRepository extends JpaRepository<Room, String> {
     LocalDate checkinDate,
     LocalDate checkoutDate,
     long numberOfNights);
+
+  long countByHotelId(String hotelId);
 }

@@ -59,4 +59,18 @@ public interface HotelRepository extends JpaRepository<Hotel, String>, JpaSpecif
 
   @Query(HotelQueries.FIND_BY_ID_WITH_DETAILS)
   Optional<Hotel> findByIdWithDetails(String id);
+
+  long countByCountryId(String countryId);
+
+  long countByProvinceId(String provinceId);
+
+  long countByCityId(String cityId);
+
+  long countByDistrictId(String districtId);
+
+  long countByWardId(String wardId);
+
+  long countByStreetId(String streetId);
+
+  long countByPartnerId(String partnerId);
 }

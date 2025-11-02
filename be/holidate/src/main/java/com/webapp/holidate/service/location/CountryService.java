@@ -6,6 +6,8 @@ import com.webapp.holidate.entity.location.Country;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.location.CountryMapper;
 import com.webapp.holidate.repository.location.CountryRepository;
+import com.webapp.holidate.repository.location.ProvinceRepository;
+import com.webapp.holidate.repository.accommodation.HotelRepository;
 import com.webapp.holidate.type.ErrorType;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,8 @@ import java.util.List;
 public class CountryService {
   CountryRepository repository;
   CountryMapper mapper;
+  ProvinceRepository provinceRepository;
+  HotelRepository hotelRepository;
 
   public LocationResponse create(CountryCreationRequest request) {
     String name = request.getName();
@@ -41,5 +45,26 @@ public class CountryService {
 
   public List<LocationResponse> getAll() {
     return repository.findAll().stream().map(mapper::toLocationResponse).toList();
+  }
+
+  public LocationResponse delete(String id) {
+    Country country = repository.findById(id)
+        .orElseThrow(() -> new AppException(ErrorType.COUNTRY_NOT_FOUND));
+    
+    // Check if country has provinces
+    long provinceCount = provinceRepository.countByCountryId(id);
+    if (provinceCount > 0) {
+      throw new AppException(ErrorType.CANNOT_DELETE_COUNTRY_HAS_PROVINCES);
+    }
+    
+    // Check if country has hotels
+    long hotelCount = hotelRepository.countByCountryId(id);
+    if (hotelCount > 0) {
+      throw new AppException(ErrorType.CANNOT_DELETE_COUNTRY_HAS_HOTELS);
+    }
+    
+    LocationResponse response = mapper.toLocationResponse(country);
+    repository.delete(country);
+    return response;
   }
 }
