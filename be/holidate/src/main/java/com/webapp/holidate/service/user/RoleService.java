@@ -41,14 +41,14 @@ public class RoleService {
 
   public RoleResponse delete(String id) {
     Role role = repository.findById(id)
-        .orElseThrow(() -> new AppException(ErrorType.ROLE_NOT_FOUND));
-    
+      .orElseThrow(() -> new AppException(ErrorType.ROLE_NOT_FOUND));
+
     // Check if role has users
     long userCount = userRepository.countByRoleId(id);
     if (userCount > 0) {
       throw new AppException(ErrorType.CANNOT_DELETE_ROLE_HAS_USERS);
     }
-    
+
     RoleResponse response = mapper.toRoleResponse(role);
     repository.delete(role);
     return response;

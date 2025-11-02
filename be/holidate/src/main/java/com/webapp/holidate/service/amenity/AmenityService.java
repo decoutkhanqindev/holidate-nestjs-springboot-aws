@@ -53,20 +53,20 @@ public class AmenityService {
 
   public AmenityDetailsResponse delete(String id) {
     Amenity amenity = repository.findById(id)
-        .orElseThrow(() -> new AppException(ErrorType.AMENITY_NOT_FOUND));
-    
+      .orElseThrow(() -> new AppException(ErrorType.AMENITY_NOT_FOUND));
+
     // Check if amenity is referenced by hotels
     long hotelAmenityCount = hotelAmenityRepository.countByAmenityId(id);
     if (hotelAmenityCount > 0) {
       throw new AppException(ErrorType.CANNOT_DELETE_AMENITY_HAS_REFERENCES);
     }
-    
+
     // Check if amenity is referenced by rooms
     long roomAmenityCount = roomAmenityRepository.countByAmenityId(id);
     if (roomAmenityCount > 0) {
       throw new AppException(ErrorType.CANNOT_DELETE_AMENITY_HAS_REFERENCES);
     }
-    
+
     AmenityDetailsResponse response = mapper.toAmenityDetailsResponse(amenity);
     repository.delete(amenity);
     return response;

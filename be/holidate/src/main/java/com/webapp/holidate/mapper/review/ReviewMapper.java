@@ -20,10 +20,10 @@ import java.util.List;
 import java.util.Set;
 
 @Mapper(componentModel = "spring", uses = {
-    UserMapper.class,
-    HotelMapper.class,
-    BookingMapper.class,
-    PhotoCategoryMapper.class
+  UserMapper.class,
+  HotelMapper.class,
+  BookingMapper.class,
+  PhotoCategoryMapper.class
 })
 public interface ReviewMapper {
   @Mapping(target = "id", ignore = true)
@@ -57,10 +57,10 @@ public interface ReviewMapper {
     }
 
     return reviewPhotos.stream()
-        .map(reviewPhoto -> PhotoResponse.builder()
-            .id(reviewPhoto.getPhoto().getId())
-            .url(reviewPhoto.getPhoto().getUrl())
-            .build())
-        .toList();
+      .map(reviewPhoto -> PhotoResponse.builder()
+        .id(reviewPhoto.getPhoto().getId())
+        .url(reviewPhoto.getPhoto().getUrl())
+        .build())
+      .toList();
   }
 }

@@ -7,10 +7,10 @@ import com.webapp.holidate.entity.location.District;
 import com.webapp.holidate.entity.location.Ward;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.location.WardMapper;
-import com.webapp.holidate.repository.location.DistrictRepository;
-import com.webapp.holidate.repository.location.WardRepository;
-import com.webapp.holidate.repository.location.StreetRepository;
 import com.webapp.holidate.repository.accommodation.HotelRepository;
+import com.webapp.holidate.repository.location.DistrictRepository;
+import com.webapp.holidate.repository.location.StreetRepository;
+import com.webapp.holidate.repository.location.WardRepository;
 import com.webapp.holidate.type.ErrorType;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -104,20 +104,20 @@ public class WardService {
 
   public WardResponse delete(String id) {
     Ward ward = wardRepository.findById(id)
-        .orElseThrow(() -> new AppException(ErrorType.WARD_NOT_FOUND));
-    
+      .orElseThrow(() -> new AppException(ErrorType.WARD_NOT_FOUND));
+
     // Check if ward has streets
     long streetCount = streetRepository.countByWardId(id);
     if (streetCount > 0) {
       throw new AppException(ErrorType.CANNOT_DELETE_WARD_HAS_STREETS);
     }
-    
+
     // Check if ward has hotels
     long hotelCount = hotelRepository.countByWardId(id);
     if (hotelCount > 0) {
       throw new AppException(ErrorType.CANNOT_DELETE_WARD_HAS_HOTELS);
     }
-    
+
     WardResponse response = wardMapper.toWardResponse(ward);
     wardRepository.delete(ward);
     return response;

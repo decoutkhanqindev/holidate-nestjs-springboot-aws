@@ -7,9 +7,9 @@ import com.webapp.holidate.entity.location.Street;
 import com.webapp.holidate.entity.location.Ward;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.location.StreetMapper;
+import com.webapp.holidate.repository.accommodation.HotelRepository;
 import com.webapp.holidate.repository.location.StreetRepository;
 import com.webapp.holidate.repository.location.WardRepository;
-import com.webapp.holidate.repository.accommodation.HotelRepository;
 import com.webapp.holidate.type.ErrorType;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -102,14 +102,14 @@ public class StreetService {
 
   public StreetResponse delete(String id) {
     Street street = streetRepository.findById(id)
-        .orElseThrow(() -> new AppException(ErrorType.STREET_NOT_FOUND));
-    
+      .orElseThrow(() -> new AppException(ErrorType.STREET_NOT_FOUND));
+
     // Check if street has hotels
     long hotelCount = hotelRepository.countByStreetId(id);
     if (hotelCount > 0) {
       throw new AppException(ErrorType.CANNOT_DELETE_STREET_HAS_HOTELS);
     }
-    
+
     StreetResponse response = streetMapper.toStreetResponse(street);
     streetRepository.delete(street);
     return response;

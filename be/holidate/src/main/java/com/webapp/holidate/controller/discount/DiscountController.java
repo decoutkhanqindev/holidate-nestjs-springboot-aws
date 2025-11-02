@@ -2,13 +2,7 @@ package com.webapp.holidate.controller.discount;
 
 import com.webapp.holidate.constants.api.endpoint.CommonEndpoints;
 import com.webapp.holidate.constants.api.endpoint.DiscountEndpoints;
-import com.webapp.holidate.constants.api.param.CommonParams;
-import com.webapp.holidate.constants.api.param.DiscountParams;
-import com.webapp.holidate.constants.api.param.FilterParams;
-import com.webapp.holidate.constants.api.param.HotelParams;
-import com.webapp.holidate.constants.api.param.PaginationParams;
-import com.webapp.holidate.constants.api.param.SortingParams;
-import com.webapp.holidate.constants.api.param.SpecialDayParams;
+import com.webapp.holidate.constants.api.param.*;
 import com.webapp.holidate.dto.request.discount.DiscountCreationRequest;
 import com.webapp.holidate.dto.request.discount.DiscountUpdateRequest;
 import com.webapp.holidate.dto.response.ApiResponse;

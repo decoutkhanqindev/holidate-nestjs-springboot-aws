@@ -35,20 +35,20 @@ public interface BookingRepository extends JpaRepository<Booking, String> {
   // Find all bookings with filters and pagination
   @Query(BookingQueries.FIND_ALL_WITH_FILTERS_PAGED)
   Page<Booking> findAllWithFiltersPaged(
-      @Nullable String userId,
-      @Nullable String roomId,
-      @Nullable String hotelId,
-      @Nullable String status,
-      @Nullable LocalDate checkInDate,
-      @Nullable LocalDate checkOutDate,
-      @Nullable LocalDateTime createdFrom,
-      @Nullable LocalDateTime createdTo,
-      @Nullable Double minPrice,
-      @Nullable Double maxPrice,
-      @Nullable String contactEmail,
-      @Nullable String contactPhone,
-      @Nullable String contactFullName,
-      Pageable pageable);
+    @Nullable String userId,
+    @Nullable String roomId,
+    @Nullable String hotelId,
+    @Nullable String status,
+    @Nullable LocalDate checkInDate,
+    @Nullable LocalDate checkOutDate,
+    @Nullable LocalDateTime createdFrom,
+    @Nullable LocalDateTime createdTo,
+    @Nullable Double minPrice,
+    @Nullable Double maxPrice,
+    @Nullable String contactEmail,
+    @Nullable String contactPhone,
+    @Nullable String contactFullName,
+    Pageable pageable);
 
   long countByHotelId(String hotelId);
 

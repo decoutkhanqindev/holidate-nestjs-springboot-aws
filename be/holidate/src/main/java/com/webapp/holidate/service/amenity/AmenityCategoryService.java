@@ -45,14 +45,14 @@ public class AmenityCategoryService {
 
   public AmenityCategoryDetailsResponse delete(String id) {
     AmenityCategory category = repository.findById(id)
-        .orElseThrow(() -> new AppException(ErrorType.AMENITY_CATEGORY_NOT_FOUND));
-    
+      .orElseThrow(() -> new AppException(ErrorType.AMENITY_CATEGORY_NOT_FOUND));
+
     // Check if category has amenities (though cascade will handle, we check for business logic)
     long amenityCount = amenityRepository.countByCategoryId(id);
     if (amenityCount > 0) {
       throw new AppException(ErrorType.CANNOT_DELETE_AMENITY_CATEGORY_HAS_AMENITIES);
     }
-    
+
     AmenityCategoryDetailsResponse response = mapper.toAmenityCategoryDetailsResponse(category);
     repository.delete(category);
     return response;

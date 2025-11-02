@@ -1,20 +1,11 @@
 package com.webapp.holidate.dto.response.review;
 
+import com.webapp.holidate.dto.response.image.PhotoResponse;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+
 import java.time.LocalDateTime;
 import java.util.List;
-
-import com.webapp.holidate.dto.response.image.PhotoResponse;
-
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-import lombok.experimental.FieldDefaults;
 
 @Data
 @Builder

@@ -64,7 +64,7 @@ public class ReviewService {
   public ReviewDetailsResponse create(ReviewCreationRequest request) throws IOException {
     String bookingId = request.getBookingId();
     Booking booking = bookingRepository.findById(bookingId)
-        .orElseThrow(() -> new AppException(ErrorType.BOOKING_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.BOOKING_NOT_FOUND));
 
     // Check if review already exists for this booking
     if (booking.getReview() != null) {
@@ -91,7 +91,7 @@ public class ReviewService {
       for (PhotoCreationRequest photoRequest : photos) {
         String categoryId = photoRequest.getCategoryId();
         PhotoCategory category = photoCategoryRepository.findById(categoryId)
-            .orElseThrow(() -> new AppException(ErrorType.PHOTO_CATEGORY_NOT_FOUND));
+          .orElseThrow(() -> new AppException(ErrorType.PHOTO_CATEGORY_NOT_FOUND));
 
         List<MultipartFile> files = photoRequest.getFiles();
         boolean hasFiles = files != null && !files.isEmpty();
@@ -104,15 +104,15 @@ public class ReviewService {
               String fileName = file.getOriginalFilename();
               String url = fileService.createFileUrl(fileName);
               Photo photo = Photo.builder()
-                  .url(url)
-                  .category(category)
-                  .build();
+                .url(url)
+                .category(category)
+                .build();
               photoRepository.save(photo);
 
               ReviewPhoto reviewPhoto = ReviewPhoto.builder()
-                  .review(review)
-                  .photo(photo)
-                  .build();
+                .review(review)
+                .photo(photo)
+                .build();
               reviewPhotoRepository.save(reviewPhoto);
               reviewPhotos.add(reviewPhoto);
             }
@@ -130,30 +130,30 @@ public class ReviewService {
 
     // Reload with all relationships for response
     Review finalReview = reviewRepository.findByIdWithDetails(review.getId())
-        .orElseThrow(() -> new AppException(ErrorType.REVIEW_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.REVIEW_NOT_FOUND));
     return reviewMapper.toReviewDetailsResponse(finalReview);
   }
 
   public PagedResponse<ReviewResponse> getAll(
-      String hotelId, String userId, String bookingId,
-      Integer minScore, Integer maxScore,
-      int page, int size, String sortBy, String sortDir) {
+    String hotelId, String userId, String bookingId,
+    Integer minScore, Integer maxScore,
+    int page, int size, String sortBy, String sortDir) {
     // Clean up page and size values
     page = Math.max(0, page);
     size = Math.min(Math.max(1, size), 100);
 
     // Check if sort direction is valid
     boolean hasSortDir = sortDir != null && !sortDir.isEmpty()
-        && (SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir) ||
-            SortingParams.SORT_DIR_DESC.equalsIgnoreCase(sortDir));
+      && (SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir) ||
+      SortingParams.SORT_DIR_DESC.equalsIgnoreCase(sortDir));
     if (!hasSortDir) {
       sortDir = SortingParams.SORT_DIR_DESC;
     }
 
     // Check if sort field is valid
     boolean hasSortBy = sortBy != null && !sortBy.isEmpty()
-        && (ReviewParams.SCORE.equals(sortBy) ||
-            CommonParams.CREATED_AT.equals(sortBy));
+      && (ReviewParams.SCORE.equals(sortBy) ||
+      CommonParams.CREATED_AT.equals(sortBy));
     if (!hasSortBy) {
       sortBy = null;
     }
@@ -163,7 +163,7 @@ public class ReviewService {
 
     // Get reviews from database with pagination
     Page<Review> reviewPage = reviewRepository.findAllWithFiltersPaged(
-        hotelId, userId, bookingId, minScore, maxScore, pageable);
+      hotelId, userId, bookingId, minScore, maxScore, pageable);
 
     // Check if we have any reviews
     if (reviewPage.isEmpty()) {
@@ -172,16 +172,16 @@ public class ReviewService {
 
     // Convert entities to response DTOs
     List<ReviewResponse> reviewResponses = reviewPage.getContent().stream()
-        .map(reviewMapper::toReviewResponse)
-        .toList();
+      .map(reviewMapper::toReviewResponse)
+      .toList();
 
     // Create and return paged response with database pagination metadata
     return pagedMapper.createPagedResponse(
-        reviewResponses,
-        page,
-        size,
-        reviewPage.getTotalElements(),
-        reviewPage.getTotalPages());
+      reviewResponses,
+      page,
+      size,
+      reviewPage.getTotalElements(),
+      reviewPage.getTotalPages());
   }
 
   // Create Pageable object with sorting
@@ -193,8 +193,8 @@ public class ReviewService {
     // Map sort field to entity field
     String entitySortField = mapSortFieldToEntity(sortBy);
     Sort.Direction direction = SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir)
-        ? Sort.Direction.ASC
-        : Sort.Direction.DESC;
+      ? Sort.Direction.ASC
+      : Sort.Direction.DESC;
 
     Sort sort = Sort.by(direction, entitySortField);
     return PageRequest.of(page, size, sort);
@@ -211,14 +211,14 @@ public class ReviewService {
 
   public ReviewDetailsResponse getById(String id) {
     Review review = reviewRepository.findByIdWithDetails(id)
-        .orElseThrow(() -> new AppException(ErrorType.REVIEW_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.REVIEW_NOT_FOUND));
     return reviewMapper.toReviewDetailsResponse(review);
   }
 
   @Transactional
   public ReviewDetailsResponse update(String id, ReviewUpdateRequest request) throws IOException {
     Review review = reviewRepository.findByIdWithDetails(id)
-        .orElseThrow(() -> new AppException(ErrorType.REVIEW_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.REVIEW_NOT_FOUND));
 
     // Update basic fields using mapper
     reviewMapper.updateEntity(request, review);
@@ -233,7 +233,7 @@ public class ReviewService {
 
     // Reload with all relationships for response
     Review updatedReview = reviewRepository.findByIdWithDetails(id)
-        .orElseThrow(() -> new AppException(ErrorType.REVIEW_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.REVIEW_NOT_FOUND));
     return reviewMapper.toReviewDetailsResponse(updatedReview);
   }
 
@@ -245,8 +245,8 @@ public class ReviewService {
     boolean hasPhotosToDelete = photoIdsToDelete != null && !photoIdsToDelete.isEmpty();
     if (hasPhotosToDelete) {
       List<ReviewPhoto> photosToRemove = currentPhotos.stream()
-          .filter(reviewPhoto -> photoIdsToDelete.contains(reviewPhoto.getPhoto().getId()))
-          .toList();
+        .filter(reviewPhoto -> photoIdsToDelete.contains(reviewPhoto.getPhoto().getId()))
+        .toList();
 
       for (ReviewPhoto photoToRemove : photosToRemove) {
         currentPhotos.remove(photoToRemove);
@@ -255,7 +255,7 @@ public class ReviewService {
 
       for (String photoId : photoIdsToDelete) {
         Photo photo = photoRepository.findById(photoId)
-            .orElseThrow(() -> new AppException(ErrorType.PHOTO_NOT_FOUND));
+          .orElseThrow(() -> new AppException(ErrorType.PHOTO_NOT_FOUND));
         String fileUrl = photo.getUrl();
         fileService.delete(fileUrl);
         photoRepository.delete(photo);
@@ -269,7 +269,7 @@ public class ReviewService {
       for (PhotoCreationRequest photoToAdd : photosToAdd) {
         String categoryId = photoToAdd.getCategoryId();
         PhotoCategory category = photoCategoryRepository.findById(categoryId)
-            .orElseThrow(() -> new AppException(ErrorType.PHOTO_CATEGORY_NOT_FOUND));
+          .orElseThrow(() -> new AppException(ErrorType.PHOTO_CATEGORY_NOT_FOUND));
 
         List<MultipartFile> files = photoToAdd.getFiles();
         boolean hasFiles = files != null && !files.isEmpty();
@@ -282,15 +282,15 @@ public class ReviewService {
               String fileName = file.getOriginalFilename();
               String url = fileService.createFileUrl(fileName);
               Photo photo = Photo.builder()
-                  .url(url)
-                  .category(category)
-                  .build();
+                .url(url)
+                .category(category)
+                .build();
               photoRepository.save(photo);
 
               ReviewPhoto reviewPhoto = ReviewPhoto.builder()
-                  .review(review)
-                  .photo(photo)
-                  .build();
+                .review(review)
+                .photo(photo)
+                .build();
               reviewPhotoRepository.save(reviewPhoto);
               currentPhotos.add(reviewPhoto);
             }
@@ -305,7 +305,7 @@ public class ReviewService {
   @Transactional
   public ReviewDetailsResponse delete(String id) {
     Review review = reviewRepository.findByIdWithDetails(id)
-        .orElseThrow(() -> new AppException(ErrorType.REVIEW_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.REVIEW_NOT_FOUND));
 
     Hotel hotel = review.getHotel();
 
@@ -320,7 +320,7 @@ public class ReviewService {
   private void updateHotelStarRating(Hotel hotel) {
     // Fetch all reviews for this hotel using the query with FETCH to avoid N+1
     Hotel hotelWithReviews = hotelRepository.findByIdWithDetails(hotel.getId())
-        .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
 
     Set<Review> reviews = hotelWithReviews.getReviews();
     if (reviews == null || reviews.isEmpty()) {
@@ -331,9 +331,9 @@ public class ReviewService {
 
     // Calculate average score (review scores are 1-10)
     double averageScore = reviews.stream()
-        .mapToInt(Review::getScore)
-        .average()
-        .orElse(0.0);
+      .mapToInt(Review::getScore)
+      .average()
+      .orElse(0.0);
 
     // Convert review score (1-10) to star rating (1-5)
     // Formula: (averageScore / 10) * 5, rounded

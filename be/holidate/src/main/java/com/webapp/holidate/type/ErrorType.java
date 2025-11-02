@@ -263,7 +263,7 @@ public enum ErrorType {
   CANNOT_DELETE_AMENITY_HAS_REFERENCES(400, "Cannot delete amenity because it is referenced by hotels or rooms"),
   CANNOT_DELETE_AMENITY_CATEGORY_HAS_AMENITIES(400, "Cannot delete amenity category because it has amenities"),
   CANNOT_DELETE_DISCOUNT_HAS_REFERENCES(400,
-      "Cannot delete discount because it is referenced by hotels, special days, or bookings"),
+    "Cannot delete discount because it is referenced by hotels, special days, or bookings"),
   CANNOT_DELETE_SPECIAL_DAY_HAS_DISCOUNTS(400, "Cannot delete special day because it has discounts"),
   CANNOT_DELETE_ROLE_HAS_USERS(400, "Cannot delete role because it has users"),
   CANNOT_DELETE_USER_HAS_HOTELS(400, "Cannot delete user because they own hotels"),

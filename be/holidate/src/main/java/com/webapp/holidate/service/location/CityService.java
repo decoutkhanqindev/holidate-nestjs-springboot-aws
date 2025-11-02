@@ -6,10 +6,10 @@ import com.webapp.holidate.dto.response.location.LocationResponse;
 import com.webapp.holidate.entity.location.City;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.location.CityMapper;
-import com.webapp.holidate.repository.location.CityRepository;
-import com.webapp.holidate.repository.location.ProvinceRepository;
-import com.webapp.holidate.repository.location.DistrictRepository;
 import com.webapp.holidate.repository.accommodation.HotelRepository;
+import com.webapp.holidate.repository.location.CityRepository;
+import com.webapp.holidate.repository.location.DistrictRepository;
+import com.webapp.holidate.repository.location.ProvinceRepository;
 import com.webapp.holidate.type.ErrorType;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -53,8 +53,8 @@ public class CityService {
   }
 
   public List<LocationResponse> getAll(
-      String name,
-      String provinceId) {
+    String name,
+    String provinceId) {
     boolean nameProvided = name != null && !name.isBlank();
     boolean provinceIdProvided = provinceId != null && !provinceId.isBlank();
 
@@ -65,16 +65,16 @@ public class CityService {
       }
 
       return cityRepository.findAllByNameContainingIgnoreCaseAndProvinceId(name, provinceId)
-          .stream()
-          .map(cityMapper::toLocationResponse)
-          .toList();
+        .stream()
+        .map(cityMapper::toLocationResponse)
+        .toList();
     }
 
     if (nameProvided) {
       return cityRepository.findAllByNameContainingIgnoreCase(name)
-          .stream()
-          .map(cityMapper::toLocationResponse)
-          .toList();
+        .stream()
+        .map(cityMapper::toLocationResponse)
+        .toList();
     }
 
     if (provinceIdProvided) {
@@ -84,20 +84,20 @@ public class CityService {
       }
 
       return cityRepository.findAllByProvinceId(provinceId)
-          .stream()
-          .map(cityMapper::toLocationResponse)
-          .toList();
-    }
-
-    return cityRepository.findAll()
         .stream()
         .map(cityMapper::toLocationResponse)
         .toList();
+    }
+
+    return cityRepository.findAll()
+      .stream()
+      .map(cityMapper::toLocationResponse)
+      .toList();
   }
 
   public CityResponse delete(String id) {
     City city = cityRepository.findById(id)
-        .orElseThrow(() -> new AppException(ErrorType.CITY_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.CITY_NOT_FOUND));
 
     // Check if city has districts
     long districtCount = districtRepository.countByCityId(id);

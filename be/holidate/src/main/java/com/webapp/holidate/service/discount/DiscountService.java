@@ -71,14 +71,14 @@ public class DiscountService {
 
     if (hotelId != null) {
       Hotel hotel = hotelRepository.findById(hotelId)
-          .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
       HotelDiscount hotelDiscount = mapper.toEntity(discount, hotel);
       hotelDiscountRepository.save(hotelDiscount);
     }
 
     if (specialDayId != null) {
       SpecialDay specialDay = specialDayRepository.findById(specialDayId)
-          .orElseThrow(() -> new AppException(ErrorType.SPECIAL_DAY_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.SPECIAL_DAY_NOT_FOUND));
       SpecialDayDiscount specialDayDiscount = mapper.toEntity(discount, specialDay);
       specialDayDiscountRepository.save(specialDayDiscount);
     }
@@ -88,26 +88,26 @@ public class DiscountService {
   }
 
   public PagedResponse<DiscountResponse> getAll(
-      String code, Boolean active, Boolean currentlyValid, LocalDate validFrom, LocalDate validTo,
-      Double minPercentage, Double maxPercentage, Integer minBookingPrice, Integer maxBookingPrice,
-      Integer minBookingCount, Integer maxBookingCount, Boolean available, Boolean exhausted,
-      Integer minTimesUsed, Integer maxTimesUsed, String hotelId, String specialDayId,
-      int page, int size, String sortBy, String sortDir) {
+    String code, Boolean active, Boolean currentlyValid, LocalDate validFrom, LocalDate validTo,
+    Double minPercentage, Double maxPercentage, Integer minBookingPrice, Integer maxBookingPrice,
+    Integer minBookingCount, Integer maxBookingCount, Boolean available, Boolean exhausted,
+    Integer minTimesUsed, Integer maxTimesUsed, String hotelId, String specialDayId,
+    int page, int size, String sortBy, String sortDir) {
     // Clean up page and size values
     page = Math.max(0, page);
     size = Math.min(Math.max(1, size), 100);
 
     // Check if sort direction is valid
     boolean hasSortDir = sortDir != null && !sortDir.isEmpty()
-        && (SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir) ||
-            SortingParams.SORT_DIR_DESC.equalsIgnoreCase(sortDir));
+      && (SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir) ||
+      SortingParams.SORT_DIR_DESC.equalsIgnoreCase(sortDir));
     if (!hasSortDir) {
       sortDir = SortingParams.SORT_DIR_ASC;
     }
 
     // Check if sort field is valid
     boolean hasSortBy = sortBy != null && !sortBy.isEmpty()
-        && (isValidSortField(sortBy));
+      && (isValidSortField(sortBy));
     if (!hasSortBy) {
       sortBy = null;
     }
@@ -124,8 +124,8 @@ public class DiscountService {
     boolean hasRelationshipFilter = hotelId != null || specialDayId != null;
 
     boolean hasAnyFilter = hasCodeFilter || hasActiveFilter || hasCurrentlyValidFilter || hasDateFilter
-        || hasPercentageFilter || hasBookingPriceFilter || hasBookingCountFilter || hasUsageFilter
-        || hasRelationshipFilter;
+      || hasPercentageFilter || hasBookingPriceFilter || hasBookingCountFilter || hasUsageFilter
+      || hasRelationshipFilter;
 
     // If no filters, get all discounts with simple pagination
     if (!hasAnyFilter) {
@@ -134,23 +134,23 @@ public class DiscountService {
 
     // If it has filters, use database-level filtering with pagination
     return getDiscountsWithFilters(
-        code, active, currentlyValid, validFrom, validTo,
-        minPercentage, maxPercentage, minBookingPrice, maxBookingPrice,
-        minBookingCount, maxBookingCount, available, exhausted,
-        minTimesUsed, maxTimesUsed, hotelId, specialDayId,
-        page, size, sortBy, sortDir);
+      code, active, currentlyValid, validFrom, validTo,
+      minPercentage, maxPercentage, minBookingPrice, maxBookingPrice,
+      minBookingCount, maxBookingCount, available, exhausted,
+      minTimesUsed, maxTimesUsed, hotelId, specialDayId,
+      page, size, sortBy, sortDir);
   }
 
   // Check if sort field is valid for discounts
   private boolean isValidSortField(String sortBy) {
     return DiscountParams.PERCENTAGE.equals(sortBy) ||
-        DiscountParams.VALID_FROM.equals(sortBy) ||
-        DiscountParams.VALID_TO.equals(sortBy) ||
-        DiscountParams.USAGE_LIMIT.equals(sortBy) ||
-        DiscountParams.TIMES_USED.equals(sortBy) ||
-        DiscountParams.MIN_BOOKING_PRICE.equals(sortBy) ||
-        DiscountParams.CODE.equals(sortBy) ||
-        CommonParams.CREATED_AT.equals(sortBy);
+      DiscountParams.VALID_FROM.equals(sortBy) ||
+      DiscountParams.VALID_TO.equals(sortBy) ||
+      DiscountParams.USAGE_LIMIT.equals(sortBy) ||
+      DiscountParams.TIMES_USED.equals(sortBy) ||
+      DiscountParams.MIN_BOOKING_PRICE.equals(sortBy) ||
+      DiscountParams.CODE.equals(sortBy) ||
+      CommonParams.CREATED_AT.equals(sortBy);
   }
 
   // Create Pageable object with sorting
@@ -162,8 +162,8 @@ public class DiscountService {
     // Map sort field to entity field
     String entitySortField = mapSortFieldToEntity(sortBy);
     Sort.Direction direction = SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir)
-        ? Sort.Direction.ASC
-        : Sort.Direction.DESC;
+      ? Sort.Direction.ASC
+      : Sort.Direction.DESC;
 
     Sort sort = Sort.by(direction, entitySortField);
     return PageRequest.of(page, size, sort);
@@ -186,7 +186,7 @@ public class DiscountService {
 
   // Get all discounts when no filters applied
   private PagedResponse<DiscountResponse> getAllDiscountsWithoutFilters(int page, int size, String sortBy,
-      String sortDir) {
+                                                                        String sortDir) {
     // Create Pageable with sorting
     Pageable pageable = createPageable(page, size, sortBy, sortDir);
 
@@ -200,36 +200,36 @@ public class DiscountService {
 
     // Convert entities to response DTOs
     List<DiscountResponse> discountResponses = discountPage.getContent().stream()
-        .map(mapper::toDiscountResponse)
-        .toList();
+      .map(mapper::toDiscountResponse)
+      .toList();
 
     // Create and return paged response with database pagination metadata
     return pagedMapper.createPagedResponse(
-        discountResponses,
-        page,
-        size,
-        discountPage.getTotalElements(),
-        discountPage.getTotalPages());
+      discountResponses,
+      page,
+      size,
+      discountPage.getTotalElements(),
+      discountPage.getTotalPages());
   }
 
   // Handle filtering logic when filters are provided
   private PagedResponse<DiscountResponse> getDiscountsWithFilters(
-      String code, Boolean active, Boolean currentlyValid, LocalDate validFrom, LocalDate validTo,
-      Double minPercentage, Double maxPercentage, Integer minBookingPrice, Integer maxBookingPrice,
-      Integer minBookingCount, Integer maxBookingCount, Boolean available, Boolean exhausted,
-      Integer minTimesUsed, Integer maxTimesUsed, String hotelId, String specialDayId,
-      int page, int size, String sortBy, String sortDir) {
+    String code, Boolean active, Boolean currentlyValid, LocalDate validFrom, LocalDate validTo,
+    Double minPercentage, Double maxPercentage, Integer minBookingPrice, Integer maxBookingPrice,
+    Integer minBookingCount, Integer maxBookingCount, Boolean available, Boolean exhausted,
+    Integer minTimesUsed, Integer maxTimesUsed, String hotelId, String specialDayId,
+    int page, int size, String sortBy, String sortDir) {
 
     // Create pageable with sorting
     Pageable pageable = createPageable(page, size, sortBy, sortDir);
 
     // Get filtered results from database with pagination
     Page<Discount> discountPage = discountRepository.findAllWithFilters(
-        code, active, currentlyValid, validFrom, validTo,
-        minPercentage, maxPercentage, minBookingPrice, maxBookingPrice,
-        minBookingCount, maxBookingCount, available, exhausted,
-        minTimesUsed, maxTimesUsed, hotelId, specialDayId,
-        pageable);
+      code, active, currentlyValid, validFrom, validTo,
+      minPercentage, maxPercentage, minBookingPrice, maxBookingPrice,
+      minBookingCount, maxBookingCount, available, exhausted,
+      minTimesUsed, maxTimesUsed, hotelId, specialDayId,
+      pageable);
 
     // Check if we found any discounts
     if (discountPage.isEmpty()) {
@@ -238,22 +238,22 @@ public class DiscountService {
 
     // Convert entities to response DTOs
     List<DiscountResponse> discountResponses = discountPage.getContent().stream()
-        .map(mapper::toDiscountResponse)
-        .toList();
+      .map(mapper::toDiscountResponse)
+      .toList();
 
     // Create and return paged response with database pagination metadata
     return pagedMapper.createPagedResponse(
-        discountResponses,
-        page,
-        size,
-        discountPage.getTotalElements(),
-        discountPage.getTotalPages());
+      discountResponses,
+      page,
+      size,
+      discountPage.getTotalElements(),
+      discountPage.getTotalPages());
   }
 
   @Transactional
   public DiscountDetailsResponse getById(String id) {
     Discount discount = discountRepository.findByIdWithDetails(id)
-        .orElseThrow(() -> new AppException(ErrorType.DISCOUNT_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.DISCOUNT_NOT_FOUND));
 
     // Get hotel information if exists
     var hotelDiscount = hotelDiscountRepository.findByDiscountId(id);
@@ -278,12 +278,12 @@ public class DiscountService {
   @Transactional
   public DiscountDetailsResponse update(String id, DiscountUpdateRequest request) {
     Discount existingDiscount = discountRepository.findByIdWithDetails(id)
-        .orElseThrow(() -> new AppException(ErrorType.DISCOUNT_NOT_FOUND));
+      .orElseThrow(() -> new AppException(ErrorType.DISCOUNT_NOT_FOUND));
 
     // Check if code is being changed and if new code already exists
     if (request.getCode() != null &&
-        !existingDiscount.getCode().equals(request.getCode()) &&
-        discountRepository.existsByCode(request.getCode())) {
+      !existingDiscount.getCode().equals(request.getCode()) &&
+      discountRepository.existsByCode(request.getCode())) {
       throw new AppException(ErrorType.DISCOUNT_EXISTS);
     }
 
@@ -315,10 +315,10 @@ public class DiscountService {
       // Add new hotel relationship if newHotelId is provided
       if (hotelId != null && !hotelId.trim().isEmpty()) {
         Hotel hotel = hotelRepository.findById(hotelId)
-            .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
+          .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
 
         Discount discount = discountRepository.findById(discountId)
-            .orElseThrow(() -> new AppException(ErrorType.DISCOUNT_NOT_FOUND));
+          .orElseThrow(() -> new AppException(ErrorType.DISCOUNT_NOT_FOUND));
 
         HotelDiscount hotelDiscount = mapper.toEntity(discount, hotel);
         hotelDiscountRepository.save(hotelDiscount);
@@ -339,10 +339,10 @@ public class DiscountService {
       // Add new special day relationship if newSpecialDayId is provided
       if (specialDayId != null && !specialDayId.trim().isEmpty()) {
         SpecialDay specialDay = specialDayRepository.findById(specialDayId)
-            .orElseThrow(() -> new AppException(ErrorType.SPECIAL_DAY_NOT_FOUND));
+          .orElseThrow(() -> new AppException(ErrorType.SPECIAL_DAY_NOT_FOUND));
 
         Discount discount = discountRepository.findById(discountId)
-            .orElseThrow(() -> new AppException(ErrorType.DISCOUNT_NOT_FOUND));
+          .orElseThrow(() -> new AppException(ErrorType.DISCOUNT_NOT_FOUND));
 
         SpecialDayDiscount specialDayDiscount = mapper.toEntity(discount, specialDay);
         specialDayDiscountRepository.save(specialDayDiscount);
@@ -352,26 +352,26 @@ public class DiscountService {
 
   public DiscountDetailsResponse delete(String id) {
     Discount discount = discountRepository.findByIdWithDetails(id)
-        .orElseThrow(() -> new AppException(ErrorType.DISCOUNT_NOT_FOUND));
-    
+      .orElseThrow(() -> new AppException(ErrorType.DISCOUNT_NOT_FOUND));
+
     // Check if discount is referenced by hotels
     long hotelDiscountCount = hotelDiscountRepository.countByDiscountId(id);
     if (hotelDiscountCount > 0) {
       throw new AppException(ErrorType.CANNOT_DELETE_DISCOUNT_HAS_REFERENCES);
     }
-    
+
     // Check if discount is referenced by special days
     long specialDayDiscountCount = specialDayDiscountRepository.countByDiscountId(id);
     if (specialDayDiscountCount > 0) {
       throw new AppException(ErrorType.CANNOT_DELETE_DISCOUNT_HAS_REFERENCES);
     }
-    
+
     // Check if discount is used in bookings
     long bookingCount = bookingRepository.countByAppliedDiscountId(id);
     if (bookingCount > 0) {
       throw new AppException(ErrorType.CANNOT_DELETE_DISCOUNT_HAS_REFERENCES);
     }
-    
+
     DiscountDetailsResponse response = mapper.toDiscountDetailsResponse(discount);
     discountRepository.delete(discount);
     return response;
@@ -383,13 +383,13 @@ public class DiscountService {
     }
 
     Discount discount = discountRepository.findByCode(discountCode)
-        .orElseThrow(() -> new AppException(ErrorType.INVALID_DISCOUNT_CODE));
+      .orElseThrow(() -> new AppException(ErrorType.INVALID_DISCOUNT_CODE));
 
     // Validate discount conditions
     LocalDate todayDate = LocalDate.now();
     if (!discount.isActive() ||
-        todayDate.isBefore(discount.getValidFrom()) ||
-        todayDate.isAfter(discount.getValidTo())) {
+      todayDate.isBefore(discount.getValidFrom()) ||
+      todayDate.isAfter(discount.getValidTo())) {
       throw new AppException(ErrorType.INVALID_DISCOUNT_CODE);
     }
 
@@ -410,13 +410,13 @@ public class DiscountService {
     }
 
     Discount discount = discountRepository.findByCode(discountCode)
-        .orElseThrow(() -> new AppException(ErrorType.INVALID_DISCOUNT_CODE));
+      .orElseThrow(() -> new AppException(ErrorType.INVALID_DISCOUNT_CODE));
 
     // Validate discount conditions
     LocalDate todayDate = LocalDate.now();
     if (!discount.isActive() ||
-        todayDate.isBefore(discount.getValidFrom()) ||
-        todayDate.isAfter(discount.getValidTo())) {
+      todayDate.isBefore(discount.getValidFrom()) ||
+      todayDate.isAfter(discount.getValidTo())) {
       throw new AppException(ErrorType.INVALID_DISCOUNT_CODE);
     }
 
@@ -432,7 +432,7 @@ public class DiscountService {
     if ("FIRSTBOOK10".equals(discountCode)) {
       // Check if user has any confirmed bookings (excluding cancelled ones)
       List<String> confirmedStatuses = List.of(BookingStatusType.CONFIRMED.getValue(),
-          BookingStatusType.COMPLETED.getValue());
+        BookingStatusType.COMPLETED.getValue());
       long userBookingCount = bookingRepository.countByUserIdAndStatusIn(userId, confirmedStatuses);
 
       if (userBookingCount > 0) {
@@ -445,13 +445,13 @@ public class DiscountService {
 
   public double[] calculateDiscountAmount(Discount discount, double originalPrice) {
     if (discount == null) {
-      return new double[] { 0.0, originalPrice };
+      return new double[]{0.0, originalPrice};
     }
 
     double discountAmount = originalPrice * (discount.getPercentage() / 100.0);
     double finalPrice = originalPrice - discountAmount;
 
-    return new double[] { discountAmount, finalPrice };
+    return new double[]{discountAmount, finalPrice};
   }
 
   @Transactional

@@ -24,9 +24,9 @@ import com.webapp.holidate.mapper.acommodation.room.RoomMapper;
 import com.webapp.holidate.repository.accommodation.HotelRepository;
 import com.webapp.holidate.repository.accommodation.room.BedTypeRepository;
 import com.webapp.holidate.repository.accommodation.room.RoomRepository;
-import com.webapp.holidate.repository.booking.BookingRepository;
 import com.webapp.holidate.repository.amenity.AmenityRepository;
 import com.webapp.holidate.repository.amenity.RoomAmenityRepository;
+import com.webapp.holidate.repository.booking.BookingRepository;
 import com.webapp.holidate.repository.image.PhotoCategoryRepository;
 import com.webapp.holidate.repository.image.PhotoRepository;
 import com.webapp.holidate.repository.image.RoomPhotoRepository;
@@ -476,14 +476,14 @@ public class RoomService {
   @Transactional
   public RoomDetailsResponse delete(String id) {
     Room room = roomRepository.findByIdWithDetails(id)
-        .orElseThrow(() -> new AppException(ErrorType.ROOM_NOT_FOUND));
-    
+      .orElseThrow(() -> new AppException(ErrorType.ROOM_NOT_FOUND));
+
     // Check if room has bookings
     long bookingCount = bookingRepository.countByRoomId(id);
     if (bookingCount > 0) {
       throw new AppException(ErrorType.CANNOT_DELETE_ROOM_HAS_BOOKINGS);
     }
-    
+
     RoomDetailsResponse response = roomMapper.toRoomDetailsResponse(room);
     roomRepository.delete(room);
     return response;
