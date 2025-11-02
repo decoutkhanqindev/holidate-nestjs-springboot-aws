@@ -985,28 +985,6 @@ Base URL: `http://localhost:8080`
 **Note**: According to SecurityConfig, PUT and DELETE endpoints for room inventories are configured for ADMIN and PARTNER roles, but controller endpoints may not be fully implemented yet. If they exist, they would be:
 - **PUT** `/accommodation/rooms/inventories` - Update room inventory prices (requires RoomInventoryPriceUpdateRequest)
 - **DELETE** `/accommodation/rooms/inventories/{id}` - Delete room inventory
-- **Response**:
-```json
-{
-  "statusCode": 200,
-  "message": "",
-  "data": {
-    "id": "string",
-    "room": {
-      // ... (room details)
-      "inventories": [
-        {
-          "id": "string",
-          "date": "date",
-          "price": "number",
-          "availableQuantity": "integer",
-          "status": "string"
-        }
-      ]
-    }
-  }
-}
-```
 
 ---
 
