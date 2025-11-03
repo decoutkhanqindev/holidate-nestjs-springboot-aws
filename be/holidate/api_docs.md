@@ -855,7 +855,7 @@ Base URL: `http://localhost:8080`
 
 **GET** `/accommodation/hotels`
 
-- **Role Required**: Public (GET), ADMIN (POST/PUT/DELETE)
+- **Role Required**: Public
 - **Query Parameters**:
     - `name`: string (optional)
     - `countryId`: string (optional)
@@ -923,7 +923,7 @@ Base URL: `http://localhost:8080`
 **PUT** `/accommodation/hotels/{id}`
 
 - **Content-Type**: `multipart/form-data`
-- **Role Required**: ADMIN
+- **Role Required**: PARTNER, ADMIN (PARTNER can only update hotels they own)
 - **Path Parameters**:
     - `id`: string (UUID format)
 - **Request Body** (form-data): All fields from Create Hotel (optional) + files
