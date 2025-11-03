@@ -15,4 +15,8 @@ public interface SpecialDayDiscountRepository extends JpaRepository<SpecialDayDi
 
   @Query(DiscountQueries.FIND_BY_DISCOUNT_ID_WITH_SPECIAL_DAY)
   Optional<SpecialDayDiscount> findByDiscountId(String discountId);
+
+  long countByDiscountId(String discountId);
+
+  long countBySpecialDayId(String specialDayId);
 }

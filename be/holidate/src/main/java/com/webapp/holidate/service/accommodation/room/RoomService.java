@@ -1,6 +1,6 @@
 package com.webapp.holidate.service.accommodation.room;
 
-import com.webapp.holidate.constants.api.param.RoomParams;
+import com.webapp.holidate.constants.api.param.CommonParams;
 import com.webapp.holidate.constants.api.param.SortingParams;
 import com.webapp.holidate.dto.request.acommodation.room.RoomCreationRequest;
 import com.webapp.holidate.dto.request.acommodation.room.RoomUpdateRequest;
@@ -26,6 +26,7 @@ import com.webapp.holidate.repository.accommodation.room.BedTypeRepository;
 import com.webapp.holidate.repository.accommodation.room.RoomRepository;
 import com.webapp.holidate.repository.amenity.AmenityRepository;
 import com.webapp.holidate.repository.amenity.RoomAmenityRepository;
+import com.webapp.holidate.repository.booking.BookingRepository;
 import com.webapp.holidate.repository.image.PhotoCategoryRepository;
 import com.webapp.holidate.repository.image.PhotoRepository;
 import com.webapp.holidate.repository.image.RoomPhotoRepository;
@@ -59,6 +60,7 @@ import java.util.stream.Collectors;
 public class RoomService {
   HotelRepository hotelRepository;
   RoomRepository roomRepository;
+  BookingRepository bookingRepository;
   BedTypeRepository bedTypeRepository;
   CancellationPolicyRepository cancellationPolicyRepository;
   ReschedulePolicyRepository reschedulePolicyRepository;
@@ -176,7 +178,7 @@ public class RoomService {
 
     // Check if sort field is valid (only price sorting allowed)
     boolean hasSortBy = sortBy != null && !sortBy.isEmpty()
-      && RoomParams.PRICE.equals(sortBy);
+      && CommonParams.PRICE.equals(sortBy);
     if (!hasSortBy) {
       sortBy = null;
     }
@@ -243,7 +245,7 @@ public class RoomService {
   // Map API sort field to entity field name for rooms
   private String mapRoomSortFieldToEntity(String sortBy) {
     return switch (sortBy) {
-      case RoomParams.PRICE -> "basePricePerNight";
+      case CommonParams.PRICE -> "basePricePerNight";
       default -> "createdAt"; // Default sorting by creation date
     };
   }
@@ -469,5 +471,21 @@ public class RoomService {
         .orElseThrow(() -> new AppException(ErrorType.RESCHEDULE_POLICY_NOT_FOUND));
       room.setReschedulePolicy(reschedulePolicy);
     }
+  }
+
+  @Transactional
+  public RoomDetailsResponse delete(String id) {
+    Room room = roomRepository.findByIdWithDetails(id)
+      .orElseThrow(() -> new AppException(ErrorType.ROOM_NOT_FOUND));
+
+    // Check if room has bookings
+    long bookingCount = bookingRepository.countByRoomId(id);
+    if (bookingCount > 0) {
+      throw new AppException(ErrorType.CANNOT_DELETE_ROOM_HAS_BOOKINGS);
+    }
+
+    RoomDetailsResponse response = roomMapper.toRoomDetailsResponse(room);
+    roomRepository.delete(room);
+    return response;
   }
 }

@@ -1,6 +1,7 @@
 package com.webapp.holidate.service.accommodation.room;
 
 import com.webapp.holidate.constants.AppProperties;
+import com.webapp.holidate.constants.api.param.CommonParams;
 import com.webapp.holidate.constants.api.param.RoomInventoryParams;
 import com.webapp.holidate.constants.api.param.SortingParams;
 import com.webapp.holidate.dto.request.acommodation.room.inventory.RoomInventoryCreationRequest;
@@ -117,7 +118,7 @@ public class RoomInventoryService {
     // Check if sort field is valid
     boolean hasSortBy = sortBy != null && !sortBy.isEmpty()
       && (RoomInventoryParams.DATE.equals(sortBy)
-      || RoomInventoryParams.PRICE.equals(sortBy)
+      || CommonParams.PRICE.equals(sortBy)
       || RoomInventoryParams.AVAILABLE_ROOMS.equals(sortBy));
     if (!hasSortBy) {
       sortBy = null;
@@ -182,7 +183,7 @@ public class RoomInventoryService {
   private String mapInventorySortFieldToEntity(String sortBy) {
     return switch (sortBy) {
       case RoomInventoryParams.DATE -> "id.date";
-      case RoomInventoryParams.PRICE -> "price";
+      case CommonParams.PRICE -> "price";
       case RoomInventoryParams.AVAILABLE_ROOMS -> "availableRooms";
       default -> "id.date"; // Default sorting by date
     };

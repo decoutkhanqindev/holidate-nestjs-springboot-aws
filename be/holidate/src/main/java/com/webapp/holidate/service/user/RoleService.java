@@ -6,6 +6,7 @@ import com.webapp.holidate.entity.user.Role;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.user.RoleMapper;
 import com.webapp.holidate.repository.user.RoleRepository;
+import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.type.ErrorType;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import java.util.List;
 public class RoleService {
   RoleRepository repository;
   RoleMapper mapper;
+  UserRepository userRepository;
 
   public RoleResponse create(RoleCreationRequest request) {
     String name = request.getName();
@@ -38,8 +40,17 @@ public class RoleService {
   }
 
   public RoleResponse delete(String id) {
-    Role role = repository.findById(id).orElseThrow();
+    Role role = repository.findById(id)
+      .orElseThrow(() -> new AppException(ErrorType.ROLE_NOT_FOUND));
+
+    // Check if role has users
+    long userCount = userRepository.countByRoleId(id);
+    if (userCount > 0) {
+      throw new AppException(ErrorType.CANNOT_DELETE_ROLE_HAS_USERS);
+    }
+
+    RoleResponse response = mapper.toRoleResponse(role);
     repository.delete(role);
-    return mapper.toRoleResponse(role);
+    return response;
   }
 }

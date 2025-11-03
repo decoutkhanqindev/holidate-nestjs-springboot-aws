@@ -48,6 +48,7 @@ public interface RoomMapper {
   @Mapping(source = "amenities", target = "amenities", qualifiedByName = "roomAmenitiesToCategories")
   RoomResponse toRoomResponse(Room room);
 
+  @Mapping(target = "pricesByDateRange", ignore = true)
   RoomBriefResponse toRoomBriefResponse(Room room);
 
   @AfterMapping

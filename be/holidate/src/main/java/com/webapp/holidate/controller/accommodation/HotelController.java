@@ -55,11 +55,11 @@ public class HotelController {
     @RequestParam(name = RoomParams.REQUIRED_ADULTS, required = false) Integer requiredAdults,
     @RequestParam(name = RoomParams.REQUIRED_CHILDREN, required = false) Integer requiredChildren,
     @RequestParam(name = RoomParams.REQUIRED_ROOMS, required = false) Integer requiredRooms,
-    @RequestParam(name = RoomParams.MIN_PRICE, required = false) Double minPrice,
-    @RequestParam(name = RoomParams.MAX_PRICE, required = false) Double maxPrice,
+    @RequestParam(name = FilterParams.MIN_PRICE, required = false) Double minPrice,
+    @RequestParam(name = FilterParams.MAX_PRICE, required = false) Double maxPrice,
     @RequestParam(name = PaginationParams.PAGE, defaultValue = PaginationParams.DEFAULT_PAGE) int page,
     @RequestParam(name = PaginationParams.SIZE, defaultValue = PaginationParams.DEFAULT_SIZE) int size,
-    @RequestParam(name = SortingParams.SORT_BY, defaultValue = HotelParams.CREATED_AT) String sortBy,
+    @RequestParam(name = SortingParams.SORT_BY, defaultValue = CommonParams.CREATED_AT) String sortBy,
     @RequestParam(name = SortingParams.SORT_DIR, defaultValue = SortingParams.SORT_DIR_ASC) String sortDir) {
     PagedResponse<HotelResponse> response = hotelService.getAll(
       name, countryId, provinceId, cityId, districtId, wardId, streetId,
@@ -84,6 +84,14 @@ public class HotelController {
     @PathVariable String id,
     @ModelAttribute @Valid HotelUpdateRequest request) throws IOException {
     HotelDetailsResponse response = hotelService.update(id, request);
+    return ApiResponse.<HotelDetailsResponse>builder()
+      .data(response)
+      .build();
+  }
+
+  @DeleteMapping(CommonEndpoints.ID)
+  public ApiResponse<HotelDetailsResponse> delete(@PathVariable String id) {
+    HotelDetailsResponse response = hotelService.delete(id);
     return ApiResponse.<HotelDetailsResponse>builder()
       .data(response)
       .build();

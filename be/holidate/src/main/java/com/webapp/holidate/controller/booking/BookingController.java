@@ -2,9 +2,7 @@ package com.webapp.holidate.controller.booking;
 
 import com.webapp.holidate.constants.api.endpoint.BookingEndpoints;
 import com.webapp.holidate.constants.api.endpoint.CommonEndpoints;
-import com.webapp.holidate.constants.api.param.BookingParams;
-import com.webapp.holidate.constants.api.param.PaginationParams;
-import com.webapp.holidate.constants.api.param.SortingParams;
+import com.webapp.holidate.constants.api.param.*;
 import com.webapp.holidate.dto.request.booking.BookingCreationRequest;
 import com.webapp.holidate.dto.request.booking.BookingPricePreviewRequest;
 import com.webapp.holidate.dto.request.booking.BookingRescheduleRequest;
@@ -55,19 +53,19 @@ public class BookingController {
     @RequestParam(name = BookingParams.USER_ID, required = false) String userId,
     @RequestParam(name = BookingParams.ROOM_ID, required = false) String roomId,
     @RequestParam(name = BookingParams.HOTEL_ID, required = false) String hotelId,
-    @RequestParam(name = BookingParams.STATUS, required = false) String status,
+    @RequestParam(name = CommonParams.STATUS, required = false) String status,
     @RequestParam(name = BookingParams.CHECK_IN_DATE, required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkInDate,
     @RequestParam(name = BookingParams.CHECK_OUT_DATE, required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOutDate,
-    @RequestParam(name = BookingParams.CREATED_FROM, required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime createdFrom,
-    @RequestParam(name = BookingParams.CREATED_TO, required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime createdTo,
-    @RequestParam(name = BookingParams.MIN_PRICE, required = false) Double minPrice,
-    @RequestParam(name = BookingParams.MAX_PRICE, required = false) Double maxPrice,
+    @RequestParam(name = FilterParams.CREATED_FROM, required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime createdFrom,
+    @RequestParam(name = FilterParams.CREATED_TO, required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime createdTo,
+    @RequestParam(name = FilterParams.MIN_PRICE, required = false) Double minPrice,
+    @RequestParam(name = FilterParams.MAX_PRICE, required = false) Double maxPrice,
     @RequestParam(name = BookingParams.CONTACT_EMAIL, required = false) String contactEmail,
     @RequestParam(name = BookingParams.CONTACT_PHONE, required = false) String contactPhone,
     @RequestParam(name = BookingParams.CONTACT_FULL_NAME, required = false) String contactFullName,
     @RequestParam(name = PaginationParams.PAGE, defaultValue = PaginationParams.DEFAULT_PAGE) int page,
     @RequestParam(name = PaginationParams.SIZE, defaultValue = PaginationParams.DEFAULT_SIZE) int size,
-    @RequestParam(name = SortingParams.SORT_BY, defaultValue = BookingParams.CREATED_AT) String sortBy,
+    @RequestParam(name = SortingParams.SORT_BY, defaultValue = CommonParams.CREATED_AT) String sortBy,
     @RequestParam(name = SortingParams.SORT_DIR, defaultValue = SortingParams.SORT_DIR_DESC) String sortDir) {
     PagedResponse<BookingResponse> response = service.getAll(
       userId, roomId, hotelId, status,

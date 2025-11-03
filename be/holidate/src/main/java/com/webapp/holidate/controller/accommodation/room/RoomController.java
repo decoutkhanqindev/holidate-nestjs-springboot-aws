@@ -69,4 +69,12 @@ public class RoomController {
       .data(response)
       .build();
   }
+
+  @DeleteMapping(CommonEndpoints.ID)
+  public ApiResponse<RoomDetailsResponse> delete(@PathVariable String id) {
+    RoomDetailsResponse response = service.delete(id);
+    return ApiResponse.<RoomDetailsResponse>builder()
+      .data(response)
+      .build();
+  }
 }

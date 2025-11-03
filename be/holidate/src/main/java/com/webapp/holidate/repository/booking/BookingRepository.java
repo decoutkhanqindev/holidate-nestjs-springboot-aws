@@ -17,6 +17,10 @@ public interface BookingRepository extends JpaRepository<Booking, String> {
   @Query(BookingQueries.FIND_BY_STATUS_AND_CREATED_AT_BEFORE)
   List<Booking> findByStatusAndCreatedAtBefore(String status, LocalDateTime createdAt);
 
+  // Find no-show bookings by checkInDate and status
+  @Query(BookingQueries.FIND_NO_SHOW_BOOKINGS)
+  List<Booking> findNoShowBookings(LocalDate checkInDate, String confirmedStatus, String rescheduledStatus);
+
   // Count confirmed bookings for a user (excluding cancelled bookings)
   long countByUserIdAndStatusIn(String userId, List<String> statuses);
 
@@ -45,4 +49,12 @@ public interface BookingRepository extends JpaRepository<Booking, String> {
     @Nullable String contactPhone,
     @Nullable String contactFullName,
     Pageable pageable);
+
+  long countByHotelId(String hotelId);
+
+  long countByRoomId(String roomId);
+
+  long countByUserId(String userId);
+
+  long countByAppliedDiscountId(String discountId);
 }

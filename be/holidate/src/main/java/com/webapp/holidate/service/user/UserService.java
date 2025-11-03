@@ -9,6 +9,8 @@ import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.entity.user.UserAuthInfo;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.user.UserMapper;
+import com.webapp.holidate.repository.accommodation.HotelRepository;
+import com.webapp.holidate.repository.booking.BookingRepository;
 import com.webapp.holidate.repository.location.*;
 import com.webapp.holidate.repository.user.RoleRepository;
 import com.webapp.holidate.repository.user.UserRepository;
@@ -23,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -31,6 +34,8 @@ import java.util.List;
 public class UserService {
   UserRepository userRepository;
   RoleRepository roleRepository;
+  HotelRepository hotelRepository;
+  BookingRepository bookingRepository;
   CountryRepository countryRepository;
   ProvinceRepository provinceRepository;
   CityRepository cityRepository;
@@ -137,7 +142,7 @@ public class UserService {
     updateLocation(user, request);
     updateAvatar(user, request);
 
-    user.setUpdatedAt(java.time.LocalDateTime.now());
+    user.setUpdatedAt(LocalDateTime.now());
     userRepository.save(user);
     return userMapper.toUserResponse(user);
   }
@@ -164,7 +169,7 @@ public class UserService {
       user.setGender(newGender);
     }
 
-    java.time.LocalDateTime newDateOfBirth = request.getDateOfBirth();
+    LocalDateTime newDateOfBirth = request.getDateOfBirth();
     boolean dateOfBirthChanged = newDateOfBirth != null && !newDateOfBirth.equals(user.getDateOfBirth());
     if (dateOfBirthChanged) {
       user.setDateOfBirth(newDateOfBirth);
@@ -251,7 +256,21 @@ public class UserService {
   public UserResponse delete(String id) {
     User user = userRepository.findById(id)
       .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+
+    // Check if user owns hotels
+    long hotelCount = hotelRepository.countByPartnerId(id);
+    if (hotelCount > 0) {
+      throw new AppException(ErrorType.CANNOT_DELETE_USER_HAS_HOTELS);
+    }
+
+    // Check if user has bookings
+    long bookingCount = bookingRepository.countByUserId(id);
+    if (bookingCount > 0) {
+      throw new AppException(ErrorType.CANNOT_DELETE_USER_HAS_BOOKINGS);
+    }
+
+    UserResponse response = userMapper.toUserResponse(user);
     userRepository.delete(user);
-    return userMapper.toUserResponse(user);
+    return response;
   }
 }

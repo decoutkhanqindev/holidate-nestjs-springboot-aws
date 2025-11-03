@@ -1,6 +1,7 @@
 package com.webapp.holidate.controller.amenity;
 
 import com.webapp.holidate.constants.api.endpoint.AmenityEndpoints;
+import com.webapp.holidate.constants.api.endpoint.CommonEndpoints;
 import com.webapp.holidate.dto.request.amenity.AmenityCreationRequest;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.dto.response.amenity.AmenityDetailsResponse;
@@ -42,6 +43,14 @@ public class AmenityController {
     List<AmenityDetailsResponse> responses = service.getAllByCategoryId(categoryId);
     return ApiResponse.<List<AmenityDetailsResponse>>builder()
       .data(responses)
+      .build();
+  }
+
+  @DeleteMapping(CommonEndpoints.ID)
+  public ApiResponse<AmenityDetailsResponse> delete(@PathVariable String id) {
+    AmenityDetailsResponse response = service.delete(id);
+    return ApiResponse.<AmenityDetailsResponse>builder()
+      .data(response)
       .build();
   }
 }

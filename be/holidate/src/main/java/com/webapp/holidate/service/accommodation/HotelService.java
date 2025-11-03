@@ -2,6 +2,7 @@ package com.webapp.holidate.service.accommodation;
 
 import com.webapp.holidate.component.room.RoomCandidate;
 import com.webapp.holidate.component.room.RoomCombinationFinder;
+import com.webapp.holidate.constants.api.param.CommonParams;
 import com.webapp.holidate.constants.api.param.HotelParams;
 import com.webapp.holidate.constants.api.param.SortingParams;
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelCreationRequest;
@@ -36,6 +37,7 @@ import com.webapp.holidate.repository.accommodation.HotelRepository;
 import com.webapp.holidate.repository.accommodation.room.RoomRepository;
 import com.webapp.holidate.repository.amenity.AmenityRepository;
 import com.webapp.holidate.repository.amenity.HotelAmenityRepository;
+import com.webapp.holidate.repository.booking.BookingRepository;
 import com.webapp.holidate.repository.document.HotelPolicyIdentificationDocumentRepository;
 import com.webapp.holidate.repository.document.IdentificationDocumentRepository;
 import com.webapp.holidate.repository.image.HotelPhotoRepository;
@@ -80,6 +82,7 @@ import java.util.stream.Collectors;
 public class HotelService {
   HotelRepository hotelRepository;
   RoomRepository roomRepository;
+  BookingRepository bookingRepository;
 
   PhotoCategoryRepository photoCategoryRepository;
   PhotoRepository photoRepository;
@@ -185,9 +188,9 @@ public class HotelService {
 
     // Check if sort field is valid
     boolean hasSortBy = sortBy != null && !sortBy.isEmpty()
-      && (HotelParams.PRICE.equals(sortBy) ||
+      && (CommonParams.PRICE.equals(sortBy) ||
       HotelParams.STAR_RATING.equals(sortBy) ||
-      HotelParams.CREATED_AT.equals(sortBy));
+      CommonParams.CREATED_AT.equals(sortBy));
     if (!hasSortBy) {
       sortBy = null;
     }
@@ -240,7 +243,7 @@ public class HotelService {
   private String mapSortFieldToEntity(String sortBy) {
     return switch (sortBy) {
       case HotelParams.STAR_RATING -> "starRating";
-      case HotelParams.CREATED_AT -> "createdAt";
+      case CommonParams.CREATED_AT -> "createdAt";
       default -> "createdAt"; // Default sorting
     };
   }
@@ -249,7 +252,7 @@ public class HotelService {
   private boolean canSortAtDatabaseLevel(String sortBy) {
     return sortBy == null ||
       HotelParams.STAR_RATING.equals(sortBy) ||
-      HotelParams.CREATED_AT.equals(sortBy);
+      CommonParams.CREATED_AT.equals(sortBy);
   }
 
   // Get all hotels when no filters applied
@@ -669,13 +672,13 @@ public class HotelService {
       .sorted((h1, h2) -> {
         // Step 3: Compare values based on sort field
         int comparison = switch (sortBy) {
-          case HotelParams.PRICE ->
+          case CommonParams.PRICE ->
             // Compare price per night (double values)
             Double.compare(h1.getCurrentPricePerNight(), h2.getCurrentPricePerNight());
           case HotelParams.STAR_RATING ->
             // Compare star rating (integer values)
             Integer.compare(h1.getStarRating(), h2.getStarRating());
-          case HotelParams.CREATED_AT ->
+          case CommonParams.CREATED_AT ->
             // Compare creation date (LocalDateTime values)
             h1.getCreatedAt().compareTo(h2.getCreatedAt());
           default ->
@@ -1141,5 +1144,27 @@ public class HotelService {
     }
 
     policy.setRequiredIdentificationDocuments(currentDocuments);
+  }
+
+  @Transactional
+  public HotelDetailsResponse delete(String id) {
+    Hotel hotel = hotelRepository.findByIdWithDetails(id)
+      .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
+
+    // Check if hotel has rooms
+    long roomCount = roomRepository.countByHotelId(id);
+    if (roomCount > 0) {
+      throw new AppException(ErrorType.CANNOT_DELETE_HOTEL_HAS_ROOMS);
+    }
+
+    // Check if hotel has bookings
+    long bookingCount = bookingRepository.countByHotelId(id);
+    if (bookingCount > 0) {
+      throw new AppException(ErrorType.CANNOT_DELETE_HOTEL_HAS_BOOKINGS);
+    }
+
+    HotelDetailsResponse response = hotelMapper.toHotelDetailsResponse(hotel);
+    hotelRepository.delete(hotel);
+    return response;
   }
 }

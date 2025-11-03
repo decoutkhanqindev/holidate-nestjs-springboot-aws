@@ -83,13 +83,19 @@ public class SecurityConfig {
       .hasAnyAuthority(RoleType.ADMIN.getValue(), RoleType.PARTNER.getValue())
       // 4. amenity endpoints
       .requestMatchers(HttpMethod.GET, AmenityEndpoints.AMENITY + ALL_ENDPOINTS).permitAll()
+      // 4.1. image/photo category endpoints
+      .requestMatchers(HttpMethod.GET, ImageEndpoints.IMAGE + ImageEndpoints.PHOTO_CATEGORIES + ALL_ENDPOINTS)
+      .permitAll()
       // 5. special day endpoints
       .requestMatchers(HttpMethod.GET, SpecialDayEndpoints.SPECIAL_DAYS + ALL_ENDPOINTS)
       .permitAll()
       // 6. discount endpoints
       .requestMatchers(HttpMethod.GET, DiscountEndpoints.DISCOUNTS + ALL_ENDPOINTS)
       .permitAll()
-      // 7. payment callback endpoints (VNPay callback)
+      // 7. review endpoints
+      .requestMatchers(HttpMethod.GET, BookingEndpoints.REVIEWS + ALL_ENDPOINTS)
+      .permitAll()
+      // 8. payment callback endpoints (VNPay callback)
       .requestMatchers(HttpMethod.GET, BookingEndpoints.PAYMENT + BookingEndpoints.CALLBACK)
       .permitAll()
 
@@ -127,6 +133,13 @@ public class SecurityConfig {
         BookingEndpoints.BOOKINGS + CommonEndpoints.ID
           + BookingEndpoints.CHECKOUT)
       .hasAuthority(RoleType.USER.getValue())
+      // 3. review endpoints
+      .requestMatchers(HttpMethod.POST, BookingEndpoints.REVIEWS + ALL_ENDPOINTS)
+      .hasAuthority(RoleType.USER.getValue())
+      .requestMatchers(HttpMethod.PUT, BookingEndpoints.REVIEWS + CommonEndpoints.ID)
+      .hasAuthority(RoleType.USER.getValue())
+      .requestMatchers(HttpMethod.DELETE, BookingEndpoints.REVIEWS + CommonEndpoints.ID)
+      .hasAuthority(RoleType.USER.getValue())
 
       // II. partner role
       // 1. profile endpoints
@@ -148,6 +161,10 @@ public class SecurityConfig {
           + CommonEndpoints.ID)
       .hasAuthority(RoleType.PARTNER.getValue())
       .requestMatchers(HttpMethod.PUT,
+        AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
+          + CommonEndpoints.ID)
+      .hasAuthority(RoleType.PARTNER.getValue())
+      .requestMatchers(HttpMethod.DELETE,
         AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
           + CommonEndpoints.ID)
       .hasAuthority(RoleType.PARTNER.getValue())
@@ -195,6 +212,13 @@ public class SecurityConfig {
       .requestMatchers(HttpMethod.POST,
         BookingEndpoints.BOOKINGS + CommonEndpoints.ID
           + BookingEndpoints.CHECKOUT)
+      .hasAuthority(RoleType.PARTNER.getValue())
+      // 4. review endpoints
+      .requestMatchers(HttpMethod.POST, BookingEndpoints.REVIEWS + ALL_ENDPOINTS)
+      .hasAuthority(RoleType.PARTNER.getValue())
+      .requestMatchers(HttpMethod.PUT, BookingEndpoints.REVIEWS + CommonEndpoints.ID)
+      .hasAuthority(RoleType.PARTNER.getValue())
+      .requestMatchers(HttpMethod.DELETE, BookingEndpoints.REVIEWS + CommonEndpoints.ID)
       .hasAuthority(RoleType.PARTNER.getValue())
 
       // III. admin role
@@ -261,6 +285,13 @@ public class SecurityConfig {
       .hasAuthority(RoleType.ADMIN.getValue())
       .requestMatchers(HttpMethod.DELETE, AmenityEndpoints.AMENITY + ALL_ENDPOINTS)
       .hasAuthority(RoleType.ADMIN.getValue())
+      // 4.1. amenity category endpoints
+      .requestMatchers(HttpMethod.POST,
+        AmenityEndpoints.AMENITY + AmenityEndpoints.AMENITY_CATEGORIES + ALL_ENDPOINTS)
+      .hasAuthority(RoleType.ADMIN.getValue())
+      .requestMatchers(HttpMethod.DELETE,
+        AmenityEndpoints.AMENITY + AmenityEndpoints.AMENITY_CATEGORIES + CommonEndpoints.ID)
+      .hasAuthority(RoleType.ADMIN.getValue())
       // 5. special day endpoints
       .requestMatchers(HttpMethod.POST, SpecialDayEndpoints.SPECIAL_DAYS + ALL_ENDPOINTS)
       .hasAuthority(RoleType.ADMIN.getValue())
@@ -303,6 +334,13 @@ public class SecurityConfig {
       .requestMatchers(HttpMethod.POST,
         BookingEndpoints.BOOKINGS + CommonEndpoints.ID
           + BookingEndpoints.CHECKOUT)
+      .hasAuthority(RoleType.ADMIN.getValue())
+      // 8. review endpoints
+      .requestMatchers(HttpMethod.POST, BookingEndpoints.REVIEWS + ALL_ENDPOINTS)
+      .hasAuthority(RoleType.ADMIN.getValue())
+      .requestMatchers(HttpMethod.PUT, BookingEndpoints.REVIEWS + CommonEndpoints.ID)
+      .hasAuthority(RoleType.ADMIN.getValue())
+      .requestMatchers(HttpMethod.DELETE, BookingEndpoints.REVIEWS + CommonEndpoints.ID)
       .hasAuthority(RoleType.ADMIN.getValue())
 
       // C. any other endpoints

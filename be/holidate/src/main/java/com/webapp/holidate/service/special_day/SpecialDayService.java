@@ -6,6 +6,7 @@ import com.webapp.holidate.dto.response.special_day.SpecialDayResponse;
 import com.webapp.holidate.entity.special_day.SpecialDay;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.special_day.SpecialDayMapper;
+import com.webapp.holidate.repository.discount.SpecialDayDiscountRepository;
 import com.webapp.holidate.repository.special_day.SpecialDayRepository;
 import com.webapp.holidate.type.ErrorType;
 import lombok.AccessLevel;
@@ -21,6 +22,7 @@ import java.util.List;
 public class SpecialDayService {
   SpecialDayRepository repository;
   SpecialDayMapper mapper;
+  SpecialDayDiscountRepository specialDayDiscountRepository;
 
   public SpecialDayResponse create(SpecialDayCreationRequest request) {
     if (repository.existsByDate(request.getDate())) {
@@ -58,7 +60,15 @@ public class SpecialDayService {
   public SpecialDayResponse delete(String id) {
     SpecialDay specialDay = repository.findById(id)
       .orElseThrow(() -> new AppException(ErrorType.SPECIAL_DAY_NOT_FOUND));
+
+    // Check if special day has discounts
+    long discountCount = specialDayDiscountRepository.countBySpecialDayId(id);
+    if (discountCount > 0) {
+      throw new AppException(ErrorType.CANNOT_DELETE_SPECIAL_DAY_HAS_DISCOUNTS);
+    }
+
+    SpecialDayResponse response = mapper.toSpecialDayResponse(specialDay);
     repository.delete(specialDay);
-    return mapper.toSpecialDayResponse(specialDay);
+    return response;
   }
 }

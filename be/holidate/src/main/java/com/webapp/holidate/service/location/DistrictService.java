@@ -7,8 +7,10 @@ import com.webapp.holidate.entity.location.City;
 import com.webapp.holidate.entity.location.District;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.location.DistrictMapper;
+import com.webapp.holidate.repository.accommodation.HotelRepository;
 import com.webapp.holidate.repository.location.CityRepository;
 import com.webapp.holidate.repository.location.DistrictRepository;
+import com.webapp.holidate.repository.location.WardRepository;
 import com.webapp.holidate.type.ErrorType;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,8 @@ public class DistrictService {
   DistrictRepository districtRepository;
   CityRepository cityRepository;
   DistrictMapper districtMapper;
+  WardRepository wardRepository;
+  HotelRepository hotelRepository;
 
   public DistrictResponse create(DistrictCreationRequest request) {
     String name = request.getName();
@@ -96,5 +100,26 @@ public class DistrictService {
       .stream()
       .map(districtMapper::toLocationResponse)
       .toList();
+  }
+
+  public DistrictResponse delete(String id) {
+    District district = districtRepository.findById(id)
+      .orElseThrow(() -> new AppException(ErrorType.DISTRICT_NOT_FOUND));
+
+    // Check if district has wards
+    long wardCount = wardRepository.countByDistrictId(id);
+    if (wardCount > 0) {
+      throw new AppException(ErrorType.CANNOT_DELETE_DISTRICT_HAS_WARDS);
+    }
+
+    // Check if district has hotels
+    long hotelCount = hotelRepository.countByDistrictId(id);
+    if (hotelCount > 0) {
+      throw new AppException(ErrorType.CANNOT_DELETE_DISTRICT_HAS_HOTELS);
+    }
+
+    DistrictResponse response = districtMapper.toDistrictResponse(district);
+    districtRepository.delete(district);
+    return response;
   }
 }

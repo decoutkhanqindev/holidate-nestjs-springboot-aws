@@ -44,6 +44,8 @@ public enum ErrorType {
   INVALID_OTP(400, "OTP is invalid"),
   OTP_BLOCKED(429, "Too many failed attempts. Please try again later"),
   OTP_EXPIRED(400, "OTP has expired"),
+  SCORE_NOT_BLANK(400, "Score is required"),
+  SCORE_INVALID(400, "Score must be between 1 and 10"),
 
   // date errors
   DATE_UTC_NOT_BLANK(400, "Date is required"),
@@ -153,6 +155,10 @@ public enum ErrorType {
   // booking errors
   BOOKING_NOT_FOUND(404, "Booking not found"),
   BOOKING_NOT_CONFIRMED(400, "Booking is not confirmed"),
+  BOOKING_ALREADY_COMPLETED(400, "Cannot check-in. Booking has already been completed"),
+  BOOKING_NOT_CHECKED_IN(400, "Cannot checkout. Booking must be checked in first"),
+  BOOKING_ID_NOT_BLANK(400, "Booking ID is required"),
+  REVIEW_NOT_FOUND(404, "Review not found"),
   ROOM_NOT_AVAILABLE(400, "Room is not available for the selected dates"),
   CONCURRENT_BOOKING_FAILED(409, "Booking failed due to concurrent access. Please try again"),
   INVALID_DISCOUNT_CODE(400, "Discount code is invalid or expired"),
@@ -237,7 +243,31 @@ public enum ErrorType {
   VNPAY_INVALID_AMOUNT(400, "Số tiền không hợp lệ"),
   VNPAY_DUPLICATE_TRANSACTION(409, "Giao dịch bị trùng lặp"),
   VNPAY_REFUND_NOT_ALLOWED(400, "Không được phép hoàn tiền cho giao dịch này"),
-  VNPAY_REFUND_AMOUNT_EXCEEDED(400, "Số tiền hoàn trả vượt quá số tiền giao dịch");
+  VNPAY_REFUND_AMOUNT_EXCEEDED(400, "Số tiền hoàn trả vượt quá số tiền giao dịch"),
+
+  // delete errors - cannot delete because of references
+  CANNOT_DELETE_HOTEL_HAS_ROOMS(400, "Cannot delete hotel because it has rooms"),
+  CANNOT_DELETE_HOTEL_HAS_BOOKINGS(400, "Cannot delete hotel because it has bookings"),
+  CANNOT_DELETE_ROOM_HAS_BOOKINGS(400, "Cannot delete room because it has bookings"),
+  CANNOT_DELETE_COUNTRY_HAS_HOTELS(400, "Cannot delete country because it has hotels"),
+  CANNOT_DELETE_COUNTRY_HAS_PROVINCES(400, "Cannot delete country because it has provinces"),
+  CANNOT_DELETE_PROVINCE_HAS_HOTELS(400, "Cannot delete province because it has hotels"),
+  CANNOT_DELETE_PROVINCE_HAS_CITIES(400, "Cannot delete province because it has cities"),
+  CANNOT_DELETE_CITY_HAS_HOTELS(400, "Cannot delete city because it has hotels"),
+  CANNOT_DELETE_CITY_HAS_DISTRICTS(400, "Cannot delete city because it has districts"),
+  CANNOT_DELETE_DISTRICT_HAS_HOTELS(400, "Cannot delete district because it has hotels"),
+  CANNOT_DELETE_DISTRICT_HAS_WARDS(400, "Cannot delete district because it has wards"),
+  CANNOT_DELETE_WARD_HAS_HOTELS(400, "Cannot delete ward because it has hotels"),
+  CANNOT_DELETE_WARD_HAS_STREETS(400, "Cannot delete ward because it has streets"),
+  CANNOT_DELETE_STREET_HAS_HOTELS(400, "Cannot delete street because it has hotels"),
+  CANNOT_DELETE_AMENITY_HAS_REFERENCES(400, "Cannot delete amenity because it is referenced by hotels or rooms"),
+  CANNOT_DELETE_AMENITY_CATEGORY_HAS_AMENITIES(400, "Cannot delete amenity category because it has amenities"),
+  CANNOT_DELETE_DISCOUNT_HAS_REFERENCES(400,
+    "Cannot delete discount because it is referenced by hotels, special days, or bookings"),
+  CANNOT_DELETE_SPECIAL_DAY_HAS_DISCOUNTS(400, "Cannot delete special day because it has discounts"),
+  CANNOT_DELETE_ROLE_HAS_USERS(400, "Cannot delete role because it has users"),
+  CANNOT_DELETE_USER_HAS_HOTELS(400, "Cannot delete user because they own hotels"),
+  CANNOT_DELETE_USER_HAS_BOOKINGS(400, "Cannot delete user because they have bookings");
 
   int statusCode;
   String message;

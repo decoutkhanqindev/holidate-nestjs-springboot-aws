@@ -1,5 +1,6 @@
 package com.webapp.holidate.service.discount;
 
+import com.webapp.holidate.constants.api.param.CommonParams;
 import com.webapp.holidate.constants.api.param.DiscountParams;
 import com.webapp.holidate.constants.api.param.SortingParams;
 import com.webapp.holidate.dto.request.discount.DiscountCreationRequest;
@@ -149,7 +150,7 @@ public class DiscountService {
       DiscountParams.TIMES_USED.equals(sortBy) ||
       DiscountParams.MIN_BOOKING_PRICE.equals(sortBy) ||
       DiscountParams.CODE.equals(sortBy) ||
-      DiscountParams.CREATED_AT.equals(sortBy);
+      CommonParams.CREATED_AT.equals(sortBy);
   }
 
   // Create Pageable object with sorting
@@ -178,7 +179,7 @@ public class DiscountService {
       case DiscountParams.TIMES_USED -> "timesUsed";
       case DiscountParams.MIN_BOOKING_PRICE -> "minBookingPrice";
       case DiscountParams.CODE -> "code";
-      case DiscountParams.CREATED_AT -> "createdAt";
+      case CommonParams.CREATED_AT -> "createdAt";
       default -> "id"; // Default sorting
     };
   }
@@ -350,10 +351,30 @@ public class DiscountService {
   }
 
   public DiscountDetailsResponse delete(String id) {
-    Discount discount = discountRepository.findById(id)
+    Discount discount = discountRepository.findByIdWithDetails(id)
       .orElseThrow(() -> new AppException(ErrorType.DISCOUNT_NOT_FOUND));
+
+    // Check if discount is referenced by hotels
+    long hotelDiscountCount = hotelDiscountRepository.countByDiscountId(id);
+    if (hotelDiscountCount > 0) {
+      throw new AppException(ErrorType.CANNOT_DELETE_DISCOUNT_HAS_REFERENCES);
+    }
+
+    // Check if discount is referenced by special days
+    long specialDayDiscountCount = specialDayDiscountRepository.countByDiscountId(id);
+    if (specialDayDiscountCount > 0) {
+      throw new AppException(ErrorType.CANNOT_DELETE_DISCOUNT_HAS_REFERENCES);
+    }
+
+    // Check if discount is used in bookings
+    long bookingCount = bookingRepository.countByAppliedDiscountId(id);
+    if (bookingCount > 0) {
+      throw new AppException(ErrorType.CANNOT_DELETE_DISCOUNT_HAS_REFERENCES);
+    }
+
+    DiscountDetailsResponse response = mapper.toDiscountDetailsResponse(discount);
     discountRepository.delete(discount);
-    return getById(id);
+    return response;
   }
 
   public Discount validateDiscount(String discountCode, double originalPrice) {
@@ -410,7 +431,8 @@ public class DiscountService {
     // Special validation for FIRSTBOOK10 discount
     if ("FIRSTBOOK10".equals(discountCode)) {
       // Check if user has any confirmed bookings (excluding cancelled ones)
-      List<String> confirmedStatuses = List.of(BookingStatusType.CONFIRMED.getValue(), BookingStatusType.COMPLETED.getValue());
+      List<String> confirmedStatuses = List.of(BookingStatusType.CONFIRMED.getValue(),
+        BookingStatusType.COMPLETED.getValue());
       long userBookingCount = bookingRepository.countByUserIdAndStatusIn(userId, confirmedStatuses);
 
       if (userBookingCount > 0) {

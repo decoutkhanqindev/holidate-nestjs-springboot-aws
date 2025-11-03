@@ -2,6 +2,7 @@ package com.webapp.holidate.service.booking;
 
 import com.webapp.holidate.constants.AppProperties;
 import com.webapp.holidate.constants.api.param.BookingParams;
+import com.webapp.holidate.constants.api.param.CommonParams;
 import com.webapp.holidate.constants.api.param.SortingParams;
 import com.webapp.holidate.dto.request.booking.BookingCreationRequest;
 import com.webapp.holidate.dto.request.booking.BookingPricePreviewRequest;
@@ -18,6 +19,8 @@ import com.webapp.holidate.entity.accommodation.room.RoomInventory;
 import com.webapp.holidate.entity.booking.Booking;
 import com.webapp.holidate.entity.booking.Payment;
 import com.webapp.holidate.entity.discount.Discount;
+import com.webapp.holidate.entity.policy.cancelation.CancellationPolicy;
+import com.webapp.holidate.entity.policy.reschedule.ReschedulePolicy;
 import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.PagedMapper;
@@ -284,7 +287,7 @@ public class BookingService {
 
     // Check if sort field is valid
     boolean hasSortBy = sortBy != null && !sortBy.isEmpty()
-      && (BookingParams.CREATED_AT.equals(sortBy) ||
+      && (CommonParams.CREATED_AT.equals(sortBy) ||
       BookingParams.CHECK_IN_DATE_SORT.equals(sortBy) ||
       BookingParams.CHECK_OUT_DATE_SORT.equals(sortBy) ||
       BookingParams.FINAL_PRICE.equals(sortBy) ||
@@ -360,7 +363,7 @@ public class BookingService {
       case BookingParams.CHECK_OUT_DATE_SORT -> "checkOutDate";
       case BookingParams.FINAL_PRICE -> "finalPrice";
       case BookingParams.STATUS_SORT -> "status";
-      case BookingParams.CREATED_AT -> "createdAt";
+      case CommonParams.CREATED_AT -> "createdAt";
       default -> "createdAt"; // Default sorting
     };
   }
@@ -774,13 +777,31 @@ public class BookingService {
     Booking booking = bookingRepository.findByIdWithAllRelations(bookingId)
       .orElseThrow(() -> new AppException(ErrorType.BOOKING_NOT_FOUND));
 
-    // Allow check-in if the booking is confirmed or rescheduled
-    // and check-in date has arrived (today or in the past)
+    // Check if booking is already completed - cannot check-in completed bookings
     String status = booking.getStatus();
+    if (BookingStatusType.COMPLETED.getValue().equals(status)) {
+      throw new AppException(ErrorType.BOOKING_ALREADY_COMPLETED);
+    }
+
+    // Allow check-in if the booking is confirmed or rescheduled
+    // Prevent duplicate check-in if already checked in
     boolean isCheckinable = BookingStatusType.CONFIRMED.getValue().equals(status)
       || BookingStatusType.RESCHEDULED.getValue().equals(status);
 
     if (!isCheckinable) {
+      // If already checked in, return current booking without error
+      if (BookingStatusType.CHECKED_IN.getValue().equals(status)) {
+        BookingResponse response = bookingMapper.toBookingResponse(booking, null);
+        BookingPriceDetailsResponse priceDetails = calculatePriceDetails(booking);
+        response.setPriceDetails(priceDetails);
+
+        if (response.getRoom() != null) {
+          List<RoomInventoryPriceByDateResponse> pricesByDate = roomInventoryService.getPricesByDateRange(
+            booking.getRoom().getId(), booking.getCheckInDate(), booking.getCheckOutDate());
+          response.getRoom().setPricesByDateRange(pricesByDate);
+        }
+        return response;
+      }
       throw new AppException(ErrorType.BOOKING_NOT_CONFIRMED);
     }
 
@@ -793,9 +814,8 @@ public class BookingService {
       throw new AppException(ErrorType.CHECK_IN_DATE_INVALID);
     }
 
-    // Note: We don't change status after check-in, booking remains CONFIRMED or
-    // RESCHEDULED
-    // Status only changes to COMPLETED after checkout
+    // Update booking status to CHECKED_IN
+    booking.setStatus(BookingStatusType.CHECKED_IN.getValue());
     booking.setUpdatedAt(LocalDateTime.now());
     bookingRepository.save(booking);
 
@@ -820,23 +840,32 @@ public class BookingService {
     Booking booking = bookingRepository.findByIdWithAllRelations(bookingId)
       .orElseThrow(() -> new AppException(ErrorType.BOOKING_NOT_FOUND));
 
-    // Allow checkout if the booking is confirmed or rescheduled
-    // and check-out date has passed or is today
+    // Only allow checkout if the booking is checked in
     String status = booking.getStatus();
-    boolean isCheckoutable = BookingStatusType.CONFIRMED.getValue().equals(status)
-      || BookingStatusType.RESCHEDULED.getValue().equals(status);
-
-    if (!isCheckoutable) {
-      throw new AppException(ErrorType.BOOKING_NOT_CONFIRMED);
+    if (!BookingStatusType.CHECKED_IN.getValue().equals(status)) {
+      throw new AppException(ErrorType.BOOKING_NOT_CHECKED_IN);
     }
 
-    // Validate check-out date (can checkout if check-out date is today or in the
-    // past)
+    // Validate check-in date (can checkout if check-in date has passed or is today)
+    // This allows early checkout (checking out before scheduled check-out date)
     LocalDate today = LocalDate.now();
     LocalDate checkOutDate = booking.getCheckOutDate();
 
+    // Handle early checkout: release room inventory for remaining nights
+    // (from tomorrow to scheduled check-out date)
     if (checkOutDate.isAfter(today)) {
-      throw new AppException(ErrorType.CHECK_OUT_DATE_INVALID);
+      // Release inventory for nights from tomorrow until scheduled check-out date
+      LocalDate releaseStartDate = today.plusDays(1);
+      LocalDate releaseEndDate = checkOutDate;
+
+      if (releaseStartDate.isBefore(releaseEndDate)) {
+        // Release inventory for the remaining nights
+        roomInventoryService.updateAvailabilityForCancellation(
+          booking.getRoom().getId(),
+          releaseStartDate,
+          releaseEndDate,
+          booking.getNumberOfRooms());
+      }
     }
 
     // Update booking status to completed
@@ -878,6 +907,37 @@ public class BookingService {
         booking.getCheckInDate(),
         booking.getCheckOutDate(),
         booking.getNumberOfRooms());
+
+      // Save updated booking
+      bookingRepository.save(booking);
+    }
+  }
+
+  @Transactional
+  public void cancelNoShowBookings() {
+    // Get yesterday's date (checkInDate should be yesterday)
+    LocalDate yesterday = LocalDate.now().minusDays(1);
+
+    // Find bookings with checkInDate = yesterday and status is CONFIRMED or
+    // RESCHEDULED
+    List<Booking> noShowBookings = bookingRepository.findNoShowBookings(
+      yesterday,
+      BookingStatusType.CONFIRMED.getValue(),
+      BookingStatusType.RESCHEDULED.getValue());
+
+    for (Booking booking : noShowBookings) {
+      // Update booking status to cancelled (no-show, no refund)
+      booking.setStatus(BookingStatusType.CANCELLED.getValue());
+      booking.setUpdatedAt(LocalDateTime.now());
+
+      // Release room inventory so rooms can be booked by other customers
+      if (booking.getRoom() != null) {
+        roomInventoryService.updateAvailabilityForCancellation(
+          booking.getRoom().getId(),
+          booking.getCheckInDate(),
+          booking.getCheckOutDate(),
+          booking.getNumberOfRooms());
+      }
 
       // Save updated booking
       bookingRepository.save(booking);
@@ -1092,8 +1152,7 @@ public class BookingService {
       .build();
   }
 
-  private String buildCancellationPolicyInfo(
-    com.webapp.holidate.entity.policy.cancelation.CancellationPolicy policy) {
+  private String buildCancellationPolicyInfo(CancellationPolicy policy) {
     if (policy == null) {
       return "Không có chính sách hủy phòng cụ thể. Vui lòng liên hệ với khách sạn để biết thêm chi tiết.";
     }
@@ -1132,8 +1191,7 @@ public class BookingService {
     return info.toString();
   }
 
-  private String buildReschedulePolicyInfo(
-    com.webapp.holidate.entity.policy.reschedule.ReschedulePolicy policy) {
+  private String buildReschedulePolicyInfo(ReschedulePolicy policy) {
     if (policy == null) {
       return "Không có chính sách đổi lịch cụ thể. Vui lòng liên hệ với khách sạn để biết thêm chi tiết.";
     }

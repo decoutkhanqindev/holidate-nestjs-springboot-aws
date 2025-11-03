@@ -10,6 +10,7 @@ import lombok.experimental.FieldDefaults;
 public enum BookingStatusType {
   PENDING_PAYMENT("pending_payment"),
   CONFIRMED("confirmed"),
+  CHECKED_IN("checked_in"),
   CANCELLED("cancelled"),
   COMPLETED("completed"),
   RESCHEDULED("rescheduled");

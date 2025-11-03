@@ -17,4 +17,6 @@ public interface ProvinceRepository extends JpaRepository<Province, String> {
   List<Province> findAllByCountryId(String countryId);
 
   List<Province> findAllByNameContainingIgnoreCaseAndCountryId(String name, String countryId);
+
+  long countByCountryId(String countryId);
 }

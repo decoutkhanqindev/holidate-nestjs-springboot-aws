@@ -17,4 +17,6 @@ public interface WardRepository extends JpaRepository<Ward, String> {
   List<Ward> findAllByDistrictId(String districtId);
 
   List<Ward> findAllByNameContainingIgnoreCaseAndDistrictId(String name, String districtId);
+
+  long countByDistrictId(String districtId);
 }

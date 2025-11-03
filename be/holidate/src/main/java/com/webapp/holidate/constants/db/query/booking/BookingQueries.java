@@ -46,6 +46,12 @@ public class BookingQueries {
     "LEFT JOIN FETCH b.room " +
     "WHERE b.status = :status AND b.createdAt < :createdAt";
 
+  // Find no-show bookings (checkInDate is yesterday and status is CONFIRMED or RESCHEDULED)
+  public static final String FIND_NO_SHOW_BOOKINGS = "SELECT b FROM Booking b " +
+    "LEFT JOIN FETCH b.room " +
+    "WHERE b.checkInDate = :checkInDate " +
+    "AND (b.status = :confirmedStatus OR b.status = :rescheduledStatus)";
+
   // Count bookings by user ID and status list
   public static final String COUNT_BY_USER_ID_AND_STATUS_IN = "SELECT COUNT(b) FROM Booking b " +
     "WHERE b.user.id = :userId AND b.status IN :statuses";

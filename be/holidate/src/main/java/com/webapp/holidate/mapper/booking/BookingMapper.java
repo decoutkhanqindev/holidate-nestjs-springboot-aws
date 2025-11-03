@@ -1,6 +1,7 @@
 package com.webapp.holidate.mapper.booking;
 
 import com.webapp.holidate.dto.request.booking.BookingCreationRequest;
+import com.webapp.holidate.dto.response.booking.BookingBriefResponse;
 import com.webapp.holidate.dto.response.booking.BookingResponse;
 import com.webapp.holidate.entity.booking.Booking;
 import com.webapp.holidate.mapper.acommodation.HotelMapper;
@@ -36,6 +37,8 @@ public interface BookingMapper {
   @Mapping(target = "expiresAt", ignore = true)
   @Mapping(target = "priceDetails", ignore = true)
   BookingResponse toBookingResponse(Booking booking, String paymentUrl);
+
+  BookingBriefResponse toBookingBriefResponse(Booking booking);
 
   @AfterMapping
   default void addExpirationTime(Booking booking,

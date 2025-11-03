@@ -15,4 +15,6 @@ public interface AmenityRepository extends JpaRepository<Amenity, String> {
 
   @Query(AmenityQueries.FIND_ALL_WITH_CATEGORY_BY_CATEGORY_ID)
   List<Amenity> findAllByCategoryId(String categoryId);
+
+  long countByCategoryId(String categoryId);
 }

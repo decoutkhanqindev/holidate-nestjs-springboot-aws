@@ -18,4 +18,9 @@ public class BookingExpirationScheduler {
   public void cancelExpiredBookings() {
     bookingService.cancelExpiredBookings();
   }
+
+  @Scheduled(cron = "0 0 12 * * *") // runs daily at 12:00 PM (noon)
+  public void cancelNoShowBookings() {
+    bookingService.cancelNoShowBookings();
+  }
 }

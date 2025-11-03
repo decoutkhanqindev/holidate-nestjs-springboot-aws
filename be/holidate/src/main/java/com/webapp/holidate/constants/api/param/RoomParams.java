@@ -9,10 +9,4 @@ public class RoomParams {
   public static final String REQUIRED_ADULTS = "required-adults";
   public static final String REQUIRED_CHILDREN = "required-children";
   public static final String REQUIRED_ROOMS = "required-rooms";
-  public static final String MIN_PRICE = "min-price";
-  public static final String MAX_PRICE = "max-price";
-
-  // Sort fields
-  public static final String PRICE = "price";
-  public static final String CREATED_AT = "created-at";
 }

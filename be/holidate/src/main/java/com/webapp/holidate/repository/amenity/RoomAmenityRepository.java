@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface RoomAmenityRepository extends JpaRepository<RoomAmenity, String> {
+  long countByAmenityId(String amenityId);
 }
