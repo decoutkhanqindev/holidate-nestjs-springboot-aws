@@ -34,10 +34,23 @@ export default function DiscountsPage() {
     useEffect(() => {
         async function loadDiscounts() {
             setIsLoading(true);
-            const response = await getDiscounts({ page: currentPage, limit: ITEMS_PER_PAGE });
-            setDiscounts(response.data);
-            setTotalPages(response.totalPages);
-            setIsLoading(false);
+            try {
+                // Backend dùng 0-based index, frontend dùng 1-based
+                const response = await getDiscounts({
+                    page: currentPage - 1, // Convert 1-based to 0-based
+                    size: ITEMS_PER_PAGE
+                });
+                setDiscounts(response.data);
+                setTotalPages(response.totalPages);
+            } catch (error: any) {
+                console.error('[DiscountsPage] Error loading discounts:', error);
+                // Hiển thị lỗi cho user (có thể thêm toast notification)
+                alert('Không thể tải danh sách mã giảm giá: ' + (error.message || 'Lỗi không xác định'));
+                setDiscounts([]);
+                setTotalPages(0);
+            } finally {
+                setIsLoading(false);
+            }
         }
         loadDiscounts();
     }, [currentPage]);

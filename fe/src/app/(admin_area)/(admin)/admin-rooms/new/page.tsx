@@ -5,11 +5,13 @@ import { createRoomAction } from "@/lib/actions/roomActions"; // Sẽ tạo file
 import { notFound } from "next/navigation";
 
 interface NewRoomPageProps {
-    searchParams: { [key: string]: string | string[] | undefined };
+    searchParams: Promise<{ hotelId?: string }>;
 }
 
 export default async function NewRoomPage({ searchParams }: NewRoomPageProps) {
-    const hotelId = searchParams.hotelId as string;
+    // Await searchParams trước khi sử dụng (Next.js 15+)
+    const params = await searchParams;
+    const hotelId = params.hotelId as string;
     if (!hotelId) {
         return <div>Lỗi: Không tìm thấy ID khách sạn. Vui lòng quay lại.</div>;
     }

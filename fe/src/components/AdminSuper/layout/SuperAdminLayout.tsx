@@ -39,13 +39,13 @@ export default function SuperAdminAreaLayout({ children }: { children: ReactNode
 
     useEffect(() => {
         if (!isLoading) {
-            if (!effectiveUser || effectiveUser.role !== 'SUPER_ADMIN') {
+            if (!effectiveUser || effectiveUser.role.name.toLowerCase() !== 'admin') {
                 router.push('/admin-login');
             }
         }
     }, [isLoading, effectiveUser, router]);
 
-    if (isLoading || !effectiveUser || effectiveUser.role !== 'SUPER_ADMIN') {
+    if (isLoading || !effectiveUser || effectiveUser.role.name.toLowerCase() !== 'admin') {
         return (
             <div className="d-flex justify-content-center align-items-center vh-100">
                 Đang tải và xác thực quyền...

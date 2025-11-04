@@ -2,42 +2,67 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createHotel, updateHotel, deleteHotel as deleteHotelService } from "@/lib/AdminAPI/hotelService";
+import { createHotelServer, updateHotel, deleteHotel as deleteHotelService } from "@/lib/AdminAPI/hotelService";
 import type { HotelStatus } from "@/types";
 
 // ACTION ĐỂ TẠO KHÁCH SẠN MỚI
 export async function createHotelAction(formData: FormData) {
-    // 1. Lấy và xử lý ảnh TRƯỚC TIÊN
-    const imageFile = formData.get('image') as File;
-    let imageUrl = ''; // Khởi tạo imageUrl mặc định
+    try {
+        const name = formData.get('name') as string;
+        const address = formData.get('address') as string;
+        const description = formData.get('description') as string;
+        
+        // Lấy các field location - PHẢI CÓ ID từ dropdown
+        const countryId = formData.get('countryId') as string;
+        const provinceId = formData.get('provinceId') as string;
+        const cityId = formData.get('cityId') as string;
+        const districtId = formData.get('districtId') as string;
+        const wardId = formData.get('wardId') as string;
+        const streetId = formData.get('streetId') as string;
+        const partnerId = formData.get('partnerId') as string;
 
-    if (imageFile && imageFile.size > 0) {
-        // **LOGIC UPLOAD ẢNH THẬT SẼ Ở ĐÂY**
-        // Ví dụ: imageUrl = await uploadToCloudinary(imageFile);
-        console.log("Đã nhận được file ảnh:", imageFile.name);
-        imageUrl = `/placeholder-uploaded-${Date.now()}.png`; // Giả lập URL duy nhất sau khi upload
+        // Validation
+        if (!name || !address) {
+            return { error: "Tên và địa chỉ là bắt buộc." };
+        }
+
+        // Validate required fields cho API - TẤT CẢ PHẢI CÓ ID
+        if (!countryId || !provinceId || !cityId || !districtId || !wardId || !streetId || !partnerId) {
+            return { error: "Vui lòng điền đầy đủ thông tin địa chỉ (chọn từ danh sách) và đối tác." };
+        }
+
+        console.log('[createHotelAction] Creating hotel with location IDs:', {
+            countryId, provinceId, cityId, districtId, wardId, streetId, partnerId
+        });
+
+        // Xây dựng JSON payload để gửi lên API (CREATE dùng JSON)
+        // Note: description là required trong API docs, không được để rỗng
+        const payload = {
+            name: name.trim(),
+            description: (description && description.trim()) || 'Không có mô tả', // Đảm bảo description không rỗng
+            address: address.trim(),
+            countryId: countryId.trim(),
+            provinceId: provinceId.trim(),
+            cityId: cityId.trim(),
+            districtId: districtId.trim(),
+            wardId: wardId.trim(),
+            streetId: streetId.trim(),
+            partnerId: partnerId.trim(),
+        };
+
+        console.log('[createHotelAction] Final payload before sending:', JSON.stringify(payload, null, 2));
+
+        // Dùng createHotelServer (dành cho server actions - lấy token từ cookies)
+        await createHotelServer(payload);
+
+        // TODO: Nếu cần upload ảnh riêng sau khi tạo hotel, thực hiện ở đây
+
+        revalidatePath("/admin-hotels");
+        redirect("/admin-hotels");
+    } catch (error: any) {
+        console.error("[createHotelAction] Error:", error);
+        return { error: error.message || "Không thể tạo khách sạn. Vui lòng thử lại." };
     }
-
-    // 2. Tạo đối tượng data hoàn chỉnh, BAO GỒM CẢ imageUrl
-    const dataToCreate = {
-        name: formData.get('name') as string,
-        address: formData.get('address') as string,
-        status: 'PENDING' as HotelStatus,
-        stt: Number(formData.get('stt')),
-        description: formData.get('description') as string,
-        imageUrl: imageUrl, // << GỘP imageUrl VÀO ĐÂY
-    };
-
-    // 3. Validation
-    if (!dataToCreate.name || !dataToCreate.address) {
-        return { error: "Tên và địa chỉ là bắt buộc." };
-    }
-
-    // 4. Gọi service với đối tượng data đã hoàn chỉnh
-    await createHotel(dataToCreate);
-
-    revalidatePath("/admin-hotels");
-    redirect("/admin-hotels");
 }
 
 // ACTION ĐỂ CẬP NHẬT KHÁCH SẠN

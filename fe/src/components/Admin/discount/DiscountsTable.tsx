@@ -32,25 +32,37 @@ export default function DiscountsTable({ discounts, onEdit }: DiscountsTableProp
                     <thead className="bg-gray-50">
                         <tr>
                             <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">STT</th>
-                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                             <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Mã</th>
+                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Mô tả</th>
                             <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Giảm giá</th>
                             <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày hết hạn</th>
+                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
                             <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200 text-center">
                         {discounts.map((discount, index) => (
                             <tr key={discount.id} className="hover:bg-gray-50">
-                                {/* các td khác giữ nguyên */}
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{index + 1}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{discount.id}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{discount.code}</td>
+                                <td className="px-6 py-4 text-sm text-gray-600 max-w-xs">
+                                    <div className="truncate" title={discount.description || 'Không có mô tả'}>
+                                        {discount.description || <span className="text-gray-400 italic">Không có mô tả</span>}
+                                    </div>
+                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">
                                     {formatDiscountValue(discount.discountValue, discount.discountType)}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                     {new Date(discount.expiresAt).toLocaleDateString('vi-VN')}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${discount.active
+                                            ? 'bg-green-100 text-green-800'
+                                            : 'bg-red-100 text-red-800'
+                                        }`}>
+                                        {discount.active ? 'Đang hoạt động' : 'Đã tắt'}
+                                    </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div className="inline-flex items-center justify-center gap-x-4">

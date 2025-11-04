@@ -21,9 +21,11 @@ export type DiscountType = 'PERCENT' | 'AMOUNT';
 export interface Discount {
     id: string;
     code: string;
+    description?: string;
     discountValue: number;
     discountType: DiscountType; // 'PERCENT' cho % hoặc 'AMOUNT' cho VND
     expiresAt: Date;
+    active?: boolean; // Trạng thái hoạt động
     createdAt: Date;
 }
 export type RoomStatus = 'AVAILABLE' | 'OCCUPIED' | 'MAINTENANCE';
@@ -36,6 +38,10 @@ export interface Room {
     price: number;
     status: RoomStatus;
     image: string;
+    images?: string[]; // Nhiều ảnh
+    quantity?: number; // Tổng số lượng phòng (totalRooms)
+    availableQuantity?: number; // Số lượng phòng khả dụng (availableRooms)
+    amenities?: Array<{ id: string; name: string }>; // Tiện ích phòng (đã flatten từ nested structure)
 }
 
 
@@ -58,7 +64,7 @@ export type PaymentStatus = 'PAID' | 'UNPAID' | 'PENDING' | 'REFUNDED';
 export type BookingStatus = 'COMPLETED' | 'CONFIRMED' | 'PENDING' | 'CANCELLED' | 'CHECKED_IN';
 
 export interface Booking {
-    id: number;
+    id: string; // UUID từ backend (không phải number)
     customerName: string;
     roomNumbers: string[];
     checkInDate: Date;
@@ -66,6 +72,11 @@ export interface Booking {
     totalAmount: number;
     paymentStatus: PaymentStatus;
     bookingStatus: BookingStatus;
+    // Thêm các field mới
+    email: string;
+    phone: string;
+    numberOfAdults: number;
+    numberOfChildren: number;
 }
 
 

@@ -1,66 +1,58 @@
 //  src/app/(admin)/login/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/Admin/AuthContext_Admin/AuthContextAdmin';
+import { loginAdmin } from '@/lib/AdminAPI/adminAuthService';
 
 export default function AdminLoginPage() {
     const auth = useAuth();
+    const searchParams = useSearchParams();
+    const redirectMessage = searchParams.get('message');
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
     const [error, setError] = useState<string | null>(null);
+    const [info, setInfo] = useState<string | null>(null);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleLogin = (e: React.FormEvent) => {
+    useEffect(() => {
+        if (redirectMessage === 'admin_redirect') {
+            setInfo('Bạn đang đăng nhập với tài khoản Admin/Partner. Vui lòng đăng nhập lại tại đây.');
+        }
+    }, [redirectMessage]);
+
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
         setIsSubmitting(true);
 
-        setTimeout(() => {
-            //    gọi API ở đây.
+        try {
+            // Gọi API login thật
+            const loginResponse = await loginAdmin({ email, password });
 
-            //  Đăng nhập thành công với vai trò SUPER_ADMIN
-            if (email === 'admin@booking.com' && password === 'admin123') {
-                console.log('Xác thực thành công: SUPER_ADMIN');
-                auth.login({
-                    email: 'admin@booking.com',
-                    role: 'SUPER_ADMIN',
-                });
-                return;
-            }
+            console.log('[AdminLoginPage] Login successful:', loginResponse);
 
-            //  Đăng nhập thành công với vai trò HOTEL_ADMIN của khách sạn 1
-            if (email === 'hotel1@booking.com' && password === 'hotel123') {
-                console.log('Xác thực thành công: HOTEL_ADMIN - Khách sạn Sài Gòn');
-                auth.login({
-                    email: 'hotel1@booking.com',
-                    role: 'HOTEL_ADMIN',
-                    hotelId: 'hotel_saigon_123',
-                    hotelName: 'Khách sạn Sài Gòn',
-                });
-                return;
-            }
+            // Lưu user vào context - giữ nguyên role từ API (admin, partner, user)
+            auth.login({
+                id: loginResponse.id,
+                email: loginResponse.email,
+                fullName: loginResponse.fullName,
+                role: {
+                    id: loginResponse.role.id,
+                    name: loginResponse.role.name,
+                    description: loginResponse.role.description,
+                },
+            });
 
-            //  Đăng nhập thành công với vai trò HOTEL_ADMIN của khách sạn 2
-            if (email === 'hotel2@booking.com' && password === 'hotel123') {
-                console.log('Xác thực thành công: HOTEL_ADMIN - Khách sạn Hà Nội');
-                auth.login({
-                    email: 'hotel2@booking.com',
-                    role: 'HOTEL_ADMIN',
-                    hotelId: 'hotel_hanoi_456',
-                    hotelName: 'Khách sạn Hà Nội',
-                });
-                return;
-            }
-
-
-            setError('Email hoặc mật khẩu không chính xác. Vui lòng thử lại.');
+        } catch (error: any) {
+            console.error('[AdminLoginPage] Login error:', error);
+            setError(error.message || 'Email hoặc mật khẩu không chính xác. Vui lòng thử lại.');
             setIsSubmitting(false);
-
-        }, 500);
+        }
     };
 
     return (
@@ -110,6 +102,12 @@ export default function AdminLoginPage() {
                             <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path fill="#f472b6" d="M12 17a2 2 0 100-4 2 2 0 000 4zm6-7V7a6 6 0 10-12 0v3a2 2 0 00-2 2v6a2 2 0 002 2h12a2 2 0 002-2v-6a2 2 0 00-2-2zm-8-3a4 4 0 118 0v3H6V7z" /></svg>
                         </span>
                     </div>
+
+                    {info && (
+                        <div className="text-blue-700 bg-blue-50 border border-blue-200 text-sm font-semibold text-center p-3 rounded-xl">
+                            {info}
+                        </div>
+                    )}
 
                     {error && (
                         <div className="text-red-600 bg-red-100 border border-red-300 text-sm font-semibold text-center p-3 rounded-xl">

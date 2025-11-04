@@ -1,7 +1,6 @@
 // components/Admin/BookingsTable.tsx
 "use client";
 
-import { EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import type { Booking, PaymentStatus, BookingStatus } from '@/types';
 
 // Component con để hiển thị badge trạng thái
@@ -45,55 +44,42 @@ export default function BookingsTable({ bookings }: BookingsTableProps) {
                 <table className="min-w-full">
                     <thead className="bg-gray-50 border-b-2 border-gray-200">
                         <tr>
-                            <th className="p-4 text-left text-sm font-semibold text-gray-600">ID</th>
+                            <th className="p-4 text-center text-sm font-semibold text-gray-600">STT</th>
                             <th className="p-4 text-left text-sm font-semibold text-gray-600">Tên Người Đặt</th>
                             <th className="p-4 text-left text-sm font-semibold text-gray-600">Phòng</th>
                             <th className="p-4 text-left text-sm font-semibold text-gray-600">Check-in</th>
                             <th className="p-4 text-left text-sm font-semibold text-gray-600">Check-out</th>
+                            <th className="p-4 text-center text-sm font-semibold text-gray-600">Số Người Ở</th>
+                            <th className="p-4 text-left text-sm font-semibold text-gray-600">Email</th>
+                            <th className="p-4 text-left text-sm font-semibold text-gray-600">Số Điện Thoại</th>
                             <th className="p-4 text-left text-sm font-semibold text-gray-600">Tổng Tiền</th>
                             <th className="p-4 text-left text-sm font-semibold text-gray-600">Thanh Toán</th>
                             <th className="p-4 text-left text-sm font-semibold text-gray-600">Trạng Thái</th>
-                            <th className="p-4 text-right text-sm font-semibold text-gray-600">Hành Động</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                        {bookings.map((booking, index) => (
-                            <tr key={booking.id} className={index % 2 !== 0 ? 'bg-gray-50' : 'bg-white'}>
-                                <td className="p-4 whitespace-nowrap text-sm text-gray-800">{booking.id}</td>
-                                <td className="p-4 whitespace-nowrap text-sm font-medium text-gray-900">{booking.customerName}</td>
-                                <td className="p-4 whitespace-nowrap text-sm text-gray-700">{booking.roomNumbers.join(', ')}</td>
-                                <td className="p-4 whitespace-nowrap text-sm text-gray-700">{booking.checkInDate.toLocaleDateString('vi-VN')}</td>
-                                <td className="p-4 whitespace-nowrap text-sm text-gray-700">{booking.checkOutDate.toLocaleDateString('vi-VN')}</td>
-                                <td className="p-4 whitespace-nowrap text-sm font-semibold text-gray-900">{booking.totalAmount.toLocaleString('vi-VN')} VND</td>
-                                <td className="p-4 whitespace-nowrap"><StatusBadge status={booking.paymentStatus} type="payment" /></td>
-                                <td className="p-4 whitespace-nowrap"><StatusBadge status={booking.bookingStatus} type="booking" /></td>
-                                <td className="p-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div className="inline-flex items-center justify-end gap-x-4">
-                                        <button
-                                            onClick={() => alert(`(Giả lập) Xem chi tiết đặt phòng ID: ${booking.id}`)}
-                                            className="text-green-600 hover:text-green-700 transition-colors"
-                                            title="Xem chi tiết"
-                                        >
-                                            <EyeIcon className="h-5 w-5" />
-                                        </button>
-                                        <button
-                                            onClick={() => alert(`(Giả lập) Chỉnh sửa đặt phòng ID: ${booking.id}`)}
-                                            className="text-blue-600 hover:text-blue-700 transition-colors"
-                                            title="Chỉnh sửa"
-                                        >
-                                            <PencilIcon className="h-5 w-5" />
-                                        </button>
-                                        <button
-                                            onClick={() => confirm(`Bạn có chắc chắn muốn xóa đặt phòng ID: ${booking.id} không?`) && alert(`(Giả lập) Đã xóa đặt phòng ID: ${booking.id}`)}
-                                            className="text-red-600 hover:text-red-700 transition-colors"
-                                            title="Xóa"
-                                        >
-                                            <TrashIcon className="h-5 w-5" />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
+                        {bookings.map((booking, index) => {
+                            const totalGuests = booking.numberOfAdults + booking.numberOfChildren;
+                            const guestsText = `${booking.numberOfAdults} người lớn${booking.numberOfChildren > 0 ? `, ${booking.numberOfChildren} trẻ em` : ''}`;
+                            
+                            return (
+                                <tr key={booking.id} className={index % 2 !== 0 ? 'bg-gray-50' : 'bg-white'}>
+                                    <td className="p-4 whitespace-nowrap text-sm text-gray-800 text-center">{index + 1}</td>
+                                    <td className="p-4 whitespace-nowrap text-sm font-medium text-gray-900">{booking.customerName}</td>
+                                    <td className="p-4 whitespace-nowrap text-sm text-gray-700">{booking.roomNumbers.join(', ')}</td>
+                                    <td className="p-4 whitespace-nowrap text-sm text-gray-700">{booking.checkInDate.toLocaleDateString('vi-VN')}</td>
+                                    <td className="p-4 whitespace-nowrap text-sm text-gray-700">{booking.checkOutDate.toLocaleDateString('vi-VN')}</td>
+                                    <td className="p-4 whitespace-nowrap text-sm text-gray-700 text-center" title={guestsText}>
+                                        {totalGuests} ({booking.numberOfAdults}/{booking.numberOfChildren})
+                                    </td>
+                                    <td className="p-4 whitespace-nowrap text-sm text-gray-700">{booking.email || '-'}</td>
+                                    <td className="p-4 whitespace-nowrap text-sm text-gray-700">{booking.phone || '-'}</td>
+                                    <td className="p-4 whitespace-nowrap text-sm font-semibold text-gray-900">{booking.totalAmount.toLocaleString('vi-VN')} VND</td>
+                                    <td className="p-4 whitespace-nowrap"><StatusBadge status={booking.paymentStatus} type="payment" /></td>
+                                    <td className="p-4 whitespace-nowrap"><StatusBadge status={booking.bookingStatus} type="booking" /></td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
