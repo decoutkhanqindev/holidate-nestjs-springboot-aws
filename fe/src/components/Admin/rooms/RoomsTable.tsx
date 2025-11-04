@@ -94,11 +94,11 @@ function StatusDropdown({
     };
 
     const statusStyles: Record<Room['status'], string> = {
-        AVAILABLE: "bg-green-100 text-green-800 border-green-300",
-        OCCUPIED: "bg-red-100 text-red-800 border-red-300",
-        MAINTENANCE: "bg-yellow-100 text-yellow-800 border-yellow-300",
-        INACTIVE: "bg-gray-100 text-gray-800 border-gray-300",
-        CLOSED: "bg-red-100 text-red-800 border-red-300",
+        AVAILABLE: "bg-green-600 text-white border-green-600",
+        OCCUPIED: "bg-red-600 text-white border-red-600",
+        MAINTENANCE: "bg-yellow-500 text-white border-yellow-500",
+        INACTIVE: "bg-gray-500 text-white border-gray-500",
+        CLOSED: "bg-red-600 text-white border-red-600",
     };
 
     const handleStatusChange = async (newStatus: Room['status']) => {
@@ -141,17 +141,19 @@ function StatusDropdown({
             value={status}
             onChange={(e) => handleStatusChange(e.target.value as Room['status'])}
             disabled={isUpdating}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-full border-2 cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-offset-1 ${statusStyles[status] || 'bg-gray-100 text-gray-800 border-gray-300'
+            className={`px-1.5 py-0.5 text-xs font-semibold rounded-md border cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-offset-1 ${statusStyles[status] || 'bg-gray-500 text-white border-gray-500'
                 } ${isUpdating ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'}`}
             style={{
                 appearance: 'none',
                 backgroundImage: isUpdating
                     ? 'none'
-                    : `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-                backgroundPosition: 'right 0.5rem center',
+                    : `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                backgroundPosition: 'right 0.25rem center',
                 backgroundRepeat: 'no-repeat',
-                backgroundSize: '1.5em 1.5em',
-                paddingRight: '2.5rem'
+                backgroundSize: '0.9em 0.9em',
+                paddingRight: '1.5rem',
+                minWidth: '80px',
+                fontSize: '11px'
             }}
         >
             <option value="AVAILABLE">Hoạt động</option>
@@ -202,14 +204,48 @@ export default function RoomsTable({ rooms, hotelId, currentPage, totalPages, to
         fetchInventories();
     }, [rooms]);
 
-    const handleDelete = (id: string, name: string) => {
-        if (confirm(`Bạn có chắc chắn muốn xóa phòng "${name}" không?`)) {
-            startTransition(async () => {
-                await deleteRoomAction(id);
-                // Refresh page sẽ được handle bởi parent component
-                window.location.reload();
-            });
+    const handleDelete = async (id: string, name: string) => {
+        if (!confirm(`Bạn có chắc chắn muốn xóa phòng "${name}" không?`)) {
+            return;
         }
+
+        startTransition(async () => {
+            try {
+                await deleteRoomAction(id);
+                
+                // Hiển thị toast thành công
+                const { toast } = await import('react-toastify');
+                toast.success('Xóa phòng thành công!', {
+                    position: "top-right",
+                    autoClose: 2000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                });
+
+                // Refresh data thay vì reload toàn trang
+                if (onRefresh) {
+                    onRefresh();
+                } else {
+                    // Fallback: reload trang nếu không có callback
+                    window.location.reload();
+                }
+            } catch (error: any) {
+                console.error('[RoomsTable] Error deleting room:', error);
+                
+                // Hiển thị toast lỗi
+                const { toast } = await import('react-toastify');
+                toast.error(error.message || 'Không thể xóa phòng. Vui lòng thử lại.', {
+                    position: "top-right",
+                    autoClose: 3000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                });
+            }
+        });
     };
 
     // Handle click ảnh để mở gallery
@@ -270,31 +306,31 @@ export default function RoomsTable({ rooms, hotelId, currentPage, totalPages, to
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
                                 STT
                             </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ width: '142px' }}>
                                 TÊN PHÒNG
                             </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ width: '81px' }}>
                                 ẢNH
                             </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ width: '58px' }}>
                                 LOẠI
                             </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ width: '71px' }}>
                                 GIÁ ĐÊM
                             </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
                                 SỐ LƯỢNG
                             </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ width: '202px' }}>
                                 TIỆN ÍCH
                             </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ width: '90px' }}>
                                 TRẠNG THÁI
                             </th>
-                            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
                                 HÀNH ĐỘNG
                             </th>
                         </tr>
@@ -310,16 +346,17 @@ export default function RoomsTable({ rooms, hotelId, currentPage, totalPages, to
                         ) : (
                             rooms.map((room, index) => (
                                 <tr key={room.id} className="hover:bg-gray-50 transition-colors duration-200">
-                                    <td className="px-6 py-4 whitespace-nowrap">
+                                    <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="text-sm font-medium text-gray-900">{startIndex + index + 1}</div>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-3 py-4">
                                         <div className="text-sm font-medium text-gray-900">{room.name}</div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
+                                    <td className="px-2 py-4 whitespace-nowrap">
                                         {room.image ? (
                                             <div
-                                                className="flex-shrink-0 h-20 w-28 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 shadow-sm group relative cursor-pointer hover:border-blue-400 transition-all"
+                                                className="flex-shrink-0 h-20 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 shadow-sm group relative cursor-pointer hover:border-blue-400 transition-all"
+                                                style={{ width: '75px' }}
                                                 onClick={() => handleImageClick(room)}
                                                 title="Click để xem ảnh"
                                             >
@@ -327,7 +364,7 @@ export default function RoomsTable({ rooms, hotelId, currentPage, totalPages, to
                                                     className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
                                                     src={room.image}
                                                     alt={room.name}
-                                                    width={112}
+                                                    width={75}
                                                     height={80}
                                                     unoptimized
                                                 />
@@ -338,20 +375,20 @@ export default function RoomsTable({ rooms, hotelId, currentPage, totalPages, to
                                                 )}
                                             </div>
                                         ) : (
-                                            <div className="flex-shrink-0 h-20 w-28 flex items-center justify-center bg-gray-100 rounded-md border border-gray-200">
+                                            <div className="flex-shrink-0 h-20 flex items-center justify-center bg-gray-100 rounded-md border border-gray-200" style={{ width: '75px' }}>
                                                 <span className="text-xs text-gray-400">Không có ảnh</span>
                                             </div>
                                         )}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
+                                    <td className="px-2 py-4 whitespace-nowrap">
                                         <div className="text-sm text-gray-600">{room.type || 'N/A'}</div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-900 font-medium">
+                                    <td className="px-2 py-4 whitespace-nowrap">
+                                        <div className="text-sm text-gray-900 font-medium text-left">
                                             {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(room.price)}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
+                                    <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="flex flex-col gap-1">
                                             {/* Tổng số lượng phòng */}
                                             <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
@@ -396,14 +433,14 @@ export default function RoomsTable({ rooms, hotelId, currentPage, totalPages, to
                                             )}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-wrap gap-1 max-w-xs">
+                                    <td className="px-3 py-4">
+                                        <div className="flex flex-wrap gap-1.5" style={{ maxWidth: '202px' }}>
                                             {room.amenities && room.amenities.length > 0 ? (
                                                 <>
                                                     {room.amenities.slice(0, 3).map((amenity) => (
                                                         <span
                                                             key={amenity.id}
-                                                            className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200"
+                                                            className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200 whitespace-nowrap leading-tight"
                                                             title={amenity.name}
                                                         >
                                                             {amenity.name}
@@ -412,19 +449,10 @@ export default function RoomsTable({ rooms, hotelId, currentPage, totalPages, to
                                                     {room.amenities.length > 3 && (
                                                         <button
                                                             onClick={() => handleAmenitiesClick(room)}
-                                                            className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 cursor-pointer transition-colors"
+                                                            className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 cursor-pointer transition-colors whitespace-nowrap leading-tight"
                                                             title="Click để xem tất cả tiện ích"
                                                         >
                                                             +{room.amenities.length - 3} tiện ích
-                                                        </button>
-                                                    )}
-                                                    {room.amenities.length <= 3 && (
-                                                        <button
-                                                            onClick={() => handleAmenitiesClick(room)}
-                                                            className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium text-blue-600 hover:text-blue-800 cursor-pointer underline"
-                                                            title="Click để xem chi tiết"
-                                                        >
-                                                            Xem tất cả
                                                         </button>
                                                     )}
                                                 </>
@@ -433,22 +461,24 @@ export default function RoomsTable({ rooms, hotelId, currentPage, totalPages, to
                                             )}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <StatusDropdown
-                                            roomId={room.id}
-                                            currentStatus={room.status}
-                                            onStatusChange={() => {
-                                                // Refresh data nếu có callback
-                                                if (onRefresh) {
-                                                    onRefresh();
-                                                } else {
-                                                    // Fallback: reload trang
-                                                    window.location.reload();
-                                                }
-                                            }}
-                                        />
+                                    <td className="px-1 py-4 whitespace-nowrap text-center">
+                                        <div className="flex justify-center">
+                                            <StatusDropdown
+                                                roomId={room.id}
+                                                currentStatus={room.status}
+                                                onStatusChange={() => {
+                                                    // Refresh data nếu có callback
+                                                    if (onRefresh) {
+                                                        onRefresh();
+                                                    } else {
+                                                        // Fallback: reload trang
+                                                        window.location.reload();
+                                                    }
+                                                }}
+                                            />
+                                        </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <td className="px-3 py-4 whitespace-nowrap text-sm font-medium">
                                         <div className="flex items-center justify-end gap-x-2">
                                             <Link
                                                 href={`/admin-rooms/${room.id}`}

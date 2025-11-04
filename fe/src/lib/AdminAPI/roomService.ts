@@ -937,7 +937,7 @@ export const updateRoomServer = async (
 };
 
 /**
- * Xóa phòng
+ * Xóa phòng - Client version (dùng apiClient với token từ localStorage)
  */
 export const deleteRoom = async (roomId: string): Promise<void> => {
     try {
@@ -955,6 +955,42 @@ export const deleteRoom = async (roomId: string): Promise<void> => {
         throw new Error('Invalid response from server');
     } catch (error: any) {
         console.error(`[roomService] Error deleting room ${roomId}:`, error);
+        const errorMessage = error.response?.data?.message
+            || error.message
+            || 'Không thể xóa phòng';
+        throw new Error(errorMessage);
+    }
+};
+
+/**
+ * Delete room - Server version (dùng serverApiClient với token từ cookies)
+ * Dùng trong server actions
+ */
+export const deleteRoomServer = async (roomId: string): Promise<void> => {
+    try {
+        console.log(`[roomService] Deleting room ${roomId} (server)`);
+
+        const serverClient = await createServerApiClient();
+
+        const url = `${baseURL}/${roomId}`;
+        console.log(`[roomService] Deleting room at: DELETE ${url}`);
+
+        const response = await serverClient.delete<ApiResponse<RoomResponse>>(url);
+
+        if (response.status === 200 || response.status === 204) {
+            const responseData = response.data as any;
+
+            if (responseData?.statusCode && responseData.statusCode !== 200 && responseData.statusCode !== 204) {
+                throw new Error(responseData.message || 'Lỗi từ server');
+            }
+
+            console.log(`[roomService] ✅ Room deleted successfully (server): ${roomId}`);
+            return;
+        }
+
+        throw new Error(`Invalid response status: ${response.status}`);
+    } catch (error: any) {
+        console.error(`[roomService] Error deleting room ${roomId} (server):`, error);
         const errorMessage = error.response?.data?.message
             || error.message
             || 'Không thể xóa phòng';

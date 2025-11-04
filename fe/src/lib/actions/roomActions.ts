@@ -92,15 +92,8 @@ export async function createRoomAction(formData: FormData) {
             amenityIdsCount: validAmenityIds.length,
         });
 
-        // Map status từ frontend (uppercase) sang backend (lowercase)
-        const statusMap: Record<string, string> = {
-            'AVAILABLE': 'active',
-            'OCCUPIED': 'active', // OCCUPIED không có trong backend pattern, dùng active
-            'MAINTENANCE': 'maintenance',
-            'INACTIVE': 'inactive',
-            'CLOSED': 'closed'
-        };
-        const backendStatus = status ? (statusMap[status.toUpperCase()] || status.toLowerCase()) : 'active';
+        // Tạm thời bỏ status để test tạo phòng
+        // TODO: Thêm lại status sau khi test xong
 
         // Xây dựng payload
         const payload: CreateRoomPayload = {
@@ -117,7 +110,7 @@ export async function createRoomAction(formData: FormData) {
             wifiAvailable,
             breakfastIncluded,
             quantity: parseInt(quantity),
-            status: backendStatus, // Thêm status
+            // status: backendStatus, // Tạm thời bỏ status
             amenityIds: validAmenityIds.map(id => id.trim()),
         };
 
@@ -146,8 +139,8 @@ export async function createRoomAction(formData: FormData) {
         console.log("[createRoomAction] ===== CLIENT-SIDE: Room created successfully =====");
         revalidatePath("/admin-rooms");
 
-        // redirect() throws a special error that Next.js catches - don't catch it
-        redirect("/admin-rooms");
+        // Trả về success thay vì redirect ngay - để client có thể hiển thị toast trước
+        return { success: true };
     } catch (error: any) {
         // Next.js redirect() throws a special error - don't treat it as an error
         if (error?.digest?.startsWith('NEXT_REDIRECT')) {
@@ -421,9 +414,11 @@ export async function updateRoomAction(roomId: string, formData: FormData) {
 
 export async function deleteRoomAction(roomId: string) {
     try {
-        const { deleteRoom } = await import('@/lib/AdminAPI/roomService');
-        await deleteRoom(roomId);
+        console.log("[deleteRoomAction] Deleting room:", roomId);
+        const { deleteRoomServer } = await import('@/lib/AdminAPI/roomService');
+        await deleteRoomServer(roomId);
 
+        console.log("[deleteRoomAction] Room deleted successfully");
         revalidatePath("/admin-rooms");
         // Không redirect, để component tự refresh
     } catch (error: any) {
