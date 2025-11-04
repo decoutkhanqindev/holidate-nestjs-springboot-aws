@@ -27,27 +27,27 @@ public interface PhotoCategoryMapper {
 
     // group photos by category
     Map<PhotoCategory, List<HotelPhoto>> photosByCategory = hotelPhotos.stream()
-        .collect(Collectors.groupingBy(hotelPhoto -> hotelPhoto.getPhoto().getCategory()));
+      .collect(Collectors.groupingBy(hotelPhoto -> hotelPhoto.getPhoto().getCategory()));
 
     return photosByCategory.entrySet().stream()
-        .map(entry -> {
-          PhotoCategory category = entry.getKey();
-          List<HotelPhoto> photosInCategory = entry.getValue();
+      .map(entry -> {
+        PhotoCategory category = entry.getKey();
+        List<HotelPhoto> photosInCategory = entry.getValue();
 
-          List<PhotoResponse> photoResponses = photosInCategory.stream()
-              .map(hotelPhoto -> PhotoResponse.builder()
-                  .id(hotelPhoto.getPhoto().getId())
-                  .url(hotelPhoto.getPhoto().getUrl())
-                  .build())
-              .toList();
+        List<PhotoResponse> photoResponses = photosInCategory.stream()
+          .map(hotelPhoto -> PhotoResponse.builder()
+            .id(hotelPhoto.getPhoto().getId())
+            .url(hotelPhoto.getPhoto().getUrl())
+            .build())
+          .toList();
 
-          return PhotoCategoryResponse.builder()
-              .id(category.getId())
-              .name(category.getName())
-              .photos(photoResponses)
-              .build();
-        })
-        .toList();
+        return PhotoCategoryResponse.builder()
+          .id(category.getId())
+          .name(category.getName())
+          .photos(photoResponses)
+          .build();
+      })
+      .toList();
   }
 
   @Named("roomPhotosToCategories")
@@ -59,26 +59,26 @@ public interface PhotoCategoryMapper {
 
     // group photos by category
     Map<PhotoCategory, List<RoomPhoto>> photosByCategory = roomPhotos.stream()
-        .collect(Collectors.groupingBy(hotelPhoto -> hotelPhoto.getPhoto().getCategory()));
+      .collect(Collectors.groupingBy(hotelPhoto -> hotelPhoto.getPhoto().getCategory()));
 
     return photosByCategory.entrySet().stream()
-        .map(entry -> {
-          PhotoCategory category = entry.getKey();
-          List<RoomPhoto> photosInCategory = entry.getValue();
+      .map(entry -> {
+        PhotoCategory category = entry.getKey();
+        List<RoomPhoto> photosInCategory = entry.getValue();
 
-          List<PhotoResponse> photoResponses = photosInCategory.stream()
-              .map(hotelPhoto -> PhotoResponse.builder()
-                  .id(hotelPhoto.getPhoto().getId())
-                  .url(hotelPhoto.getPhoto().getUrl())
-                  .build())
-              .toList();
+        List<PhotoResponse> photoResponses = photosInCategory.stream()
+          .map(hotelPhoto -> PhotoResponse.builder()
+            .id(hotelPhoto.getPhoto().getId())
+            .url(hotelPhoto.getPhoto().getUrl())
+            .build())
+          .toList();
 
-          return PhotoCategoryResponse.builder()
-              .id(category.getId())
-              .name(category.getName())
-              .photos(photoResponses)
-              .build();
-        })
-        .toList();
+        return PhotoCategoryResponse.builder()
+          .id(category.getId())
+          .name(category.getName())
+          .photos(photoResponses)
+          .build();
+      })
+      .toList();
   }
 }

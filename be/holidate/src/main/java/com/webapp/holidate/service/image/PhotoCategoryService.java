@@ -19,8 +19,8 @@ public class PhotoCategoryService {
 
   public List<PhotoCategorySimpleResponse> getAll() {
     return repository.findAll()
-        .stream()
-        .map(mapper::toPhotoCategorySimpleResponse)
-        .toList();
+      .stream()
+      .map(mapper::toPhotoCategorySimpleResponse)
+      .toList();
   }
 }
