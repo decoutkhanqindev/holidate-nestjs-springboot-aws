@@ -20,6 +20,7 @@ Base URL: `http://localhost:8080`
 14. [Locations](#locations)
 15. [Discounts](#discounts)
 16. [Special Days](#special-days)
+17. [Status Types Reference](#status-types-reference)
 
 ---
 
@@ -338,7 +339,7 @@ Base URL: `http://localhost:8080`
     {
       "id": "string",
       "email": "string",
-      "fullName": "string",
+      "fullName": "string"
       // ... (same structure as Create User response)
     }
   ]
@@ -351,7 +352,7 @@ Base URL: `http://localhost:8080`
 
 - **Role Required**: USER, PARTNER, ADMIN (USER and PARTNER can only access their own profile)
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create User response
 
 ### 4. Update User
@@ -361,10 +362,10 @@ Base URL: `http://localhost:8080`
 - **Content-Type**: `multipart/form-data`
 - **Role Required**: USER, PARTNER, ADMIN (USER and PARTNER can only update their own profile)
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Request Body** (form-data):
-    - All fields from Create User (optional)
-    - `avatar`: File (image file)
+  - All fields from Create User (optional)
+  - `avatar`: File (image file)
 - **Response**: Same as Create User response
 
 ### 5. Delete User
@@ -373,7 +374,7 @@ Base URL: `http://localhost:8080`
 
 - **Role Required**: ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create User response
 
 ---
@@ -439,7 +440,7 @@ Base URL: `http://localhost:8080`
 
 - **Role Required**: ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create Role response
 
 ---
@@ -496,7 +497,7 @@ Base URL: `http://localhost:8080`
     "contactFullName": "string",
     "contactEmail": "string",
     "contactPhone": "string",
-    "status": "string",
+    "status": "string (see [Booking Status Types](#booking-status-types))",
     "paymentUrl": "string",
     "createdAt": "datetime",
     "expiresAt": "datetime",
@@ -551,23 +552,23 @@ Base URL: `http://localhost:8080`
 
 - **Role Required**: USER, PARTNER, ADMIN
 - **Query Parameters**:
-    - `userId`: string (optional)
-    - `roomId`: string (optional)
-    - `hotelId`: string (optional)
-    - `status`: string (optional)
-    - `checkInDate`: date (optional, ISO format)
-    - `checkOutDate`: date (optional, ISO format)
-    - `createdFrom`: datetime (optional, ISO format)
-    - `createdTo`: datetime (optional, ISO format)
-    - `minPrice`: number (optional)
-    - `maxPrice`: number (optional)
-    - `contactEmail`: string (optional)
-    - `contactPhone`: string (optional)
-    - `contactFullName`: string (optional)
-    - `page`: integer (default: 0)
-    - `size`: integer (default: 10)
-    - `sortBy`: string (default: "createdAt")
-    - `sortDir`: string (default: "DESC")
+  - `userId`: string (optional)
+  - `roomId`: string (optional)
+  - `hotelId`: string (optional)
+  - `status`: string (optional, see [Booking Status Types](#booking-status-types))
+  - `checkInDate`: date (optional, ISO format)
+  - `checkOutDate`: date (optional, ISO format)
+  - `createdFrom`: datetime (optional, ISO format)
+  - `createdTo`: datetime (optional, ISO format)
+  - `minPrice`: number (optional)
+  - `maxPrice`: number (optional)
+  - `contactEmail`: string (optional)
+  - `contactPhone`: string (optional)
+  - `contactFullName`: string (optional)
+  - `page`: integer (default: 0)
+  - `size`: integer (default: 10)
+  - `sortBy`: string (default: "createdAt")
+  - `sortDir`: string (default: "DESC")
 - **Response**:
 
 ```json
@@ -599,7 +600,7 @@ Base URL: `http://localhost:8080`
 
 - **Role Required**: USER, PARTNER, ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create Booking response
 
 ### 5. Cancel Booking
@@ -608,7 +609,7 @@ Base URL: `http://localhost:8080`
 
 - **Role Required**: USER, PARTNER, ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create Booking response
 
 ### 6. Reschedule Booking
@@ -617,7 +618,7 @@ Base URL: `http://localhost:8080`
 
 - **Role Required**: USER, PARTNER, ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Request Body**:
 
 ```json
@@ -635,11 +636,17 @@ Base URL: `http://localhost:8080`
   "message": "",
   "data": {
     "booking": {
-      // ... (same structure as Create Booking response)
+      // ... (same structure as Create Booking response with status field)
     },
+    "oldCheckInDate": "date",
+    "oldCheckOutDate": "date",
+    "newCheckInDate": "date",
+    "newCheckOutDate": "date",
+    "status": "string (see [Booking Status Types](#booking-status-types))",
     "originalPrice": "number",
     "newPrice": "number",
-    "priceDifference": "number"
+    "priceDifference": "number",
+    "rescheduleFee": "number"
   }
 }
 ```
@@ -650,7 +657,7 @@ Base URL: `http://localhost:8080`
 
 - **Role Required**: USER, PARTNER, ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create Booking response
 
 ### 8. Check Out
@@ -659,7 +666,7 @@ Base URL: `http://localhost:8080`
 
 - **Role Required**: USER, PARTNER, ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create Booking response
 
 ### 9. Delete Booking
@@ -668,7 +675,7 @@ Base URL: `http://localhost:8080`
 
 - **Role Required**: PARTNER, ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create Booking response
 
 ---
@@ -682,10 +689,10 @@ Base URL: `http://localhost:8080`
 - **Content-Type**: `multipart/form-data`
 - **Role Required**: USER, PARTNER, ADMIN
 - **Request Body** (form-data):
-    - `bookingId`: string (required)
-    - `score`: integer (required, 1-10)
-    - `comment`: string (optional)
-    - `photos`: File[] (optional, image files)
+  - `bookingId`: string (required)
+  - `score`: integer (required, 1-10)
+  - `comment`: string (optional)
+  - `photos`: File[] (optional, image files)
 - **Response**:
 
 ```json
@@ -698,9 +705,7 @@ Base URL: `http://localhost:8080`
     "user": { "id": "string", "fullName": "string", "avatarUrl": "string" },
     "score": "integer",
     "comment": "string",
-    "photos": [
-      { "id": "string", "url": "string", "category": "string" }
-    ],
+    "photos": [{ "id": "string", "url": "string", "category": "string" }],
     "createdAt": "datetime",
     "updatedAt": "datetime"
   }
@@ -713,15 +718,15 @@ Base URL: `http://localhost:8080`
 
 - **Role Required**: Public
 - **Query Parameters**:
-    - `hotelId`: string (optional)
-    - `userId`: string (optional)
-    - `bookingId`: string (optional)
-    - `minScore`: integer (optional)
-    - `maxScore`: integer (optional)
-    - `page`: integer (default: 0)
-    - `size`: integer (default: 10)
-    - `sortBy`: string (default: "createdAt")
-    - `sortDir`: string (default: "DESC")
+  - `hotelId`: string (optional)
+  - `userId`: string (optional)
+  - `bookingId`: string (optional)
+  - `minScore`: integer (optional)
+  - `maxScore`: integer (optional)
+  - `page`: integer (default: 0)
+  - `size`: integer (default: 10)
+  - `sortBy`: string (default: "createdAt")
+  - `sortDir`: string (default: "DESC")
 - **Response**:
 
 ```json
@@ -756,7 +761,7 @@ Base URL: `http://localhost:8080`
 
 - **Role Required**: Public
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create Review response
 
 ### 4. Update Review
@@ -766,12 +771,12 @@ Base URL: `http://localhost:8080`
 - **Content-Type**: `multipart/form-data`
 - **Role Required**: USER, PARTNER, ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Request Body** (form-data):
-    - `score`: integer (optional, 1-10)
-    - `comment`: string (optional)
-    - `photosToAdd`: File[] (optional, image files)
-    - `photoIdsToDelete`: string[] (optional, array of photo IDs)
+  - `score`: integer (optional, 1-10)
+  - `comment`: string (optional)
+  - `photosToAdd`: File[] (optional, image files)
+  - `photoIdsToDelete`: string[] (optional, array of photo IDs)
 - **Response**: Same as Create Review response
 
 ### 5. Delete Review
@@ -780,7 +785,7 @@ Base URL: `http://localhost:8080`
 
 - **Role Required**: USER, PARTNER, ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create Review response
 
 ---
@@ -841,7 +846,7 @@ Base URL: `http://localhost:8080`
       "street": {}
     },
     "starRating": "integer",
-    "status": "string",
+    "status": "string (see [Accommodation Status Types](#accommodation-status-types))",
     "amenities": [],
     "photos": [],
     "partner": {},
@@ -857,27 +862,28 @@ Base URL: `http://localhost:8080`
 
 - **Role Required**: Public
 - **Query Parameters**:
-    - `name`: string (optional)
-    - `countryId`: string (optional)
-    - `provinceId`: string (optional)
-    - `cityId`: string (optional)
-    - `districtId`: string (optional)
-    - `wardId`: string (optional)
-    - `streetId`: string (optional)
-    - `starRating`: integer (optional)
-    - `amenityIds`: string[] (optional, array of amenity IDs)
-    - `status`: string (optional)
-    - `checkinDate`: date (optional, ISO format)
-    - `checkoutDate`: date (optional, ISO format)
-    - `requiredAdults`: integer (optional)
-    - `requiredChildren`: integer (optional)
-    - `requiredRooms`: integer (optional)
-    - `minPrice`: number (optional)
-    - `maxPrice`: number (optional)
-    - `page`: integer (default: 0)
-    - `size`: integer (default: 10)
-    - `sortBy`: string (default: "createdAt")
-    - `sortDir`: string (default: "ASC")
+  - `name`: string (optional)
+  - `countryId`: string (optional)
+  - `provinceId`: string (optional)
+  - `cityId`: string (optional)
+  - `districtId`: string (optional)
+  - `wardId`: string (optional)
+  - `streetId`: string (optional)
+  - `starRating`: integer (optional)
+  - `amenityIds`: string[] (optional, array of amenity IDs)
+  - `status`: string (optional, see [Accommodation Status Types](#accommodation-status-types))
+  - `partnerId`: string (optional, filter hotels by partner/owner ID)
+  - `checkinDate`: date (optional, ISO format)
+  - `checkoutDate`: date (optional, ISO format)
+  - `requiredAdults`: integer (optional)
+  - `requiredChildren`: integer (optional)
+  - `requiredRooms`: integer (optional)
+  - `minPrice`: number (optional)
+  - `maxPrice`: number (optional)
+  - `page`: integer (default: 0)
+  - `size`: integer (default: 10)
+  - `sortBy`: string (default: "createdAt")
+  - `sortDir`: string (default: "ASC")
 - **Response**:
 
 ```json
@@ -892,7 +898,7 @@ Base URL: `http://localhost:8080`
         "description": "string",
         "address": "string",
         "starRating": "integer",
-        "status": "string",
+        "status": "string (see [Accommodation Status Types](#accommodation-status-types))",
         "photos": [],
         "location": {}
       }
@@ -915,7 +921,7 @@ Base URL: `http://localhost:8080`
 
 - **Role Required**: Public
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create Hotel response
 
 ### 4. Update Hotel
@@ -925,7 +931,7 @@ Base URL: `http://localhost:8080`
 - **Content-Type**: `multipart/form-data`
 - **Role Required**: PARTNER, ADMIN (PARTNER can only update hotels they own)
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Request Body** (form-data): All fields from Create Hotel (optional) + files
 - **Response**: Same as Create Hotel response
 
@@ -935,7 +941,7 @@ Base URL: `http://localhost:8080`
 
 - **Role Required**: ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create Hotel response
 
 ---
@@ -949,20 +955,20 @@ Base URL: `http://localhost:8080`
 - **Content-Type**: `multipart/form-data`
 - **Role Required**: PARTNER, ADMIN
 - **Request Body** (form-data):
-    - `hotelId`: string (required)
-    - `name`: string (required)
-    - `view`: string (required)
-    - `area`: number (required, positive)
-    - `photos`: File[] (required, at least 1 image)
-    - `maxAdults`: integer (required, positive)
-    - `maxChildren`: integer (required, min 0)
-    - `basePricePerNight`: number (required, positive)
-    - `bedTypeId`: string (required)
-    - `smokingAllowed`: boolean (optional)
-    - `wifiAvailable`: boolean (optional)
-    - `breakfastIncluded`: boolean (optional)
-    - `quantity`: integer (required, positive)
-    - `amenityIds`: string[] (required, array of amenity IDs)
+  - `hotelId`: string (required)
+  - `name`: string (required)
+  - `view`: string (required)
+  - `area`: number (required, positive)
+  - `photos`: File[] (required, at least 1 image)
+  - `maxAdults`: integer (required, positive)
+  - `maxChildren`: integer (required, min 0)
+  - `basePricePerNight`: number (required, positive)
+  - `bedTypeId`: string (required)
+  - `smokingAllowed`: boolean (optional)
+  - `wifiAvailable`: boolean (optional)
+  - `breakfastIncluded`: boolean (optional)
+  - `quantity`: integer (required, positive)
+  - `amenityIds`: string[] (required, array of amenity IDs)
 - **Response**:
 
 ```json
@@ -985,7 +991,7 @@ Base URL: `http://localhost:8080`
     "breakfastIncluded": boolean,
     "quantity": "integer",
     "amenities": [],
-    "status": "string",
+    "status": "string (see [Accommodation Status Types](#accommodation-status-types))",
     "createdAt": "datetime",
     "updatedAt": "datetime"
   }
@@ -998,12 +1004,12 @@ Base URL: `http://localhost:8080`
 
 - **Role Required**: Public (GET without hotelId), PARTNER, ADMIN (GET with hotelId)
 - **Query Parameters**:
-    - `hotelId`: string (required for PARTNER/ADMIN, optional for public)
-    - `status`: string (optional)
-    - `page`: integer (default: 0)
-    - `size`: integer (default: 10)
-    - `sortBy`: string (optional)
-    - `sortDir`: string (default: "ASC")
+  - `hotelId`: string (required for PARTNER/ADMIN, optional for public)
+  - `status`: string (optional, see [Accommodation Status Types](#accommodation-status-types))
+  - `page`: integer (default: 0)
+  - `size`: integer (default: 10)
+  - `sortBy`: string (optional)
+  - `sortDir`: string (default: "ASC")
 - **Response**:
 
 ```json
@@ -1020,7 +1026,7 @@ Base URL: `http://localhost:8080`
         "area": "number",
         "basePricePerNight": "number",
         "photos": [],
-        "status": "string"
+        "status": "string (see [Accommodation Status Types](#accommodation-status-types))"
       }
     ],
     "page": "integer",
@@ -1041,7 +1047,7 @@ Base URL: `http://localhost:8080`
 
 - **Role Required**: Public
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create Room response
 
 ### 4. Update Room
@@ -1051,7 +1057,7 @@ Base URL: `http://localhost:8080`
 - **Content-Type**: `multipart/form-data`
 - **Role Required**: PARTNER, ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Request Body** (form-data): All fields from Create Room (optional) + files
 - **Response**: Same as Create Room response
 
@@ -1061,7 +1067,7 @@ Base URL: `http://localhost:8080`
 
 - **Role Required**: PARTNER, ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create Room response
 
 ---
@@ -1074,14 +1080,14 @@ Base URL: `http://localhost:8080`
 
 - **Role Required**: ADMIN, PARTNER
 - **Query Parameters**:
-    - `roomId`: string (required)
-    - `startDate`: date (required, ISO format)
-    - `endDate`: date (required, ISO format)
-    - `status`: string (optional)
-    - `page`: integer (default: 0)
-    - `size`: integer (default: 10)
-    - `sortBy`: string (optional)
-    - `sortDir`: string (default: "ASC")
+  - `roomId`: string (required)
+  - `startDate`: date (required, ISO format)
+  - `endDate`: date (required, ISO format)
+  - `status`: string (optional, see [Room Inventory Status Types](#room-inventory-status-types))
+  - `page`: integer (default: 0)
+  - `size`: integer (default: 10)
+  - `sortBy`: string (optional)
+  - `sortDir`: string (default: "ASC")
 - **Response**:
 
 ```json
@@ -1096,7 +1102,7 @@ Base URL: `http://localhost:8080`
         "date": "date",
         "price": "number",
         "availableQuantity": "integer",
-        "status": "string"
+        "status": "string (see [Room Inventory Status Types](#room-inventory-status-types))"
       }
     ],
     "page": "integer",
@@ -1201,7 +1207,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 - **Role Required**: Public
 - **Path Parameters**:
-    - `categoryId`: string (UUID format)
+  - `categoryId`: string (UUID format)
 - **Response**: Same as Get All Amenities
 
 ### 4. Delete Amenity
@@ -1210,7 +1216,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 - **Role Required**: ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create Amenity response
 
 ---
@@ -1274,7 +1280,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 - **Role Required**: ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create Amenity Category response
 
 ---
@@ -1362,7 +1368,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 - **Role Required**: ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create Country response
 
 ---
@@ -1405,8 +1411,8 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 - **Role Required**: Public
 - **Query Parameters**:
-    - `name`: string (optional)
-    - `countryId`: string (optional)
+  - `name`: string (optional)
+  - `countryId`: string (optional)
 - **Response**:
 
 ```json
@@ -1429,7 +1435,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 - **Role Required**: ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create Province response
 
 ---
@@ -1459,8 +1465,8 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 - **Role Required**: Public
 - **Query Parameters**:
-    - `name`: string (optional)
-    - `provinceId`: string (optional)
+  - `name`: string (optional)
+  - `provinceId`: string (optional)
 - **Response**: Array of location objects
 
 #### 3. Delete City
@@ -1469,7 +1475,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 - **Role Required**: ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create City response
 
 ---
@@ -1498,8 +1504,8 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 - **Role Required**: Public
 - **Query Parameters**:
-    - `name`: string (optional)
-    - `cityId`: string (optional)
+  - `name`: string (optional)
+  - `cityId`: string (optional)
 - **Response**: Array of location objects
 
 #### 3. Delete District
@@ -1508,7 +1514,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 - **Role Required**: ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create District response
 
 ---
@@ -1537,8 +1543,8 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 - **Role Required**: Public
 - **Query Parameters**:
-    - `name`: string (optional)
-    - `districtId`: string (optional)
+  - `name`: string (optional)
+  - `districtId`: string (optional)
 - **Response**: Array of location objects
 
 #### 3. Delete Ward
@@ -1547,7 +1553,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 - **Role Required**: ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create Ward response
 
 ---
@@ -1576,8 +1582,8 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 - **Role Required**: Public
 - **Query Parameters**:
-    - `name`: string (optional)
-    - `wardId`: string (optional)
+  - `name`: string (optional)
+  - `wardId`: string (optional)
 - **Response**: Array of location objects
 
 #### 3. Delete Street
@@ -1586,7 +1592,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 - **Role Required**: ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create Street response
 
 ---
@@ -1599,7 +1605,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 - **Role Required**: Public
 - **Path Parameters**:
-    - `cityId`: string (UUID format)
+  - `cityId`: string (UUID format)
 - **Response**:
 
 ```json
@@ -1635,8 +1641,8 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 - **Role Required**: ADMIN
 - **Query Parameters**:
-    - `hotelId`: string (optional)
-    - `specialDayId`: string (optional)
+  - `hotelId`: string (optional)
+  - `specialDayId`: string (optional)
 - **Request Body**:
 
 ```json
@@ -1685,27 +1691,27 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 - **Role Required**: Public
 - **Query Parameters**:
-    - `code`: string (optional)
-    - `active`: boolean (optional)
-    - `currentlyValid`: boolean (optional)
-    - `validFrom`: date (optional, ISO format)
-    - `validTo`: date (optional, ISO format)
-    - `minPercentage`: number (optional)
-    - `maxPercentage`: number (optional)
-    - `minBookingPrice`: integer (optional)
-    - `maxBookingPrice`: integer (optional)
-    - `minBookingCount`: integer (optional)
-    - `maxBookingCount`: integer (optional)
-    - `available`: boolean (optional)
-    - `exhausted`: boolean (optional)
-    - `minTimesUsed`: integer (optional)
-    - `maxTimesUsed`: integer (optional)
-    - `hotelId`: string (optional)
-    - `specialDayId`: string (optional)
-    - `page`: integer (default: 0)
-    - `size`: integer (default: 10)
-    - `sortBy`: string (default: "createdAt")
-    - `sortDir`: string (default: "ASC")
+  - `code`: string (optional)
+  - `active`: boolean (optional)
+  - `currentlyValid`: boolean (optional)
+  - `validFrom`: date (optional, ISO format)
+  - `validTo`: date (optional, ISO format)
+  - `minPercentage`: number (optional)
+  - `maxPercentage`: number (optional)
+  - `minBookingPrice`: integer (optional)
+  - `maxBookingPrice`: integer (optional)
+  - `minBookingCount`: integer (optional)
+  - `maxBookingCount`: integer (optional)
+  - `available`: boolean (optional)
+  - `exhausted`: boolean (optional)
+  - `minTimesUsed`: integer (optional)
+  - `maxTimesUsed`: integer (optional)
+  - `hotelId`: string (optional)
+  - `specialDayId`: string (optional)
+  - `page`: integer (default: 0)
+  - `size`: integer (default: 10)
+  - `sortBy`: string (default: "createdAt")
+  - `sortDir`: string (default: "ASC")
 - **Response**:
 
 ```json
@@ -1742,7 +1748,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 - **Role Required**: Public
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create Discount response
 
 ### 4. Update Discount
@@ -1751,7 +1757,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 - **Role Required**: ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Request Body**: Same as Create Discount (all fields optional)
 - **Response**: Same as Create Discount response
 
@@ -1761,7 +1767,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 - **Role Required**: ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create Discount response
 
 ---
@@ -1827,7 +1833,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 - **Role Required**: ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Request Body**:
 
 ```json
@@ -1845,7 +1851,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 - **Role Required**: ADMIN
 - **Path Parameters**:
-    - `id`: string (UUID format)
+  - `id`: string (UUID format)
 - **Response**: Same as Create Special Day response
 
 ---
@@ -1901,3 +1907,91 @@ All ID path parameters must be in UUID format: `{id:[a-fA-F0-9\\-]{36}}`
 
 Endpoints that accept file uploads use `multipart/form-data` content type.
 
+---
+
+## Status Types Reference
+
+This section provides reference for all status types used in the API. These values can be used in filter parameters and are returned in API responses.
+
+### Accommodation Status Types
+
+Used for hotels and other accommodations:
+
+- `active` - Accommodation is active and available for bookings
+- `inactive` - Accommodation is inactive (not available for new bookings)
+- `maintenance` - Accommodation is under maintenance
+- `closed` - Accommodation is closed
+
+**Used in**:
+
+- `GET /accommodation/hotels` - `status` query parameter
+- `GET /accommodation/rooms` - `status` query parameter
+- Hotel response objects
+- Room response objects
+
+### Booking Status Types
+
+Used for booking status tracking:
+
+- `pending_payment` - Booking is waiting for payment
+- `confirmed` - Booking is confirmed after payment
+- `checked_in` - Guest has checked in
+- `cancelled` - Booking has been cancelled
+- `completed` - Booking is completed (guest has checked out)
+- `rescheduled` - Booking has been rescheduled
+
+**Used in**:
+
+- `GET /bookings` - `status` query parameter
+- Booking response objects
+
+### Payment Status Types
+
+Used for payment tracking:
+
+- `pending` - Payment is pending
+- `success` - Payment was successful
+- `failed` - Payment failed
+
+**Used in**:
+
+- Payment-related response objects
+
+### Room Inventory Status Types
+
+Used for room inventory availability:
+
+- `available` - Room is available for booking
+- `unavailable` - Room is not available
+- `maintenance` - Room is under maintenance
+- `booked` - Room is booked
+
+**Used in**:
+
+- `GET /accommodation/rooms/inventories` - `status` query parameter
+- Room inventory response objects
+
+### User Role Types
+
+User roles in the system:
+
+- `user` - Regular user (can make bookings)
+- `partner` - Partner/owner (can manage hotels and rooms)
+- `admin` - Administrator (full system access)
+
+**Used in**:
+
+- User response objects
+- Authorization checks
+
+### Auth Provider Types
+
+Authentication providers:
+
+- `local` - Local email/password authentication
+- `google` - Google OAuth authentication
+
+**Used in**:
+
+- User creation/registration
+- User response objects
