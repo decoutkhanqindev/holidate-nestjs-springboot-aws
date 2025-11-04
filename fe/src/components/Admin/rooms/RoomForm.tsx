@@ -490,10 +490,9 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
                                 className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                             >
                                 <option value="AVAILABLE">Hoạt động</option>
-                                <option value="MAINTENANCE">Bảo trì</option>
                                 <option value="INACTIVE">Ngưng hoạt động</option>
+                                <option value="MAINTENANCE">Bảo trì</option>
                                 <option value="CLOSED">Đóng cửa</option>
-                                <option value="OCCUPIED">Đã thuê</option>
                             </select>
                             <p className="text-xs text-gray-500 mt-1">
                                 Chọn trạng thái hiện tại của phòng
@@ -802,7 +801,7 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
                         {previewImages.length > 0 && (
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                                 {previewImages.map((preview, index) => (
-                                    <div key={index} className="relative group h-32 rounded-md overflow-hidden border border-gray-200">
+                                    <div key={index} className="relative h-32 rounded-md overflow-hidden border border-gray-200 shadow-sm">
                                         <img
                                             src={preview}
                                             alt={`Preview ${index + 1}`}
@@ -811,7 +810,7 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
                                         <button
                                             type="button"
                                             onClick={() => handleRemoveImage(index)}
-                                            className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                            className="absolute top-1 right-1 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-md transition-colors z-10"
                                             title="Xóa ảnh"
                                         >
                                             <XMarkIcon className="h-4 w-4" />

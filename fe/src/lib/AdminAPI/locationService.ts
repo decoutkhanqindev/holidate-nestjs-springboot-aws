@@ -184,18 +184,26 @@ export const getStreets = async (wardId?: string, districtId?: string, cityId?: 
 export const createStreet = async (name: string, wardId: string): Promise<LocationOption> => {
     try {
         console.log(`[locationService] Creating street: ${name} for wardId: ${wardId}`);
-        const response = await apiClient.post<ApiResponse<LocationOption>>('/location/streets', {
+        const response = await apiClient.post<ApiResponse<any>>('/location/streets', {
             name: name.trim(),
             wardId: wardId.trim(),
         });
 
         if (response.data.statusCode === 200 && response.data.data) {
-            console.log(`[locationService] Street created successfully: ${response.data.data.id}`);
-            return response.data.data;
+            const data = response.data.data;
+            const result: LocationOption = {
+                id: data.id,
+                name: data.name,
+                code: data.code,
+            };
+            console.log(`[locationService] Street created successfully: ${result.id}`);
+            return result;
         }
+        console.error('[locationService] Invalid response structure:', response.data);
         throw new Error('Invalid response from server');
     } catch (error: any) {
         console.error('[locationService] Error creating street:', error);
+        console.error('[locationService] Error response:', error.response?.data);
         const errorMessage = error.response?.data?.message || error.message || 'Không thể tạo đường mới';
         throw new Error(errorMessage);
     }
@@ -207,14 +215,20 @@ export const createStreet = async (name: string, wardId: string): Promise<Locati
 export const createWard = async (name: string, districtId: string): Promise<LocationOption> => {
     try {
         console.log(`[locationService] Creating ward: ${name} for districtId: ${districtId}`);
-        const response = await apiClient.post<ApiResponse<LocationOption>>('/location/wards', {
+        const response = await apiClient.post<ApiResponse<any>>('/location/wards', {
             name: name.trim(),
             districtId: districtId.trim(),
         });
 
         if (response.data.statusCode === 200 && response.data.data) {
-            console.log(`[locationService] Ward created successfully: ${response.data.data.id}`);
-            return response.data.data;
+            const data = response.data.data;
+            const result: LocationOption = {
+                id: data.id,
+                name: data.name,
+                code: data.code,
+            };
+            console.log(`[locationService] Ward created successfully: ${result.id}`);
+            return result;
         }
         throw new Error('Invalid response from server');
     } catch (error: any) {
@@ -230,14 +244,20 @@ export const createWard = async (name: string, districtId: string): Promise<Loca
 export const createDistrict = async (name: string, cityId: string): Promise<LocationOption> => {
     try {
         console.log(`[locationService] Creating district: ${name} for cityId: ${cityId}`);
-        const response = await apiClient.post<ApiResponse<LocationOption>>('/location/districts', {
+        const response = await apiClient.post<ApiResponse<any>>('/location/districts', {
             name: name.trim(),
             cityId: cityId.trim(),
         });
 
         if (response.data.statusCode === 200 && response.data.data) {
-            console.log(`[locationService] District created successfully: ${response.data.data.id}`);
-            return response.data.data;
+            const data = response.data.data;
+            const result: LocationOption = {
+                id: data.id,
+                name: data.name,
+                code: data.code,
+            };
+            console.log(`[locationService] District created successfully: ${result.id}`);
+            return result;
         }
         throw new Error('Invalid response from server');
     } catch (error: any) {
@@ -253,15 +273,21 @@ export const createDistrict = async (name: string, cityId: string): Promise<Loca
 export const createCity = async (name: string, code: string, provinceId: string): Promise<LocationOption> => {
     try {
         console.log(`[locationService] Creating city: ${name} for provinceId: ${provinceId}`);
-        const response = await apiClient.post<ApiResponse<LocationOption>>('/location/cities', {
+        const response = await apiClient.post<ApiResponse<any>>('/location/cities', {
             name: name.trim(),
             code: code.trim() || '',
             provinceId: provinceId.trim(),
         });
 
         if (response.data.statusCode === 200 && response.data.data) {
-            console.log(`[locationService] City created successfully: ${response.data.data.id}`);
-            return response.data.data;
+            const data = response.data.data;
+            const result: LocationOption = {
+                id: data.id,
+                name: data.name,
+                code: data.code,
+            };
+            console.log(`[locationService] City created successfully: ${result.id}`);
+            return result;
         }
         throw new Error('Invalid response from server');
     } catch (error: any) {
@@ -277,20 +303,45 @@ export const createCity = async (name: string, code: string, provinceId: string)
 export const createProvince = async (name: string, code: string, countryId: string): Promise<LocationOption> => {
     try {
         console.log(`[locationService] Creating province: ${name} for countryId: ${countryId}`);
-        const response = await apiClient.post<ApiResponse<LocationOption>>('/location/provinces', {
+        const response = await apiClient.post<ApiResponse<any>>('/location/provinces', {
             name: name.trim(),
             code: code.trim() || '',
             countryId: countryId.trim(),
         });
 
         if (response.data.statusCode === 200 && response.data.data) {
-            console.log(`[locationService] Province created successfully: ${response.data.data.id}`);
-            return response.data.data;
+            const data = response.data.data;
+            const result: LocationOption = {
+                id: data.id,
+                name: data.name,
+                code: data.code,
+            };
+            console.log(`[locationService] Province created successfully: ${result.id}`);
+            return result;
         }
         throw new Error('Invalid response from server');
     } catch (error: any) {
         console.error('[locationService] Error creating province:', error);
-        const errorMessage = error.response?.data?.message || error.message || 'Không thể tạo tỉnh/thành phố mới';
+        console.error('[locationService] Error response:', error.response?.data);
+        
+        // Xử lý error message chi tiết hơn
+        let errorMessage = 'Không thể tạo tỉnh/thành phố mới';
+        
+        if (error.response?.data?.message) {
+            const msg = error.response.data.message;
+            if (msg.includes('Province already exists') || msg.includes('PROVINCE_EXISTS')) {
+                // Kiểm tra xem có phải do tên hay mã trùng không
+                errorMessage = 'Tỉnh/thành phố đã tồn tại. Vui lòng kiểm tra:\n' +
+                    '- Tên tỉnh đã tồn tại trong hệ thống\n' +
+                    '- Mã tỉnh đã tồn tại trong hệ thống\n' +
+                    'Nếu tỉnh này chưa có trong danh sách, có thể tên hoặc mã đã bị trùng với tỉnh khác.';
+            } else {
+                errorMessage = msg;
+            }
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
         throw new Error(errorMessage);
     }
 };

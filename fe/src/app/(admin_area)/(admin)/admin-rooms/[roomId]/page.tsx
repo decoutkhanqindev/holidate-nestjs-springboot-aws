@@ -78,17 +78,20 @@ export default function EditRoomPage() {
                     breakfastIncluded: roomData.breakfastIncluded ?? false,
                     quantity: roomData.quantity || 0,
                     // Map status từ backend (lowercase) sang frontend (uppercase)
+                    // Theo API docs: active, inactive, maintenance, closed
                     status: (() => {
                         const statusMap: Record<string, string> = {
-                            'active': 'AVAILABLE',
-                            'inactive': 'INACTIVE',
-                            'maintenance': 'MAINTENANCE',
-                            'closed': 'CLOSED',
-                            'occupied': 'OCCUPIED',
+                            'active': 'AVAILABLE',      // Hoạt động
+                            'inactive': 'INACTIVE',      // Ngưng hoạt động
+                            'maintenance': 'MAINTENANCE', // Bảo trì
+                            'closed': 'CLOSED',          // Đóng cửa
+                            // Fallback cho uppercase values
                             'AVAILABLE': 'AVAILABLE',
                             'INACTIVE': 'INACTIVE',
                             'MAINTENANCE': 'MAINTENANCE',
                             'CLOSED': 'CLOSED',
+                            // OCCUPIED - legacy support (không còn trong API docs)
+                            'occupied': 'OCCUPIED',
                             'OCCUPIED': 'OCCUPIED'
                         };
                         const rawStatus = roomData.status || 'active';

@@ -120,14 +120,15 @@ export default function ManageRoomsPage() {
                 
                 console.log("[ManageRoomsPage] User info (effectiveUser):", { userId, roleName });
                 
-                // Lấy hotels với filter (nếu role là PARTNER, backend sẽ tự động filter theo owner từ JWT token)
+                // Lấy hotels với filter - nếu role là PARTNER, sẽ tự động filter theo partnerId (userId)
+                // getHotels() sẽ tự động thêm query param 'partner-id' khi role là PARTNER
                 const paginatedData = await getHotels(
                     0, 
                     1000,
                     filterCityId,
                     filterProvinceId,
-                    userId, // Truyền userId để log
-                    roleName // Truyền roleName để log
+                    userId, // Truyền userId để filter theo partnerId nếu role là PARTNER
+                    roleName // Truyền roleName để xác định có cần filter không
                 );
                 
                 console.log("[ManageRoomsPage] Received hotels:", paginatedData.hotels.length);

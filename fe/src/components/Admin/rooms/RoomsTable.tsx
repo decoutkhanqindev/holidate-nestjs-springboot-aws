@@ -84,21 +84,22 @@ function StatusDropdown({
         setStatus(currentStatus);
     }, [currentStatus]);
 
-    // Map status từ frontend sang backend (lowercase)
+    // Map status từ frontend (uppercase) sang backend (lowercase)
+    // Theo API docs: active, inactive, maintenance, closed
     const statusMap: Record<string, string> = {
-        'AVAILABLE': 'active',
-        'MAINTENANCE': 'maintenance',
-        'INACTIVE': 'inactive',
-        'CLOSED': 'closed',
-        'OCCUPIED': 'active' // OCCUPIED không có trong backend, dùng active
+        'AVAILABLE': 'active',      // Hoạt động - available for bookings
+        'INACTIVE': 'inactive',      // Ngưng hoạt động - not available for new bookings
+        'MAINTENANCE': 'maintenance', // Bảo trì - under maintenance
+        'CLOSED': 'closed'           // Đóng cửa - closed
     };
 
     const statusStyles: Record<Room['status'], string> = {
-        AVAILABLE: "bg-green-600 text-white border-green-600",
-        OCCUPIED: "bg-red-600 text-white border-red-600",
-        MAINTENANCE: "bg-yellow-500 text-white border-yellow-500",
-        INACTIVE: "bg-gray-500 text-white border-gray-500",
-        CLOSED: "bg-red-600 text-white border-red-600",
+        AVAILABLE: "bg-green-600 text-white border-green-600",     // Hoạt động - xanh lá
+        INACTIVE: "bg-gray-500 text-white border-gray-500",        // Ngưng hoạt động - xám
+        MAINTENANCE: "bg-yellow-500 text-white border-yellow-500", // Bảo trì - vàng
+        CLOSED: "bg-red-600 text-white border-red-600",            // Đóng cửa - đỏ
+        // OCCUPIED được giữ lại để backward compatibility, nhưng không hiển thị trong dropdown
+        OCCUPIED: "bg-orange-600 text-white border-orange-600",    // Đã thuê (legacy - không dùng nữa)
     };
 
     const handleStatusChange = async (newStatus: Room['status']) => {
@@ -157,10 +158,9 @@ function StatusDropdown({
             }}
         >
             <option value="AVAILABLE">Hoạt động</option>
-            <option value="MAINTENANCE">Bảo trì</option>
             <option value="INACTIVE">Ngưng hoạt động</option>
+            <option value="MAINTENANCE">Bảo trì</option>
             <option value="CLOSED">Đóng cửa</option>
-            <option value="OCCUPIED">Đã thuê</option>
         </select>
     );
 }

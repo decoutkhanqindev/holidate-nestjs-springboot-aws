@@ -68,6 +68,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [createModalType, setCreateModalType] = useState<'street' | 'ward' | 'district' | 'city' | 'province'>('street');
     const [newLocationName, setNewLocationName] = useState('');
+    const [newLocationCode, setNewLocationCode] = useState(''); // Mã cho province và city
     const [isCreating, setIsCreating] = useState(false);
     const [createError, setCreateError] = useState<string | null>(null);
 
@@ -80,6 +81,10 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
     const [isCreatingPartner, setIsCreatingPartner] = useState(false);
     const [createPartnerError, setCreatePartnerError] = useState<string | null>(null);
     const [partnerRoleId, setPartnerRoleId] = useState<string>('');
+
+    // State cho preview ảnh khi upload
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
 
     // Load countries and partners on mount
     useEffect(() => {
@@ -238,12 +243,14 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                     <div className="md:col-span-2"><label htmlFor="name" className="block text-sm font-medium text-gray-700">Tên khách sạn</label><input type="text" name="name" id="name" required defaultValue={hotel?.name} placeholder="VD: Khách sạn Grand Saigon" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" /></div>
                 </div>
                 <div>
-                    <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">Địa chỉ cụ thể</label>
+                    <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
+                        Địa chỉ cụ thể
+                        <span className="text-gray-500 text-xs ml-1">(Có thể có hoặc không)</span>
+                    </label>
                     <input
                         type="text"
                         name="address"
                         id="address"
-                        required
                         defaultValue={hotel?.address}
                         placeholder="VD: 86 Đinh Bộ Lĩnh, số nhà, tên đường..."
                         className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
@@ -290,6 +297,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                             }
                                             setCreateModalType('province');
                                             setNewLocationName('');
+                                            setNewLocationCode('');
                                             setCreateError(null);
                                             setShowCreateModal(true);
                                         }}
@@ -334,6 +342,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                             }
                                             setCreateModalType('city');
                                             setNewLocationName('');
+                                            setNewLocationCode('');
                                             setCreateError(null);
                                             setShowCreateModal(true);
                                         }}
@@ -388,6 +397,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                             }
                                             setCreateModalType('district');
                                             setNewLocationName('');
+                                            setNewLocationCode('');
                                             setCreateError(null);
                                             setShowCreateModal(true);
                                         }}
@@ -438,6 +448,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                             }
                                             setCreateModalType('ward');
                                             setNewLocationName('');
+                                            setNewLocationCode('');
                                             setCreateError(null);
                                             setShowCreateModal(true);
                                         }}
@@ -488,6 +499,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                             }
                                             setCreateModalType('street');
                                             setNewLocationName('');
+                                            setNewLocationCode('');
                                             setCreateError(null);
                                             setShowCreateModal(true);
                                         }}
@@ -615,17 +627,67 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                     <label htmlFor="image" className="block text-sm font-medium text-gray-700">
                         Ảnh đại diện khách sạn
                     </label>
-                    <div className="flex items-center gap-x-4">
-                        {/* Hiển thị ảnh cũ nếu đang sửa */}
-                        {isEditing && hotel?.imageUrl && (
-                            <img src={hotel.imageUrl} alt="Ảnh hiện tại" className="h-20 w-20 rounded-md object-cover border border-gray-300" />
+                    <div className="flex items-start gap-x-4">
+                        {/* Hiển thị preview ảnh đã chọn hoặc ảnh cũ nếu đang sửa */}
+                        {(imagePreview || (isEditing && hotel?.imageUrl)) && (
+                            <div className="relative">
+                                <img 
+                                    src={imagePreview || hotel?.imageUrl || ''} 
+                                    alt="Ảnh đại diện" 
+                                    className="h-32 w-48 rounded-md object-cover border border-gray-300"
+                                />
+                                {imagePreview && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setImagePreview(null);
+                                            setSelectedImageFile(null);
+                                            // Reset file input
+                                            const fileInput = document.getElementById('image') as HTMLInputElement;
+                                            if (fileInput) fileInput.value = '';
+                                        }}
+                                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                                        title="Xóa ảnh"
+                                    >
+                                        <XMarkIcon className="h-4 w-4" />
+                                    </button>
+                                )}
+                            </div>
                         )}
                         <div className="flex-1">
                             <label htmlFor="image" className="cursor-pointer inline-flex items-center px-4 py-2.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                                <span>Tải ảnh lên</span>
-                                <input id="image" name="image" type="file" className="sr-only" accept="image/*" />
+                                <span>{imagePreview || (isEditing && hotel?.imageUrl) ? 'Thay đổi ảnh' : 'Tải ảnh lên'}</span>
+                                <input 
+                                    id="image" 
+                                    name="image" 
+                                    type="file" 
+                                    className="sr-only" 
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                            // Kiểm tra kích thước file (10MB)
+                                            if (file.size > 10 * 1024 * 1024) {
+                                                alert('Kích thước file không được vượt quá 10MB');
+                                                return;
+                                            }
+                                            // Tạo preview
+                                            const reader = new FileReader();
+                                            reader.onloadend = () => {
+                                                setImagePreview(reader.result as string);
+                                            };
+                                            reader.readAsDataURL(file);
+                                            setSelectedImageFile(file);
+                                        }
+                                    }}
+                                />
                             </label>
                             <p className="text-xs text-gray-500 mt-1.5">PNG, JPG, GIF tối đa 10MB</p>
+                            {selectedImageFile && (
+                                <p className="text-xs text-green-600 mt-1">
+                                    Đã chọn: {selectedImageFile.name}
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -708,6 +770,29 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                     Thêm {createModalType === 'street' ? 'đường' : createModalType === 'ward' ? 'phường/xã' : createModalType === 'district' ? 'quận/huyện' : createModalType === 'city' ? 'thành phố/quận' : 'tỉnh/thành phố'} mới vào hệ thống
                                 </p>
                             </div>
+                            {/* Thêm trường mã cho province và city */}
+                            {(createModalType === 'province' || createModalType === 'city') && (
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Mã {createModalType === 'city' ? 'thành phố/quận' : 'tỉnh/thành phố'} * (2-3 ký tự)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={newLocationCode}
+                                        onChange={(e) => {
+                                            // Chỉ cho phép nhập tối đa 3 ký tự
+                                            const value = e.target.value.toUpperCase().slice(0, 3);
+                                            setNewLocationCode(value);
+                                        }}
+                                        placeholder={`VD: ${createModalType === 'city' ? 'HCM' : 'HN'}`}
+                                        maxLength={3}
+                                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Mã phải có từ 2 đến 3 ký tự (VD: {createModalType === 'city' ? 'HCM, Q1' : 'HN, HCM'})
+                                    </p>
+                                </div>
+                            )}
                         </div>
                         <div className="flex items-center justify-end gap-3 p-4 border-t bg-gray-50">
                             <button
@@ -715,6 +800,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                 onClick={() => {
                                     setShowCreateModal(false);
                                     setNewLocationName('');
+                                    setNewLocationCode('');
                                     setCreateError(null);
                                 }}
                                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
@@ -730,8 +816,42 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                         return;
                                     }
 
+                                    // Validate code cho province và city
+                                    if ((createModalType === 'province' || createModalType === 'city')) {
+                                        if (!newLocationCode.trim()) {
+                                            setCreateError('Vui lòng nhập mã (2-3 ký tự)');
+                                            return;
+                                        }
+                                        if (newLocationCode.trim().length < 2 || newLocationCode.trim().length > 3) {
+                                            setCreateError('Mã phải có từ 2 đến 3 ký tự');
+                                            return;
+                                        }
+                                    }
+
+                                    // Kiểm tra trùng trước khi tạo (optional check - chỉ để thông báo)
                                     setIsCreating(true);
                                     setCreateError(null);
+                                    
+                                    // Note: Backend sẽ kiểm tra trùng chính xác, nhưng có thể thông báo trước
+                                    try {
+                                        if (createModalType === 'province') {
+                                            // Kiểm tra xem có tỉnh nào cùng tên không
+                                            const existingProvinces = await getProvinces(selectedCountryId, newLocationName.trim());
+                                            if (existingProvinces.length > 0) {
+                                                const found = existingProvinces.find(p => 
+                                                    p.name.toLowerCase() === newLocationName.trim().toLowerCase()
+                                                );
+                                                if (found) {
+                                                    setCreateError(`Tỉnh "${newLocationName}" đã tồn tại trong hệ thống (ID: ${found.id}). Vui lòng chọn tên khác.`);
+                                                    setIsCreating(false);
+                                                    return;
+                                                }
+                                            }
+                                        }
+                                    } catch (checkError: any) {
+                                        // Nếu check fail, vẫn tiếp tục tạo (backend sẽ validate)
+                                        console.warn('[HotelForm] Pre-check warning:', checkError);
+                                    }
 
                                     try {
                                         let newLocation: LocationOption;
@@ -769,7 +889,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                                 if (!selectedProvinceId) {
                                                     throw new Error('Vui lòng chọn Tỉnh/Thành phố trước');
                                                 }
-                                                newLocation = await createCity(newLocationName, '', selectedProvinceId);
+                                                newLocation = await createCity(newLocationName, newLocationCode.trim(), selectedProvinceId);
                                                 await loadCities(selectedProvinceId);
                                                 setSelectedCityId(newLocation.id);
                                                 break;
@@ -778,7 +898,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                                 if (!selectedCountryId) {
                                                     throw new Error('Vui lòng chọn Quốc gia trước');
                                                 }
-                                                newLocation = await createProvince(newLocationName, '', selectedCountryId);
+                                                newLocation = await createProvince(newLocationName, newLocationCode.trim(), selectedCountryId);
                                                 await loadProvinces(selectedCountryId);
                                                 setSelectedProvinceId(newLocation.id);
                                                 break;
@@ -786,14 +906,43 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
 
                                         setShowCreateModal(false);
                                         setNewLocationName('');
+                                        setNewLocationCode('');
                                     } catch (error: any) {
                                         console.error('[HotelForm] Error creating location:', error);
-                                        setCreateError(error.message || 'Không thể tạo location. Vui lòng thử lại.');
+                                        console.error('[HotelForm] Error details:', {
+                                            message: error.message,
+                                            response: error.response?.data,
+                                            stack: error.stack,
+                                        });
+                                        
+                                        // Xử lý error message chi tiết hơn
+                                        let errorMessage = error.message || error.response?.data?.message || 'Không thể tạo location. Vui lòng thử lại.';
+                                        
+                                        // Nếu là lỗi "đã tồn tại", hiển thị rõ hơn
+                                        if (errorMessage.includes('đã tồn tại') || errorMessage.includes('already exists')) {
+                                            const locationType = createModalType === 'province' ? 'tỉnh/thành phố' :
+                                                               createModalType === 'city' ? 'thành phố/quận' :
+                                                               createModalType === 'district' ? 'quận/huyện' :
+                                                               createModalType === 'ward' ? 'phường/xã' : 'đường';
+                                            
+                                            errorMessage = `${locationType.charAt(0).toUpperCase() + locationType.slice(1)} đã tồn tại trong hệ thống.\n\n` +
+                                                          `Có thể:\n` +
+                                                          `- Tên "${newLocationName}" đã được sử dụng\n` +
+                                                          `${(createModalType === 'province' || createModalType === 'city') ? `- Mã "${newLocationCode}" đã được sử dụng\n` : ''}` +
+                                                          `\nVui lòng thử tên/mã khác hoặc kiểm tra lại danh sách.`;
+                                        }
+                                        
+                                        setCreateError(errorMessage);
                                     } finally {
                                         setIsCreating(false);
                                     }
                                 }}
-                                disabled={isCreating || !newLocationName.trim()}
+                                disabled={
+                                    isCreating || 
+                                    !newLocationName.trim() || 
+                                    ((createModalType === 'province' || createModalType === 'city') && 
+                                     (!newLocationCode.trim() || newLocationCode.trim().length < 2 || newLocationCode.trim().length > 3))
+                                }
                                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                             >
                                 {isCreating ? 'Đang tạo...' : 'Tạo mới'}

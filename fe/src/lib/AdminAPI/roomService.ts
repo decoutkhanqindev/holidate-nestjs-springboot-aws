@@ -119,17 +119,19 @@ function mapRoomResponseToRoom(response: RoomResponse): Room {
     console.log("[mapRoomResponseToRoom] AvailableRooms:", response.availableRooms);
 
     // Map status từ backend (lowercase: active, inactive, maintenance, closed) sang frontend (uppercase)
+    // Theo API docs: active, inactive, maintenance, closed
     const statusMap: Record<string, Room['status']> = {
-        'active': 'AVAILABLE',
-        'inactive': 'INACTIVE',
-        'maintenance': 'MAINTENANCE',
-        'closed': 'CLOSED',
-        'occupied': 'OCCUPIED',
+        'active': 'AVAILABLE',      // Hoạt động - available for bookings
+        'inactive': 'INACTIVE',      // Ngưng hoạt động - not available for new bookings
+        'maintenance': 'MAINTENANCE', // Bảo trì - under maintenance
+        'closed': 'CLOSED',          // Đóng cửa - closed
         // Fallback cho uppercase values
         'AVAILABLE': 'AVAILABLE',
         'INACTIVE': 'INACTIVE',
         'MAINTENANCE': 'MAINTENANCE',
         'CLOSED': 'CLOSED',
+        // OCCUPIED - legacy support (không còn trong API docs, nhưng giữ để backward compatibility)
+        'occupied': 'OCCUPIED',
         'OCCUPIED': 'OCCUPIED'
     };
     const rawStatus = response.status || 'active';

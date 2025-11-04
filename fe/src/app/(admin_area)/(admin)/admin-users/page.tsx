@@ -3,10 +3,12 @@
 
 import { useState, useEffect } from 'react';
 import { getUsers, getCurrentUser } from '@/lib/AdminAPI/userService';
+import { createUserAction, updateUserAction, deleteUserAction } from '@/lib/actions/userActions';
 import UsersTable from '@/components/Admin/staff_hotels/UsersTable';
 import Pagination from '@/components/Admin/pagination/Pagination';
-import UserFormModal from '@/components/Admin/staff_hotels/UserFormModal'; // << IMPORT MODAL MỚI
+import UserFormModal from '@/components/Admin/staff_hotels/UserFormModal';
 import { PlusIcon } from '@heroicons/react/24/solid';
+import { toast } from 'react-toastify';
 import type { User } from '@/types';
 
 function PageHeader({ title, children }: { title: React.ReactNode, children?: React.ReactNode }) {
@@ -31,17 +33,50 @@ export default function UsersPage() {
     const [editingUser, setEditingUser] = useState<User | null>(null);
 
     useEffect(() => {
-        const user = getCurrentUser();
-        setCurrentUser(user);
-
-        async function loadUsers() {
-            setIsLoading(true);
-            const response = await getUsers({ page: currentPage, limit: ITEMS_PER_PAGE });
-            setUsers(response.data);
-            setTotalPages(response.totalPages);
-            setIsLoading(false);
-        }
-        loadUsers();
+        const loadData = async () => {
+            try {
+                setIsLoading(true);
+                
+                // Load users và currentUser song song, nhưng không fail nếu getCurrentUser lỗi
+                const [userData, usersData] = await Promise.allSettled([
+                    getCurrentUser(),
+                    getUsers({ page: currentPage, limit: ITEMS_PER_PAGE })
+                ]);
+                
+                // Xử lý currentUser
+                if (userData.status === 'fulfilled' && userData.value) {
+                    setCurrentUser(userData.value);
+                } else {
+                    console.warn('[UsersPage] Could not load current user, using fallback');
+                    // Fallback: tạo một user tạm để page vẫn hoạt động
+                    setCurrentUser({
+                        id: 0,
+                        username: 'Unknown',
+                        email: '',
+                        avatarUrl: '/avatars/default.png',
+                        role: 'HOTEL_ADMIN',
+                        status: 'ACTIVE',
+                    });
+                }
+                
+                // Xử lý users data
+                if (usersData.status === 'fulfilled') {
+                    setUsers(usersData.value.data);
+                    setTotalPages(usersData.value.totalPages);
+                } else {
+                    console.error('[UsersPage] Error loading users:', usersData.reason);
+                    setUsers([]);
+                    setTotalPages(0);
+                }
+            } catch (error) {
+                console.error('[UsersPage] Error loading data:', error);
+                setUsers([]);
+                setTotalPages(0);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        loadData();
     }, [currentPage]);
 
     const handlePageChange = (page: number) => {
@@ -64,26 +99,104 @@ export default function UsersPage() {
     };
 
     // HÀM XỬ LÝ LƯU DỮ LIỆU TỪ FORM
-    const handleSave = (formData: FormData) => {
-        const id = formData.get('id');
-        const username = formData.get('username');
+    const handleSave = async (formData: FormData) => {
+        try {
+            const id = formData.get('id') as string;
+            const fullName = formData.get('fullName') as string;
 
-        if (id) {
-            // Logic cập nhật
-            alert(`(Giả lập) Đã cập nhật người dùng: ${username}`);
-            console.log("Cập nhật dữ liệu:", Object.fromEntries(formData.entries()));
-        } else {
-            // Logic thêm mới
-            alert(`(Giả lập) Đã thêm người dùng mới: ${username}`);
-            console.log("Thêm mới dữ liệu:", Object.fromEntries(formData.entries()));
+            if (id) {
+                // Cập nhật user
+                const result = await updateUserAction(id, formData);
+                if (result?.error) {
+                    toast.error(result.error, {
+                        position: "top-right",
+                        autoClose: 3000,
+                    });
+                    return;
+                }
+                toast.success('Cập nhật người dùng thành công!', {
+                    position: "top-right",
+                    autoClose: 2000,
+                });
+            } else {
+                // Tạo user mới
+                const result = await createUserAction(formData);
+                if (result?.error) {
+                    toast.error(result.error, {
+                        position: "top-right",
+                        autoClose: 3000,
+                    });
+                    return;
+                }
+                toast.success('Tạo người dùng thành công!', {
+                    position: "top-right",
+                    autoClose: 2000,
+                });
+            }
+
+            // Đóng modal và refresh data
+            handleCloseModal();
+            
+            // Reload users
+            const response = await getUsers({ page: currentPage, limit: ITEMS_PER_PAGE });
+            setUsers(response.data);
+            setTotalPages(response.totalPages);
+        } catch (error: any) {
+            console.error('[UsersPage] Error saving user:', error);
+            toast.error(error.message || 'Có lỗi xảy ra. Vui lòng thử lại.', {
+                position: "top-right",
+                autoClose: 3000,
+            });
         }
-        // Sau khi lưu, đóng modal và tải lại dữ liệu (tùy chọn)
-        handleCloseModal();
-        // Cân nhắc gọi lại hàm loadUsers() để cập nhật bảng
     };
 
-    if (isLoading || !currentUser) {
+    // Hàm xử lý xóa user
+    const handleDelete = async (userId: number, username: string) => {
+        if (!confirm(`Bạn có chắc chắn muốn xóa người dùng "${username}" không?`)) {
+            return;
+        }
+
+        try {
+            await deleteUserAction(userId.toString());
+            toast.success('Xóa người dùng thành công!', {
+                position: "top-right",
+                autoClose: 2000,
+            });
+
+            // Reload users
+            const response = await getUsers({ page: currentPage, limit: ITEMS_PER_PAGE });
+            setUsers(response.data);
+            setTotalPages(response.totalPages);
+        } catch (error: any) {
+            console.error('[UsersPage] Error deleting user:', error);
+            toast.error(error.message || 'Không thể xóa người dùng. Vui lòng thử lại.', {
+                position: "top-right",
+                autoClose: 3000,
+            });
+        }
+    };
+
+    if (isLoading) {
         return <p>Đang tải dữ liệu người dùng...</p>;
+    }
+
+    // Nếu không có currentUser, vẫn hiển thị page nhưng với warning
+    if (!currentUser) {
+        return (
+            <div>
+                <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+                    <p>Không thể lấy thông tin người dùng hiện tại. Vui lòng đăng nhập lại.</p>
+                </div>
+                <UsersTable users={users} currentUser={{
+                    id: 0,
+                    username: 'Unknown',
+                    email: '',
+                    avatarUrl: '/avatars/default.png',
+                    role: 'HOTEL_ADMIN',
+                    status: 'ACTIVE',
+                }} onEdit={handleEdit} onDelete={handleDelete} />
+            </div>
+        );
     }
 
     return (
@@ -98,7 +211,7 @@ export default function UsersPage() {
                 </button>
             </PageHeader>
 
-            <UsersTable users={users} currentUser={currentUser} onEdit={handleEdit} />
+            <UsersTable users={users} currentUser={currentUser} onEdit={handleEdit} onDelete={handleDelete} />
 
             <Pagination
                 currentPage={currentPage}

@@ -77,6 +77,21 @@ export async function createRoomAction(formData: FormData) {
             return { error: bedTypeError.message || `Không tìm thấy loại giường "${bedTypeName}". Vui lòng sử dụng loại giường có sẵn.` };
         }
 
+        // Lấy status từ formData
+        const status = formData.get('status') as string;
+
+        // Map status từ frontend (uppercase) sang backend (lowercase)
+        // Theo API docs: active, inactive, maintenance, closed
+        const statusMap: Record<string, string> = {
+            'AVAILABLE': 'active',      // Hoạt động - available for bookings
+            'INACTIVE': 'inactive',      // Ngưng hoạt động - not available for new bookings
+            'MAINTENANCE': 'maintenance', // Bảo trì - under maintenance
+            'CLOSED': 'closed',          // Đóng cửa - closed
+            // Legacy support
+            'OCCUPIED': 'active',        // OCCUPIED không có trong API, map sang active
+        };
+        const backendStatus = status ? (statusMap[status.toUpperCase()] || status.toLowerCase()) : 'active';
+
         console.log('[createRoomAction] Creating room with data:', {
             hotelId,
             name,
@@ -88,12 +103,10 @@ export async function createRoomAction(formData: FormData) {
             bedTypeName,
             bedTypeId,
             quantity: parseInt(quantity),
+            status: backendStatus,
             photosCount: validPhotos.length,
             amenityIdsCount: validAmenityIds.length,
         });
-
-        // Tạm thời bỏ status để test tạo phòng
-        // TODO: Thêm lại status sau khi test xong
 
         // Xây dựng payload
         const payload: CreateRoomPayload = {
@@ -110,7 +123,7 @@ export async function createRoomAction(formData: FormData) {
             wifiAvailable,
             breakfastIncluded,
             quantity: parseInt(quantity),
-            // status: backendStatus, // Tạm thời bỏ status
+            status: backendStatus, // Thêm status theo API docs
             amenityIds: validAmenityIds.map(id => id.trim()),
         };
 
@@ -327,19 +340,26 @@ export async function updateRoomAction(roomId: string, formData: FormData) {
         }
 
         // Status - Backend expect lowercase (active, inactive, maintenance, closed)
-        // Frontend có thể dùng uppercase, cần convert
+        // Theo API docs: active, inactive, maintenance, closed
+        // Frontend dùng uppercase (AVAILABLE, INACTIVE, MAINTENANCE, CLOSED), cần convert
         if (status && status.trim()) {
             // Convert từ uppercase sang lowercase để match với backend pattern
-            const statusLower = status.toLowerCase();
-            // Map từ frontend values sang backend values
+            const statusUpper = status.toUpperCase();
+            // Map từ frontend values (uppercase) sang backend values (lowercase)
             const statusMap: Record<string, string> = {
+                'AVAILABLE': 'active',      // Hoạt động - available for bookings
+                'INACTIVE': 'inactive',      // Ngưng hoạt động - not available for new bookings
+                'MAINTENANCE': 'maintenance', // Bảo trì - under maintenance
+                'CLOSED': 'closed',          // Đóng cửa - closed
+                // Legacy support (không còn trong API docs)
+                'OCCUPIED': 'active',        // OCCUPIED không có trong API, map sang active
                 'available': 'active',
-                'occupied': 'active', // OCCUPIED không có trong backend pattern, dùng active
-                'maintenance': 'maintenance',
                 'inactive': 'inactive',
-                'closed': 'closed'
+                'maintenance': 'maintenance',
+                'closed': 'closed',
+                'occupied': 'active'
             };
-            const backendStatus = statusMap[statusLower] || statusLower;
+            const backendStatus = statusMap[statusUpper] || status.toLowerCase();
             // Backend expect status trong RoomUpdateRequest
             (payload as any).status = backendStatus;
         }

@@ -28,7 +28,8 @@ interface HotelResponse {
     status: string;
     amenities?: Array<{ id: string; name: string }>;
     photos?: Array<{ id: string; url: string; category?: string }>;
-    partner?: { id: string; name: string };
+    partner?: { id: string; name?: string; fullName?: string; email?: string };
+    partnerId?: string; // Nếu API trả về partnerId trực tiếp
     createdAt?: string;
     updatedAt?: string;
 }
@@ -121,6 +122,20 @@ function mapHotelResponseToHotel(response: HotelResponse): Hotel {
         }
     }
 
+    // Map ownerId từ partner hoặc partnerId
+    let ownerId: string | undefined = undefined;
+    if (response.partner?.id) {
+        ownerId = response.partner.id;
+    } else if (response.partnerId) {
+        ownerId = response.partnerId;
+    }
+    
+    console.log("[mapHotelResponseToHotel] Partner info:", {
+        partner: response.partner,
+        partnerId: response.partnerId,
+        mappedOwnerId: ownerId
+    });
+
     return {
         id: response.id,
         name: response.name,
@@ -128,6 +143,7 @@ function mapHotelResponseToHotel(response: HotelResponse): Hotel {
         status: mappedStatus,
         description: response.description,
         imageUrl: imageUrl,
+        ownerId: ownerId, // Map partner.id hoặc partnerId sang ownerId
     };
 }
 
@@ -180,15 +196,12 @@ export const getHotels = async (
             params['province-id'] = provinceId.trim(); // Backend dùng "province-id" (kebab-case)
         }
 
-        // Nếu role là PARTNER, backend PHẢI tự động filter theo owner từ JWT token
-        // Backend không có query param để filter theo partner, nên phải filter từ JWT token
-        // Nếu backend chưa filter, sẽ trả về tất cả hotels (BUG - cần fix backend)
-        if (roleName?.toLowerCase() === 'partner' && userId) {
-            console.log(`[hotelService] ⚠️ User is PARTNER (${userId})`);
-            console.log(`[hotelService] ⚠️ Backend SHOULD automatically filter hotels by owner from JWT token`);
-            console.log(`[hotelService] ⚠️ If backend doesn't filter, user will see ALL hotels (SECURITY ISSUE)`);
-            // Backend không có query param để filter theo partner
-            // Backend phải tự động filter từ JWT token trong service layer
+        // Nếu role là PARTNER, filter hotels theo owner (partnerId)
+        // Hoặc nếu là ADMIN và có userId, cũng filter theo partner-id
+        // Backend dùng "partner-id" (kebab-case) theo CommonParams.PARTNER_ID
+        if (userId && (roleName?.toLowerCase() === 'partner' || roleName?.toLowerCase() === 'admin')) {
+            params['partner-id'] = userId.trim(); // Kebab-case (theo backend CommonParams)
+            console.log(`[hotelService] Filtering hotels by partner-id (owner): ${userId} for role: ${roleName}`);
         }
 
         console.log("[hotelService] Request params:", JSON.stringify(params, null, 2));
@@ -203,7 +216,23 @@ export const getHotels = async (
 
         if (response.data.statusCode === 200 && response.data.data) {
             const paginatedData = response.data.data;
+            
+            // Debug: Log raw response để kiểm tra partner info
+            console.log(`[hotelService] Raw response sample (first hotel):`, paginatedData.content[0] ? {
+                id: paginatedData.content[0].id,
+                name: paginatedData.content[0].name,
+                partner: paginatedData.content[0].partner,
+                partnerId: (paginatedData.content[0] as any).partnerId,
+            } : 'No hotels');
+            
             const hotels = paginatedData.content.map(mapHotelResponseToHotel);
+            
+            // Debug: Log mapped hotels với ownerId
+            console.log(`[hotelService] Mapped hotels with ownerId:`, hotels.map(h => ({
+                id: h.id,
+                name: h.name,
+                ownerId: h.ownerId
+            })));
 
             console.log(`[hotelService] Fetched ${hotels.length} hotels (page ${page + 1}/${paginatedData.totalPages})`);
 
@@ -228,18 +257,48 @@ export const getHotels = async (
 };
 
 /**
- * Lấy một khách sạn theo ID
+ * Interface cho HotelDetailsResponse (có partner đầy đủ)
+ * Partner là UserBriefResponse từ backend: { id, email, fullName, role }
+ */
+interface HotelDetailsResponse extends HotelResponse {
+    partner?: { 
+        id: string; 
+        fullName: string;  // Backend dùng fullName
+        email: string;
+        role?: { id: string; name: string; };
+    };
+}
+
+/**
+ * Lấy một khách sạn theo ID (detail API - có partner info)
  */
 export const getHotelById = async (id: string): Promise<Hotel | null> => {
     try {
-        console.log(`[hotelService] Fetching hotel with id: ${id}`);
+        console.log(`[hotelService] Fetching hotel detail with id: ${id}`);
 
-        const response = await apiClient.get<ApiResponse<HotelResponse>>(
+        const response = await apiClient.get<ApiResponse<HotelDetailsResponse>>(
             `${baseURL}/${id}`
         );
 
         if (response.data.statusCode === 200 && response.data.data) {
-            return mapHotelResponseToHotel(response.data.data);
+            const detailData = response.data.data;
+            
+            // Debug: Log partner info từ detail API
+            console.log(`[hotelService] Hotel detail ${id} - partner info:`, {
+                partner: detailData.partner,
+                partnerId: detailData.partner?.id,
+                partnerFullName: detailData.partner?.fullName,
+                partnerEmail: detailData.partner?.email,
+            });
+            
+            // Map hotel với partner info
+            const mappedHotel = mapHotelResponseToHotel(detailData);
+            
+            // Nếu có partner trong detail response, lưu vào hotel object (tạm thời dùng ownerId để lưu)
+            // Hoặc có thể extend Hotel type để có partnerInfo
+            console.log(`[hotelService] Mapped hotel with ownerId: ${mappedHotel.ownerId}`);
+            
+            return mappedHotel;
         }
 
         return null;
@@ -420,10 +479,19 @@ export const createHotelServer = async (payload: CreateHotelPayload): Promise<Ho
             requestMethod: error.config?.method,
         });
 
-        const errorMessage = error.response?.data?.message
-            || error.response?.data?.error
-            || error.message
-            || 'Không thể tạo khách sạn';
+        // Xử lý các lỗi cụ thể
+        let errorMessage = 'Không thể tạo khách sạn';
+        
+        if (error.response?.status === 409) {
+            errorMessage = 'Khách sạn với tên này đã tồn tại. Vui lòng chọn tên khác.';
+        } else if (error.response?.data?.message) {
+            errorMessage = error.response.data.message;
+        } else if (error.response?.data?.error) {
+            errorMessage = error.response.data.error;
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
         throw new Error(errorMessage);
     }
 };

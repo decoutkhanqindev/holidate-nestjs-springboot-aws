@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Review } from '@/types';
+import { getRoomById } from '@/lib/AdminAPI/roomService';
 
 interface ReviewsTableProps {
     reviews: Review[];
@@ -31,10 +32,10 @@ function PhotoGallery({ photos }: { photos: Array<{ id: string; url: string }> }
                     <span className="text-xs text-gray-500">+{photos.length - 3}</span>
                 )}
             </div>
-            
+
             {/* Modal xem ảnh */}
             {selectedPhoto && (
-                <div 
+                <div
                     className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4"
                     onClick={() => setSelectedPhoto(null)}
                 >
@@ -88,15 +89,78 @@ function StarRating({ score }: { score: number }) {
     const emptyStars = 10 - fullStars - (hasHalfStar ? 1 : 0);
 
     return (
-        <div className="flex items-center gap-1">
-            {Array.from({ length: fullStars }).map((_, i) => (
-                <span key={i} className="text-yellow-400 text-lg">★</span>
-            ))}
-            {hasHalfStar && <span className="text-yellow-400 text-lg">☆</span>}
-            {Array.from({ length: emptyStars }).map((_, i) => (
-                <span key={i} className="text-gray-300 text-lg">★</span>
-            ))}
-            <span className="ml-2 text-sm text-gray-600">({score}/10)</span>
+        <div className="flex items-center justify-center gap-1 flex-wrap">
+            <div className="flex items-center gap-0.5">
+                {Array.from({ length: fullStars }).map((_, i) => (
+                    <span key={i} className="text-yellow-400 text-base">★</span>
+                ))}
+                {hasHalfStar && <span className="text-yellow-400 text-base">☆</span>}
+                {Array.from({ length: emptyStars }).map((_, i) => (
+                    <span key={i} className="text-gray-300 text-base">★</span>
+                ))}
+            </div>
+            <span className="ml-1 text-xs text-gray-600 whitespace-nowrap">({score}/10)</span>
+        </div>
+    );
+}
+
+// Component để hiển thị ảnh phòng
+function RoomImageDisplay({ roomId, roomName }: { roomId: string; roomName: string }) {
+    const [roomImage, setRoomImage] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchRoomImage = async () => {
+            try {
+                const roomData = await getRoomById(roomId);
+                if (roomData && roomData.photos) {
+                    // Lấy ảnh đầu tiên từ photos array
+                    // photos có cấu trúc: photos[].photos[].url
+                    for (const photoCategory of roomData.photos) {
+                        if (photoCategory.photos && photoCategory.photos.length > 0) {
+                            const firstPhoto = photoCategory.photos[0]?.url;
+                            if (firstPhoto) {
+                                setRoomImage(firstPhoto);
+                                break;
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('[RoomImageDisplay] Error fetching room image:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (roomId) {
+            fetchRoomImage();
+        } else {
+            setIsLoading(false);
+        }
+    }, [roomId]);
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-16 w-20 bg-gray-100 rounded-md">
+                <span className="text-xs text-gray-400">Đang tải...</span>
+            </div>
+        );
+    }
+
+    if (roomImage) {
+        return (
+            <img
+                src={roomImage}
+                alt={roomName !== 'N/A' ? roomName : 'Phòng'}
+                className="h-16 w-20 object-cover rounded-md border border-gray-200 mx-auto"
+            />
+        );
+    }
+
+    return (
+        <div className="flex items-center justify-center h-16 w-20 bg-gray-100 rounded-md border border-gray-200 mx-auto">
+            <span className="text-xs text-gray-400 text-center px-1">Chưa có ảnh</span>
         </div>
     );
 }
@@ -108,73 +172,64 @@ export default function ReviewsTable({ reviews }: ReviewsTableProps) {
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">STT</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Người đánh giá</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khách sạn</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phòng</th>
-                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Điểm đánh giá</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bình luận</th>
-                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ảnh</th>
-                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tạo</th>
+                            <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">STT</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ width: '180px' }}>NGƯỜI ĐÁNH GIÁ</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ width: '180px' }}>KHÁCH SẠN</th>
+                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ width: '120px' }}>PHÒNG</th>
+                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ width: '180px' }}>ĐIỂM ĐÁNH GIÁ</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ width: '200px' }}>BÌNH LUẬN</th>
+                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ width: '120px' }}>ẢNH</th>
+                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ width: '120px' }}>NGÀY TẠO</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {reviews.map((review, index) => (
                             <tr key={review.id} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">{index + 1}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">
+                                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 text-center">{index + 1}</td>
+                                <td className="px-4 py-4 whitespace-nowrap">
                                     <div className="flex items-center">
                                         {review.userAvatar && (
-                                            <img 
-                                                src={review.userAvatar} 
+                                            <img
+                                                src={review.userAvatar}
                                                 alt={review.userName}
-                                                className="h-10 w-10 rounded-full mr-3"
+                                                className="h-10 w-10 rounded-full mr-3 flex-shrink-0"
                                             />
                                         )}
-                                        <div>
-                                            <div className="text-sm font-medium text-gray-900">{review.userName}</div>
-                                            {review.userId && (
-                                                <div className="text-sm text-gray-500">{review.userId}</div>
-                                            )}
+                                        <div className="text-sm font-medium text-gray-900 truncate">
+                                            {review.userName}
                                         </div>
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                    <div className="font-medium text-gray-900">
+                                <td className="px-4 py-4 whitespace-nowrap text-sm">
+                                    <div className="font-medium text-gray-900 truncate">
                                         {review.hotelName !== 'N/A' ? review.hotelName : (
                                             <span className="text-gray-400 italic">Chưa có thông tin</span>
                                         )}
                                     </div>
-                                    {review.hotelId && review.hotelId !== '' && (
-                                        <div className="text-xs text-gray-500">ID: {review.hotelId.substring(0, 8)}...</div>
+                                </td>
+                                <td className="px-4 py-4 whitespace-nowrap text-center">
+                                    {review.roomId && review.roomId !== '' ? (
+                                        <RoomImageDisplay roomId={review.roomId} roomName={review.roomName} />
+                                    ) : (
+                                        <span className="text-gray-400 italic text-sm">Chưa có thông tin</span>
                                     )}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                    <div className="font-medium text-gray-700">
-                                        {review.roomName !== 'N/A' ? review.roomName : (
-                                            <span className="text-gray-400 italic">Chưa có thông tin</span>
-                                        )}
-                                    </div>
-                                    {review.roomId && review.roomId !== '' && (
-                                        <div className="text-xs text-gray-500">ID: {review.roomId.substring(0, 8)}...</div>
-                                    )}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
+                                <td className="px-4 py-4 whitespace-nowrap text-center">
                                     <StarRating score={review.score} />
                                 </td>
-                                <td className="px-6 py-4 text-sm text-gray-700 max-w-xs">
+                                <td className="px-4 py-4 text-sm text-gray-700">
                                     <div className="truncate" title={review.comment || 'Không có bình luận'}>
                                         {review.comment || <span className="text-gray-400 italic">Không có bình luận</span>}
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                <td className="px-4 py-4 whitespace-nowrap text-center text-sm">
                                     {review.photos && review.photos.length > 0 ? (
                                         <PhotoGallery photos={review.photos} />
                                     ) : (
                                         <span className="text-gray-400">-</span>
                                     )}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">
+                                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 text-center">
                                     {review.createdAt.toLocaleDateString('vi-VN')}
                                 </td>
                             </tr>
