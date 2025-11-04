@@ -8,7 +8,8 @@ const baseURL = '/accommodation/rooms';
 // Interface từ API response (theo cấu trúc thực tế từ API)
 interface RoomResponse {
     id: string;
-    hotelId?: string; // Có thể không có trong response
+    hotelId?: string; // Có thể không có trong response (deprecated, dùng hotel.id)
+    hotel?: { id: string; name: string }; // RoomDetailsResponse có hotel object
     name: string;
     view: string;
     area: number;
@@ -100,10 +101,39 @@ function mapRoomResponseToRoom(response: RoomResponse): Room {
     }
     console.log("[mapRoomResponseToRoom] Flat amenities count:", flatAmenities.length);
 
-    // Xử lý quantity - dùng totalRooms nếu có, nếu không thì dùng quantity
-    const quantity = response.totalRooms || response.quantity || 0;
-    console.log("[mapRoomResponseToRoom] Quantity (totalRooms):", quantity);
+    // Xử lý quantity - Backend trả về totalRooms (từ room.getQuantity())
+    // RoomResponse (list) chỉ có totalRooms, không có quantity field
+    // Nếu có quantity (từ RoomDetailsResponse), dùng nó, nếu không dùng totalRooms
+    const quantity = response.quantity !== undefined && response.quantity !== null
+        ? response.quantity
+        : (response.totalRooms !== undefined && response.totalRooms !== null
+            ? response.totalRooms
+            : 0);
+    console.log("[mapRoomResponseToRoom] Quantity mapping:", {
+        hasQuantity: response.quantity !== undefined,
+        quantity: response.quantity,
+        hasTotalRooms: response.totalRooms !== undefined,
+        totalRooms: response.totalRooms,
+        finalQuantity: quantity
+    });
     console.log("[mapRoomResponseToRoom] AvailableRooms:", response.availableRooms);
+
+    // Map status từ backend (lowercase: active, inactive, maintenance, closed) sang frontend (uppercase)
+    const statusMap: Record<string, Room['status']> = {
+        'active': 'AVAILABLE',
+        'inactive': 'INACTIVE',
+        'maintenance': 'MAINTENANCE',
+        'closed': 'CLOSED',
+        'occupied': 'OCCUPIED',
+        // Fallback cho uppercase values
+        'AVAILABLE': 'AVAILABLE',
+        'INACTIVE': 'INACTIVE',
+        'MAINTENANCE': 'MAINTENANCE',
+        'CLOSED': 'CLOSED',
+        'OCCUPIED': 'OCCUPIED'
+    };
+    const rawStatus = response.status || 'active';
+    const mappedStatus = statusMap[rawStatus] || 'AVAILABLE';
 
     return {
         id: response.id,
@@ -111,7 +141,7 @@ function mapRoomResponseToRoom(response: RoomResponse): Room {
         name: response.name,
         type: response.view || '',
         price: response.basePricePerNight,
-        status: (response.status || 'AVAILABLE').toUpperCase() as Room['status'],
+        status: mappedStatus,
         image: imageUrl,
         images: images,
         quantity: quantity, // Tổng số phòng
@@ -163,23 +193,34 @@ export const getRoomsByHotelId = async (
 
         console.log("[roomService] Request params:", JSON.stringify(params, null, 2));
 
+        // Thêm timestamp để bypass cache (nếu có)
         const response = await apiClient.get<ApiResponse<PaginatedRoomResponse>>(
             baseURL,
             {
-                params
+                params: {
+                    ...params,
+                    _t: Date.now() // Cache buster
+                }
             }
         );
 
         if (response.data.statusCode === 200 && response.data.data) {
-            console.log("[roomService] Raw API response:", JSON.stringify(response.data.data.content[0], null, 2));
+            console.log("[roomService] Raw API response (first room):", JSON.stringify(response.data.data.content[0], null, 2));
+            console.log("[roomService] Raw quantity/totalRooms in response:", response.data.data.content.map((r: any) => ({
+                id: r.id,
+                name: r.name,
+                quantity: r.quantity,
+                totalRooms: r.totalRooms,
+                availableRooms: r.availableRooms
+            })));
             const rooms = response.data.data.content.map(mapRoomResponseToRoom);
             console.log("[roomService] Mapped rooms count:", rooms.length);
-            console.log("[roomService] Sample mapped room:", rooms[0] ? {
-                id: rooms[0].id,
-                name: rooms[0].name,
-                image: rooms[0].image,
-                imagesCount: rooms[0].images?.length || 0
-            } : 'No rooms');
+            console.log("[roomService] Mapped rooms quantity:", rooms.map(r => ({
+                id: r.id,
+                name: r.name,
+                quantity: r.quantity,
+                availableQuantity: r.availableQuantity
+            })));
             return {
                 rooms,
                 page: response.data.data.page,
@@ -252,6 +293,7 @@ export interface CreateRoomPayload {
     wifiAvailable?: boolean;
     breakfastIncluded?: boolean;
     quantity: number;
+    status?: string; // Status cho room (active, inactive, maintenance, closed)
     amenityIds: string[];
 }
 
@@ -347,6 +389,10 @@ export const createRoomServer = async (payload: CreateRoomPayload): Promise<Room
         formData.append('basePricePerNight', payload.basePricePerNight.toString());
         formData.append('bedTypeId', payload.bedTypeId);
         formData.append('quantity', payload.quantity.toString());
+
+        if (payload.status) {
+            formData.append('status', payload.status);
+        }
 
         // Boolean fields - gửi dưới dạng string "true"/"false" hoặc boolean
         // Backend có thể expect cả hai, nên thử gửi boolean trước
@@ -451,9 +497,12 @@ export const createRoomServer = async (payload: CreateRoomPayload): Promise<Room
 
         // Sử dụng axios.post() thay vì request() để đảm bảo method POST
         // Axios sẽ tự động xử lý FormData và set Content-Type với boundary
+        const fullUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}${url}`;
         console.log("[roomService] ===== SENDING REQUEST NOW =====");
         console.log("[roomService] About to call serverClient.post() with:");
         console.log("  - URL:", url);
+        console.log("  - Full URL:", fullUrl);
+        console.log("  - Method: POST (explicit)");
         console.log("  - FormData:", formData instanceof FormData ? "FormData instance" : typeof formData);
         console.log("  - FormData entries count:", Array.from(formData.entries()).length);
 
@@ -462,6 +511,8 @@ export const createRoomServer = async (payload: CreateRoomPayload): Promise<Room
             formData,
             {
                 // Không set Content-Type - axios sẽ tự động set với boundary cho FormData
+                // Explicitly set method để đảm bảo
+                method: 'POST',
                 headers: {
                     // Axios sẽ tự động set Content-Type: multipart/form-data; boundary=...
                 }
@@ -503,47 +554,78 @@ export const createRoomServer = async (payload: CreateRoomPayload): Promise<Room
         }
 
         // Kiểm tra response structure - Backend có thể trả về format khác
+        // QUAN TRỌNG: Backend có thể trả về HTTP 200 nhưng statusCode trong body != 200 (lỗi business logic)
+        const responseData = response.data as any;
+
+        // Kiểm tra statusCode trong response body (backend dùng ApiResponse với statusCode)
+        if (responseData?.statusCode && responseData.statusCode !== 200 && responseData.statusCode !== 201) {
+            console.error("[roomService] ⚠️ Backend returned error statusCode:", responseData.statusCode);
+            console.error("[roomService] Error message:", responseData.message);
+            throw new Error(responseData.message || 'Lỗi từ server');
+        }
+
         if (response.status === 200 || response.status === 201) {
             // Kiểm tra các format response khả dĩ
             let roomData: RoomResponse | null = null;
-            const responseData = response.data as any; // Dùng any để check structure linh hoạt
+
+            console.log("[roomService] ===== PARSING RESPONSE DATA =====");
+            console.log("[roomService] Response status:", response.status);
+            console.log("[roomService] Response data type:", typeof responseData);
+            console.log("[roomService] Response data keys:", responseData ? Object.keys(responseData) : 'null');
+            console.log("[roomService] Full response data:", JSON.stringify(responseData, null, 2));
 
             // Format 1: { statusCode: 200, message: "", data: {...} }
             if (responseData?.statusCode === 200 && responseData?.data) {
+                console.log("[roomService] Format 1: Standard ApiResponse with data");
                 roomData = responseData.data as RoomResponse;
             }
             // Format 2: { statusCode: 200, message: "", data: null } nhưng data thực tế ở root
-            else if (responseData?.statusCode === 200 && (responseData?.data === null || responseData?.data === undefined) && responseData?.id) {
-                roomData = responseData as RoomResponse;
+            else if (responseData?.statusCode === 200 && (responseData?.data === null || responseData?.data === undefined)) {
+                console.log("[roomService] Format 2: ApiResponse with data=null, checking root level");
+                if (responseData?.id) {
+                    console.log("[roomService] Found id at root level, using root as roomData");
+                    roomData = responseData as RoomResponse;
+                } else {
+                    console.error("[roomService] Format 2: data is null and no id at root level");
+                }
             }
             // Format 3: Data ở root level (không có wrapper)
             else if (responseData?.id && !responseData?.statusCode) {
+                console.log("[roomService] Format 3: Data at root level (no wrapper)");
                 roomData = responseData as RoomResponse;
             }
             // Format 4: HTTP 200/201 nhưng structure khác
             else if (responseData && typeof responseData === 'object') {
-                console.log("[roomService] Unexpected response structure, attempting to parse:", responseData);
+                console.log("[roomService] Format 4: Unexpected structure, attempting to parse");
                 // Thử lấy data từ bất kỳ đâu trong response
                 roomData = responseData.data || responseData;
                 // Kiểm tra xem có phải RoomResponse không
                 if (roomData && typeof roomData === 'object' && !roomData.id) {
+                    console.error("[roomService] Format 4: Parsed data has no id field");
                     roomData = null;
                 }
             }
 
             if (roomData && roomData.id) {
-                console.log(`[roomService] Room created successfully (server): ${roomData.id}`);
+                console.log(`[roomService] ✅ Room created successfully (server): ${roomData.id}`);
                 return roomData as RoomResponse;
             } else {
-                console.error("[roomService] Response has status 200 but no valid room data:", {
+                console.error("[roomService] ❌ Response has status 200 but no valid room data:", {
                     statusCode: responseData?.statusCode,
                     hasData: !!responseData?.data,
                     dataType: typeof responseData?.data,
                     dataValue: responseData?.data,
+                    dataIsNull: responseData?.data === null,
+                    dataIsUndefined: responseData?.data === undefined,
+                    hasIdAtRoot: !!responseData?.id,
                     responseKeys: responseData ? Object.keys(responseData) : [],
                     responseData: responseData,
                 });
-                throw new Error(responseData?.message || 'Server returned success but no valid room data');
+
+                // Thử lấy message từ response
+                const errorMessage = responseData?.message
+                    || (responseData?.data === null ? 'Backend trả về data: null - có thể có lỗi trong quá trình tạo phòng' : 'Server returned success but no valid room data');
+                throw new Error(errorMessage);
             }
         }
 
@@ -569,8 +651,24 @@ export const createRoomServer = async (payload: CreateRoomPayload): Promise<Room
             url: error.config?.url,
             method: error.config?.method,
             baseURL: error.config?.baseURL,
+            fullURL: error.config?.baseURL ? `${error.config.baseURL}${error.config.url}` : error.config?.url,
             headers: error.config?.headers,
         });
+
+        // Log chi tiết hơn về 405 error
+        if (error.response?.status === 405) {
+            console.error("[roomService] ===== 405 METHOD NOT ALLOWED DETAILS =====");
+            console.error("[roomService] Requested URL:", error.config?.baseURL ? `${error.config.baseURL}${error.config.url}` : error.config?.url);
+            console.error("[roomService] Request Method:", error.config?.method);
+            console.error("[roomService] Backend may not support this endpoint or method");
+            console.error("[roomService] Expected endpoint: POST /accommodation/rooms");
+            console.error("[roomService] Please verify:");
+            console.error("  1. Backend has been rebuilt and restarted");
+            console.error("  2. @PostMapping annotation is correct in RoomController");
+            console.error("  3. SecurityConfig allows POST to /accommodation/rooms");
+            console.error("  4. No path conflicts (e.g., GET /accommodation/rooms vs POST /accommodation/rooms)");
+            console.error("=".repeat(80));
+        }
 
         // Log FormData nếu có trong error config
         if (error.config?.data instanceof FormData) {
@@ -598,20 +696,46 @@ export const createRoomServer = async (payload: CreateRoomPayload): Promise<Room
         // Trích xuất thông điệp lỗi chi tiết hơn
         let errorMessage = 'Không thể tạo phòng';
 
-        if (error.response?.data) {
-            errorMessage = error.response.data.message
-                || error.response.data.error
-                || JSON.stringify(error.response.data);
+        // Kiểm tra status code cụ thể
+        if (error.response?.status === 405) {
+            errorMessage = 'Method Not Allowed - Backend có thể không chấp nhận request này. Vui lòng kiểm tra backend configuration.';
+            console.error('[roomService] ⚠️ 405 Method Not Allowed - Backend endpoint có thể không đúng');
+            console.error('[roomService] Expected: POST /accommodation/rooms');
+            console.error('[roomService] Backend @PostMapping có thể sai cú pháp (thiếu consumes = MediaType.MULTIPART_FORM_DATA_VALUE)');
+        } else if (error.response?.status === 401 || error.response?.status === 403) {
+            errorMessage = 'Không có quyền truy cập. Vui lòng đăng nhập lại.';
+        } else if (error.response?.data) {
+            // Kiểm tra xem response có phải HTML không (redirect/error page)
+            const contentType = error.response.headers?.['content-type'] || error.response.headers?.['Content-Type'] || '';
+            const responseData = error.response.data;
+            const isHtml = typeof responseData === 'string' && (
+                contentType.includes('text/html') ||
+                responseData.trim().toLowerCase().startsWith('<!doctype') ||
+                responseData.trim().toLowerCase().startsWith('<html')
+            );
+
+            if (isHtml) {
+                errorMessage = 'Backend trả về HTML thay vì JSON - có thể là redirect/error page. Vui lòng kiểm tra authentication.';
+                console.error('[roomService] ⚠️ Received HTML response:', responseData.substring(0, 500));
+            } else if (typeof responseData === 'object') {
+                errorMessage = responseData.message
+                    || responseData.error
+                    || error.response.statusText
+                    || 'Lỗi từ server';
+            } else {
+                errorMessage = String(responseData) || error.response.statusText || 'Lỗi không xác định';
+            }
         } else if (error.message) {
             errorMessage = error.message;
         }
 
+        console.error('[roomService] Final error message:', errorMessage);
         throw new Error(errorMessage);
     }
 };
 
 /**
- * Cập nhật phòng
+ * Cập nhật phòng - Client version (dùng apiClient với token từ localStorage)
  */
 export const updateRoom = async (
     roomId: string,
@@ -633,6 +757,8 @@ export const updateRoom = async (
         }
         if (payload.bedTypeId) formData.append('bedTypeId', payload.bedTypeId);
         if (payload.quantity !== undefined) formData.append('quantity', payload.quantity.toString());
+
+        if (payload.status) formData.append('status', payload.status);
 
         if (payload.smokingAllowed !== undefined) {
             formData.append('smokingAllowed', payload.smokingAllowed.toString());
@@ -673,6 +799,136 @@ export const updateRoom = async (
         throw new Error('Invalid response from server');
     } catch (error: any) {
         console.error(`[roomService] Error updating room ${roomId}:`, error);
+        const errorMessage = error.response?.data?.message
+            || error.message
+            || 'Không thể cập nhật phòng';
+        throw new Error(errorMessage);
+    }
+};
+
+/**
+ * Update room - Server version (dùng serverApiClient với token từ cookies)
+ * Dùng trong server actions
+ */
+export const updateRoomServer = async (
+    roomId: string,
+    payload: Partial<CreateRoomPayload>
+): Promise<RoomResponse> => {
+    try {
+        console.log(`[roomService] Updating room ${roomId} (server)`, {
+            ...payload,
+            photos: payload.photos ? `[${payload.photos.length} files]` : undefined,
+        });
+
+        const serverClient = await createServerApiClient();
+
+        const formData = new FormData();
+
+        if (payload.hotelId) formData.append('hotelId', payload.hotelId);
+        if (payload.name) formData.append('name', payload.name);
+        if (payload.view) formData.append('view', payload.view);
+        if (payload.area !== undefined) formData.append('area', payload.area.toString());
+        if (payload.maxAdults !== undefined) formData.append('maxAdults', payload.maxAdults.toString());
+        if (payload.maxChildren !== undefined) formData.append('maxChildren', payload.maxChildren.toString());
+        if (payload.basePricePerNight !== undefined) {
+            formData.append('basePricePerNight', payload.basePricePerNight.toString());
+        }
+        if (payload.bedTypeId) formData.append('bedTypeId', payload.bedTypeId);
+        if (payload.quantity !== undefined) formData.append('quantity', payload.quantity.toString());
+
+        if (payload.status) formData.append('status', payload.status);
+
+        if (payload.smokingAllowed !== undefined) {
+            formData.append('smokingAllowed', String(payload.smokingAllowed));
+        }
+        if (payload.wifiAvailable !== undefined) {
+            formData.append('wifiAvailable', String(payload.wifiAvailable));
+        }
+        if (payload.breakfastIncluded !== undefined) {
+            formData.append('breakfastIncluded', String(payload.breakfastIncluded));
+        }
+
+        // Handle photos - tương tự createRoomServer
+        if (payload.photos && payload.photos.length > 0) {
+            // Fetch photo category ID
+            let photoCategoryId: string | null = null;
+            try {
+                const { getPhotoCategoriesServer } = await import('./photoCategoryService');
+                const categories = await getPhotoCategoriesServer();
+                const roomCategory = categories.find(cat =>
+                    cat.name.toLowerCase().includes('phòng') ||
+                    cat.name.toLowerCase().includes('room') ||
+                    cat.name.toLowerCase() === 'phòng'
+                );
+                if (roomCategory) {
+                    photoCategoryId = roomCategory.id;
+                } else if (categories.length > 0) {
+                    photoCategoryId = categories[0].id;
+                }
+            } catch (error) {
+                console.error('[roomService] Error fetching photo categories:', error);
+            }
+
+            // Append photos theo format backend mong đợi
+            payload.photos.forEach((photo, index) => {
+                formData.append(`photos[0].files[${index}]`, photo);
+            });
+
+            if (photoCategoryId) {
+                formData.append('photos[0].categoryId', photoCategoryId);
+            }
+        }
+
+        // Append amenityIds
+        if (payload.amenityIds && payload.amenityIds.length > 0) {
+            payload.amenityIds.forEach((amenityId) => {
+                formData.append('amenityIds', amenityId);
+            });
+        }
+
+        const url = `${baseURL}/${roomId}`;
+        console.log(`[roomService] Updating room at: PUT ${url}`);
+
+        const response = await serverClient.put<ApiResponse<RoomResponse>>(
+            url,
+            formData,
+            {
+                method: 'PUT',
+                headers: {
+                    // Axios sẽ tự động set Content-Type với boundary cho FormData
+                }
+            }
+        );
+
+        if (response.status === 200 || response.status === 201) {
+            const responseData = response.data as any;
+
+            if (responseData?.statusCode && responseData.statusCode !== 200 && responseData.statusCode !== 201) {
+                throw new Error(responseData.message || 'Lỗi từ server');
+            }
+
+            if (responseData?.statusCode === 200 && responseData?.data) {
+                const updatedRoom = responseData.data as RoomResponse;
+                console.log(`[roomService] ✅ Room updated successfully (server): ${updatedRoom.id}`);
+                console.log(`[roomService] Updated room quantity:`, {
+                    quantity: updatedRoom.quantity,
+                    totalRooms: updatedRoom.totalRooms,
+                    availableRooms: updatedRoom.availableRooms
+                });
+                return updatedRoom;
+            }
+
+            // Fallback: check if data is at root level
+            if (responseData?.id) {
+                return responseData as RoomResponse;
+            }
+
+            throw new Error('Invalid response from server');
+        }
+
+        throw new Error(`Invalid response status: ${response.status}`);
+    } catch (error: any) {
+        console.error(`[roomService] Error updating room ${roomId} (server):`, error);
         const errorMessage = error.response?.data?.message
             || error.message
             || 'Không thể cập nhật phòng';

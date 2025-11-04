@@ -28,7 +28,7 @@ export interface Discount {
     active?: boolean; // Trạng thái hoạt động
     createdAt: Date;
 }
-export type RoomStatus = 'AVAILABLE' | 'OCCUPIED' | 'MAINTENANCE';
+export type RoomStatus = 'AVAILABLE' | 'OCCUPIED' | 'MAINTENANCE' | 'INACTIVE' | 'CLOSED';
 
 export interface Room {
     id: string;
@@ -93,4 +93,21 @@ export interface HotelAdmin {
     };
     status: 'ACTIVE' | 'INACTIVE';
     createdAt: Date;
+}
+
+export interface Review {
+    id: string;
+    userId: string;
+    userName: string;
+    userAvatar?: string;
+    hotelId: string;
+    hotelName: string;
+    roomId: string;
+    roomName: string;
+    bookingId: string;
+    score: number; // 1-10
+    comment?: string;
+    photos?: Array<{ id: string; url: string }>;
+    createdAt: Date;
+    updatedAt?: Date;
 }

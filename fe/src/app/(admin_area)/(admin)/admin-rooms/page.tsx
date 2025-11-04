@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { PlusIcon } from '@heroicons/react/24/solid';
 import { Hotel } from "@/types";
 import { getHotels } from "@/lib/AdminAPI/hotelService";
@@ -22,6 +23,7 @@ function PageHeader({ title, children }: { title: React.ReactNode, children?: Re
 
 export default function ManageRoomsPage() {
     const { effectiveUser } = useAuth();
+    const searchParams = useSearchParams();
     const [hotels, setHotels] = useState<Hotel[]>([]);
     const [selectedHotelId, setSelectedHotelId] = useState<string>('');
     const [roomsData, setRoomsData] = useState<PaginatedRoomsResult | null>(null);
@@ -32,6 +34,9 @@ export default function ManageRoomsPage() {
     // Track filter values để tránh fetch lại không cần thiết
     const [lastFilterCityId, setLastFilterCityId] = useState<string>('');
     const [lastFilterProvinceId, setLastFilterProvinceId] = useState<string>('');
+    
+    // Ref để track lần fetch cuối cùng - dùng để force refresh khi quay lại từ edit
+    const lastFetchTimestamp = useRef<number>(0);
 
     // State cho location filter
     const [provinces, setProvinces] = useState<LocationOption[]>([]);
@@ -162,11 +167,38 @@ export default function ManageRoomsPage() {
     useEffect(() => {
         if (!selectedHotelId) return;
 
+        // Kiểm tra nếu có query param refresh=1 (từ edit page redirect)
+        const shouldRefresh = searchParams.get('refresh') === '1';
+        const now = Date.now();
+        
+        // Nếu có refresh param hoặc đã quá 5 giây từ lần fetch cuối, force refresh
+        if (shouldRefresh || (now - lastFetchTimestamp.current) > 5000) {
+            console.log("[ManageRoomsPage] Force refreshing rooms data", { shouldRefresh, timeSinceLastFetch: now - lastFetchTimestamp.current });
+        }
+
         const fetchRooms = async () => {
             try {
                 setIsLoadingRooms(true);
+                console.log("[ManageRoomsPage] Fetching rooms for hotel:", selectedHotelId, "page:", currentPage, "refresh:", shouldRefresh);
                 const data = await getRoomsByHotelId(selectedHotelId, currentPage, 10);
+                console.log("[ManageRoomsPage] Received rooms data:", {
+                    totalRooms: data.rooms.length,
+                    sampleRoom: data.rooms[0] ? {
+                        id: data.rooms[0].id,
+                        name: data.rooms[0].name,
+                        quantity: data.rooms[0].quantity,
+                        availableQuantity: data.rooms[0].availableQuantity
+                    } : null
+                });
                 setRoomsData(data);
+                lastFetchTimestamp.current = Date.now();
+                
+                // Xóa refresh param sau khi đã refresh
+                if (shouldRefresh) {
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete('refresh');
+                    window.history.replaceState({}, '', url.toString());
+                }
             } catch (error) {
                 console.error("[ManageRoomsPage] Error fetching rooms:", error);
             } finally {
@@ -174,7 +206,7 @@ export default function ManageRoomsPage() {
             }
         };
         fetchRooms();
-    }, [selectedHotelId, currentPage]);
+    }, [selectedHotelId, currentPage, searchParams]);
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
@@ -304,6 +336,22 @@ export default function ManageRoomsPage() {
                                 totalPages={roomsData.totalPages}
                                 totalItems={roomsData.totalItems}
                                 onPageChange={handlePageChange}
+                                onRefresh={() => {
+                                    // Force refresh rooms data
+                                    const fetchRooms = async () => {
+                                        try {
+                                            setIsLoadingRooms(true);
+                                            const data = await getRoomsByHotelId(selectedHotelId, currentPage, 10);
+                                            setRoomsData(data);
+                                            lastFetchTimestamp.current = Date.now();
+                                        } catch (error) {
+                                            console.error("[ManageRoomsPage] Error refreshing rooms:", error);
+                                        } finally {
+                                            setIsLoadingRooms(false);
+                                        }
+                                    };
+                                    fetchRooms();
+                                }}
                             />
                         ) : (
                             <div className="text-center py-8 text-gray-500">Không có phòng nào</div>

@@ -40,11 +40,21 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
     // State cho amenities, categories và bed types
     const [amenities, setAmenities] = useState<Amenity[]>([]);
     const [amenityCategories, setAmenityCategories] = useState<AmenityCategory[]>([]);
-    const [bedTypeName, setBedTypeName] = useState<string>(room?.bedType?.name || '');
+    const [bedTypeName, setBedTypeName] = useState<string>('');
+
+    // Load bedTypeName khi room data thay đổi
+    useEffect(() => {
+        if (room?.bedType?.name) {
+            setBedTypeName(room.bedType.name);
+        }
+    }, [room?.bedType?.name]);
     const [isLoadingAmenities, setIsLoadingAmenities] = useState(false);
 
     // State cho selected amenities (dạng multi-select dropdown)
-    const [selectedAmenityIds, setSelectedAmenityIds] = useState<string[]>([]);
+    // Nếu đang edit, load amenities hiện có của phòng
+    const [selectedAmenityIds, setSelectedAmenityIds] = useState<string[]>(
+        room?.amenities?.map((a: { id: string; name: string }) => a.id) || []
+    );
     const [amenitySearchQuery, setAmenitySearchQuery] = useState('');
     const [showAmenityDropdown, setShowAmenityDropdown] = useState(false);
 
@@ -63,7 +73,10 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
     ];
 
     // State cho preview images
-    const [previewImages, setPreviewImages] = useState<string[]>([]);
+    // Nếu đang edit, load ảnh hiện có của phòng
+    const [previewImages, setPreviewImages] = useState<string[]>(
+        room?.images && room.images.length > 0 ? room.images : []
+    );
     const [imageFiles, setImageFiles] = useState<File[]>([]);
 
     // State cho modal thêm amenity mới
@@ -314,8 +327,8 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
     return (
         <div className="bg-white rounded-lg shadow-md mt-4">
             <form action={formAction} onSubmit={handleFormSubmit} className="p-8 space-y-8">
-                {/* Hidden field cho hotelId */}
-                <input type="hidden" name="hotelId" value={hotelId} />
+                {/* Hidden field cho hotelId - luôn có để đảm bảo không bị thiếu */}
+                <input type="hidden" name="hotelId" value={hotelId || room?.hotelId || ''} />
 
                 {/* Hidden fields cho selected amenityIds */}
                 {selectedAmenityIds.map((id) => (
@@ -368,7 +381,7 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
                                 required
                                 min="1"
                                 step="0.1"
-                                defaultValue={room?.area || ''}
+                                defaultValue={room?.area ? String(room.area) : ''}
                                 placeholder="VD: 30"
                                 className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                             />
@@ -403,7 +416,7 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
                                 name="maxAdults"
                                 required
                                 min="1"
-                                defaultValue={room?.maxAdults || ''}
+                                defaultValue={room?.maxAdults ? String(room.maxAdults) : ''}
                                 placeholder="VD: 2"
                                 className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                             />
@@ -419,7 +432,7 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
                                 name="maxChildren"
                                 required
                                 min="0"
-                                defaultValue={room?.maxChildren || 0}
+                                defaultValue={room?.maxChildren !== undefined && room?.maxChildren !== null ? String(room.maxChildren) : '0'}
                                 placeholder="VD: 0"
                                 className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                             />
@@ -436,7 +449,7 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
                                 required
                                 min="0"
                                 step="1000"
-                                defaultValue={room?.basePricePerNight || ''}
+                                defaultValue={room?.basePricePerNight ? String(room.basePricePerNight) : ''}
                                 placeholder="VD: 2000000"
                                 className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                             />
@@ -452,7 +465,7 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
                                 name="quantity"
                                 required
                                 min="1"
-                                defaultValue={room?.quantity || ''}
+                                defaultValue={room?.quantity ? String(room.quantity) : ''}
                                 placeholder="VD: 10"
                                 className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                             />
@@ -460,9 +473,38 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
                     </div>
                 </div>
 
-                {/* Section 2: Tùy chọn */}
+                {/* Section 2: Trạng thái */}
                 <div className="space-y-6">
-                    <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">2. Tùy chọn</h3>
+                    <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">2. Trạng thái phòng</h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label htmlFor="status" className="block text-sm font-medium text-gray-700">
+                                Trạng thái *
+                            </label>
+                            <select
+                                id="status"
+                                name="status"
+                                required
+                                defaultValue={room?.status || 'AVAILABLE'}
+                                className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            >
+                                <option value="AVAILABLE">Hoạt động</option>
+                                <option value="MAINTENANCE">Bảo trì</option>
+                                <option value="INACTIVE">Ngưng hoạt động</option>
+                                <option value="CLOSED">Đóng cửa</option>
+                                <option value="OCCUPIED">Đã thuê</option>
+                            </select>
+                            <p className="text-xs text-gray-500 mt-1">
+                                Chọn trạng thái hiện tại của phòng
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Section 3: Tùy chọn */}
+                <div className="space-y-6">
+                    <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">3. Tùy chọn</h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <label className="flex items-center space-x-2 cursor-pointer p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
@@ -500,10 +542,10 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
                     </div>
                 </div>
 
-                {/* Section 3: Tiện ích - Dropdown với search */}
+                {/* Section 4: Tiện ích - Dropdown với search */}
                 <div className="space-y-6">
                     <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 flex-1">3. Tiện ích phòng *</h3>
+                        <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 flex-1">4. Tiện ích phòng *</h3>
                         <button
                             type="button"
                             onClick={() => {
@@ -732,9 +774,9 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
                     )}
                 </div>
 
-                {/* Section 4: Hình ảnh - Upload nhiều ảnh */}
+                {/* Section 5: Hình ảnh - Upload nhiều ảnh */}
                 <div className="space-y-6">
-                    <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">4. Hình ảnh phòng *</h3>
+                    <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">5. Hình ảnh phòng *</h3>
 
                     <div className="space-y-4">
                         <div>

@@ -15,6 +15,7 @@ interface RoomsTableProps {
     totalPages: number;
     totalItems: number;
     onPageChange: (page: number) => void;
+    onRefresh?: () => void; // Callback để refresh data sau khi update status
 }
 
 // Component Pagination
@@ -65,35 +66,113 @@ function Pagination({ currentPage, totalPages, onPageChange }: { currentPage: nu
     );
 }
 
-// Component StatusBadge
-function StatusBadge({ status }: { status: Room['status'] }) {
+// Component StatusDropdown - Cho phép thay đổi status trực tiếp trong bảng
+function StatusDropdown({
+    roomId,
+    currentStatus,
+    onStatusChange
+}: {
+    roomId: string;
+    currentStatus: Room['status'];
+    onStatusChange?: () => void;
+}) {
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [status, setStatus] = useState<Room['status']>(currentStatus);
+
+    // Sync status khi currentStatus thay đổi (từ parent)
+    useEffect(() => {
+        setStatus(currentStatus);
+    }, [currentStatus]);
+
+    // Map status từ frontend sang backend (lowercase)
+    const statusMap: Record<string, string> = {
+        'AVAILABLE': 'active',
+        'MAINTENANCE': 'maintenance',
+        'INACTIVE': 'inactive',
+        'CLOSED': 'closed',
+        'OCCUPIED': 'active' // OCCUPIED không có trong backend, dùng active
+    };
+
     const statusStyles: Record<Room['status'], string> = {
-        AVAILABLE: "bg-green-100 text-green-800",
-        OCCUPIED: "bg-red-100 text-red-800",
-        MAINTENANCE: "bg-yellow-100 text-yellow-800",
+        AVAILABLE: "bg-green-100 text-green-800 border-green-300",
+        OCCUPIED: "bg-red-100 text-red-800 border-red-300",
+        MAINTENANCE: "bg-yellow-100 text-yellow-800 border-yellow-300",
+        INACTIVE: "bg-gray-100 text-gray-800 border-gray-300",
+        CLOSED: "bg-red-100 text-red-800 border-red-300",
     };
-    const statusText: Record<Room['status'], string> = {
-        AVAILABLE: "Trống",
-        OCCUPIED: "Đã thuê",
-        MAINTENANCE: "Bảo trì",
+
+    const handleStatusChange = async (newStatus: Room['status']) => {
+        if (newStatus === status || isUpdating) return;
+
+        setIsUpdating(true);
+        try {
+            // Gọi API update status (dùng client version vì đây là client component)
+            const { updateRoom } = await import('@/lib/AdminAPI/roomService');
+            await updateRoom(roomId, { status: statusMap[newStatus] || newStatus.toLowerCase() });
+
+            setStatus(newStatus);
+
+            // Hiển thị toast notification
+            const { toast } = await import('react-toastify');
+            toast.success('Cập nhật trạng thái thành công!', {
+                position: "top-right",
+                autoClose: 2000,
+            });
+
+            if (onStatusChange) {
+                onStatusChange();
+            }
+        } catch (error: any) {
+            console.error('[StatusDropdown] Error updating status:', error);
+            const { toast } = await import('react-toastify');
+            toast.error('Không thể cập nhật trạng thái: ' + (error.message || 'Lỗi không xác định'), {
+                position: "top-right",
+                autoClose: 3000,
+            });
+            // Revert status nếu có lỗi
+            setStatus(currentStatus);
+        } finally {
+            setIsUpdating(false);
+        }
     };
+
     return (
-        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${statusStyles[status]}`}>
-            {statusText[status]}
-        </span>
+        <select
+            value={status}
+            onChange={(e) => handleStatusChange(e.target.value as Room['status'])}
+            disabled={isUpdating}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-full border-2 cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-offset-1 ${statusStyles[status] || 'bg-gray-100 text-gray-800 border-gray-300'
+                } ${isUpdating ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'}`}
+            style={{
+                appearance: 'none',
+                backgroundImage: isUpdating
+                    ? 'none'
+                    : `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                backgroundPosition: 'right 0.5rem center',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: '1.5em 1.5em',
+                paddingRight: '2.5rem'
+            }}
+        >
+            <option value="AVAILABLE">Hoạt động</option>
+            <option value="MAINTENANCE">Bảo trì</option>
+            <option value="INACTIVE">Ngưng hoạt động</option>
+            <option value="CLOSED">Đóng cửa</option>
+            <option value="OCCUPIED">Đã thuê</option>
+        </select>
     );
 }
 
-export default function RoomsTable({ rooms, hotelId, currentPage, totalPages, totalItems, onPageChange }: RoomsTableProps) {
+export default function RoomsTable({ rooms, hotelId, currentPage, totalPages, totalItems, onPageChange, onRefresh }: RoomsTableProps) {
     const [isPending, startTransition] = useTransition();
     const [inventories, setInventories] = useState<Map<string, RoomInventory>>(new Map());
     const [isLoadingInventories, setIsLoadingInventories] = useState(false);
-    
+
     // State cho image gallery
     const [showImageGallery, setShowImageGallery] = useState(false);
     const [selectedRoomImages, setSelectedRoomImages] = useState<string[]>([]);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    
+
     // State cho amenities dropdown
     const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
     const [selectedRoomAmenities, setSelectedRoomAmenities] = useState<Array<{ id: string; name: string }>>([]);
@@ -239,7 +318,7 @@ export default function RoomsTable({ rooms, hotelId, currentPage, totalPages, to
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         {room.image ? (
-                                            <div 
+                                            <div
                                                 className="flex-shrink-0 h-20 w-28 flex items-center justify-center overflow-hidden rounded-md border border-gray-200 shadow-sm group relative cursor-pointer hover:border-blue-400 transition-all"
                                                 onClick={() => handleImageClick(room)}
                                                 title="Click để xem ảnh"
@@ -284,11 +363,10 @@ export default function RoomsTable({ rooms, hotelId, currentPage, totalPages, to
                                                     const availableQty = room.availableQuantity;
                                                     const isLowStock = availableQty <= 2;
                                                     return (
-                                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border ${
-                                                            isLowStock 
-                                                                ? 'bg-red-50 text-red-700 border-red-200' 
-                                                                : 'bg-green-50 text-green-700 border-green-200'
-                                                        }`}>
+                                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border ${isLowStock
+                                                            ? 'bg-red-50 text-red-700 border-red-200'
+                                                            : 'bg-green-50 text-green-700 border-green-200'
+                                                            }`}>
                                                             Tồn: {availableQty} phòng
                                                         </span>
                                                     );
@@ -303,11 +381,10 @@ export default function RoomsTable({ rooms, hotelId, currentPage, totalPages, to
                                                     const availableQty = inventory.availableQuantity || 0;
                                                     const isLowStock = availableQty <= 2;
                                                     return (
-                                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border ${
-                                                            isLowStock 
-                                                                ? 'bg-red-50 text-red-700 border-red-200' 
-                                                                : 'bg-green-50 text-green-700 border-green-200'
-                                                        }`}>
+                                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border ${isLowStock
+                                                            ? 'bg-red-50 text-red-700 border-red-200'
+                                                            : 'bg-green-50 text-green-700 border-green-200'
+                                                            }`}>
                                                             Tồn: {availableQty} phòng
                                                         </span>
                                                     );
@@ -357,7 +434,19 @@ export default function RoomsTable({ rooms, hotelId, currentPage, totalPages, to
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <StatusBadge status={room.status} />
+                                        <StatusDropdown
+                                            roomId={room.id}
+                                            currentStatus={room.status}
+                                            onStatusChange={() => {
+                                                // Refresh data nếu có callback
+                                                if (onRefresh) {
+                                                    onRefresh();
+                                                } else {
+                                                    // Fallback: reload trang
+                                                    window.location.reload();
+                                                }
+                                            }}
+                                        />
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div className="flex items-center justify-end gap-x-2">
@@ -369,7 +458,7 @@ export default function RoomsTable({ rooms, hotelId, currentPage, totalPages, to
                                                 <EyeIcon className="h-5 w-5" />
                                             </Link>
                                             <Link
-                                                href={`/admin-rooms/${room.id}/edit`}
+                                                href={`/admin-rooms/${room.id}`}
                                                 className="p-2 bg-gray-100 text-blue-600 hover:bg-gray-200 rounded-md transition-colors"
                                                 title="Chỉnh sửa"
                                             >
