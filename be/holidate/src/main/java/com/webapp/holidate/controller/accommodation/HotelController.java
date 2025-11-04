@@ -50,6 +50,7 @@ public class HotelController {
     @RequestParam(name = HotelParams.STAR_RATING, required = false) Integer starRating,
     @RequestParam(name = HotelParams.AMENITY_IDS, required = false) List<String> amenityIds,
     @RequestParam(name = CommonParams.STATUS, required = false) String status,
+    @RequestParam(name = CommonParams.PARTNER_ID, required = false) String partnerId,
     @RequestParam(name = RoomParams.CHECKIN_DATE, required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkinDate,
     @RequestParam(name = RoomParams.CHECKOUT_DATE, required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkoutDate,
     @RequestParam(name = RoomParams.REQUIRED_ADULTS, required = false) Integer requiredAdults,
@@ -63,7 +64,7 @@ public class HotelController {
     @RequestParam(name = SortingParams.SORT_DIR, defaultValue = SortingParams.SORT_DIR_ASC) String sortDir) {
     PagedResponse<HotelResponse> response = hotelService.getAll(
       name, countryId, provinceId, cityId, districtId, wardId, streetId,
-      amenityIds, starRating, status,
+      amenityIds, starRating, status, partnerId,
       checkinDate, checkoutDate, requiredAdults, requiredChildren, requiredRooms, minPrice, maxPrice,
       page, size, sortBy, sortDir);
     return ApiResponse.<PagedResponse<HotelResponse>>builder()

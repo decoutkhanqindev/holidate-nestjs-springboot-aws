@@ -50,9 +50,11 @@ public class BookingCreationRequest {
   @NotBlank(message = "CONTACT_FULL_NAME_NOT_BLANK")
   String contactFullName;
 
+  @NotBlank(message = "CONTACT_EMAIL_NOT_BLANK")
   @Email(message = "CONTACT_EMAIL_INVALID")
   String contactEmail;
 
+  @NotBlank(message = "CONTACT_PHONE_NOT_BLANK")
   @Pattern(regexp = ValidationPatterns.PHONE_NUMBER, message = "CONTACT_PHONE_INVALID")
   String contactPhone;
 }
