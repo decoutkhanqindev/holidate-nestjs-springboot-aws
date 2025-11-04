@@ -13,16 +13,16 @@ export interface PhotoCategory {
 export const getPhotoCategories = async (): Promise<PhotoCategory[]> => {
     try {
         console.log('[photoCategoryService] Fetching photo categories...');
-        
+
         const response = await apiClient.get<ApiResponse<PhotoCategory[]>>(
             '/image/photo-categories'
         );
-        
+
         if (response.data.statusCode === 200 && response.data.data) {
             console.log(`[photoCategoryService] Found ${response.data.data.length} photo categories`);
             return response.data.data;
         }
-        
+
         return [];
     } catch (error: any) {
         console.error('[photoCategoryService] Error fetching photo categories:', error);
@@ -36,18 +36,18 @@ export const getPhotoCategories = async (): Promise<PhotoCategory[]> => {
 export const getPhotoCategoriesServer = async (): Promise<PhotoCategory[]> => {
     try {
         console.log('[photoCategoryService] Fetching photo categories (server)...');
-        
+
         const serverClient = await createServerApiClient();
-        
+
         const response = await serverClient.get<ApiResponse<PhotoCategory[]>>(
             '/image/photo-categories'
         );
-        
+
         if (response.data.statusCode === 200 && response.data.data) {
             console.log(`[photoCategoryService] Found ${response.data.data.length} photo categories`);
             return response.data.data;
         }
-        
+
         return [];
     } catch (error: any) {
         console.error('[photoCategoryService] Error fetching photo categories (server):', error);

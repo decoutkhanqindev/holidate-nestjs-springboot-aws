@@ -11,7 +11,7 @@ export async function createHotelAction(formData: FormData) {
         const name = formData.get('name') as string;
         const address = formData.get('address') as string;
         const description = formData.get('description') as string;
-        
+
         // Lấy các field location - PHẢI CÓ ID từ dropdown
         const countryId = formData.get('countryId') as string;
         const provinceId = formData.get('provinceId') as string;

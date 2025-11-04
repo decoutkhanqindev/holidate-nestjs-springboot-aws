@@ -58,8 +58,8 @@ export default function DiscountsTable({ discounts, onEdit }: DiscountsTableProp
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${discount.active
-                                            ? 'bg-green-100 text-green-800'
-                                            : 'bg-red-100 text-red-800'
+                                        ? 'bg-green-100 text-green-800'
+                                        : 'bg-red-100 text-red-800'
                                         }`}>
                                         {discount.active ? 'Đang hoạt động' : 'Đã tắt'}
                                     </span>
