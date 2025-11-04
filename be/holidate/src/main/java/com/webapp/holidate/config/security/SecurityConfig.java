@@ -147,18 +147,16 @@ public class SecurityConfig {
       .hasAuthority(RoleType.PARTNER.getValue())
       .requestMatchers(HttpMethod.PUT, UserEndpoints.USERS + CommonEndpoints.ID)
       .hasAuthority(RoleType.PARTNER.getValue())
-      // 2. room management endpoints (partner specific)
+      // 2. hotel management endpoints (partner can update hotels they own, but not
+      // create/delete)
+      .requestMatchers(HttpMethod.PUT,
+        AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.HOTELS + CommonEndpoints.ID)
+      .hasAuthority(RoleType.PARTNER.getValue())
+      // 3. room management endpoints (partner specific)
+      // Note: GET /accommodation/rooms and GET /accommodation/rooms/{id} are public
+      // (see public endpoints section)
       .requestMatchers(HttpMethod.POST,
-        AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
-          + ALL_ENDPOINTS)
-      .hasAuthority(RoleType.PARTNER.getValue())
-      .requestMatchers(HttpMethod.GET,
-        AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
-          + ALL_ENDPOINTS)
-      .hasAuthority(RoleType.PARTNER.getValue())
-      .requestMatchers(HttpMethod.GET,
-        AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
-          + CommonEndpoints.ID)
+        AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS)
       .hasAuthority(RoleType.PARTNER.getValue())
       .requestMatchers(HttpMethod.PUT,
         AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
@@ -168,7 +166,7 @@ public class SecurityConfig {
         AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
           + CommonEndpoints.ID)
       .hasAuthority(RoleType.PARTNER.getValue())
-      // 2.1. room inventory management endpoints (partner specific)
+      // 3.1. room inventory management endpoints (partner specific)
       .requestMatchers(HttpMethod.POST,
         AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
           + AccommodationEndpoints.ROOM_INVENTORIES
@@ -184,7 +182,7 @@ public class SecurityConfig {
           + AccommodationEndpoints.ROOM_INVENTORIES
           + ALL_ENDPOINTS)
       .hasAuthority(RoleType.PARTNER.getValue())
-      // 3. booking endpoints
+      // 4. booking endpoints
       .requestMatchers(HttpMethod.POST, BookingEndpoints.BOOKINGS + ALL_ENDPOINTS)
       .hasAuthority(RoleType.PARTNER.getValue())
       .requestMatchers(HttpMethod.POST,
@@ -213,7 +211,7 @@ public class SecurityConfig {
         BookingEndpoints.BOOKINGS + CommonEndpoints.ID
           + BookingEndpoints.CHECKOUT)
       .hasAuthority(RoleType.PARTNER.getValue())
-      // 4. review endpoints
+      // 5. review endpoints
       .requestMatchers(HttpMethod.POST, BookingEndpoints.REVIEWS + ALL_ENDPOINTS)
       .hasAuthority(RoleType.PARTNER.getValue())
       .requestMatchers(HttpMethod.PUT, BookingEndpoints.REVIEWS + CommonEndpoints.ID)
@@ -231,27 +229,22 @@ public class SecurityConfig {
       .requestMatchers(LocationEndpoints.LOCATION + ALL_ENDPOINTS)
       .hasAuthority(RoleType.ADMIN.getValue())
       // 3. accommodation endpoints
-      .requestMatchers(HttpMethod.POST, AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS)
+      // 3.0. hotel management endpoints (only admin can create and delete hotels, not
+      // partner)
+      .requestMatchers(HttpMethod.POST,
+        AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.HOTELS + ALL_ENDPOINTS)
       .hasAuthority(RoleType.ADMIN.getValue())
-      .requestMatchers(HttpMethod.GET, AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS)
-      .hasAuthority(RoleType.ADMIN.getValue())
-      .requestMatchers(HttpMethod.PUT, AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS)
+      .requestMatchers(HttpMethod.PUT,
+        AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.HOTELS + CommonEndpoints.ID)
       .hasAuthority(RoleType.ADMIN.getValue())
       .requestMatchers(HttpMethod.DELETE,
-        AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS)
+        AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.HOTELS + CommonEndpoints.ID)
       .hasAuthority(RoleType.ADMIN.getValue())
       // 3.1. room management endpoints (admin can also manage rooms)
+      // Note: GET /accommodation/rooms and GET /accommodation/rooms/{id} are public
+      // (see public endpoints section)
       .requestMatchers(HttpMethod.POST,
-        AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
-          + ALL_ENDPOINTS)
-      .hasAuthority(RoleType.ADMIN.getValue())
-      .requestMatchers(HttpMethod.GET,
-        AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
-          + ALL_ENDPOINTS)
-      .hasAuthority(RoleType.ADMIN.getValue())
-      .requestMatchers(HttpMethod.GET,
-        AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
-          + CommonEndpoints.ID)
+        AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS)
       .hasAuthority(RoleType.ADMIN.getValue())
       .requestMatchers(HttpMethod.PUT,
         AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
@@ -261,7 +254,18 @@ public class SecurityConfig {
         AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
           + CommonEndpoints.ID)
       .hasAuthority(RoleType.ADMIN.getValue())
-      // 3.2. room inventory management endpoints (admin can also manage room
+      // 3.2. other accommodation endpoints (general - must be placed after specific
+      // endpoints)
+      .requestMatchers(HttpMethod.POST, AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS)
+      .hasAuthority(RoleType.ADMIN.getValue())
+      .requestMatchers(HttpMethod.GET, AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS)
+      .hasAuthority(RoleType.ADMIN.getValue())
+      .requestMatchers(HttpMethod.PUT, AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS)
+      .hasAuthority(RoleType.ADMIN.getValue())
+      .requestMatchers(HttpMethod.DELETE,
+        AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS)
+      .hasAuthority(RoleType.ADMIN.getValue())
+      // 3.3. room inventory management endpoints (admin can also manage room
       // inventories)
       .requestMatchers(HttpMethod.POST,
         AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
