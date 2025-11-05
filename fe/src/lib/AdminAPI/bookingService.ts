@@ -58,36 +58,52 @@ interface PaginatedBookingResponse {
 // Helper function để map từ BookingResponse sang Booking
 function mapBookingResponseToBooking(response: BookingResponse): Booking {
     // Map booking status từ backend sang frontend BookingStatus
-    // Backend có thể trả về: 'completed', 'confirmed', 'pending', 'cancelled', 'rescheduled', 'checked_in', etc.
+    // Backend có thể trả về: 'completed', 'confirmed', 'pending_payment', 'cancelled', 'rescheduled', 'checked_in', etc.
     const statusMap: Record<string, 'COMPLETED' | 'CONFIRMED' | 'PENDING' | 'CANCELLED' | 'CHECKED_IN'> = {
         'COMPLETED': 'COMPLETED',
         'CONFIRMED': 'CONFIRMED',
         'PENDING': 'PENDING',
+        'PENDING_PAYMENT': 'PENDING',
         'CANCELLED': 'CANCELLED',
         'CHECKED_IN': 'CHECKED_IN',
         // Thêm lowercase variants
         'completed': 'COMPLETED',
         'confirmed': 'CONFIRMED',
         'pending': 'PENDING',
+        'pending_payment': 'PENDING',
         'cancelled': 'CANCELLED',
         'checked_in': 'CHECKED_IN',
         'rescheduled': 'CONFIRMED', // Rescheduled được coi như confirmed
     };
 
-    // Map payment status - Backend có thể không có paymentStatus riêng, cần check từ status hoặc priceDetails
-    // Tạm thời dùng PENDING nếu chưa có paymentUrl hoặc status khác
+    // Map payment status theo API docs:
+    // Backend PaymentStatusType: PENDING, SUCCESS, FAILED
+    // Backend BookingStatus: pending_payment, confirmed, cancelled, checked_in, completed, rescheduled
+    // Logic mapping:
+    // - confirmed/completed/checked_in → payment = SUCCESS → PAID
+    // - pending_payment → payment = PENDING → PENDING
+    // - cancelled → payment có thể = FAILED hoặc SUCCESS (đã hoàn tiền) → cần check payment status
+    //   Tạm thời: nếu cancelled thì coi như REFUNDED (đã hoàn tiền) nếu có payment trước đó
     let paymentStatus: 'PAID' | 'UNPAID' | 'PENDING' | 'REFUNDED' = 'PENDING';
-    const statusUpper = response.status.toUpperCase();
-    if (statusUpper === 'COMPLETED' || statusUpper === 'CHECKED_IN') {
+    const statusLower = response.status.toLowerCase();
+    
+    if (statusLower === 'confirmed' || statusLower === 'completed' || statusLower === 'checked_in' || statusLower === 'rescheduled') {
+        // Booking đã confirmed → payment đã success
         paymentStatus = 'PAID';
-    } else if (statusUpper === 'CANCELLED' || statusUpper === 'CANCELLED') {
-        paymentStatus = 'REFUNDED';
-    } else if (response.paymentUrl) {
+    } else if (statusLower === 'pending_payment') {
+        // Booking chờ thanh toán → payment pending
         paymentStatus = 'PENDING';
+    } else if (statusLower === 'cancelled') {
+        // Booking đã hủy → có thể payment failed (chưa thanh toán) hoặc success (đã hoàn tiền)
+        // Nếu có paymentUrl trước đó (đã tạo payment) thì coi như đã hoàn tiền
+        // Nếu không có paymentUrl thì chưa thanh toán → UNPAID
+        paymentStatus = response.paymentUrl ? 'REFUNDED' : 'UNPAID';
     } else {
-        paymentStatus = 'UNPAID';
+        // Trường hợp khác: mặc định là PENDING (chờ thanh toán)
+        paymentStatus = response.paymentUrl ? 'PENDING' : 'UNPAID';
     }
 
+    const statusUpper = response.status.toUpperCase();
     const bookingStatus = statusMap[response.status] || statusMap[statusUpper] || 'PENDING';
 
     return {

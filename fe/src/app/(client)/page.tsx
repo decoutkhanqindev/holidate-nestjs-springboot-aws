@@ -206,6 +206,10 @@ export default function HomePage() {
               margin-left: 0 !important;
               
             }
+                .homepage-guest-section .flex.items-center > svg {
+            margin-left: 0!important;
+          }
+          
             .homepage-guest-popup {
               right: 25px !important;
 

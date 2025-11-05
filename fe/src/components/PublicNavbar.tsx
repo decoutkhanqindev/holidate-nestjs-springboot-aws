@@ -16,6 +16,14 @@ export default function PublicNavbar() {
         setIsClient(true);
     }, []);
 
+    // Debug: Log khi user hoặc avatarUrl thay đổi
+    useEffect(() => {
+        if (user) {
+            console.log('[PublicNavbar] User state:', user);
+            console.log('[PublicNavbar] avatarUrl:', user.avatarUrl);
+        }
+    }, [user, user?.avatarUrl]);
+
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
     };
@@ -55,8 +63,44 @@ export default function PublicNavbar() {
 
                         {isClient && (isLoggedIn && user ? (
                             <div className="dropdown">
-                                <button className="btn btn-outline-primary dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    👤 {user.fullName} | 💰 {user.score ?? 0} Điểm
+                                <button className="btn btn-outline-primary dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    {user.avatarUrl ? (
+                                        <img
+                                            key={`avatar-${user.avatarUrl}`} // Force re-render khi avatarUrl thay đổi
+                                            src={user.avatarUrl}
+                                            alt={user.fullName}
+                                            className="rounded-circle"
+                                            style={{
+                                                width: '32px',
+                                                height: '32px',
+                                                objectFit: 'cover',
+                                                border: '2px solid #0d6efd'
+                                            }}
+                                            onError={(e) => {
+                                                // Fallback nếu ảnh không load được
+                                                console.error('[PublicNavbar] Error loading avatar:', user.avatarUrl);
+                                                e.currentTarget.style.display = 'none';
+                                            }}
+                                            onLoad={() => {
+                                                console.log('[PublicNavbar] ✅ Avatar loaded successfully:', user.avatarUrl);
+                                            }}
+                                        />
+                                    ) : (
+                                        <div
+                                            className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                                            style={{
+                                                width: '32px',
+                                                height: '32px',
+                                                fontSize: '14px',
+                                                fontWeight: 'bold'
+                                            }}
+                                        >
+                                            {user.fullName.charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
+                                    <span>{user.fullName}</span>
+                                    <span className="text-muted">|</span>
+                                    <span>💰 {user.score ?? 0} Điểm</span>
                                 </button>
                                 <ul className="dropdown-menu dropdown-menu-end">
                                     <li><a className="dropdown-item" href="#">Bạn là thành viên Bronze</a></li>

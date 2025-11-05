@@ -111,3 +111,41 @@ export interface Review {
     createdAt: Date;
     updatedAt?: Date;
 }
+
+// Super Discount type (matching backend DiscountResponse)
+export interface SuperDiscount {
+    id: string;
+    code: string;
+    description: string;
+    percentage: number; // e.g., 10.0 for 10%
+    usageLimit: number;
+    timesUsed: number;
+    minBookingPrice: number;
+    minBookingCount: number;
+    validFrom: Date | string;
+    validTo: Date | string;
+    active: boolean;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    hotel?: {
+        id: string;
+        name: string;
+    };
+    specialDay?: {
+        id: string;
+        name: string;
+    };
+}
+
+// Paged Response type
+export interface PagedResponse<T> {
+    content: T[];
+    page: number;
+    size: number;
+    totalItems: number;
+    totalPages: number;
+    first: boolean;
+    last: boolean;
+    hasNext: boolean;
+    hasPrevious: boolean;
+}

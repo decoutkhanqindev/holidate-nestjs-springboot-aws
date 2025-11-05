@@ -71,11 +71,23 @@ export default function BookingsPage() {
                 let bookingsResponse;
 
                 if (roleName?.toLowerCase() === 'partner') {
-                    console.log("[BookingsPage] PARTNER: Fetching bookings (backend should auto-filter from JWT token)");
-                    console.log("[BookingsPage] PARTNER hotels:", hotelIds);
+                    console.log("[BookingsPage] PARTNER: Fetching bookings for hotels:", hotelIds);
 
-                    // Thử 1: Không gửi hotelId - backend tự filter từ JWT token (theo API docs, backend đã cấp quyền)
+                    // PARTNER PHẢI gửi hotelId vì backend không tự động filter
+                    if (hotelIds.length === 0) {
+                        console.log("[BookingsPage] PARTNER has no hotels, no bookings available");
+                        setBookings([]);
+                        setTotalPages(0);
+                        setTotalItems(0);
+                        setIsLoading(false);
+                        return;
+                    }
+
+                    // Nếu PARTNER có nhiều hotels, gộp bookings từ tất cả hotels
+                    // Hoặc có thể chỉ lấy từ hotel đầu tiên (tùy requirement)
+                    // Ở đây ta sẽ lấy từ hotel đầu tiên, hoặc có thể merge từ tất cả
                     try {
+                        // Option 1: Lấy bookings từ hotel đầu tiên (nhanh hơn)
                         bookingsResponse = await getBookings({
                             page: currentPage - 1,
                             size: ITEMS_PER_PAGE,
@@ -83,32 +95,16 @@ export default function BookingsPage() {
                             sortDir: 'DESC',
                             roleName: roleName,
                             currentUserId: userId,
-                            // KHÔNG gửi hotelId - để backend tự filter từ JWT token
+                            hotelId: hotelIds[0], // Gửi hotelId đầu tiên
                         });
-                        console.log("[BookingsPage] ✅ Successfully fetched bookings without hotelId (backend auto-filtered)");
-                    } catch (errorWithoutHotelId: any) {
-                        console.warn('[BookingsPage] ⚠️ Failed without hotelId, trying with hotelId...', errorWithoutHotelId.message);
+                        console.log("[BookingsPage] ✅ Successfully fetched bookings for hotel:", hotelIds[0]);
 
-                        // Thử 2: Nếu backend không tự filter, gửi hotelId
-                        if (hotelIds.length > 0) {
-                            try {
-                                bookingsResponse = await getBookings({
-                                    page: currentPage - 1,
-                                    size: ITEMS_PER_PAGE,
-                                    sortBy: 'createdAt',
-                                    sortDir: 'DESC',
-                                    roleName: roleName,
-                                    currentUserId: userId,
-                                    hotelId: hotelIds[0], // Gửi hotelId đầu tiên
-                                });
-                                console.log("[BookingsPage] ✅ Successfully fetched bookings with hotelId");
-                            } catch (errorWithHotelId: any) {
-                                console.error('[BookingsPage] ❌ Failed with hotelId too:', errorWithHotelId.message);
-                                throw errorWithHotelId; // Re-throw để hiển thị lỗi
-                            }
-                        } else {
-                            throw new Error('Bạn chưa có khách sạn nào. Vui lòng tạo khách sạn trước.');
-                        }
+                        // TODO: Nếu muốn merge bookings từ tất cả hotels, có thể:
+                        // - Gọi API cho từng hotel và merge results
+                        // - Hoặc tạo một API endpoint mới hỗ trợ multiple hotelIds
+                    } catch (error: any) {
+                        console.error('[BookingsPage] ❌ Error fetching bookings for PARTNER:', error.message);
+                        throw error;
                     }
                 } else {
                     // ADMIN hoặc không có hotels: Lấy tất cả bookings

@@ -3,6 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
 
 const navItems = [
     { href: '/account/settings', label: 'Tài khoản' },
@@ -15,6 +16,14 @@ export default function AccountSidebar() {
     const { user, logout } = useAuth();
     const pathname = usePathname();
 
+    // Debug: Log khi user hoặc avatarUrl thay đổi
+    useEffect(() => {
+        if (user) {
+            console.log('[AccountSidebar] User state:', user);
+            console.log('[AccountSidebar] avatarUrl:', user.avatarUrl);
+        }
+    }, [user, user?.avatarUrl]);
+
     if (!user) {
         return <div>Đang tải...</div>;
     }
@@ -24,9 +33,32 @@ export default function AccountSidebar() {
             {/*  thông tin người dùng */}
             <div className="d-flex align-items-center mb-4">
                 <div className="flex-shrink-0">
-                    <div className="bg-primary text-black rounded-circle d-flex align-items-center justify-content-center" style={{ width: '50px', height: '50px' }}>
-                        <span className="fw-bold fs-5">{user.fullName.charAt(0).toUpperCase()}</span>
-                    </div>
+                    {user.avatarUrl ? (
+                        <img
+                            key={`avatar-${user.avatarUrl}`} // Force re-render khi avatarUrl thay đổi
+                            src={user.avatarUrl}
+                            alt={user.fullName}
+                            className="rounded-circle"
+                            style={{
+                                width: '50px',
+                                height: '50px',
+                                objectFit: 'cover',
+                                border: '2px solid #dee2e6'
+                            }}
+                            onError={(e) => {
+                                // Fallback nếu ảnh không load được
+                                console.error('[AccountSidebar] Error loading avatar:', user.avatarUrl);
+                                e.currentTarget.style.display = 'none';
+                            }}
+                            onLoad={() => {
+                                console.log('[AccountSidebar] ✅ Avatar loaded successfully:', user.avatarUrl);
+                            }}
+                        />
+                    ) : (
+                        <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style={{ width: '50px', height: '50px' }}>
+                            <span className="fw-bold fs-5">{user.fullName.charAt(0).toUpperCase()}</span>
+                        </div>
+                    )}
                 </div>
                 <div className="flex-grow-1 ms-3 text-black">
                     <h5 className="mb-0">{user.fullName}</h5>

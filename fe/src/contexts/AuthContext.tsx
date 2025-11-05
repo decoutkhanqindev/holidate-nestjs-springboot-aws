@@ -5,7 +5,8 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
-import { loginUser, logoutUser, getMyProfile } from '@/service/authService';
+import { loginUser, logoutUser } from '@/service/authService';
+import { getUserProfile } from '@/lib/client/userService';
 
 // Interfaces
 interface User {
@@ -19,6 +20,7 @@ interface User {
     } | string;
     score?: number;
     phone?: string;
+    avatarUrl?: string; // Avatar URL từ server
 }
 interface JwtPayload { sub: string; fullName: string; role?: string; id?: string; exp?: number; }
 interface AuthContextType {
@@ -30,6 +32,7 @@ interface AuthContextType {
     closeModal: () => void;
     login: (email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
+    refreshUserProfile: () => Promise<void>; // Hàm để refresh user profile (sau khi update avatar)
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -136,6 +139,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                             setUser(userData);
                             setIsLoggedIn(true);
                             console.log("[Client AuthContext] Khôi phục phiên USER thành công.", userData);
+                            
+                            // Load avatarUrl từ profile sau khi đã set user cơ bản
+                            // (không await để không block UI)
+                            getUserProfile(userIdFromStorage).then(profile => {
+                                console.log("[Client AuthContext] Profile loaded on init:", profile);
+                                setUser(prevUser => ({
+                                    ...prevUser!,
+                                    avatarUrl: profile.avatarUrl,
+                                    score: profile.score ?? prevUser?.score,
+                                }));
+                            }).catch(err => {
+                                console.warn("[Client AuthContext] Could not load profile on init:", err);
+                            });
                         } else {
                             console.warn("[Client AuthContext] Role không hợp lệ cho client:", tokenRole);
                             logout();
@@ -159,6 +175,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const openModal = () => setIsModalOpen(true);
     const closeModal = () => setIsModalOpen(false);
+
+    // Hàm để refresh user profile (gọi sau khi update avatar)
+    const refreshUserProfile = async () => {
+        const currentUserId = user?.id || localStorage.getItem('userId');
+        if (!currentUserId) {
+            console.warn("[AuthContext] Cannot refresh profile: no user ID");
+            return;
+        }
+        try {
+            console.log("[AuthContext] Refreshing user profile for ID:", currentUserId);
+            // Dùng getUserProfile để lấy đầy đủ thông tin bao gồm avatarUrl
+            const profile = await getUserProfile(currentUserId);
+            console.log("[AuthContext] Profile data received:", profile);
+            setUser(prevUser => {
+                const updatedUser = {
+                    ...prevUser!,
+                    id: profile.id || prevUser?.id || currentUserId,
+                    fullName: profile.fullName || prevUser?.fullName || '',
+                    email: profile.email || prevUser?.email || '',
+                    avatarUrl: profile.avatarUrl || undefined, // Set undefined nếu không có (không phải null)
+                    score: profile.score ?? prevUser?.score,
+                    role: profile.role || prevUser?.role,
+                };
+                console.log("[AuthContext] ✅ User state updated:", updatedUser);
+                console.log("[AuthContext] ✅ avatarUrl value:", updatedUser.avatarUrl);
+                console.log("[AuthContext] ✅ avatarUrl type:", typeof updatedUser.avatarUrl);
+                return updatedUser;
+            });
+        } catch (error) {
+            console.error("[AuthContext] Error refreshing user profile:", error);
+        }
+    };
 
     // THAY ĐỔI 3: Hàm login bây giờ sẽ truyền cả object data vào hàm success (bao gồm role)
     const login = async (email: string, password: string) => {
@@ -199,7 +247,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ isLoggedIn, user, isLoading, isModalOpen, openModal, closeModal, login, logout }}>
+        <AuthContext.Provider value={{ isLoggedIn, user, isLoading, isModalOpen, openModal, closeModal, login, logout, refreshUserProfile }}>
             {children}
         </AuthContext.Provider>
     );
