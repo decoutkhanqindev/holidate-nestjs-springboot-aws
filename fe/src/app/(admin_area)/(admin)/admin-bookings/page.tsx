@@ -33,6 +33,37 @@ export default function BookingsPage() {
         async function loadBookings() {
             setIsLoading(true);
             try {
+                // Kiểm tra token TRƯỚC KHI làm gì
+                // QUAN TRỌNG: Mỗi trình duyệt có localStorage riêng
+                // Admin PHẢI login trên chính trình duyệt đang dùng
+                const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+                if (!token) {
+                    console.error("[BookingsPage] ❌ No accessToken found!");
+                    console.error("[BookingsPage] ⚠️ Lưu ý: Mỗi trình duyệt có localStorage riêng.");
+                    console.error("[BookingsPage] ⚠️ Admin PHẢI login trên chính trình duyệt đang dùng.");
+                    console.error("[BookingsPage] ⚠️ Không thể dùng token từ trình duyệt khác.");
+                    alert('Bạn chưa đăng nhập hoặc đã đăng nhập trên trình duyệt khác.\n\nVui lòng đăng nhập lại trên trình duyệt này.');
+                    if (typeof window !== 'undefined') {
+                        window.location.href = '/admin-login';
+                    }
+                    return;
+                }
+                
+                // Kiểm tra token có phải của admin/partner không
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    const tokenScope = payload.scope?.toLowerCase();
+                    console.log("[BookingsPage] ✅ Token found:", token.substring(0, 20) + '...');
+                    console.log("[BookingsPage] Token scope:", tokenScope);
+                    
+                    if (tokenScope !== 'partner' && tokenScope !== 'admin') {
+                        console.warn("[BookingsPage] ⚠️ Token không phải của admin/partner, có thể là token của USER");
+                        console.warn("[BookingsPage] ⚠️ Đây có thể là token từ client login trên cùng trình duyệt");
+                    }
+                } catch (e) {
+                    console.error("[BookingsPage] Cannot decode token:", e);
+                }
+
                 // Lấy userId và roleName từ AuthContext để filter theo owner nếu role là PARTNER
                 const userId = effectiveUser?.id;
                 const roleName = effectiveUser?.role?.name;
@@ -87,15 +118,14 @@ export default function BookingsPage() {
                     // Hoặc có thể chỉ lấy từ hotel đầu tiên (tùy requirement)
                     // Ở đây ta sẽ lấy từ hotel đầu tiên, hoặc có thể merge từ tất cả
                     try {
-                        // Option 1: Lấy bookings từ hotel đầu tiên (nhanh hơn)
+                        // PARTNER: Chỉ gửi hotel-id để lấy bookings theo id khách sạn
+                        // KHÔNG gửi roleName, currentUserId - backend sẽ tự biết từ JWT token
                         bookingsResponse = await getBookings({
                             page: currentPage - 1,
                             size: ITEMS_PER_PAGE,
                             sortBy: 'createdAt',
                             sortDir: 'DESC',
-                            roleName: roleName,
-                            currentUserId: userId,
-                            hotelId: hotelIds[0], // Gửi hotelId đầu tiên
+                            hotelId: hotelIds[0], // Gửi hotelId để lấy bookings của khách sạn này
                         });
                         console.log("[BookingsPage] ✅ Successfully fetched bookings for hotel:", hotelIds[0]);
 
@@ -127,22 +157,49 @@ export default function BookingsPage() {
                 console.log("[BookingsPage] Received bookings:", response.data.length);
                 console.log("[BookingsPage] Total items:", response.totalItems);
             } catch (error: any) {
-                console.error('[BookingsPage] Error loading bookings:', error);
+                console.error('[BookingsPage] ===== ERROR DETAILS =====');
+                console.error('[BookingsPage] Error:', error);
                 console.error('[BookingsPage] Error message:', error.message);
-                console.error('[BookingsPage] Error response:', error.response?.data);
+                console.error('[BookingsPage] Error response status:', error.response?.status);
+                console.error('[BookingsPage] Error response data:', error.response?.data);
+
+                // Kiểm tra token hiện tại
+                const currentToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+                console.error('[BookingsPage] Current token exists:', !!currentToken);
+                if (currentToken) {
+                    try {
+                        const payload = JSON.parse(atob(currentToken.split('.')[1]));
+                        console.error('[BookingsPage] Token payload scope:', payload.scope);
+                        console.error('[BookingsPage] Token payload:', payload);
+                    } catch (e) {
+                        console.error('[BookingsPage] Cannot decode token:', e);
+                    }
+                }
 
                 // Hiển thị thông báo lỗi chi tiết hơn
                 const errorMessage = error.message || 'Lỗi không xác định';
+                const statusCode = error.response?.status;
 
-                // Nếu là lỗi 401 hoặc 403, có thể cần redirect về trang login
-                if (errorMessage.includes('hết hạn') || errorMessage.includes('đăng nhập')) {
-                    alert(errorMessage);
-                    // Redirect về trang login nếu cần
-                    // window.location.href = '/admin-login';
-                } else if (errorMessage.includes('không có quyền') || errorMessage.includes('not allowed')) {
-                    // Lỗi 403 - có thể backend không cho phép PARTNER truy cập
-                    alert('Bạn không có quyền truy cập tài nguyên này. Backend có thể chưa hỗ trợ PARTNER xem bookings.');
-                    console.error('[BookingsPage] ⚠️ Backend returned 403 Forbidden. Backend needs to allow PARTNER to access /bookings endpoint.');
+                // Xử lý các loại lỗi
+                if (!currentToken || errorMessage.includes('chưa đăng nhập') || statusCode === 401) {
+                    alert('Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+                    if (typeof window !== 'undefined') {
+                        window.location.href = '/admin-login';
+                    }
+                } else if (statusCode === 403 || errorMessage.includes('không có quyền') || errorMessage.includes('not allowed')) {
+                    // Lỗi 403 - có thể backend chưa restart sau khi sửa SecurityConfig
+                    const detailedMessage = 
+                        'Bạn không có quyền truy cập tài nguyên này.\n\n' +
+                        'VẤN ĐỀ CÓ THỂ DO:\n' +
+                        '1. Backend chưa được restart sau khi sửa SecurityConfig\n' +
+                        '2. JWT token không có scope đúng format\n' +
+                        '3. Backend SecurityConfig chưa cho phép PARTNER truy cập /bookings\n\n' +
+                        'VUI LÒNG:\n' +
+                        '- Kiểm tra console logs để xem chi tiết\n' +
+                        '- Restart backend server\n' +
+                        '- Kiểm tra JWT token có scope: "partner" không';
+                    alert(detailedMessage);
+                    console.error('[BookingsPage] ⚠️ 403 Forbidden - Backend returned 403. Check backend logs and SecurityConfig.');
                 } else {
                     alert('Không thể tải danh sách đặt phòng: ' + errorMessage);
                 }

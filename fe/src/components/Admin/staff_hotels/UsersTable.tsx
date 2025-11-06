@@ -62,9 +62,21 @@ export default function UsersTable({ users, currentUser, onEdit, onDelete }: Use
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
                                 <td className="px-4 py-4 whitespace-nowrap">
                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                        {user.role === 'HOTEL_STAFF' ? 'Nhân viên' :
-                                            user.role === 'CUSTOMER' ? 'Khách hàng' :
-                                                user.role}
+                                        {(() => {
+                                            // Ưu tiên lấy roleName từ localStorage (roleName tự do nhập)
+                                            if (typeof window !== 'undefined') {
+                                                const savedRoleName = localStorage.getItem(`user_role_${user.id}`);
+                                                if (savedRoleName) return savedRoleName;
+                                            }
+                                            // Nếu không có, lấy từ user.role
+                                            if (typeof user.role === 'string') return user.role;
+                                            if (user.role && typeof user.role === 'object' && 'description' in user.role) {
+                                                return (user.role as { description?: string; name?: string }).description ||
+                                                    (user.role as { description?: string; name?: string }).name ||
+                                                    'Nhân viên';
+                                            }
+                                            return 'Nhân viên';
+                                        })()}
                                     </span>
                                 </td>
 

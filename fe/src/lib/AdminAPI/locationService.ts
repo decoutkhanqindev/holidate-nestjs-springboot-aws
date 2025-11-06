@@ -301,13 +301,24 @@ export const createCity = async (name: string, code: string, provinceId: string)
  * Tạo Province mới
  */
 export const createProvince = async (name: string, code: string, countryId: string): Promise<LocationOption> => {
+    // Request body để gửi lên backend (định nghĩa ở ngoài để dùng trong catch block)
+    const requestBody = {
+        name: name.trim(),
+        code: code.trim() || '',
+        countryId: countryId.trim(),
+    };
+    
     try {
-        console.log(`[locationService] Creating province: ${name} for countryId: ${countryId}`);
-        const response = await apiClient.post<ApiResponse<any>>('/location/provinces', {
-            name: name.trim(),
-            code: code.trim() || '',
-            countryId: countryId.trim(),
-        });
+        console.log(`[locationService] ===== CREATING PROVINCE =====`);
+        console.log(`[locationService] Request URL: POST /location/provinces`);
+        console.log(`[locationService] Request Body (JSON):`, JSON.stringify(requestBody, null, 2));
+        console.log(`[locationService] Request Body (raw):`, requestBody);
+        console.log(`[locationService] - name: "${requestBody.name}" (length: ${requestBody.name.length})`);
+        console.log(`[locationService] - code: "${requestBody.code}" (length: ${requestBody.code.length})`);
+        console.log(`[locationService] - countryId: "${requestBody.countryId}"`);
+        console.log(`[locationService] ===== END REQUEST =====`);
+        
+        const response = await apiClient.post<ApiResponse<any>>('/location/provinces', requestBody);
 
         if (response.data.statusCode === 200 && response.data.data) {
             const data = response.data.data;
@@ -321,26 +332,63 @@ export const createProvince = async (name: string, code: string, countryId: stri
         }
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error('[locationService] Error creating province:', error);
-        console.error('[locationService] Error response:', error.response?.data);
+        console.error('[locationService] ===== ERROR CREATING PROVINCE =====');
+        console.error('[locationService] Error object:', error);
+        console.error('[locationService] Error message:', error.message);
+        console.error('[locationService] Error response status:', error.response?.status);
+        console.error('[locationService] Error response data (full):', JSON.stringify(error.response?.data, null, 2));
+        console.error('[locationService] Error response headers:', error.response?.headers);
+        console.error('[locationService] Request config:', {
+            url: error.config?.url,
+            method: error.config?.method,
+            baseURL: error.config?.baseURL,
+        });
+        console.error('[locationService] Request Body (đã gửi lên backend):', error.config?.data ? JSON.parse(error.config.data) : requestBody);
+        console.error('[locationService] Request Body (JSON string):', error.config?.data || JSON.stringify(requestBody, null, 2));
+        console.error('[locationService] ===== END ERROR DETAILS =====');
+        
+        // Log riêng để dễ copy-paste cho backend team
+        console.error('[locationService] ===== COPY THIS FOR BACKEND TEAM =====');
+        console.error('[locationService] REQUEST BODY:');
+        console.error(JSON.stringify(requestBody, null, 2));
+        console.error('[locationService] BACKEND RESPONSE:');
+        console.error(JSON.stringify(error.response?.data || { message: error.message }, null, 2));
+        console.error('[locationService] HTTP STATUS:', error.response?.status || 'N/A');
+        console.error('[locationService] ===== END COPY =====');
         
         // Xử lý error message chi tiết hơn
         let errorMessage = 'Không thể tạo tỉnh/thành phố mới';
+        let isFromBackend = false;
+        let backendMessage = '';
         
-        if (error.response?.data?.message) {
-            const msg = error.response.data.message;
-            if (msg.includes('Province already exists') || msg.includes('PROVINCE_EXISTS')) {
-                // Kiểm tra xem có phải do tên hay mã trùng không
-                errorMessage = 'Tỉnh/thành phố đã tồn tại. Vui lòng kiểm tra:\n' +
-                    '- Tên tỉnh đã tồn tại trong hệ thống\n' +
-                    '- Mã tỉnh đã tồn tại trong hệ thống\n' +
-                    'Nếu tỉnh này chưa có trong danh sách, có thể tên hoặc mã đã bị trùng với tỉnh khác.';
-            } else {
-                errorMessage = msg;
+        // Kiểm tra response từ backend
+        if (error.response?.data) {
+            isFromBackend = true;
+            backendMessage = error.response.data.message || JSON.stringify(error.response.data);
+            console.log('[locationService] ✅ ERROR TỪ BACKEND:', backendMessage);
+            console.log('[locationService] Backend statusCode:', error.response.data.statusCode);
+            console.log('[locationService] Backend error type:', error.response.data.errorType || 'N/A');
+            
+            if (error.response.data.message) {
+                const msg = error.response.data.message;
+                if (msg.includes('Province already exists') || msg.includes('PROVINCE_EXISTS')) {
+                    // Backend xác nhận province đã tồn tại
+                    errorMessage = 'Tỉnh/thành phố đã tồn tại trong hệ thống. Vui lòng kiểm tra:\n\n' +
+                        `- Tên "${name}" đã được sử dụng\n` +
+                        `- Mã "${code}" đã được sử dụng\n\n` +
+                        'Vui lòng thử tên/mã khác hoặc kiểm tra lại danh sách.';
+                } else {
+                    // Dùng message từ backend
+                    errorMessage = msg;
+                }
             }
         } else if (error.message) {
+            console.log('[locationService] ⚠️ ERROR TỪ FRONTEND (network/timeout/etc):', error.message);
             errorMessage = error.message;
         }
+        
+        console.log('[locationService] Final error message:', errorMessage);
+        console.log('[locationService] Error source:', isFromBackend ? 'BACKEND' : 'FRONTEND/NETWORK');
         
         throw new Error(errorMessage);
     }

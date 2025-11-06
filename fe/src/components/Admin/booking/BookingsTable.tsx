@@ -27,7 +27,7 @@ function StatusBadge({ status, type }: { status: PaymentStatus | BookingStatus, 
     const text = statusTextMap[status as keyof typeof statusTextMap] || status;
 
     return (
-        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${styles}`}>
+        <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap ${styles}`}>
             {text}
         </span>
     );
@@ -41,42 +41,44 @@ export default function BookingsTable({ bookings }: BookingsTableProps) {
     return (
         <div className="mt-6 bg-white rounded-lg shadow-md overflow-hidden">
             <div className="overflow-x-auto">
-                <table className="min-w-full">
+                <table className="min-w-full table-auto">
                     <thead className="bg-gray-50 border-b-2 border-gray-200">
                         <tr>
-                            <th className="p-4 text-center text-sm font-semibold text-gray-600">STT</th>
-                            <th className="p-4 text-left text-sm font-semibold text-gray-600">Tên Người Đặt</th>
-                            <th className="p-4 text-left text-sm font-semibold text-gray-600">Phòng</th>
-                            <th className="p-4 text-left text-sm font-semibold text-gray-600">Check-in</th>
-                            <th className="p-4 text-left text-sm font-semibold text-gray-600">Check-out</th>
-                            <th className="p-4 text-center text-sm font-semibold text-gray-600">Số Người Ở</th>
-                            <th className="p-4 text-left text-sm font-semibold text-gray-600">Email</th>
-                            <th className="p-4 text-left text-sm font-semibold text-gray-600">Số Điện Thoại</th>
-                            <th className="p-4 text-left text-sm font-semibold text-gray-600">Tổng Tiền</th>
-                            <th className="p-4 text-left text-sm font-semibold text-gray-600">Thanh Toán</th>
-                            <th className="p-4 text-left text-sm font-semibold text-gray-600">Trạng Thái</th>
+                            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-12">STT</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider min-w-[150px]">Tên Người Đặt</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider min-w-[180px]">Phòng</th>
+                            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-28">Check-in</th>
+                            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-28">Check-out</th>
+                            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-24">Số Người Ở</th>
+                            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-32">Số Điện Thoại</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider min-w-[120px]">Tổng Tiền</th>
+                            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider min-w-[140px]">Thanh Toán</th>
+                            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider min-w-[140px]">Trạng Thái</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200">
+                    <tbody className="bg-white divide-y divide-gray-200">
                         {bookings.map((booking, index) => {
                             const totalGuests = booking.numberOfAdults + booking.numberOfChildren;
                             const guestsText = `${booking.numberOfAdults} người lớn${booking.numberOfChildren > 0 ? `, ${booking.numberOfChildren} trẻ em` : ''}`;
-                            
+
                             return (
-                                <tr key={booking.id} className={index % 2 !== 0 ? 'bg-gray-50' : 'bg-white'}>
-                                    <td className="p-4 whitespace-nowrap text-sm text-gray-800 text-center">{index + 1}</td>
-                                    <td className="p-4 whitespace-nowrap text-sm font-medium text-gray-900">{booking.customerName}</td>
-                                    <td className="p-4 whitespace-nowrap text-sm text-gray-700">{booking.roomNumbers.join(', ')}</td>
-                                    <td className="p-4 whitespace-nowrap text-sm text-gray-700">{booking.checkInDate.toLocaleDateString('vi-VN')}</td>
-                                    <td className="p-4 whitespace-nowrap text-sm text-gray-700">{booking.checkOutDate.toLocaleDateString('vi-VN')}</td>
-                                    <td className="p-4 whitespace-nowrap text-sm text-gray-700 text-center" title={guestsText}>
+                                <tr key={booking.id} className={index % 2 !== 0 ? 'bg-gray-50' : 'bg-white hover:bg-gray-100'}>
+                                    <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-800">{index + 1}</td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{booking.customerName}</td>
+                                    <td className="px-4 py-3 text-sm text-gray-700">{booking.roomNumbers.join(', ')}</td>
+                                    <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-700">{booking.checkInDate.toLocaleDateString('vi-VN')}</td>
+                                    <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-700">{booking.checkOutDate.toLocaleDateString('vi-VN')}</td>
+                                    <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-700" title={guestsText}>
                                         {totalGuests} ({booking.numberOfAdults}/{booking.numberOfChildren})
                                     </td>
-                                    <td className="p-4 whitespace-nowrap text-sm text-gray-700">{booking.email || '-'}</td>
-                                    <td className="p-4 whitespace-nowrap text-sm text-gray-700">{booking.phone || '-'}</td>
-                                    <td className="p-4 whitespace-nowrap text-sm font-semibold text-gray-900">{booking.totalAmount.toLocaleString('vi-VN')} VND</td>
-                                    <td className="p-4 whitespace-nowrap"><StatusBadge status={booking.paymentStatus} type="payment" /></td>
-                                    <td className="p-4 whitespace-nowrap"><StatusBadge status={booking.bookingStatus} type="booking" /></td>
+                                    <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-700">{booking.phone || '-'}</td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900">{booking.totalAmount.toLocaleString('vi-VN')} VND</td>
+                                    <td className="px-3 py-3 whitespace-nowrap">
+                                        <StatusBadge status={booking.paymentStatus} type="payment" />
+                                    </td>
+                                    <td className="px-3 py-3 whitespace-nowrap">
+                                        <StatusBadge status={booking.bookingStatus} type="booking" />
+                                    </td>
                                 </tr>
                             );
                         })}

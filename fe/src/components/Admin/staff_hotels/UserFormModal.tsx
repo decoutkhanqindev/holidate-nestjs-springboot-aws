@@ -14,7 +14,7 @@ interface UserFormModalProps {
 
 export default function UserFormModal({ isOpen, onClose, user, onSave }: UserFormModalProps) {
     const isEditing = !!user;
-    const title = isEditing ? 'Chỉnh sửa Người dùng' : 'Thêm Người dùng mới';
+    const title = isEditing ? 'Chỉnh sửa nhân viên' : 'Thêm nhân viên mới';
 
     return (
         <Modal show={isOpen} onHide={onClose} centered>

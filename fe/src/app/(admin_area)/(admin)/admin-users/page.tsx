@@ -114,12 +114,26 @@ export default function UsersPage() {
                     });
                     return;
                 }
-                toast.success('Cập nhật người dùng thành công!', {
+                // Lưu roleName vào localStorage nếu có
+                const roleName = formData.get('roleName') as string;
+                if (roleName) {
+                    localStorage.setItem(`user_role_${id}`, roleName);
+                    console.log(`[UsersPage] Updated roleName "${roleName}" for user ${id}`);
+                }
+                
+                toast.success('Cập nhật nhân viên thành công!', {
                     position: "top-right",
                     autoClose: 2000,
                 });
+                
+                // Reload users sau khi update
+                const response = await getUsers({ page: currentPage, limit: ITEMS_PER_PAGE });
+                setUsers(response.data);
+                setTotalPages(response.totalPages);
             } else {
                 // Tạo user mới
+                const roleName = formData.get('roleName') as string;
+                const userEmail = formData.get('email') as string;
                 const result = await createUserAction(formData);
                 if (result?.error) {
                     toast.error(result.error, {
@@ -128,19 +142,28 @@ export default function UsersPage() {
                     });
                     return;
                 }
-                toast.success('Tạo người dùng thành công!', {
+                
+                // Reload users để lấy userId mới tạo
+                const response = await getUsers({ page: currentPage, limit: ITEMS_PER_PAGE });
+                // Tìm user mới tạo bằng email
+                const newUser = response.data.find(u => u.email === userEmail);
+                if (newUser && roleName) {
+                    // Lưu roleName vào localStorage với key là userId
+                    localStorage.setItem(`user_role_${newUser.id}`, roleName);
+                    console.log(`[UsersPage] Saved roleName "${roleName}" for user ${newUser.id}`);
+                }
+                
+                toast.success('Tạo nhân viên thành công!', {
                     position: "top-right",
                     autoClose: 2000,
                 });
+                
+                setUsers(response.data);
+                setTotalPages(response.totalPages);
             }
 
-            // Đóng modal và refresh data
+            // Đóng modal
             handleCloseModal();
-            
-            // Reload users
-            const response = await getUsers({ page: currentPage, limit: ITEMS_PER_PAGE });
-            setUsers(response.data);
-            setTotalPages(response.totalPages);
         } catch (error: any) {
             console.error('[UsersPage] Error saving user:', error);
             toast.error(error.message || 'Có lỗi xảy ra. Vui lòng thử lại.', {
@@ -207,7 +230,7 @@ export default function UsersPage() {
                     className="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 font-semibold shadow-sm"
                 >
                     <PlusIcon className="h-5 w-5" />
-                    Thêm Người Dùng
+                    Thêm Nhân Viên
                 </button>
             </PageHeader>
 

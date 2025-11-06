@@ -30,8 +30,25 @@ interface BookingResponse {
     priceDetails: {
         basePrice: number;
         discountAmount: number;
+        netPriceAfterDiscount: number;
         totalPrice: number;
-        fees: Array<{ name: string; amount: number }>;
+        finalPrice: number; // Backend trả về finalPrice (tổng tiền sau thuế và phí)
+        appliedDiscount?: {
+            id: string;
+            code: string;
+            percentage: number;
+        } | null;
+        tax?: {
+            name: string;
+            percentage: number;
+            amount: number;
+        };
+        serviceFee?: {
+            name: string;
+            percentage: number;
+            amount: number;
+        };
+        fees?: Array<{ name: string; amount: number }>;
     };
     contactFullName: string;
     contactEmail: string;
@@ -58,7 +75,7 @@ interface PaginatedBookingResponse {
 // Helper function để map từ BookingResponse sang Booking
 function mapBookingResponseToBooking(response: BookingResponse): Booking {
     // Map booking status từ backend sang frontend BookingStatus
-    // Backend có thể trả về: 'completed', 'confirmed', 'pending_payment', 'cancelled', 'rescheduled', 'checked_in', etc.
+    // Theo API docs: pending_payment, confirmed, checked_in, cancelled, completed, rescheduled
     const statusMap: Record<string, 'COMPLETED' | 'CONFIRMED' | 'PENDING' | 'CANCELLED' | 'CHECKED_IN'> = {
         'COMPLETED': 'COMPLETED',
         'CONFIRMED': 'CONFIRMED',
@@ -77,16 +94,12 @@ function mapBookingResponseToBooking(response: BookingResponse): Booking {
     };
 
     // Map payment status theo API docs:
-    // Backend PaymentStatusType: PENDING, SUCCESS, FAILED
-    // Backend BookingStatus: pending_payment, confirmed, cancelled, checked_in, completed, rescheduled
-    // Logic mapping:
-    // - confirmed/completed/checked_in → payment = SUCCESS → PAID
+    // - confirmed/completed/checked_in/rescheduled → payment = SUCCESS → PAID
     // - pending_payment → payment = PENDING → PENDING
-    // - cancelled → payment có thể = FAILED hoặc SUCCESS (đã hoàn tiền) → cần check payment status
-    //   Tạm thời: nếu cancelled thì coi như REFUNDED (đã hoàn tiền) nếu có payment trước đó
+    // - cancelled → payment có thể = FAILED (chưa thanh toán) hoặc SUCCESS (đã hoàn tiền) → REFUNDED nếu đã thanh toán trước đó
     let paymentStatus: 'PAID' | 'UNPAID' | 'PENDING' | 'REFUNDED' = 'PENDING';
     const statusLower = response.status.toLowerCase();
-    
+
     if (statusLower === 'confirmed' || statusLower === 'completed' || statusLower === 'checked_in' || statusLower === 'rescheduled') {
         // Booking đã confirmed → payment đã success
         paymentStatus = 'PAID';
@@ -112,7 +125,7 @@ function mapBookingResponseToBooking(response: BookingResponse): Booking {
         roomNumbers: [response.room.name], // Backend chỉ có 1 room, frontend có thể có nhiều
         checkInDate: new Date(response.checkInDate),
         checkOutDate: new Date(response.checkOutDate),
-        totalAmount: response.priceDetails.finalPrice || response.priceDetails.totalPrice || 0, // Dùng finalPrice từ backend
+        totalAmount: response.priceDetails.finalPrice || response.priceDetails.totalPrice || 0, // Dùng finalPrice (tổng tiền sau thuế và phí) từ backend
         paymentStatus: paymentStatus,
         bookingStatus: bookingStatus,
         // Thêm các field mới
@@ -165,6 +178,7 @@ export interface PaginatedBookingsResult {
  */
 export async function getBookings(params: GetBookingsParams = {}): Promise<PaginatedBookingsResult> {
     try {
+        const roleName = params.roleName; // Chỉ dùng để check xem có phải PARTNER không (không gửi user-id)
         const {
             page = 0, // Backend dùng 0-based index
             size = 10,
@@ -183,25 +197,14 @@ export async function getBookings(params: GetBookingsParams = {}): Promise<Pagin
             contactFullName,
             sortBy = 'createdAt',
             sortDir = 'DESC',
-            roleName,
-            currentUserId,
         } = params;
 
         console.log(`[bookingService] Fetching bookings:`, {
             page,
             size,
-            roleName,
-            currentUserId,
-            hotelId,
+            hotelId, // PARTNER: chỉ cần hotelId
             status,
         });
-
-        // Nếu role là PARTNER, backend PHẢI tự động filter theo owner từ JWT token
-        if (roleName?.toLowerCase() === 'partner' && currentUserId) {
-            console.log(`[bookingService] ⚠️ User is PARTNER (${currentUserId})`);
-            console.log(`[bookingService] ⚠️ Backend SHOULD automatically filter bookings by hotel owner from JWT token`);
-            console.log(`[bookingService] ⚠️ If backend doesn't filter, user will see ALL bookings (SECURITY ISSUE)`);
-        }
 
         // Build query params
         const queryParams: any = {
@@ -213,14 +216,23 @@ export async function getBookings(params: GetBookingsParams = {}): Promise<Pagin
 
         // Thêm các filter optional
         // Backend dùng kebab-case cho query params: 'user-id', 'room-id', 'hotel-id'
-        // QUAN TRỌNG: Nếu role là PARTNER, KHÔNG gửi 'user-id' (vì đó là bookings của user khác)
-        // PARTNER chỉ nên xem bookings của hotels họ sở hữu, nên cần gửi 'hotel-id'
+        // 
+        // LOGIC QUAN TRỌNG:
+        // - Khi client booking → userId trong booking là ID của client (đã được lưu trong booking)
+        // - PARTNER (chủ khách sạn) muốn xem bookings → lấy theo hotelId (id khách sạn)
+        // - USER muốn xem bookings của chính họ → lấy theo userId (id của user)
+        // - ADMIN muốn xem tất cả bookings → không gửi filter hoặc gửi filter cụ thể
+        //
+        // Vì vậy:
+        // - PARTNER: KHÔNG gửi 'user-id' (vì userId trong booking là của client, không phải của Partner)
+        // - PARTNER: GỬI 'hotel-id' để filter bookings của hotels họ sở hữu
         if (userId && roleName?.toLowerCase() !== 'partner') {
-            // Chỉ gửi user-id nếu không phải PARTNER (USER role dùng user-id để xem bookings của chính họ)
+            // Chỉ gửi user-id nếu không phải PARTNER
+            // USER role dùng user-id để xem bookings của chính họ
             queryParams['user-id'] = userId;
         }
         if (roomId) queryParams['room-id'] = roomId;
-        if (hotelId) queryParams['hotel-id'] = hotelId; // PARTNER cần gửi hotel-id để filter bookings
+        if (hotelId) queryParams['hotel-id'] = hotelId; // PARTNER cần gửi hotel-id để lấy bookings theo id khách sạn
         if (status) queryParams.status = status;
         if (checkInDate) queryParams.checkInDate = checkInDate;
         if (checkOutDate) queryParams.checkOutDate = checkOutDate;
@@ -234,9 +246,7 @@ export async function getBookings(params: GetBookingsParams = {}): Promise<Pagin
 
         console.log("[bookingService] ===== REQUEST DETAILS =====");
         console.log("[bookingService] Request params:", JSON.stringify(queryParams, null, 2));
-        console.log("[bookingService] Role:", roleName);
-        console.log("[bookingService] User ID:", currentUserId);
-        console.log("[bookingService] Hotel ID:", hotelId);
+        console.log("[bookingService] Hotel ID:", hotelId, hotelId ? "(PARTNER: lấy bookings theo id khách sạn)" : "");
 
         // Kiểm tra token trước khi gọi API
         if (typeof window !== 'undefined') {
@@ -261,19 +271,19 @@ export async function getBookings(params: GetBookingsParams = {}): Promise<Pagin
         console.log("[bookingService] Response message:", response.data?.message);
         console.log("[bookingService] Response has data:", !!response.data?.data);
         console.log("[bookingService] Response data type:", typeof response.data?.data);
-        
+
         // Kiểm tra response structure
         if (!response.data) {
             console.error("[bookingService] ❌ Response không có data property");
             throw new Error('Phản hồi từ server không hợp lệ.');
         }
-        
+
         if (response.data.statusCode !== 200) {
             console.error("[bookingService] ❌ Response statusCode không phải 200:", response.data.statusCode);
             console.error("[bookingService] Response message:", response.data.message);
             throw new Error(response.data.message || `Lỗi từ server (statusCode: ${response.data.statusCode})`);
         }
-        
+
         if (!response.data.data) {
             console.warn("[bookingService] ⚠️ Response không có data.data");
             return {
@@ -283,7 +293,7 @@ export async function getBookings(params: GetBookingsParams = {}): Promise<Pagin
                 totalItems: 0,
             };
         }
-        
+
         console.log("[bookingService] Response data structure:", {
             hasContent: !!response.data.data.content,
             contentLength: response.data.data.content?.length || 0,
@@ -291,7 +301,7 @@ export async function getBookings(params: GetBookingsParams = {}): Promise<Pagin
             totalPages: response.data.data.totalPages,
             totalItems: response.data.data.totalItems,
         });
-        
+
         try {
             // Kiểm tra content có tồn tại không
             if (!response.data.data.content || !Array.isArray(response.data.data.content)) {
@@ -299,7 +309,7 @@ export async function getBookings(params: GetBookingsParams = {}): Promise<Pagin
                 console.error("[bookingService] Content value:", response.data.data.content);
                 throw new Error('Dữ liệu bookings không hợp lệ từ server.');
             }
-            
+
             const bookings = response.data.data.content.map((item: BookingResponse, index: number) => {
                 try {
                     return mapBookingResponseToBooking(item);
@@ -309,9 +319,9 @@ export async function getBookings(params: GetBookingsParams = {}): Promise<Pagin
                     throw new Error(`Lỗi khi xử lý booking ${index + 1}: ${itemError.message}`);
                 }
             });
-            
+
             console.log(`[bookingService] ✅ Successfully mapped ${bookings.length} bookings (page ${response.data.data.page + 1}/${response.data.data.totalPages})`);
-            
+
             return {
                 data: bookings,
                 totalPages: response.data.data.totalPages,
@@ -338,7 +348,7 @@ export async function getBookings(params: GetBookingsParams = {}): Promise<Pagin
             baseURL: error.config?.baseURL,
             params: error.config?.params,
         });
-        
+
         // Xử lý các loại lỗi khác nhau
         if (error.response?.status === 401) {
             console.error("[bookingService] ⚠️ 401 Unauthorized - Token không hợp lệ hoặc đã hết hạn");
@@ -350,6 +360,35 @@ export async function getBookings(params: GetBookingsParams = {}): Promise<Pagin
         } else if (error.response?.status === 403) {
             console.error("[bookingService] ⚠️ 403 Forbidden - User không có quyền truy cập");
             console.error("[bookingService] ⚠️ Response data:", JSON.stringify(error.response?.data, null, 2));
+            console.error("[bookingService] ⚠️ Expected roles for /bookings endpoint (theo API docs):");
+            console.error("[bookingService] ⚠️   - USER");
+            console.error("[bookingService] ⚠️   - PARTNER");
+            console.error("[bookingService] ⚠️   - ADMIN");
+
+            // Kiểm tra JWT token để xem role trong token
+            if (typeof window !== 'undefined') {
+                try {
+                    const token = localStorage.getItem('accessToken');
+                    if (token) {
+                        // Decode JWT token để xem role (không verify, chỉ decode)
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        console.error("[bookingService] ⚠️ JWT token payload (scope/roles):", payload.scope || payload.roles || payload.authorities || 'Not found');
+                        console.error("[bookingService] ⚠️ JWT token full payload:", payload);
+
+                        // Kiểm tra xem scope có đúng format không
+                        const scope = payload.scope;
+                        console.error("[bookingService] ⚠️ Scope type:", typeof scope);
+                        console.error("[bookingService] ⚠️ Scope value:", scope);
+                        if (typeof scope === 'string') {
+                            console.error("[bookingService] ⚠️ ⚠️ VẤN ĐỀ: Scope là string đơn, backend JwtGrantedAuthoritiesConverter không parse được!");
+                            console.error("[bookingService] ⚠️ ⚠️ Backend cần scope là array ['partner'] hoặc space-separated 'partner admin'");
+                        }
+                    }
+                } catch (e) {
+                    console.error("[bookingService] ⚠️ Cannot decode JWT token:", e);
+                }
+            }
+
             const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Bạn không có quyền truy cập tài nguyên này.';
             throw new Error(errorMessage);
         } else if (error.response?.status === 404) {
@@ -363,13 +402,16 @@ export async function getBookings(params: GetBookingsParams = {}): Promise<Pagin
                 throw new Error(error.response.data.message || 'Lỗi từ server');
             }
         } else {
-            const errorMessage = error.response?.data?.message 
+            const errorMessage = error.response?.data?.message
                 || error.response?.data?.error
-                || error.message 
+                || error.message
                 || 'Không thể tải danh sách đặt phòng';
             throw new Error(errorMessage);
         }
     }
+    // TypeScript safety: function always returns or throws, but we need to satisfy the compiler
+    // This line should never be reached
+    throw new Error('Unexpected error in getBookings');
 }
 
 /**
