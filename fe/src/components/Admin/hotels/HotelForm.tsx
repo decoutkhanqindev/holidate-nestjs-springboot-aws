@@ -240,7 +240,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                 {/* ... Các trường STT, Tên, Địa chỉ, Mô tả giữ nguyên ... */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="md:col-span-1"><label htmlFor="stt" className="block text-sm font-medium text-gray-700">Số thứ tự (STT)</label><input type="number" name="stt" id="stt" defaultValue={hotel?.stt || ''} placeholder="VD: 1" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" /></div>
-                    <div className="md:col-span-2"><label htmlFor="name" className="block text-sm font-medium text-gray-700">Tên khách sạn</label><input type="text" name="name" id="name" required defaultValue={hotel?.name} placeholder="VD: Khách sạn Grand Saigon" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" /></div>
+                    <div className="md:col-span-2"><label htmlFor="name" className="block text-sm font-medium text-gray-700">Tên khách sạn *</label><input type="text" name="name" id="name" required defaultValue={hotel?.name} placeholder="VD: Khách sạn Grand Saigon" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" /></div>
                 </div>
                 <div>
                     <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
@@ -279,10 +279,10 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                             >
                                 <option value="">Chọn quốc gia</option>
                                 {countries
-                                    .filter(c => c.id && c.id.trim())
-                                    .filter((c, index, self) => self.findIndex(item => item.id === c.id) === index) // Remove duplicates
-                                    .map(country => (
-                                        <option key={country.id} value={country.id}>{country.name}</option>
+                                    .filter(c => c.id && String(c.id).trim())
+                                    .filter((c, index, self) => self.findIndex(item => String(item.id) === String(c.id)) === index) // Remove duplicates
+                                    .map((country, index) => (
+                                        <option key={`country-${country.id}-${index}`} value={country.id}>{country.name}</option>
                                     ))}
                             </select>
                         </div>
@@ -327,10 +327,10 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                             >
                                 <option value="">Chọn tỉnh/thành phố</option>
                                 {provinces
-                                    .filter(p => p.id && p.id.trim())
-                                    .filter((p, index, self) => self.findIndex(item => item.id === p.id) === index) // Remove duplicates
-                                    .map(province => (
-                                        <option key={province.id} value={province.id}>{province.name}</option>
+                                    .filter(p => p.id && String(p.id).trim())
+                                    .filter((p, index, self) => self.findIndex(item => String(item.id) === String(p.id)) === index) // Remove duplicates
+                                    .map((province, index) => (
+                                        <option key={`province-${province.id}-${index}`} value={province.id}>{province.name}</option>
                                     ))}
                             </select>
                         </div>
@@ -385,10 +385,10 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                             >
                                 <option value="">Chọn thành phố/quận (của {provinces.find(p => p.id === selectedProvinceId)?.name || 'tỉnh đã chọn'})</option>
                                 {cities
-                                    .filter(c => c.id && c.id.trim())
-                                    .filter((c, index, self) => self.findIndex(item => item.id === c.id) === index) // Remove duplicates
-                                    .map(city => (
-                                        <option key={city.id} value={city.id}>{city.name}</option>
+                                    .filter(c => c.id && String(c.id).trim())
+                                    .filter((c, index, self) => self.findIndex(item => String(item.id) === String(c.id)) === index) // Remove duplicates
+                                    .map((city, index) => (
+                                        <option key={`city-${city.id}-${index}`} value={city.id}>{city.name}</option>
                                     ))}
                             </select>
                         </div>
@@ -439,10 +439,10 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                             >
                                 <option value="">Chọn quận/huyện (của {cities.find(c => c.id === selectedCityId)?.name || 'thành phố đã chọn'})</option>
                                 {districts
-                                    .filter(d => d.id && d.id.trim())
-                                    .filter((d, index, self) => self.findIndex(item => item.id === d.id) === index) // Remove duplicates
-                                    .map(district => (
-                                        <option key={district.id} value={district.id}>{district.name}</option>
+                                    .filter(d => d.id && String(d.id).trim())
+                                    .filter((d, index, self) => self.findIndex(item => String(item.id) === String(d.id)) === index) // Remove duplicates
+                                    .map((district, index) => (
+                                        <option key={`district-${district.id}-${index}`} value={district.id}>{district.name}</option>
                                     ))}
                             </select>
                         </div>
@@ -493,10 +493,10 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                             >
                                 <option value="">Chọn phường/xã (của {districts.find(d => d.id === selectedDistrictId)?.name || 'quận/huyện đã chọn'})</option>
                                 {wards
-                                    .filter(w => w.id && w.id.trim())
-                                    .filter((w, index, self) => self.findIndex(item => item.id === w.id) === index) // Remove duplicates
-                                    .map(ward => (
-                                        <option key={ward.id} value={ward.id}>{ward.name}</option>
+                                    .filter(w => w.id && String(w.id).trim())
+                                    .filter((w, index, self) => self.findIndex(item => String(item.id) === String(w.id)) === index) // Remove duplicates
+                                    .map((ward, index) => (
+                                        <option key={`ward-${ward.id}-${index}`} value={ward.id}>{ward.name}</option>
                                     ))}
                             </select>
                         </div>
@@ -538,10 +538,10 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                             >
                                 <option value="">Chọn đường (của {wards.find(w => w.id === selectedWardId)?.name || 'phường/xã đã chọn'})</option>
                                 {streets
-                                    .filter(s => s.id && s.id.trim())
-                                    .filter((s, index, self) => self.findIndex(item => item.id === s.id) === index) // Remove duplicates
-                                    .map(street => (
-                                        <option key={street.id} value={street.id}>{street.name}</option>
+                                    .filter(s => s.id && String(s.id).trim())
+                                    .filter((s, index, self) => self.findIndex(item => String(item.id) === String(s.id)) === index) // Remove duplicates
+                                    .map((street, index) => (
+                                        <option key={`street-${street.id}-${index}`} value={street.id}>{street.name}</option>
                                     ))}
                             </select>
                         </div>
@@ -596,8 +596,8 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                     className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                 >
                                     <option value="">Chọn đối tác</option>
-                                    {partners.filter(p => p.id && String(p.id).trim()).map(partner => (
-                                        <option key={partner.id} value={partner.id}>
+                                    {partners.filter(p => p.id && String(p.id).trim()).map((partner, index) => (
+                                        <option key={`partner-${partner.id}-${index}`} value={partner.id}>
                                             {partner.fullName} ({partner.email})
                                         </option>
                                     ))}
@@ -788,11 +788,17 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                     Thêm {createModalType === 'street' ? 'đường' : createModalType === 'ward' ? 'phường/xã' : createModalType === 'district' ? 'quận/huyện' : createModalType === 'city' ? 'thành phố/quận' : 'tỉnh/thành phố'} mới vào hệ thống
                                 </p>
                             </div>
-                            {/* Thêm trường mã cho province và city */}
-                            {(createModalType === 'province' || createModalType === 'city') && (
+                            {/* Thêm trường mã cho province, city, district, ward và street */}
+                            {(createModalType === 'province' || createModalType === 'city' || createModalType === 'district' || createModalType === 'ward' || createModalType === 'street') && (
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Mã {createModalType === 'city' ? 'thành phố/quận' : 'tỉnh/thành phố'} * (2-3 ký tự)
+                                        Mã {
+                                            createModalType === 'province' ? 'tỉnh/thành phố' :
+                                            createModalType === 'city' ? 'thành phố/quận' :
+                                            createModalType === 'district' ? 'quận/huyện' :
+                                            createModalType === 'ward' ? 'phường/xã' :
+                                            'đường'
+                                        } * (2-3 ký tự)
                                     </label>
                                     <input
                                         type="text"
@@ -802,12 +808,24 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                             const value = e.target.value.toUpperCase().slice(0, 3);
                                             setNewLocationCode(value);
                                         }}
-                                        placeholder={`VD: ${createModalType === 'city' ? 'HCM' : 'HN'}`}
+                                        placeholder={`VD: ${
+                                            createModalType === 'province' ? 'HN' :
+                                            createModalType === 'city' ? 'HCM' :
+                                            createModalType === 'district' ? 'Q1' :
+                                            createModalType === 'ward' ? 'P1' :
+                                            'D1'
+                                        }`}
                                         maxLength={3}
                                         className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                     />
                                     <p className="text-xs text-gray-500 mt-1">
-                                        Mã phải có từ 2 đến 3 ký tự (VD: {createModalType === 'city' ? 'HCM, Q1' : 'HN, HCM'})
+                                        Mã phải có từ 2 đến 3 ký tự (VD: {
+                                            createModalType === 'province' ? 'HN, HCM' :
+                                            createModalType === 'city' ? 'HCM, Q1' :
+                                            createModalType === 'district' ? 'Q1, H1' :
+                                            createModalType === 'ward' ? 'P1, X1' :
+                                            'D1, D2'
+                                        })
                                     </p>
                                 </div>
                             )}
@@ -834,8 +852,8 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                         return;
                                     }
 
-                                    // Validate code cho province và city
-                                    if ((createModalType === 'province' || createModalType === 'city')) {
+                                    // Validate code cho province, city, district, ward và street
+                                    if ((createModalType === 'province' || createModalType === 'city' || createModalType === 'district' || createModalType === 'ward' || createModalType === 'street')) {
                                         if (!newLocationCode.trim()) {
                                             setCreateError('Vui lòng nhập mã (2-3 ký tự)');
                                             return;
@@ -879,7 +897,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                                 if (!selectedWardId) {
                                                     throw new Error('Vui lòng chọn Phường/Xã trước');
                                                 }
-                                                newLocation = await createStreet(newLocationName, selectedWardId);
+                                                newLocation = await createStreet(newLocationName, selectedWardId, newLocationCode.trim());
                                                 // Refresh streets và tự động chọn
                                                 await loadStreets(selectedWardId, selectedDistrictId, selectedCityId);
                                                 setSelectedStreetId(newLocation.id);
@@ -889,7 +907,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                                 if (!selectedDistrictId) {
                                                     throw new Error('Vui lòng chọn Quận/Huyện trước');
                                                 }
-                                                newLocation = await createWard(newLocationName, selectedDistrictId);
+                                                newLocation = await createWard(newLocationName, selectedDistrictId, newLocationCode.trim());
                                                 await loadWards(selectedDistrictId, selectedCityId);
                                                 setSelectedWardId(newLocation.id);
                                                 break;
@@ -898,7 +916,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                                 if (!selectedCityId) {
                                                     throw new Error('Vui lòng chọn Thành phố/Quận trước');
                                                 }
-                                                newLocation = await createDistrict(newLocationName, selectedCityId);
+                                                newLocation = await createDistrict(newLocationName, selectedCityId, newLocationCode.trim());
                                                 await loadDistricts(selectedCityId);
                                                 setSelectedDistrictId(newLocation.id);
                                                 break;
@@ -946,7 +964,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                             errorMessage = `${locationType.charAt(0).toUpperCase() + locationType.slice(1)} đã tồn tại trong hệ thống.\n\n` +
                                                           `Có thể:\n` +
                                                           `- Tên "${newLocationName}" đã được sử dụng\n` +
-                                                          `${(createModalType === 'province' || createModalType === 'city') ? `- Mã "${newLocationCode}" đã được sử dụng\n` : ''}` +
+                                                          `${(createModalType === 'province' || createModalType === 'city' || createModalType === 'district' || createModalType === 'ward' || createModalType === 'street') ? `- Mã "${newLocationCode}" đã được sử dụng\n` : ''}` +
                                                           `\nVui lòng thử tên/mã khác hoặc kiểm tra lại danh sách.`;
                                         }
                                         
@@ -958,7 +976,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                 disabled={
                                     isCreating || 
                                     !newLocationName.trim() || 
-                                    ((createModalType === 'province' || createModalType === 'city') && 
+                                    ((createModalType === 'province' || createModalType === 'city' || createModalType === 'district' || createModalType === 'ward' || createModalType === 'street') && 
                                      (!newLocationCode.trim() || newLocationCode.trim().length < 2 || newLocationCode.trim().length > 3))
                                 }
                                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"

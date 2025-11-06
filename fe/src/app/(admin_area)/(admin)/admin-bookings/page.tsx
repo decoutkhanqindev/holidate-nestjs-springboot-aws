@@ -71,15 +71,19 @@ export default function BookingsPage() {
                 console.log("[BookingsPage] User info (effectiveUser):", { userId, roleName });
 
                 // Nếu role là PARTNER, lấy danh sách hotels của họ trước
-                // Sau đó filter bookings theo hotelId của các hotels đó
+                // Sau đó lấy bookings của TẤT CẢ hotels đó
                 let hotelIds: string[] = [];
 
                 if (roleName?.toLowerCase() === 'partner' && userId) {
                     try {
-                        console.log("[BookingsPage] User is PARTNER, fetching hotels first...");
+                        console.log("[BookingsPage] ===== PARTNER: FETCHING HOTELS =====");
+                        console.log("[BookingsPage] User ID:", userId);
+                        console.log("[BookingsPage] Role:", roleName);
                         const hotelsData = await getHotels(0, 1000, undefined, undefined, userId, roleName);
                         hotelIds = hotelsData.hotels.map(h => h.id);
-                        console.log("[BookingsPage] Found hotels for PARTNER:", hotelIds.length, hotelIds);
+                        console.log("[BookingsPage] ✅ Found hotels for PARTNER:", hotelIds.length, "hotels");
+                        console.log("[BookingsPage] Hotel IDs:", hotelIds);
+                        console.log("[BookingsPage] ===== END FETCHING HOTELS =====");
 
                         // Nếu PARTNER không có hotels, không có bookings
                         if (hotelIds.length === 0) {
@@ -92,52 +96,82 @@ export default function BookingsPage() {
                         }
                     } catch (hotelError: any) {
                         console.error('[BookingsPage] Error fetching hotels for PARTNER:', hotelError);
-                        // Nếu không lấy được hotels, vẫn thử lấy bookings (backend có thể tự filter)
-                    }
-                }
-
-                // Gọi API bookings
-                // Nếu là PARTNER và có hotels, thử filter theo hotelId
-                // Backend có thể yêu cầu hotelId để filter bookings cho PARTNER
-                let bookingsResponse;
-
-                if (roleName?.toLowerCase() === 'partner') {
-                    console.log("[BookingsPage] PARTNER: Fetching bookings for hotels:", hotelIds);
-
-                    // PARTNER PHẢI gửi hotelId vì backend không tự động filter
-                    if (hotelIds.length === 0) {
-                        console.log("[BookingsPage] PARTNER has no hotels, no bookings available");
+                        // Nếu không lấy được hotels, không thể lấy bookings
                         setBookings([]);
                         setTotalPages(0);
                         setTotalItems(0);
                         setIsLoading(false);
                         return;
                     }
+                }
 
-                    // Nếu PARTNER có nhiều hotels, gộp bookings từ tất cả hotels
-                    // Hoặc có thể chỉ lấy từ hotel đầu tiên (tùy requirement)
-                    // Ở đây ta sẽ lấy từ hotel đầu tiên, hoặc có thể merge từ tất cả
+                // Gọi API bookings
+                let bookingsResponse;
+
+                if (roleName?.toLowerCase() === 'partner') {
+                    console.log("[BookingsPage] ===== PARTNER: FETCHING BOOKINGS =====");
+                    console.log("[BookingsPage] Total hotels to fetch:", hotelIds.length);
+                    console.log("[BookingsPage] Hotel IDs:", hotelIds);
+
+                    // PARTNER: Lấy bookings của TẤT CẢ hotels
+                    // Vì API chỉ hỗ trợ 1 hotelId mỗi lần, ta sẽ:
+                    // 1. Gọi API cho từng hotel với size lớn để lấy tất cả bookings
+                    // 2. Merge tất cả bookings lại
+                    // 3. Sort theo createdAt DESC
+                    // 4. Paginate trên frontend
                     try {
-                        // PARTNER: Chỉ gửi hotel-id để lấy bookings theo id khách sạn
-                        // KHÔNG gửi roleName, currentUserId - backend sẽ tự biết từ JWT token
-                        bookingsResponse = await getBookings({
-                            page: currentPage - 1,
-                            size: ITEMS_PER_PAGE,
-                            sortBy: 'createdAt',
-                            sortDir: 'DESC',
-                            hotelId: hotelIds[0], // Gửi hotelId để lấy bookings của khách sạn này
-                        });
-                        console.log("[BookingsPage] ✅ Successfully fetched bookings for hotel:", hotelIds[0]);
+                        const allBookings: Booking[] = [];
+                        
+                        // Gọi API cho từng hotel
+                        for (let i = 0; i < hotelIds.length; i++) {
+                            const hotelId = hotelIds[i];
+                            try {
+                                console.log(`[BookingsPage] [${i + 1}/${hotelIds.length}] Fetching bookings for hotel: ${hotelId}`);
+                                const hotelBookings = await getBookings({
+                                    page: 0,
+                                    size: 1000, // Lấy tất cả bookings của hotel này
+                                    sortBy: 'createdAt',
+                                    sortDir: 'DESC',
+                                    hotelId: hotelId, // Lấy bookings theo hotelId
+                                });
+                                console.log(`[BookingsPage] ✅✅✅ SUCCESS! Fetched ${hotelBookings.data.length} bookings for hotel ${hotelId}`);
+                                console.log(`[BookingsPage] ✅ Backend đã cho phép PARTNER truy cập /bookings với hotelId=${hotelId}`);
+                                console.log(`[BookingsPage] Response: totalItems=${hotelBookings.totalItems}, totalPages=${hotelBookings.totalPages}`);
+                                allBookings.push(...hotelBookings.data);
+                            } catch (hotelBookingError: any) {
+                                console.error(`[BookingsPage] ❌ Error fetching bookings for hotel ${hotelId}:`, hotelBookingError.message);
+                                console.error(`[BookingsPage] Error response status:`, hotelBookingError.response?.status);
+                                console.error(`[BookingsPage] Error response data:`, hotelBookingError.response?.data);
+                                // Tiếp tục với hotel tiếp theo nếu có lỗi
+                            }
+                        }
+                        
+                        console.log("[BookingsPage] ===== END FETCHING BOOKINGS =====");
 
-                        // TODO: Nếu muốn merge bookings từ tất cả hotels, có thể:
-                        // - Gọi API cho từng hotel và merge results
-                        // - Hoặc tạo một API endpoint mới hỗ trợ multiple hotelIds
+                        // Sort tất cả bookings theo createdAt DESC (mới nhất trước)
+                        allBookings.sort((a, b) => {
+                            const dateA = a.checkInDate.getTime();
+                            const dateB = b.checkInDate.getTime();
+                            return dateB - dateA; // DESC
+                        });
+
+                        console.log(`[BookingsPage] ✅ Total bookings from all hotels: ${allBookings.length}`);
+
+                        // Paginate trên frontend
+                        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+                        const endIndex = startIndex + ITEMS_PER_PAGE;
+                        const paginatedBookings = allBookings.slice(startIndex, endIndex);
+                        const totalPages = Math.ceil(allBookings.length / ITEMS_PER_PAGE);
+
+                        setBookings(paginatedBookings);
+                        setTotalPages(totalPages);
+                        setTotalItems(allBookings.length);
                     } catch (error: any) {
                         console.error('[BookingsPage] ❌ Error fetching bookings for PARTNER:', error.message);
                         throw error;
                     }
                 } else {
-                    // ADMIN hoặc không có hotels: Lấy tất cả bookings
+                    // ADMIN: Lấy tất cả bookings
                     bookingsResponse = await getBookings({
                         page: currentPage - 1,
                         size: ITEMS_PER_PAGE,
@@ -146,16 +180,14 @@ export default function BookingsPage() {
                         roleName: roleName,
                         currentUserId: userId,
                     });
+
+                    setBookings(bookingsResponse.data);
+                    setTotalPages(bookingsResponse.totalPages);
+                    setTotalItems(bookingsResponse.totalItems);
+                    
+                    console.log("[BookingsPage] Received bookings:", bookingsResponse.data.length);
+                    console.log("[BookingsPage] Total items:", bookingsResponse.totalItems);
                 }
-
-                const response = bookingsResponse;
-
-                setBookings(response.data);
-                setTotalPages(response.totalPages);
-                setTotalItems(response.totalItems);
-
-                console.log("[BookingsPage] Received bookings:", response.data.length);
-                console.log("[BookingsPage] Total items:", response.totalItems);
             } catch (error: any) {
                 console.error('[BookingsPage] ===== ERROR DETAILS =====');
                 console.error('[BookingsPage] Error:', error);

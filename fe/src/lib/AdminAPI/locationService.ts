@@ -181,16 +181,17 @@ export const getStreets = async (wardId?: string, districtId?: string, cityId?: 
 /**
  * Tạo Street mới
  */
-export const createStreet = async (name: string, wardId: string, code?: string): Promise<LocationOption> => {
-    // Đường không cần mã code - chỉ gửi name và wardId
+export const createStreet = async (name: string, wardId: string, code: string): Promise<LocationOption> => {
+    // Đường cần mã code (backend yêu cầu)
     const requestBody: {
         name: string;
+        code: string;
         wardId: string;
     } = {
         name: name.trim(),
+        code: code.trim(),
         wardId: wardId.trim(),
     };
-    // KHÔNG gửi field code
 
     try {
         console.log(`[locationService] Creating street: ${name} for wardId: ${wardId}`);
@@ -219,16 +220,17 @@ export const createStreet = async (name: string, wardId: string, code?: string):
 /**
  * Tạo Ward mới
  */
-export const createWard = async (name: string, districtId: string, code?: string): Promise<LocationOption> => {
-    // Phường/Xã không cần mã code - chỉ gửi name và districtId
+export const createWard = async (name: string, districtId: string, code: string): Promise<LocationOption> => {
+    // Phường/Xã cần mã code (backend yêu cầu)
     const requestBody: {
         name: string;
+        code: string;
         districtId: string;
     } = {
         name: name.trim(),
+        code: code.trim(),
         districtId: districtId.trim(),
     };
-    // KHÔNG gửi field code
 
     try {
         console.log(`[locationService] ===== CREATING WARD =====`);
@@ -329,16 +331,17 @@ export const createWard = async (name: string, districtId: string, code?: string
 /**
  * Tạo District mới
  */
-export const createDistrict = async (name: string, cityId: string, code?: string): Promise<LocationOption> => {
-    // Quận/Huyện không cần mã code - chỉ gửi name và cityId
+export const createDistrict = async (name: string, cityId: string, code: string): Promise<LocationOption> => {
+    // Quận/Huyện cần mã code (backend yêu cầu)
     const requestBody: {
         name: string;
+        code: string;
         cityId: string;
     } = {
         name: name.trim(),
+        code: code.trim(),
         cityId: cityId.trim(),
     };
-    // KHÔNG gửi field code
 
     try {
         console.log(`[locationService] ===== CREATING DISTRICT =====`);

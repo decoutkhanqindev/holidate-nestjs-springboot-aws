@@ -247,6 +247,7 @@ export async function getBookings(params: GetBookingsParams = {}): Promise<Pagin
         console.log("[bookingService] ===== REQUEST DETAILS =====");
         console.log("[bookingService] Request params:", JSON.stringify(queryParams, null, 2));
         console.log("[bookingService] Hotel ID:", hotelId, hotelId ? "(PARTNER: lấy bookings theo id khách sạn)" : "");
+        console.log("[bookingService] Full URL sẽ gọi:", `${baseURL}?${new URLSearchParams(queryParams).toString()}`);
 
         // Kiểm tra token trước khi gọi API
         if (typeof window !== 'undefined') {
@@ -257,6 +258,15 @@ export async function getBookings(params: GetBookingsParams = {}): Promise<Pagin
             }
             console.log("[bookingService] ✅ Token found in localStorage:", token.substring(0, 20) + '...');
             console.log("[bookingService] Token will be sent in Authorization header: Bearer <token>");
+
+            // Decode token để log role
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                console.log("[bookingService] ✅ User role (scope):", payload.scope || 'N/A');
+                console.log("[bookingService] ✅ User email:", payload.sub || 'N/A');
+            } catch (e) {
+                console.warn("[bookingService] ⚠️ Cannot decode token:", e);
+            }
         }
         console.log("[bookingService] ===== END REQUEST DETAILS =====");
 
@@ -266,11 +276,15 @@ export async function getBookings(params: GetBookingsParams = {}): Promise<Pagin
         );
 
         console.log("[bookingService] ===== RESPONSE RECEIVED =====");
-        console.log("[bookingService] HTTP Status:", response.status);
-        console.log("[bookingService] Response statusCode:", response.data?.statusCode);
-        console.log("[bookingService] Response message:", response.data?.message);
-        console.log("[bookingService] Response has data:", !!response.data?.data);
-        console.log("[bookingService] Response data type:", typeof response.data?.data);
+        console.log("[bookingService] ✅ HTTP Status:", response.status);
+        console.log("[bookingService] ✅ Response statusCode:", response.data?.statusCode);
+        console.log("[bookingService] ✅ Response message:", response.data?.message);
+        console.log("[bookingService] ✅ Response has data:", !!response.data?.data);
+        console.log("[bookingService] ✅ Response data type:", typeof response.data?.data);
+
+        if (response.status === 200 && response.data?.statusCode === 200) {
+            console.log("[bookingService] ✅✅✅ REQUEST THÀNH CÔNG! Backend đã cho phép PARTNER truy cập /bookings");
+        }
 
         // Kiểm tra response structure
         if (!response.data) {
@@ -349,6 +363,163 @@ export async function getBookings(params: GetBookingsParams = {}): Promise<Pagin
             params: error.config?.params,
         });
 
+        // ===== PHÂN TÍCH LỖI CHI TIẾT ĐỂ BÁO CHO BACKEND =====
+        console.error(`[bookingService] ===== PHÂN TÍCH LỖI =====`);
+
+        // 1. Kiểm tra có phải lỗi network/frontend không
+        if (!error.response) {
+            console.error(`[bookingService] ❌ LỖI FRONTEND/NETWORK:`);
+            console.error(`[bookingService] - Không có response từ server`);
+            console.error(`[bookingService] - Có thể do: network error, CORS, server không chạy, hoặc timeout`);
+            console.error(`[bookingService] - Error message: ${error.message}`);
+            console.error(`[bookingService] - Error code: ${error.code || 'N/A'}`);
+        } else {
+            // 2. Có response → Lỗi từ backend
+            const statusCode = error.response?.status;
+            const responseData = error.response?.data;
+
+            console.error(`[bookingService] ❌ LỖI BACKEND:`);
+            console.error(`[bookingService] - HTTP Status Code: ${statusCode}`);
+            console.error(`[bookingService] - Response Status Text: ${error.response?.statusText || 'N/A'}`);
+            console.error(`[bookingService] - Response Data:`, JSON.stringify(responseData, null, 2));
+
+            // 3. Phân tích từng loại lỗi
+            if (statusCode === 401) {
+                console.error(`[bookingService] 🔐 LỖI 401 UNAUTHORIZED:`);
+                console.error(`[bookingService] - Token không hợp lệ hoặc đã hết hạn`);
+                console.error(`[bookingService] - Frontend đã xử lý: xóa token và yêu cầu đăng nhập lại`);
+            } else if (statusCode === 403) {
+                console.error(`[bookingService] 🚫 LỖI 403 FORBIDDEN:`);
+                console.error(`[bookingService] - User không có quyền truy cập resource này`);
+                console.error(`[bookingService] - ĐÂY LÀ LỖI BACKEND - SecurityConfig chưa cho phép role này`);
+
+                // Log thông tin JWT token
+                let scope: string | undefined = undefined;
+                if (typeof window !== 'undefined') {
+                    const token = localStorage.getItem('accessToken');
+                    if (token) {
+                        try {
+                            const payload = JSON.parse(atob(token.split('.')[1]));
+                            scope = payload.scope;
+                            console.error(`[bookingService] 📋 THÔNG TIN JWT TOKEN:`);
+                            console.error(`[bookingService] - Subject (email): ${payload.sub || 'N/A'}`);
+                            console.error(`[bookingService] - Scope: ${scope || 'N/A'} (type: ${typeof scope})`);
+                            console.error(`[bookingService] - Full Name: ${payload.fullName || 'N/A'}`);
+                            console.error(`[bookingService] - Issuer: ${payload.iss || 'N/A'}`);
+                            console.error(`[bookingService] - Expires At: ${new Date(payload.exp * 1000).toISOString()}`);
+                            console.error(`[bookingService] - Full Payload:`, JSON.stringify(payload, null, 2));
+
+                            // So sánh scope với RoleType
+                            console.error(`[bookingService] 🔍 SO SÁNH SCOPE VỚI ROLE TYPE:`);
+                            console.error(`[bookingService] - JWT scope: "${scope}"`);
+                            console.error(`[bookingService] - Expected RoleType.PARTNER.getValue(): "partner"`);
+                            console.error(`[bookingService] - Expected RoleType.ADMIN.getValue(): "admin"`);
+                            console.error(`[bookingService] - Expected RoleType.USER.getValue(): "user"`);
+                            console.error(`[bookingService] - Scope match PARTNER: ${scope === 'partner' || scope === 'PARTNER'}`);
+                            console.error(`[bookingService] - Scope match ADMIN: ${scope === 'admin' || scope === 'ADMIN'}`);
+                            console.error(`[bookingService] - Scope match USER: ${scope === 'user' || scope === 'USER'}`);
+
+                            // Kiểm tra vấn đề với scope format
+                            if (typeof scope === 'string' && scope.trim() !== '') {
+                                console.error(`[bookingService] ✅ SCOPE FORMAT:`);
+                                console.error(`[bookingService] - Scope là string: "${scope}" (ĐÚNG FORMAT)`);
+                                console.error(`[bookingService] - CustomJwtGrantedAuthoritiesConverter trong SecurityConfig.java (dòng 405-452) ĐÃ parse được string scope`);
+                                console.error(`[bookingService] - Scope "${scope}" sẽ được convert thành authority "partner"`);
+                                console.error(`[bookingService] - VẤN ĐỀ: SecurityConfig rule GET /bookings chưa cho phép PARTNER`);
+                            }
+                        } catch (e) {
+                            console.error(`[bookingService] ❌ Không thể decode JWT token:`, e);
+                        }
+                    } else {
+                        console.error(`[bookingService] ❌ Không tìm thấy token trong localStorage`);
+                    }
+                }
+
+                // Log request details
+                console.error(`[bookingService] 📤 REQUEST DETAILS:`);
+                console.error(`[bookingService] - URL: ${error.config?.url || 'N/A'}`);
+                console.error(`[bookingService] - Method: ${error.config?.method?.toUpperCase() || 'N/A'}`);
+                console.error(`[bookingService] - Base URL: ${error.config?.baseURL || 'N/A'}`);
+                console.error(`[bookingService] - Query Params:`, JSON.stringify(error.config?.params || {}, null, 2));
+                console.error(`[bookingService] - Full URL: ${error.config?.baseURL}${error.config?.url}${error.config?.params ? '?' + new URLSearchParams(error.config.params).toString() : ''}`);
+
+                // Thông tin để báo cho backend
+                console.error(`[bookingService] ===== THÔNG TIN ĐỂ BÁO CHO BACKEND TEAM =====`);
+                console.error(`[bookingService] `);
+                console.error(`[bookingService] 🔴 LỖI: 403 Forbidden khi PARTNER truy cập GET /bookings`);
+                console.error(`[bookingService] `);
+                console.error(`[bookingService] 📋 CHI TIẾT:`);
+                console.error(`[bookingService] - Endpoint: GET /bookings`);
+                console.error(`[bookingService] - User Role: PARTNER (scope trong JWT: "${scope || 'N/A'}")`);
+                console.error(`[bookingService] - Query Params:`, JSON.stringify(error.config?.params || {}, null, 2));
+                console.error(`[bookingService] - Response:`, JSON.stringify(responseData, null, 2));
+                console.error(`[bookingService] `);
+                console.error(`[bookingService] 🔍 NGUYÊN NHÂN:`);
+                console.error(`[bookingService] `);
+                console.error(`[bookingService] ✅ JWT TOKEN: ĐÚNG`);
+                console.error(`[bookingService]    - Scope: "${scope || 'N/A'}" (string format - ĐÚNG)`);
+                console.error(`[bookingService]    - CustomJwtGrantedAuthoritiesConverter (SecurityConfig.java dòng 405-452) ĐÃ parse được`);
+                console.error(`[bookingService]    - Scope "${scope}" → authority "partner" (ĐÚNG)`);
+                console.error(`[bookingService] `);
+                console.error(`[bookingService] ❌ VẤN ĐỀ: SecurityConfig.java rule GET /bookings`);
+                console.error(`[bookingService]    - File: SecurityConfig.java`);
+                console.error(`[bookingService]    - Dòng: ~324 (trong phần ADMIN endpoints)`);
+                console.error(`[bookingService]    - Code hiện tại:`);
+                console.error(`[bookingService]      .requestMatchers(HttpMethod.GET, BookingEndpoints.BOOKINGS + ALL_ENDPOINTS)`);
+                console.error(`[bookingService]      .hasAuthority(RoleType.ADMIN.getValue())`);
+                console.error(`[bookingService]    - VẤN ĐỀ: Chỉ cho phép ADMIN, không cho phép PARTNER và USER`);
+                console.error(`[bookingService] `);
+                console.error(`[bookingService] ✅ GIẢI PHÁP:`);
+                console.error(`[bookingService]    Sửa SecurityConfig.java dòng 324-325:`);
+                console.error(`[bookingService]    `);
+                console.error(`[bookingService]    TRƯỚC:`);
+                console.error(`[bookingService]    .requestMatchers(HttpMethod.GET, BookingEndpoints.BOOKINGS + ALL_ENDPOINTS)`);
+                console.error(`[bookingService]    .hasAuthority(RoleType.ADMIN.getValue())`);
+                console.error(`[bookingService]    `);
+                console.error(`[bookingService]    SAU:`);
+                console.error(`[bookingService]    .requestMatchers(HttpMethod.GET, BookingEndpoints.BOOKINGS + ALL_ENDPOINTS)`);
+                console.error(`[bookingService]    .hasAnyAuthority(RoleType.ADMIN.getValue(), RoleType.PARTNER.getValue(), RoleType.USER.getValue())`);
+                console.error(`[bookingService]    `);
+                console.error(`[bookingService]    LƯU Ý: Sau khi sửa, PHẢI RESTART backend server!`);
+                console.error(`[bookingService] `);
+                console.error(`[bookingService] 📝 NOTE:`);
+                console.error(`[bookingService]    - PARTNER rule ở dòng 208 chỉ match exact path "/bookings" (không có /**)`);
+                console.error(`[bookingService]    - ADMIN rule ở dòng 324 match "/bookings/**" (ALL_ENDPOINTS)`);
+                console.error(`[bookingService]    - Request "/bookings?hotel-id=xxx" match rule ADMIN (dòng 324) trước`);
+                console.error(`[bookingService]    - Vì vậy cần sửa rule ADMIN để cho phép PARTNER và USER`);
+                console.error(`[bookingService] `);
+                console.error(`[bookingService] ===== TÓM TẮT ĐỂ BÁO BACKEND =====`);
+                console.error(`[bookingService] `);
+                console.error(`[bookingService] 🔴 KẾT LUẬN: ĐÂY LÀ LỖI BACKEND`);
+                console.error(`[bookingService] `);
+                console.error(`[bookingService] ✅ Frontend: ĐÚNG`);
+                console.error(`[bookingService]    - JWT token có scope: "partner" (ĐÚNG)`);
+                console.error(`[bookingService]    - Request gửi đúng: GET /bookings?hotel-id=xxx`);
+                console.error(`[bookingService]    - CustomJwtGrantedAuthoritiesConverter ĐÃ parse được scope string`);
+                console.error(`[bookingService] `);
+                console.error(`[bookingService] ❌ Backend: SAI`);
+                console.error(`[bookingService]    - SecurityConfig.java dòng 324 chỉ cho phép ADMIN`);
+                console.error(`[bookingService]    - Cần sửa thành: .hasAnyAuthority(ADMIN, PARTNER, USER)`);
+                console.error(`[bookingService]    - Backend chưa restart sau khi sửa (hoặc chưa sửa)`);
+                console.error(`[bookingService] `);
+                console.error(`[bookingService] ===== END TÓM TẮT =====`);
+                console.error(`[bookingService] ===== END THÔNG TIN BÁO BACKEND =====`);
+            } else if (statusCode === 404) {
+                console.error(`[bookingService] 🔍 LỖI 404 NOT FOUND:`);
+                console.error(`[bookingService] - Endpoint không tồn tại`);
+                console.error(`[bookingService] - Request URL: ${error.config?.baseURL}${error.config?.url}`);
+            } else if (statusCode >= 500) {
+                console.error(`[bookingService] 🔥 LỖI 5xx SERVER ERROR:`);
+                console.error(`[bookingService] - Lỗi từ phía server (backend)`);
+                console.error(`[bookingService] - Response:`, JSON.stringify(responseData, null, 2));
+            } else {
+                console.error(`[bookingService] ⚠️ LỖI KHÁC (${statusCode}):`);
+                console.error(`[bookingService] - Response:`, JSON.stringify(responseData, null, 2));
+            }
+        }
+
+        console.error(`[bookingService] ===== END PHÂN TÍCH LỖI =====`);
+
         // Xử lý các loại lỗi khác nhau
         if (error.response?.status === 401) {
             console.error("[bookingService] ⚠️ 401 Unauthorized - Token không hợp lệ hoặc đã hết hạn");
@@ -358,37 +529,7 @@ export async function getBookings(params: GetBookingsParams = {}): Promise<Pagin
             }
             throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
         } else if (error.response?.status === 403) {
-            console.error("[bookingService] ⚠️ 403 Forbidden - User không có quyền truy cập");
-            console.error("[bookingService] ⚠️ Response data:", JSON.stringify(error.response?.data, null, 2));
-            console.error("[bookingService] ⚠️ Expected roles for /bookings endpoint (theo API docs):");
-            console.error("[bookingService] ⚠️   - USER");
-            console.error("[bookingService] ⚠️   - PARTNER");
-            console.error("[bookingService] ⚠️   - ADMIN");
-
-            // Kiểm tra JWT token để xem role trong token
-            if (typeof window !== 'undefined') {
-                try {
-                    const token = localStorage.getItem('accessToken');
-                    if (token) {
-                        // Decode JWT token để xem role (không verify, chỉ decode)
-                        const payload = JSON.parse(atob(token.split('.')[1]));
-                        console.error("[bookingService] ⚠️ JWT token payload (scope/roles):", payload.scope || payload.roles || payload.authorities || 'Not found');
-                        console.error("[bookingService] ⚠️ JWT token full payload:", payload);
-
-                        // Kiểm tra xem scope có đúng format không
-                        const scope = payload.scope;
-                        console.error("[bookingService] ⚠️ Scope type:", typeof scope);
-                        console.error("[bookingService] ⚠️ Scope value:", scope);
-                        if (typeof scope === 'string') {
-                            console.error("[bookingService] ⚠️ ⚠️ VẤN ĐỀ: Scope là string đơn, backend JwtGrantedAuthoritiesConverter không parse được!");
-                            console.error("[bookingService] ⚠️ ⚠️ Backend cần scope là array ['partner'] hoặc space-separated 'partner admin'");
-                        }
-                    }
-                } catch (e) {
-                    console.error("[bookingService] ⚠️ Cannot decode JWT token:", e);
-                }
-            }
-
+            // Log đã được xử lý ở phần trên (dòng 377-477), chỉ throw error ở đây
             const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Bạn không có quyền truy cập tài nguyên này.';
             throw new Error(errorMessage);
         } else if (error.response?.status === 404) {
