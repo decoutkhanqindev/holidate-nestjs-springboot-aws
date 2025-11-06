@@ -669,7 +669,17 @@ Base URL: `http://localhost:8080`
   - `id`: string (UUID format)
 - **Response**: Same as Create Booking response
 
-### 9. Delete Booking
+### 9. Update Booking
+
+**PUT** `/bookings/{id}`
+
+- **Role Required**: ADMIN
+- **Path Parameters**:
+  - `id`: string (UUID format)
+- **Request Body**: Same as Create Booking (all fields optional)
+- **Response**: Same as Create Booking response
+
+### 10. Delete Booking
 
 **DELETE** `/bookings/{id}`
 
@@ -1868,9 +1878,10 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 ### Role Hierarchy
 
+- **ADMIN** > **PARTNER**
 - **ADMIN** > **USER**
-- ADMIN can access all endpoints
-- USER and PARTNER roles are independent (no hierarchy between them)
+- ADMIN can access all endpoints that PARTNER and USER can access
+- PARTNER and USER roles are independent (no hierarchy between them)
 
 ### Common Response Structure
 
