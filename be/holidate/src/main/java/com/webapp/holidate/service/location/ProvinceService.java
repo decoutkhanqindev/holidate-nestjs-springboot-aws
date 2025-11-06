@@ -31,27 +31,26 @@ public class ProvinceService {
 
   public ProvinceResponse create(ProvinceCreationRequest request) {
     String name = request.getName();
-    boolean nameExists = provinceRepository.existsByName(name);
-    if (nameExists) {
-      throw new AppException(ErrorType.PROVINCE_EXISTS);
-    }
-
     String code = request.getCode();
-    boolean codeExists = provinceRepository.existsByCode(code);
-    if (codeExists) {
+    String countryId = request.getCountryId();
+
+    // Check if country exists and fetch it
+    Country country = countryRepository.findById(countryId)
+        .orElseThrow(() -> new AppException(ErrorType.COUNTRY_NOT_FOUND));
+
+    // Check if province with same name exists in this country
+    boolean nameExistsInCountry = provinceRepository.existsByNameAndCountryId(name, countryId);
+    if (nameExistsInCountry) {
       throw new AppException(ErrorType.PROVINCE_EXISTS);
     }
 
-    String countryId = request.getCountryId();
-    boolean countryExists = provinceRepository.existsByCountryId(countryId);
-    if (countryExists) {
+    // Check if province with same code exists in this country
+    boolean codeExistsInCountry = provinceRepository.existsByCodeAndCountryId(code, countryId);
+    if (codeExistsInCountry) {
       throw new AppException(ErrorType.PROVINCE_EXISTS);
     }
 
     Province province = provinceMapper.toEntity(request);
-
-    Country country = countryRepository.findById(countryId)
-      .orElseThrow(() -> new AppException(ErrorType.COUNTRY_NOT_FOUND));
     province.setCountry(country);
 
     provinceRepository.save(province);
@@ -59,9 +58,8 @@ public class ProvinceService {
   }
 
   public List<LocationResponse> getAll(
-    String name,
-    String countryId
-  ) {
+      String name,
+      String countryId) {
     boolean nameProvided = name != null && !name.isBlank();
     boolean countryIdProvided = countryId != null && !countryId.isBlank();
 
@@ -72,17 +70,16 @@ public class ProvinceService {
       }
 
       return provinceRepository.findAllByNameContainingIgnoreCaseAndCountryId(name, countryId)
-        .stream()
-        .map(provinceMapper::toLocationResponse)
-        .toList();
+          .stream()
+          .map(provinceMapper::toLocationResponse)
+          .toList();
     }
-
 
     if (nameProvided) {
       return provinceRepository.findAllByNameContainingIgnoreCase(name)
-        .stream()
-        .map(provinceMapper::toLocationResponse)
-        .toList();
+          .stream()
+          .map(provinceMapper::toLocationResponse)
+          .toList();
     }
 
     if (countryIdProvided) {
@@ -92,20 +89,20 @@ public class ProvinceService {
       }
 
       return provinceRepository.findAllByCountryId(countryId)
-        .stream()
-        .map(provinceMapper::toLocationResponse)
-        .toList();
+          .stream()
+          .map(provinceMapper::toLocationResponse)
+          .toList();
     }
 
     return provinceRepository.findAll()
-      .stream()
-      .map(provinceMapper::toLocationResponse)
-      .toList();
+        .stream()
+        .map(provinceMapper::toLocationResponse)
+        .toList();
   }
 
   public ProvinceResponse delete(String id) {
     Province province = provinceRepository.findById(id)
-      .orElseThrow(() -> new AppException(ErrorType.PROVINCE_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.PROVINCE_NOT_FOUND));
 
     // Check if province has cities
     long cityCount = cityRepository.countByProvinceId(id);

@@ -12,6 +12,10 @@ public interface WardRepository extends JpaRepository<Ward, String> {
 
   boolean existsByDistrictId(String districtId);
 
+  boolean existsByNameAndDistrictId(String name, String districtId);
+
+  boolean existsByCodeAndDistrictId(String code, String districtId);
+
   List<Ward> findAllByNameContainingIgnoreCase(String name);
 
   List<Ward> findAllByDistrictId(String districtId);

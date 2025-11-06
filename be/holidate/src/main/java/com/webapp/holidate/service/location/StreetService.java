@@ -29,27 +29,26 @@ public class StreetService {
 
   public StreetResponse create(StreetCreationRequest request) {
     String name = request.getName();
-    boolean nameExists = streetRepository.existsByName(name);
-    if (nameExists) {
-      throw new AppException(ErrorType.STREET_EXISTS);
-    }
-
     String code = request.getCode();
-    boolean codeExists = streetRepository.existsByCode(code);
-    if (codeExists) {
+    String wardId = request.getWardId();
+
+    // Check if ward exists and fetch it
+    Ward ward = wardRepository.findById(wardId)
+        .orElseThrow(() -> new AppException(ErrorType.WARD_NOT_FOUND));
+
+    // Check if street with same name exists in this ward
+    boolean nameExistsInWard = streetRepository.existsByNameAndWardId(name, wardId);
+    if (nameExistsInWard) {
       throw new AppException(ErrorType.STREET_EXISTS);
     }
 
-    String wardId = request.getWardId();
-    boolean wardExists = streetRepository.existsByWardId(wardId);
-    if (wardExists) {
+    // Check if street with same code exists in this ward
+    boolean codeExistsInWard = streetRepository.existsByCodeAndWardId(code, wardId);
+    if (codeExistsInWard) {
       throw new AppException(ErrorType.STREET_EXISTS);
     }
 
     Street street = streetMapper.toEntity(request);
-
-    Ward ward = wardRepository.findById(wardId)
-      .orElseThrow(() -> new AppException(ErrorType.WARD_NOT_FOUND));
     street.setWard(ward);
 
     streetRepository.save(street);
@@ -57,9 +56,8 @@ public class StreetService {
   }
 
   public List<LocationResponse> getAll(
-    String name,
-    String wardId
-  ) {
+      String name,
+      String wardId) {
     boolean nameProvided = name != null && !name.isBlank();
     boolean wardIdProvided = wardId != null && !wardId.isBlank();
 
@@ -70,16 +68,16 @@ public class StreetService {
       }
 
       return streetRepository.findAllByNameContainingIgnoreCaseAndWardId(name, wardId)
-        .stream()
-        .map(streetMapper::toLocationResponse)
-        .toList();
+          .stream()
+          .map(streetMapper::toLocationResponse)
+          .toList();
     }
 
     if (nameProvided) {
       return streetRepository.findAllByNameContainingIgnoreCase(name)
-        .stream()
-        .map(streetMapper::toLocationResponse)
-        .toList();
+          .stream()
+          .map(streetMapper::toLocationResponse)
+          .toList();
     }
 
     if (wardIdProvided) {
@@ -89,20 +87,20 @@ public class StreetService {
       }
 
       return streetRepository.findAllByWardId(wardId)
-        .stream()
-        .map(streetMapper::toLocationResponse)
-        .toList();
+          .stream()
+          .map(streetMapper::toLocationResponse)
+          .toList();
     }
 
     return streetRepository.findAll()
-      .stream()
-      .map(streetMapper::toLocationResponse)
-      .toList();
+        .stream()
+        .map(streetMapper::toLocationResponse)
+        .toList();
   }
 
   public StreetResponse delete(String id) {
     Street street = streetRepository.findById(id)
-      .orElseThrow(() -> new AppException(ErrorType.STREET_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.STREET_NOT_FOUND));
 
     // Check if street has hotels
     long hotelCount = hotelRepository.countByStreetId(id);

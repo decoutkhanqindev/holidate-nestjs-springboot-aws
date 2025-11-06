@@ -12,6 +12,10 @@ public interface StreetRepository extends JpaRepository<Street, String> {
 
   boolean existsByWardId(String wardId);
 
+  boolean existsByNameAndWardId(String name, String wardId);
+
+  boolean existsByCodeAndWardId(String code, String wardId);
+
   List<Street> findAllByNameContainingIgnoreCase(String name);
 
   List<Street> findAllByWardId(String wardId);

@@ -4,6 +4,7 @@ import com.webapp.holidate.dto.request.location.city.CityCreationRequest;
 import com.webapp.holidate.dto.response.location.CityResponse;
 import com.webapp.holidate.dto.response.location.LocationResponse;
 import com.webapp.holidate.entity.location.City;
+import com.webapp.holidate.entity.location.Province;
 import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.location.CityMapper;
 import com.webapp.holidate.repository.accommodation.HotelRepository;
@@ -30,31 +31,34 @@ public class CityService {
 
   public CityResponse create(CityCreationRequest request) {
     String name = request.getName();
-    boolean nameExists = cityRepository.existsByName(name);
-    if (nameExists) {
-      throw new AppException(ErrorType.CITY_EXISTS);
-    }
-
     String code = request.getCode();
-    boolean codeExists = cityRepository.existsByCode(code);
-    if (codeExists) {
-      throw new AppException(ErrorType.CITY_EXISTS);
-    }
-
     String provinceId = request.getProvinceId();
-    boolean provinceExists = cityRepository.existsByProvinceId(provinceId);
-    if (provinceExists) {
+
+    // Check if province exists and fetch it
+    Province province = provinceRepository.findById(provinceId)
+        .orElseThrow(() -> new AppException(ErrorType.PROVINCE_NOT_FOUND));
+
+    // Check if city with same name exists in this province
+    boolean nameExistsInProvince = cityRepository.existsByNameAndProvinceId(name, provinceId);
+    if (nameExistsInProvince) {
       throw new AppException(ErrorType.CITY_EXISTS);
     }
 
-    City City = cityMapper.toEntity(request);
-    cityRepository.save(City);
-    return cityMapper.toCityResponse(City);
+    // Check if city with same code exists in this province
+    boolean codeExistsInProvince = cityRepository.existsByCodeAndProvinceId(code, provinceId);
+    if (codeExistsInProvince) {
+      throw new AppException(ErrorType.CITY_EXISTS);
+    }
+
+    City city = cityMapper.toEntity(request);
+    city.setProvince(province);
+    cityRepository.save(city);
+    return cityMapper.toCityResponse(city);
   }
 
   public List<LocationResponse> getAll(
-    String name,
-    String provinceId) {
+      String name,
+      String provinceId) {
     boolean nameProvided = name != null && !name.isBlank();
     boolean provinceIdProvided = provinceId != null && !provinceId.isBlank();
 
@@ -65,16 +69,16 @@ public class CityService {
       }
 
       return cityRepository.findAllByNameContainingIgnoreCaseAndProvinceId(name, provinceId)
-        .stream()
-        .map(cityMapper::toLocationResponse)
-        .toList();
+          .stream()
+          .map(cityMapper::toLocationResponse)
+          .toList();
     }
 
     if (nameProvided) {
       return cityRepository.findAllByNameContainingIgnoreCase(name)
-        .stream()
-        .map(cityMapper::toLocationResponse)
-        .toList();
+          .stream()
+          .map(cityMapper::toLocationResponse)
+          .toList();
     }
 
     if (provinceIdProvided) {
@@ -84,20 +88,20 @@ public class CityService {
       }
 
       return cityRepository.findAllByProvinceId(provinceId)
-        .stream()
-        .map(cityMapper::toLocationResponse)
-        .toList();
+          .stream()
+          .map(cityMapper::toLocationResponse)
+          .toList();
     }
 
     return cityRepository.findAll()
-      .stream()
-      .map(cityMapper::toLocationResponse)
-      .toList();
+        .stream()
+        .map(cityMapper::toLocationResponse)
+        .toList();
   }
 
   public CityResponse delete(String id) {
     City city = cityRepository.findById(id)
-      .orElseThrow(() -> new AppException(ErrorType.CITY_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.CITY_NOT_FOUND));
 
     // Check if city has districts
     long districtCount = districtRepository.countByCityId(id);

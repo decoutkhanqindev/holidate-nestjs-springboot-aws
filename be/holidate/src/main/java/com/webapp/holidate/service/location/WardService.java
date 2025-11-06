@@ -31,27 +31,26 @@ public class WardService {
 
   public WardResponse create(WardCreationRequest request) {
     String name = request.getName();
-    boolean nameExists = wardRepository.existsByName(name);
-    if (nameExists) {
-      throw new AppException(ErrorType.WARD_EXISTS);
-    }
-
     String code = request.getCode();
-    boolean codeExists = wardRepository.existsByCode(code);
-    if (codeExists) {
+    String districtId = request.getDistrictId();
+
+    // Check if district exists and fetch it
+    District district = districtRepository.findById(districtId)
+        .orElseThrow(() -> new AppException(ErrorType.DISTRICT_NOT_FOUND));
+
+    // Check if ward with same name exists in this district
+    boolean nameExistsInDistrict = wardRepository.existsByNameAndDistrictId(name, districtId);
+    if (nameExistsInDistrict) {
       throw new AppException(ErrorType.WARD_EXISTS);
     }
 
-    String districtId = request.getDistrictId();
-    boolean districtExists = wardRepository.existsByDistrictId(districtId);
-    if (districtExists) {
+    // Check if ward with same code exists in this district
+    boolean codeExistsInDistrict = wardRepository.existsByCodeAndDistrictId(code, districtId);
+    if (codeExistsInDistrict) {
       throw new AppException(ErrorType.WARD_EXISTS);
     }
 
     Ward ward = wardMapper.toEntity(request);
-
-    District district = districtRepository.findById(districtId)
-      .orElseThrow(() -> new AppException(ErrorType.DISTRICT_NOT_FOUND));
     ward.setDistrict(district);
 
     wardRepository.save(ward);
@@ -59,9 +58,8 @@ public class WardService {
   }
 
   public List<LocationResponse> getAll(
-    String name,
-    String districtId
-  ) {
+      String name,
+      String districtId) {
     boolean nameProvided = name != null && !name.isBlank();
     boolean districtIdProvided = districtId != null && !districtId.isBlank();
 
@@ -72,16 +70,16 @@ public class WardService {
       }
 
       return wardRepository.findAllByNameContainingIgnoreCaseAndDistrictId(name, districtId)
-        .stream()
-        .map(wardMapper::toLocationResponse)
-        .toList();
+          .stream()
+          .map(wardMapper::toLocationResponse)
+          .toList();
     }
 
     if (nameProvided) {
       return wardRepository.findAllByNameContainingIgnoreCase(name)
-        .stream()
-        .map(wardMapper::toLocationResponse)
-        .toList();
+          .stream()
+          .map(wardMapper::toLocationResponse)
+          .toList();
     }
 
     if (districtIdProvided) {
@@ -91,20 +89,20 @@ public class WardService {
       }
 
       return wardRepository.findAllByDistrictId(districtId)
-        .stream()
-        .map(wardMapper::toLocationResponse)
-        .toList();
+          .stream()
+          .map(wardMapper::toLocationResponse)
+          .toList();
     }
 
     return wardRepository.findAll()
-      .stream()
-      .map(wardMapper::toLocationResponse)
-      .toList();
+        .stream()
+        .map(wardMapper::toLocationResponse)
+        .toList();
   }
 
   public WardResponse delete(String id) {
     Ward ward = wardRepository.findById(id)
-      .orElseThrow(() -> new AppException(ErrorType.WARD_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.WARD_NOT_FOUND));
 
     // Check if ward has streets
     long streetCount = streetRepository.countByWardId(id);

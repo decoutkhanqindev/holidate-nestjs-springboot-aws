@@ -12,6 +12,10 @@ public interface DistrictRepository extends JpaRepository<District, String> {
 
   boolean existsByCityId(String cityId);
 
+  boolean existsByNameAndCityId(String name, String cityId);
+
+  boolean existsByCodeAndCityId(String code, String cityId);
+
   List<District> findAllByNameContainingIgnoreCase(String name);
 
   List<District> findAllByCityId(String cityId);
