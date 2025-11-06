@@ -1323,7 +1323,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 ```json
 {
   "name": "string (required)",
-  "code": "string (required, 2-3 characters)"
+  "code": "string (required)"
 }
 ```
 
@@ -1385,7 +1385,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 ```json
 {
   "name": "string (required)",
-  "code": "string (required, 2-3 characters)",
+  "code": "string (required)",
   "countryId": "string (required)"
 }
 ```
@@ -1452,7 +1452,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 ```json
 {
   "name": "string (required)",
-  "code": "string (required, 2-3 characters)",
+  "code": "string (required)",
   "provinceId": "string (required)"
 }
 ```
@@ -1492,6 +1492,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 ```json
 {
   "name": "string (required)",
+  "code": "string (required)",
   "cityId": "string (required)"
 }
 ```
@@ -1531,6 +1532,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 ```json
 {
   "name": "string (required)",
+  "code": "string (required)",
   "districtId": "string (required)"
 }
 ```
@@ -1570,6 +1572,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 ```json
 {
   "name": "string (required)",
+  "code": "string (required)",
   "wardId": "string (required)"
 }
 ```
