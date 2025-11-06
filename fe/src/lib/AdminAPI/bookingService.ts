@@ -283,7 +283,13 @@ export async function getBookings(params: GetBookingsParams = {}): Promise<Pagin
         console.log("[bookingService] ✅ Response data type:", typeof response.data?.data);
 
         if (response.status === 200 && response.data?.statusCode === 200) {
-            console.log("[bookingService] ✅✅✅ REQUEST THÀNH CÔNG! Backend đã cho phép PARTNER truy cập /bookings");
+            console.log("[bookingService] ✅✅✅ REQUEST THÀNH CÔNG! Backend đã cho phép truy cập /bookings");
+            if (hotelId) {
+                console.log(`[bookingService] ✅ Filtering by hotelId: ${hotelId}`);
+            }
+            if (userId) {
+                console.log(`[bookingService] ✅ Filtering by userId: ${userId}`);
+            }
         }
 
         // Kiểm tra response structure
@@ -335,6 +341,15 @@ export async function getBookings(params: GetBookingsParams = {}): Promise<Pagin
             });
 
             console.log(`[bookingService] ✅ Successfully mapped ${bookings.length} bookings (page ${response.data.data.page + 1}/${response.data.data.totalPages})`);
+            console.log(`[bookingService] ✅ Total items in database: ${response.data.data.totalItems}`);
+
+            if (hotelId && bookings.length === 0) {
+                console.warn(`[bookingService] ⚠️ WARNING: No bookings found for hotelId=${hotelId}`);
+                console.warn(`[bookingService] ⚠️ This could mean:`);
+                console.warn(`[bookingService] ⚠️   1. Hotel ${hotelId} has no bookings yet`);
+                console.warn(`[bookingService] ⚠️   2. All bookings for this hotel have been cancelled/deleted`);
+                console.warn(`[bookingService] ⚠️   3. Query filter is working correctly, just no data`);
+            }
 
             return {
                 data: bookings,
