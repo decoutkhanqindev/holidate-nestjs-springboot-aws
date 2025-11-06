@@ -1,0 +1,102 @@
+CÁC CHỨC NĂNG CỦA QUẢN TRỊ VIÊN (ROLE ADMIN)
+
+1. Quản lý người dùng và vai trò
+   - Xem danh sách tất cả người dùng trong hệ thống
+   - Xem chi tiết thông tin của bất kỳ người dùng nào
+   - Tạo tài khoản người dùng mới
+   - Cập nhật thông tin người dùng
+   - Xóa tài khoản người dùng
+   - Quản lý vai trò (roles) trong hệ thống (tạo, cập nhật, xóa vai trò)
+
+2. Quản lý địa điểm
+   - Xem danh sách tất cả địa điểm
+   - Tạo địa điểm mới (tỉnh/thành phố, quận/huyện)
+   - Cập nhật thông tin địa điểm
+   - Xóa địa điểm
+
+3. Quản lý khách sạn
+   - Xem danh sách tất cả khách sạn
+   - Tạo khách sạn mới (chỉ ADMIN mới có quyền này)
+   - Cập nhật thông tin khách sạn (tên, địa chỉ, mô tả, tiện ích, hình ảnh, v.v.)
+   - Xóa khách sạn
+
+4. Quản lý phòng
+   - Xem danh sách tất cả phòng
+   - Tạo phòng mới cho bất kỳ khách sạn nào
+   - Cập nhật thông tin phòng (tên, loại, giá, mô tả, hình ảnh, v.v.)
+   - Xóa phòng
+
+5. Quản lý kho phòng (Room Inventory)
+   - Xem thông tin kho phòng của tất cả khách sạn
+   - Tạo bản ghi kho phòng mới
+   - Cập nhật thông tin kho phòng
+   - Xóa bản ghi kho phòng
+
+6. Quản lý tiện ích
+   - Xem danh sách tất cả tiện ích
+   - Tạo tiện ích mới (wifi, bể bơi, phòng gym, v.v.)
+   - Cập nhật thông tin tiện ích
+   - Xóa tiện ích
+   - Quản lý danh mục tiện ích (tạo, xóa danh mục)
+
+7. Quản lý ngày đặc biệt
+   - Xem danh sách các ngày đặc biệt (lễ, tết, sự kiện)
+   - Tạo ngày đặc biệt mới
+   - Cập nhật thông tin ngày đặc biệt
+   - Xóa ngày đặc biệt
+
+8. Quản lý khuyến mãi
+   - Xem danh sách tất cả khuyến mãi
+   - Tạo khuyến mãi mới (giảm giá, ưu đãi đặc biệt)
+   - Cập nhật thông tin khuyến mãi
+   - Xóa khuyến mãi
+
+9. Quản lý đặt phòng
+   - Xem tất cả đặt phòng trong hệ thống
+   - Xem chi tiết bất kỳ đặt phòng nào
+   - Chỉnh sửa đặt phòng (chỉ ADMIN mới có quyền này)
+   - Xóa đặt phòng
+   - Tạo đặt phòng mới
+   - Hủy đặt phòng
+   - Đổi lịch đặt phòng
+   - Thực hiện check-in và check-out
+
+10. Quản lý đánh giá
+    - Xem tất cả đánh giá trong hệ thống
+    - Viết đánh giá
+    - Chỉnh sửa đánh giá
+    - Xóa đánh giá
+
+11. Báo cáo và phân tích toàn hệ thống
+    - Xem báo cáo doanh thu tổng hợp (toàn bộ website, theo khách sạn, theo địa điểm, theo thời gian)
+    - Xem thống kê tổng số đặt phòng (toàn hệ thống, theo trạng thái, theo khách sạn)
+    - Xem phân tích hiệu suất từng khách sạn (doanh thu, tỷ lệ lấp đầy, số lượng đặt phòng)
+    - Xem thống kê người dùng (tổng số khách hàng, đối tác, khách hàng mới, khách hàng quay lại)
+    - Xem phân tích đánh giá tổng hợp (điểm trung bình toàn hệ thống, theo khách sạn, xu hướng)
+    - Xem báo cáo hoạt động đối tác (số lượng đối tác, hiệu suất từng đối tác)
+    - Xem phân tích xu hướng (mùa cao điểm, địa điểm phổ biến, loại phòng được yêu thích)
+    - Xem báo cáo tài chính (doanh thu, chi phí, lợi nhuận)
+    - So sánh hiệu suất giữa các kỳ (tháng này so với tháng trước, năm này so với năm trước)
+    - Xuất báo cáo dưới dạng file (PDF, Excel)
+    - Xem dashboard tổng quan với các chỉ số quan trọng (KPI)
+
+12. Xử lý yêu cầu từ đối tác
+    - Xem danh sách yêu cầu từ đối tác (tạo khách sạn mới, tạo khuyến mãi, v.v.)
+    - Xem chi tiết từng yêu cầu
+    - Duyệt yêu cầu (chấp nhận và thực hiện)
+    - Từ chối yêu cầu (kèm lý do)
+    - Xem lịch sử xử lý yêu cầu
+
+13. Quản lý Chatbot AI
+    - Xem các cuộc trò chuyện giữa khách hàng và chatbot AI
+    - Phân tích hiệu quả của chatbot (số lượng cuộc trò chuyện, tỷ lệ chuyển đổi thành đặt phòng)
+    - Cấu hình và cập nhật kiến thức cho chatbot AI
+    - Xem báo cáo và thống kê về chatbot
+
+LƯU Ý:
+- Quản trị viên có toàn quyền quản lý hệ thống, bao gồm tất cả chức năng của khách hàng và đối tác.
+- Quản trị viên là người duy nhất có thể tạo và xóa khách sạn trong hệ thống.
+- Quản trị viên có thể quản lý tất cả khách sạn, phòng và đặt phòng, không chỉ của riêng mình.
+- Quản trị viên có thể chỉnh sửa đặt phòng (quyền này khách hàng và đối tác không có).
+- Quản trị viên có thể xem báo cáo và phân tích cho toàn bộ hệ thống, không chỉ riêng một khách sạn như đối tác.
+
