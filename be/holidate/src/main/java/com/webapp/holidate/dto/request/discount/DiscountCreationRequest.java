@@ -17,7 +17,7 @@ import java.time.LocalDate;
 @ToString
 @EqualsAndHashCode
 public class DiscountCreationRequest {
-  @NotBlank(message = "DISCOUNT_CODE_NOT_BLANK")
+  @NotBlank(message = "CODE_NOT_BLANK")
   @Size(max = 50, message = "DISCOUNT_CODE_TOO_LONG")
   String code;
 

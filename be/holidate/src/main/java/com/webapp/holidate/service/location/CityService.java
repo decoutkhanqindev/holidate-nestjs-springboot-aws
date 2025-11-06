@@ -53,7 +53,12 @@ public class CityService {
     City city = cityMapper.toEntity(request);
     city.setProvince(province);
     cityRepository.save(city);
-    return cityMapper.toCityResponse(city);
+
+    // Reload city with province and country to avoid LazyInitializationException
+    City savedCity = cityRepository.findByIdWithProvinceAndCountry(city.getId())
+        .orElseThrow(() -> new AppException(ErrorType.CITY_NOT_FOUND));
+
+    return cityMapper.toCityResponse(savedCity);
   }
 
   public List<LocationResponse> getAll(
@@ -100,7 +105,7 @@ public class CityService {
   }
 
   public CityResponse delete(String id) {
-    City city = cityRepository.findById(id)
+    City city = cityRepository.findByIdWithProvinceAndCountry(id)
         .orElseThrow(() -> new AppException(ErrorType.CITY_NOT_FOUND));
 
     // Check if city has districts

@@ -54,7 +54,12 @@ public class WardService {
     ward.setDistrict(district);
 
     wardRepository.save(ward);
-    return wardMapper.toWardResponse(ward);
+
+    // Reload ward with district and city to avoid LazyInitializationException
+    Ward savedWard = wardRepository.findByIdWithDistrictAndCity(ward.getId())
+        .orElseThrow(() -> new AppException(ErrorType.WARD_NOT_FOUND));
+
+    return wardMapper.toWardResponse(savedWard);
   }
 
   public List<LocationResponse> getAll(
@@ -101,7 +106,7 @@ public class WardService {
   }
 
   public WardResponse delete(String id) {
-    Ward ward = wardRepository.findById(id)
+    Ward ward = wardRepository.findByIdWithDistrictAndCity(id)
         .orElseThrow(() -> new AppException(ErrorType.WARD_NOT_FOUND));
 
     // Check if ward has streets

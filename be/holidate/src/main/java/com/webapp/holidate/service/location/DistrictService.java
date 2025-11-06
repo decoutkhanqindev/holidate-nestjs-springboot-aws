@@ -36,7 +36,7 @@ public class DistrictService {
 
     // Check if city exists and fetch it
     City city = cityRepository.findById(cityId)
-      .orElseThrow(() -> new AppException(ErrorType.CITY_NOT_FOUND));
+        .orElseThrow(() -> new AppException(ErrorType.CITY_NOT_FOUND));
 
     // Check if district with same name exists in this city
     boolean nameExistsInCity = districtRepository.existsByNameAndCityId(name, cityId);
@@ -54,13 +54,17 @@ public class DistrictService {
     district.setCity(city);
 
     districtRepository.save(district);
-    return districtMapper.toDistrictResponse(district);
+
+    // Reload district with city and province to avoid LazyInitializationException
+    District savedDistrict = districtRepository.findByIdWithCityAndProvince(district.getId())
+        .orElseThrow(() -> new AppException(ErrorType.DISTRICT_NOT_FOUND));
+
+    return districtMapper.toDistrictResponse(savedDistrict);
   }
 
   public List<LocationResponse> getAll(
-    String name,
-    String cityId
-  ) {
+      String name,
+      String cityId) {
     boolean nameProvided = name != null && !name.isBlank();
     boolean cityIdProvided = cityId != null && !cityId.isBlank();
 
@@ -71,16 +75,16 @@ public class DistrictService {
       }
 
       return districtRepository.findAllByNameContainingIgnoreCaseAndCityId(name, cityId)
-        .stream()
-        .map(districtMapper::toLocationResponse)
-        .toList();
+          .stream()
+          .map(districtMapper::toLocationResponse)
+          .toList();
     }
 
     if (nameProvided) {
       return districtRepository.findAllByNameContainingIgnoreCase(name)
-        .stream()
-        .map(districtMapper::toLocationResponse)
-        .toList();
+          .stream()
+          .map(districtMapper::toLocationResponse)
+          .toList();
     }
 
     if (cityIdProvided) {
@@ -90,20 +94,20 @@ public class DistrictService {
       }
 
       return districtRepository.findAllByCityId(cityId)
-        .stream()
-        .map(districtMapper::toLocationResponse)
-        .toList();
+          .stream()
+          .map(districtMapper::toLocationResponse)
+          .toList();
     }
 
     return districtRepository.findAll()
-      .stream()
-      .map(districtMapper::toLocationResponse)
-      .toList();
+        .stream()
+        .map(districtMapper::toLocationResponse)
+        .toList();
   }
 
   public DistrictResponse delete(String id) {
-    District district = districtRepository.findById(id)
-      .orElseThrow(() -> new AppException(ErrorType.DISTRICT_NOT_FOUND));
+    District district = districtRepository.findByIdWithCityAndProvince(id)
+        .orElseThrow(() -> new AppException(ErrorType.DISTRICT_NOT_FOUND));
 
     // Check if district has wards
     long wardCount = wardRepository.countByDistrictId(id);

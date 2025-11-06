@@ -17,6 +17,7 @@ public class DistrictCreationRequest {
   @NotBlank(message = "NAME_NOT_BLANK")
   String name;
 
+  @NotBlank(message = "CODE_NOT_BLANK")
   String code;
 
   @NotBlank(message = "CITY_ID_NOT_BLANK")
