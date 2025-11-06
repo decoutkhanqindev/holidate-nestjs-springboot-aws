@@ -1,9 +1,12 @@
 package com.webapp.holidate.repository.location;
 
+import com.webapp.holidate.constants.db.query.location.LocationQueries;
 import com.webapp.holidate.entity.location.Ward;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface WardRepository extends JpaRepository<Ward, String> {
   boolean existsByName(String name);
@@ -23,4 +26,7 @@ public interface WardRepository extends JpaRepository<Ward, String> {
   List<Ward> findAllByNameContainingIgnoreCaseAndDistrictId(String name, String districtId);
 
   long countByDistrictId(String districtId);
+
+  @Query(LocationQueries.FIND_WARD_BY_ID_WITH_DISTRICT_AND_CITY)
+  Optional<Ward> findByIdWithDistrictAndCity(String id);
 }

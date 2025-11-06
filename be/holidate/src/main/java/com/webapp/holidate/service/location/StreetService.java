@@ -52,7 +52,12 @@ public class StreetService {
     street.setWard(ward);
 
     streetRepository.save(street);
-    return streetMapper.toStreetResponse(street);
+
+    // Reload street with ward and district to avoid LazyInitializationException
+    Street savedStreet = streetRepository.findByIdWithWardAndDistrict(street.getId())
+        .orElseThrow(() -> new AppException(ErrorType.STREET_NOT_FOUND));
+
+    return streetMapper.toStreetResponse(savedStreet);
   }
 
   public List<LocationResponse> getAll(
@@ -99,7 +104,7 @@ public class StreetService {
   }
 
   public StreetResponse delete(String id) {
-    Street street = streetRepository.findById(id)
+    Street street = streetRepository.findByIdWithWardAndDistrict(id)
         .orElseThrow(() -> new AppException(ErrorType.STREET_NOT_FOUND));
 
     // Check if street has hotels
