@@ -17,7 +17,6 @@ const superAdminMenu = [
     { href: "/super-user-management", label: "Quản lý  Admin Khách sạn", icon: FaUsersCog },
     { href: "/super-hotels", label: "Quản lý khách sạn", icon: FaBuilding },
     // { href: "/super-admins", label: "Quản lý Admin khách sạn", icon: FaUserShield },
-    { href: "/super-customers", label: "Quản lý người dùng", icon: FaUsers },
     { href: "/super-discounts", label: "Quản lý mã giảm giá", icon: FaTicketAlt },
 
     { href: "/super-support", label: "Hỗ trợ / Báo cáo vi phạm", icon: FaLifeRing },

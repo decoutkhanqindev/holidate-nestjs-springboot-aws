@@ -278,9 +278,12 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                 className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                             >
                                 <option value="">Chọn quốc gia</option>
-                                {countries.map(country => (
-                                    <option key={country.id} value={country.id}>{country.name}</option>
-                                ))}
+                                {countries
+                                    .filter(c => c.id && c.id.trim())
+                                    .filter((c, index, self) => self.findIndex(item => item.id === c.id) === index) // Remove duplicates
+                                    .map(country => (
+                                        <option key={country.id} value={country.id}>{country.name}</option>
+                                    ))}
                             </select>
                         </div>
 
@@ -323,9 +326,12 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                 className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100"
                             >
                                 <option value="">Chọn tỉnh/thành phố</option>
-                                {provinces.map(province => (
-                                    <option key={province.id} value={province.id}>{province.name}</option>
-                                ))}
+                                {provinces
+                                    .filter(p => p.id && p.id.trim())
+                                    .filter((p, index, self) => self.findIndex(item => item.id === p.id) === index) // Remove duplicates
+                                    .map(province => (
+                                        <option key={province.id} value={province.id}>{province.name}</option>
+                                    ))}
                             </select>
                         </div>
 
@@ -378,9 +384,12 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                 className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100"
                             >
                                 <option value="">Chọn thành phố/quận (của {provinces.find(p => p.id === selectedProvinceId)?.name || 'tỉnh đã chọn'})</option>
-                                {cities.map(city => (
-                                    <option key={city.id} value={city.id}>{city.name}</option>
-                                ))}
+                                {cities
+                                    .filter(c => c.id && c.id.trim())
+                                    .filter((c, index, self) => self.findIndex(item => item.id === c.id) === index) // Remove duplicates
+                                    .map(city => (
+                                        <option key={city.id} value={city.id}>{city.name}</option>
+                                    ))}
                             </select>
                         </div>
 
@@ -429,9 +438,12 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                 className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100"
                             >
                                 <option value="">Chọn quận/huyện (của {cities.find(c => c.id === selectedCityId)?.name || 'thành phố đã chọn'})</option>
-                                {districts.map(district => (
-                                    <option key={district.id} value={district.id}>{district.name}</option>
-                                ))}
+                                {districts
+                                    .filter(d => d.id && d.id.trim())
+                                    .filter((d, index, self) => self.findIndex(item => item.id === d.id) === index) // Remove duplicates
+                                    .map(district => (
+                                        <option key={district.id} value={district.id}>{district.name}</option>
+                                    ))}
                             </select>
                         </div>
 
@@ -480,9 +492,12 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                 className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100"
                             >
                                 <option value="">Chọn phường/xã (của {districts.find(d => d.id === selectedDistrictId)?.name || 'quận/huyện đã chọn'})</option>
-                                {wards.map(ward => (
-                                    <option key={ward.id} value={ward.id}>{ward.name}</option>
-                                ))}
+                                {wards
+                                    .filter(w => w.id && w.id.trim())
+                                    .filter((w, index, self) => self.findIndex(item => item.id === w.id) === index) // Remove duplicates
+                                    .map(ward => (
+                                        <option key={ward.id} value={ward.id}>{ward.name}</option>
+                                    ))}
                             </select>
                         </div>
 
@@ -522,9 +537,12 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                 className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100"
                             >
                                 <option value="">Chọn đường (của {wards.find(w => w.id === selectedWardId)?.name || 'phường/xã đã chọn'})</option>
-                                {streets.map(street => (
-                                    <option key={street.id} value={street.id}>{street.name}</option>
-                                ))}
+                                {streets
+                                    .filter(s => s.id && s.id.trim())
+                                    .filter((s, index, self) => self.findIndex(item => item.id === s.id) === index) // Remove duplicates
+                                    .map(street => (
+                                        <option key={street.id} value={street.id}>{street.name}</option>
+                                    ))}
                             </select>
                         </div>
                     </div>
@@ -578,7 +596,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                     className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                 >
                                     <option value="">Chọn đối tác</option>
-                                    {partners.map(partner => (
+                                    {partners.filter(p => p.id && String(p.id).trim()).map(partner => (
                                         <option key={partner.id} value={partner.id}>
                                             {partner.fullName} ({partner.email})
                                         </option>

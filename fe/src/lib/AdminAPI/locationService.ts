@@ -181,13 +181,20 @@ export const getStreets = async (wardId?: string, districtId?: string, cityId?: 
 /**
  * Tạo Street mới
  */
-export const createStreet = async (name: string, wardId: string): Promise<LocationOption> => {
+export const createStreet = async (name: string, wardId: string, code?: string): Promise<LocationOption> => {
+    // Đường không cần mã code - chỉ gửi name và wardId
+    const requestBody: {
+        name: string;
+        wardId: string;
+    } = {
+        name: name.trim(),
+        wardId: wardId.trim(),
+    };
+    // KHÔNG gửi field code
+
     try {
         console.log(`[locationService] Creating street: ${name} for wardId: ${wardId}`);
-        const response = await apiClient.post<ApiResponse<any>>('/location/streets', {
-            name: name.trim(),
-            wardId: wardId.trim(),
-        });
+        const response = await apiClient.post<ApiResponse<any>>('/location/streets', requestBody);
 
         if (response.data.statusCode === 200 && response.data.data) {
             const data = response.data.data;
@@ -212,28 +219,109 @@ export const createStreet = async (name: string, wardId: string): Promise<Locati
 /**
  * Tạo Ward mới
  */
-export const createWard = async (name: string, districtId: string): Promise<LocationOption> => {
+export const createWard = async (name: string, districtId: string, code?: string): Promise<LocationOption> => {
+    // Phường/Xã không cần mã code - chỉ gửi name và districtId
+    const requestBody: {
+        name: string;
+        districtId: string;
+    } = {
+        name: name.trim(),
+        districtId: districtId.trim(),
+    };
+    // KHÔNG gửi field code
+
     try {
-        console.log(`[locationService] Creating ward: ${name} for districtId: ${districtId}`);
-        const response = await apiClient.post<ApiResponse<any>>('/location/wards', {
-            name: name.trim(),
-            districtId: districtId.trim(),
+        console.log(`[locationService] ===== CREATING WARD =====`);
+        console.log(`[locationService] Request URL: POST /location/wards`);
+        console.log(`[locationService] Request Body:`, JSON.stringify(requestBody, null, 2));
+        console.log(`[locationService] ===== END REQUEST =====`);
+
+        const response = await apiClient.post<ApiResponse<any>>('/location/wards', requestBody);
+
+        console.log(`[locationService] Response received:`, {
+            status: response.status,
+            statusCode: response.data?.statusCode,
+            hasData: !!response.data?.data,
+            dataStructure: response.data ? Object.keys(response.data) : 'no data',
+            fullResponse: JSON.stringify(response.data, null, 2),
         });
 
-        if (response.data.statusCode === 200 && response.data.data) {
-            const data = response.data.data;
-            const result: LocationOption = {
-                id: data.id,
-                name: data.name,
-                code: data.code,
-            };
-            console.log(`[locationService] Ward created successfully: ${result.id}`);
-            return result;
+        // Kiểm tra HTTP status trước - nếu 200/201 thì coi như thành công
+        if (response.status === 200 || response.status === 201) {
+            let result: LocationOption | null = null;
+
+            // Case 1: Standard format: { statusCode: 200, data: { id, name, code } }
+            if (response.data?.statusCode === 200 && response.data?.data) {
+                const data = response.data.data;
+                if (data.id) {
+                    result = {
+                        id: data.id,
+                        name: data.name || name,
+                        code: data.code,
+                    };
+                }
+            }
+            // Case 2: Response có id trực tiếp trong response.data (không phải ApiResponse structure)
+            else if (response.data && typeof response.data === 'object' && 'id' in response.data && !('statusCode' in response.data)) {
+                const data = response.data as any;
+                result = {
+                    id: String(data.id),
+                    name: String(data.name || name),
+                    code: data.code ? String(data.code) : undefined,
+                };
+            }
+            // Case 3: Response.data.data chính là location object (nested)
+            else if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+                const nestedData = (response.data as any).data;
+                if (nestedData && typeof nestedData === 'object' && 'id' in nestedData) {
+                    result = {
+                        id: String(nestedData.id),
+                        name: String(nestedData.name || name),
+                        code: nestedData.code ? String(nestedData.code) : undefined,
+                    };
+                }
+            }
+
+            if (result) {
+                console.log(`[locationService] ✅ Ward created successfully: ${result.id}`);
+                return result;
+            } else {
+                console.warn('[locationService] ⚠️ HTTP 200 but cannot parse response. Backend may have saved the data.');
+                console.warn('[locationService] Full response:', JSON.stringify(response.data, null, 2));
+                throw new Error('Tạo thành công nhưng không nhận được thông tin phản hồi. Vui lòng kiểm tra lại danh sách.');
+            }
         }
+
+        console.error('[locationService] ❌ Invalid response structure:', JSON.stringify(response.data, null, 2));
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error('[locationService] Error creating ward:', error);
-        const errorMessage = error.response?.data?.message || error.message || 'Không thể tạo phường/xã mới';
+        console.error('[locationService] ===== ERROR CREATING WARD =====');
+        console.error('[locationService] Error type:', error.constructor?.name);
+        console.error('[locationService] Error message:', error.message);
+        console.error('[locationService] Has response:', !!error.response);
+        console.error('[locationService] Error response status:', error.response?.status);
+        console.error('[locationService] Error response data (full):', JSON.stringify(error.response?.data, null, 2));
+        console.error('[locationService] Request Body:', JSON.stringify(requestBody, null, 2));
+        console.error('[locationService] ===== COPY FOR BACKEND TEAM =====');
+        console.error('[locationService] REQUEST:', JSON.stringify(requestBody, null, 2));
+        console.error('[locationService] RESPONSE STATUS:', error.response?.status || 'NO RESPONSE');
+        console.error('[locationService] RESPONSE DATA:', JSON.stringify(error.response?.data || { message: error.message }, null, 2));
+        console.error('[locationService] ===== END ERROR =====');
+
+        let errorMessage = 'Không thể tạo phường/xã mới';
+        if (error.response?.data?.message) {
+            errorMessage = error.response.data.message;
+        } else if (error.response?.data?.error) {
+            errorMessage = error.response.data.error;
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+
+        if (errorMessage === 'Không thể tạo phường/xã mới' && (error.response?.status === 200 || error.response?.status === 201)) {
+            console.warn('[locationService] ⚠️ HTTP 200/201 nhưng không parse được. Backend có thể đã lưu.');
+            errorMessage = 'Tạo thành công nhưng không nhận được phản hồi. Vui lòng kiểm tra lại danh sách.';
+        }
+
         throw new Error(errorMessage);
     }
 };
@@ -241,28 +329,147 @@ export const createWard = async (name: string, districtId: string): Promise<Loca
 /**
  * Tạo District mới
  */
-export const createDistrict = async (name: string, cityId: string): Promise<LocationOption> => {
+export const createDistrict = async (name: string, cityId: string, code?: string): Promise<LocationOption> => {
+    // Quận/Huyện không cần mã code - chỉ gửi name và cityId
+    const requestBody: {
+        name: string;
+        cityId: string;
+    } = {
+        name: name.trim(),
+        cityId: cityId.trim(),
+    };
+    // KHÔNG gửi field code
+
     try {
-        console.log(`[locationService] Creating district: ${name} for cityId: ${cityId}`);
-        const response = await apiClient.post<ApiResponse<any>>('/location/districts', {
-            name: name.trim(),
-            cityId: cityId.trim(),
+        console.log(`[locationService] ===== CREATING DISTRICT =====`);
+        console.log(`[locationService] Request URL: POST /location/districts`);
+        console.log(`[locationService] Request Body:`, JSON.stringify(requestBody, null, 2));
+        console.log(`[locationService] ===== END REQUEST =====`);
+
+        let response;
+        try {
+            response = await apiClient.post<ApiResponse<any>>('/location/districts', requestBody);
+            console.log(`[locationService] ✅ API call successful, HTTP status: ${response.status}`);
+        } catch (apiError: any) {
+            console.error('[locationService] ❌ API call failed:', apiError);
+            console.error('[locationService] Error details:', {
+                hasResponse: !!apiError.response,
+                status: apiError.response?.status,
+                data: apiError.response?.data,
+            });
+            throw apiError; // Re-throw để catch block bên ngoài xử lý
+        }
+
+        console.log(`[locationService] Response received:`, {
+            status: response.status,
+            statusCode: response.data?.statusCode,
+            hasData: !!response.data?.data,
+            dataStructure: response.data ? Object.keys(response.data) : 'no data',
+            fullResponse: JSON.stringify(response.data, null, 2),
         });
 
-        if (response.data.statusCode === 200 && response.data.data) {
-            const data = response.data.data;
-            const result: LocationOption = {
-                id: data.id,
-                name: data.name,
-                code: data.code,
-            };
-            console.log(`[locationService] District created successfully: ${result.id}`);
-            return result;
+        // Kiểm tra HTTP status trước - nếu 200/201 thì coi như thành công
+        if (response.status === 200 || response.status === 201) {
+            let result: LocationOption | null = null;
+
+            // Case 1: Standard format: { statusCode: 200, data: { id, name, code } }
+            if (response.data?.statusCode === 200 && response.data?.data) {
+                const data = response.data.data;
+                if (data.id) {
+                    result = {
+                        id: data.id,
+                        name: data.name || name,
+                        code: data.code,
+                    };
+                }
+            }
+            // Case 2: Response có id trực tiếp trong response.data (không phải ApiResponse structure)
+            else if (response.data && typeof response.data === 'object' && 'id' in response.data && !('statusCode' in response.data)) {
+                const data = response.data as any;
+                result = {
+                    id: String(data.id),
+                    name: String(data.name || name),
+                    code: data.code ? String(data.code) : undefined,
+                };
+            }
+            // Case 3: Response.data.data chính là location object (nested)
+            else if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+                const nestedData = (response.data as any).data;
+                if (nestedData && typeof nestedData === 'object' && 'id' in nestedData) {
+                    result = {
+                        id: String(nestedData.id),
+                        name: String(nestedData.name || name),
+                        code: nestedData.code ? String(nestedData.code) : undefined,
+                    };
+                }
+            }
+
+            if (result) {
+                console.log(`[locationService] ✅ District created successfully: ${result.id}`);
+                return result;
+            } else {
+                console.warn('[locationService] ⚠️ HTTP 200 but cannot parse response. Backend may have saved the data.');
+                console.warn('[locationService] Full response:', JSON.stringify(response.data, null, 2));
+                throw new Error('Tạo thành công nhưng không nhận được thông tin phản hồi. Vui lòng kiểm tra lại danh sách.');
+            }
         }
+
+        console.error('[locationService] ❌ Invalid response structure:', JSON.stringify(response.data, null, 2));
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error('[locationService] Error creating district:', error);
-        const errorMessage = error.response?.data?.message || error.message || 'Không thể tạo quận/huyện mới';
+        console.error('[locationService] ===== ERROR CREATING DISTRICT =====');
+        console.error('[locationService] Error type:', error.constructor?.name);
+        console.error('[locationService] Error message:', error.message);
+        console.error('[locationService] Error stack:', error.stack);
+        console.error('[locationService] Has response:', !!error.response);
+        console.error('[locationService] Error response status:', error.response?.status);
+        console.error('[locationService] Error response statusText:', error.response?.statusText);
+        console.error('[locationService] Error response data (full):', JSON.stringify(error.response?.data, null, 2));
+        console.error('[locationService] Error response data (raw):', error.response?.data);
+        console.error('[locationService] Error config:', {
+            url: error.config?.url,
+            method: error.config?.method,
+            baseURL: error.config?.baseURL,
+            data: error.config?.data,
+        });
+        console.error('[locationService] Request Body:', JSON.stringify(requestBody, null, 2));
+        console.error('[locationService] ===== END ERROR =====');
+
+        // Log riêng để copy cho backend
+        console.error('[locationService] ===== COPY FOR BACKEND TEAM =====');
+        console.error('[locationService] REQUEST:');
+        console.error(JSON.stringify(requestBody, null, 2));
+        console.error('[locationService] RESPONSE STATUS:', error.response?.status || 'NO RESPONSE');
+        console.error('[locationService] RESPONSE DATA:');
+        console.error(JSON.stringify(error.response?.data || { message: error.message }, null, 2));
+        console.error('[locationService] ===== END COPY =====');
+
+        // Xử lý error message - kiểm tra nhiều nguồn
+        let errorMessage = 'Không thể tạo quận/huyện mới';
+
+        if (error.response?.data) {
+            // Backend có response
+            if (error.response.data.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.response.data.error) {
+                errorMessage = error.response.data.error;
+            } else if (typeof error.response.data === 'string') {
+                errorMessage = error.response.data;
+            } else {
+                // Backend trả về error nhưng không có message field
+                errorMessage = JSON.stringify(error.response.data);
+            }
+        } else if (error.message) {
+            // Network error hoặc error không có response
+            errorMessage = error.message;
+        }
+
+        // Nếu errorMessage vẫn là default và có response 200/201, có thể là parse error
+        if (errorMessage === 'Không thể tạo quận/huyện mới' && (error.response?.status === 200 || error.response?.status === 201)) {
+            console.warn('[locationService] ⚠️ HTTP 200/201 nhưng không parse được. Backend có thể đã lưu.');
+            errorMessage = 'Tạo thành công nhưng không nhận được phản hồi. Vui lòng kiểm tra lại danh sách.';
+        }
+
         throw new Error(errorMessage);
     }
 };
@@ -271,28 +478,107 @@ export const createDistrict = async (name: string, cityId: string): Promise<Loca
  * Tạo City mới
  */
 export const createCity = async (name: string, code: string, provinceId: string): Promise<LocationOption> => {
+    const requestBody = {
+        name: name.trim(),
+        code: code.trim() || '',
+        provinceId: provinceId.trim(),
+    };
+
     try {
-        console.log(`[locationService] Creating city: ${name} for provinceId: ${provinceId}`);
-        const response = await apiClient.post<ApiResponse<any>>('/location/cities', {
-            name: name.trim(),
-            code: code.trim() || '',
-            provinceId: provinceId.trim(),
+        console.log(`[locationService] ===== CREATING CITY =====`);
+        console.log(`[locationService] Request URL: POST /location/cities`);
+        console.log(`[locationService] Request Body:`, JSON.stringify(requestBody, null, 2));
+        console.log(`[locationService] ===== END REQUEST =====`);
+
+        const response = await apiClient.post<ApiResponse<any>>('/location/cities', requestBody);
+
+        console.log(`[locationService] Response received:`, {
+            status: response.status,
+            statusCode: response.data?.statusCode,
+            hasData: !!response.data?.data,
+            dataStructure: response.data ? Object.keys(response.data) : 'no data',
+            fullResponse: JSON.stringify(response.data, null, 2),
         });
 
-        if (response.data.statusCode === 200 && response.data.data) {
-            const data = response.data.data;
-            const result: LocationOption = {
-                id: data.id,
-                name: data.name,
-                code: data.code,
-            };
-            console.log(`[locationService] City created successfully: ${result.id}`);
-            return result;
+        // Kiểm tra HTTP status trước - nếu 200/201 thì coi như thành công
+        if (response.status === 200 || response.status === 201) {
+            // Kiểm tra response structure - có thể backend trả về format khác
+            let result: LocationOption | null = null;
+
+            // Case 1: Standard format: { statusCode: 200, data: { id, name, code } }
+            if (response.data?.statusCode === 200 && response.data?.data) {
+                const data = response.data.data;
+                if (data.id) {
+                    result = {
+                        id: data.id,
+                        name: data.name || name,
+                        code: data.code || code,
+                    };
+                }
+            }
+            // Case 2: Response có id trực tiếp trong response.data (không phải ApiResponse structure)
+            else if (response.data && typeof response.data === 'object' && 'id' in response.data && !('statusCode' in response.data)) {
+                const data = response.data as any;
+                result = {
+                    id: String(data.id),
+                    name: String(data.name || name),
+                    code: data.code ? String(data.code) : code,
+                };
+            }
+            // Case 3: Response.data.data chính là location object (nested)
+            else if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+                const nestedData = (response.data as any).data;
+                if (nestedData && typeof nestedData === 'object' && 'id' in nestedData) {
+                    result = {
+                        id: String(nestedData.id),
+                        name: String(nestedData.name || name),
+                        code: nestedData.code ? String(nestedData.code) : code,
+                    };
+                }
+            }
+
+            if (result) {
+                console.log(`[locationService] ✅ City created successfully: ${result.id}`);
+                return result;
+            } else {
+                // HTTP 200 nhưng không parse được - có thể backend đã lưu nhưng response khác
+                console.warn('[locationService] ⚠️ HTTP 200 but cannot parse response. Backend may have saved the data.');
+                console.warn('[locationService] Full response:', JSON.stringify(response.data, null, 2));
+                // Vẫn throw error để user biết, nhưng có thể data đã được lưu
+                throw new Error('Tạo thành công nhưng không nhận được thông tin phản hồi. Vui lòng kiểm tra lại danh sách.');
+            }
         }
+
+        console.error('[locationService] ❌ Invalid response structure:', JSON.stringify(response.data, null, 2));
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error('[locationService] Error creating city:', error);
-        const errorMessage = error.response?.data?.message || error.message || 'Không thể tạo thành phố/quận mới';
+        console.error('[locationService] ===== ERROR CREATING CITY =====');
+        console.error('[locationService] Error type:', error.constructor?.name);
+        console.error('[locationService] Error message:', error.message);
+        console.error('[locationService] Has response:', !!error.response);
+        console.error('[locationService] Error response status:', error.response?.status);
+        console.error('[locationService] Error response data (full):', JSON.stringify(error.response?.data, null, 2));
+        console.error('[locationService] Request Body:', JSON.stringify(requestBody, null, 2));
+        console.error('[locationService] ===== COPY FOR BACKEND TEAM =====');
+        console.error('[locationService] REQUEST:', JSON.stringify(requestBody, null, 2));
+        console.error('[locationService] RESPONSE STATUS:', error.response?.status || 'NO RESPONSE');
+        console.error('[locationService] RESPONSE DATA:', JSON.stringify(error.response?.data || { message: error.message }, null, 2));
+        console.error('[locationService] ===== END ERROR =====');
+
+        let errorMessage = 'Không thể tạo thành phố/quận mới';
+        if (error.response?.data?.message) {
+            errorMessage = error.response.data.message;
+        } else if (error.response?.data?.error) {
+            errorMessage = error.response.data.error;
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+
+        if (errorMessage === 'Không thể tạo thành phố/quận mới' && (error.response?.status === 200 || error.response?.status === 201)) {
+            console.warn('[locationService] ⚠️ HTTP 200/201 nhưng không parse được. Backend có thể đã lưu.');
+            errorMessage = 'Tạo thành công nhưng không nhận được phản hồi. Vui lòng kiểm tra lại danh sách.';
+        }
+
         throw new Error(errorMessage);
     }
 };
@@ -307,7 +593,7 @@ export const createProvince = async (name: string, code: string, countryId: stri
         code: code.trim() || '',
         countryId: countryId.trim(),
     };
-    
+
     try {
         console.log(`[locationService] ===== CREATING PROVINCE =====`);
         console.log(`[locationService] Request URL: POST /location/provinces`);
@@ -317,7 +603,7 @@ export const createProvince = async (name: string, code: string, countryId: stri
         console.log(`[locationService] - code: "${requestBody.code}" (length: ${requestBody.code.length})`);
         console.log(`[locationService] - countryId: "${requestBody.countryId}"`);
         console.log(`[locationService] ===== END REQUEST =====`);
-        
+
         const response = await apiClient.post<ApiResponse<any>>('/location/provinces', requestBody);
 
         if (response.data.statusCode === 200 && response.data.data) {
@@ -346,7 +632,7 @@ export const createProvince = async (name: string, code: string, countryId: stri
         console.error('[locationService] Request Body (đã gửi lên backend):', error.config?.data ? JSON.parse(error.config.data) : requestBody);
         console.error('[locationService] Request Body (JSON string):', error.config?.data || JSON.stringify(requestBody, null, 2));
         console.error('[locationService] ===== END ERROR DETAILS =====');
-        
+
         // Log riêng để dễ copy-paste cho backend team
         console.error('[locationService] ===== COPY THIS FOR BACKEND TEAM =====');
         console.error('[locationService] REQUEST BODY:');
@@ -355,12 +641,12 @@ export const createProvince = async (name: string, code: string, countryId: stri
         console.error(JSON.stringify(error.response?.data || { message: error.message }, null, 2));
         console.error('[locationService] HTTP STATUS:', error.response?.status || 'N/A');
         console.error('[locationService] ===== END COPY =====');
-        
+
         // Xử lý error message chi tiết hơn
         let errorMessage = 'Không thể tạo tỉnh/thành phố mới';
         let isFromBackend = false;
         let backendMessage = '';
-        
+
         // Kiểm tra response từ backend
         if (error.response?.data) {
             isFromBackend = true;
@@ -368,7 +654,7 @@ export const createProvince = async (name: string, code: string, countryId: stri
             console.log('[locationService] ✅ ERROR TỪ BACKEND:', backendMessage);
             console.log('[locationService] Backend statusCode:', error.response.data.statusCode);
             console.log('[locationService] Backend error type:', error.response.data.errorType || 'N/A');
-            
+
             if (error.response.data.message) {
                 const msg = error.response.data.message;
                 if (msg.includes('Province already exists') || msg.includes('PROVINCE_EXISTS')) {
@@ -386,10 +672,10 @@ export const createProvince = async (name: string, code: string, countryId: stri
             console.log('[locationService] ⚠️ ERROR TỪ FRONTEND (network/timeout/etc):', error.message);
             errorMessage = error.message;
         }
-        
+
         console.log('[locationService] Final error message:', errorMessage);
         console.log('[locationService] Error source:', isFromBackend ? 'BACKEND' : 'FRONTEND/NETWORK');
-        
+
         throw new Error(errorMessage);
     }
 };

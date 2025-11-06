@@ -149,3 +149,40 @@ export interface PagedResponse<T> {
     hasNext: boolean;
     hasPrevious: boolean;
 }
+
+// Payment Transaction type for Super Admin
+export type PaymentTransactionStatus = 'PAID' | 'PENDING' | 'EXPIRED' | 'FAILED';
+
+export interface PaymentTransaction {
+    id: string;
+    adminName: string;
+    adminEmail: string;
+    hotelName: string;
+    hotelId: string;
+    paymentDate: Date;
+    expiryDate: Date;
+    amount: number;
+    status: PaymentTransactionStatus;
+    paymentMethod: string; // 'VNPay', 'Bank Transfer', etc.
+    transactionId: string;
+    description?: string;
+}
+
+// Support Request type for Super Admin
+export type SupportRequestStatus = 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+export type SupportRequestType = 'TECHNICAL' | 'VIOLATION' | 'PAYMENT' | 'INFO_UPDATE' | 'BUG_REPORT' | 'ACCOUNT' | 'OTHER';
+export type SupportRequestPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+
+export interface SupportRequest {
+    id: string;
+    partnerName: string;
+    partnerEmail: string;
+    phoneNumber: string;
+    hotelName: string;
+    request: string;
+    requestType: SupportRequestType;
+    status: SupportRequestStatus;
+    priority: SupportRequestPriority;
+    createdAt: Date;
+    resolvedAt?: Date;
+}
