@@ -31,27 +31,26 @@ public class DistrictService {
 
   public DistrictResponse create(DistrictCreationRequest request) {
     String name = request.getName();
-    boolean nameExists = districtRepository.existsByName(name);
-    if (nameExists) {
-      throw new AppException(ErrorType.DISTRICT_EXISTS);
-    }
-
     String code = request.getCode();
-    boolean codeExists = districtRepository.existsByCode(code);
-    if (codeExists) {
+    String cityId = request.getCityId();
+
+    // Check if city exists and fetch it
+    City city = cityRepository.findById(cityId)
+      .orElseThrow(() -> new AppException(ErrorType.CITY_NOT_FOUND));
+
+    // Check if district with same name exists in this city
+    boolean nameExistsInCity = districtRepository.existsByNameAndCityId(name, cityId);
+    if (nameExistsInCity) {
       throw new AppException(ErrorType.DISTRICT_EXISTS);
     }
 
-    String cityId = request.getCityId();
-    boolean cityExists = districtRepository.existsByCityId(cityId);
-    if (cityExists) {
+    // Check if district with same code exists in this city
+    boolean codeExistsInCity = districtRepository.existsByCodeAndCityId(code, cityId);
+    if (codeExistsInCity) {
       throw new AppException(ErrorType.DISTRICT_EXISTS);
     }
 
     District district = districtMapper.toEntity(request);
-
-    City city = cityRepository.findById(cityId)
-      .orElseThrow(() -> new AppException(ErrorType.CITY_NOT_FOUND));
     district.setCity(city);
 
     districtRepository.save(district);
