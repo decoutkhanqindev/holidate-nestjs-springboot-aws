@@ -13,7 +13,9 @@ export const loginUser = (data: any) => {
 
 // 3 Đăng xuất
 export const logoutUser = (data: any) => {
-
+    console.log("[authService] 🔴 LOGOUT REQUEST - Gửi request logout đến backend");
+    console.log("[authService] Request data:", { token: data.token ? `${data.token.substring(0, 20)}...` : 'KHÔNG CÓ TOKEN' });
+    console.log("[authService] Request URL: POST /auth/logout");
     return apiClient.post('/auth/logout', data);
 };
 // export const logoutUser = () => {

@@ -144,15 +144,15 @@ class HotelService {
             const queryParams = new URLSearchParams(cleanParams);
             const url = `${this.baseURL}?${queryParams.toString()}`;
 
-            console.log('[HotelService] Gọi API tìm kiếm với URL:', url);
-
+            //    console.log('[HotelService] Gọi API tìm kiếm với URL:', url);
+            //
             const response = await this.api.get<ApiResponse<PaginatedData<HotelResponse>>>(url);
 
-            console.log('[HotelService] Kết quả trả về:', response.data.data);
+            // console.log('[HotelService] Kết quả trả về:', response.data.data);
 
             return response.data.data;
         } catch (error: any) {
-            console.error('[HotelService] Lỗi khi tìm kiếm khách sạn:', error.response?.data || error.message);
+            // console.error('[HotelService] Lỗi khi tìm kiếm khách sạn:', error.response?.data || error.message);
             throw new Error('Không thể tìm kiếm khách sạn. Vui lòng thử lại.');
         }
     }
@@ -162,15 +162,15 @@ class HotelService {
      */
     async getHotelById(id: string): Promise<HotelResponse> {
         try {
-            console.log(`[HotelService] Lấy thông tin khách sạn ID: ${id}`);
+            //  console.log(`[HotelService] Lấy thông tin khách sạn ID: ${id}`);
 
             const response = await this.api.get<ApiResponse<HotelResponse>>(`${this.baseURL}/${id}`);
 
-            console.log('[HotelService] Thông tin khách sạn:', response.data.data);
+            //     console.log('[HotelService] Thông tin khách sạn:', response.data.data);
 
             return response.data.data;
         } catch (error: any) {
-            console.error(`[HotelService] Lỗi khi lấy thông tin khách sạn ${id}:`, error.response?.data || error.message);
+            //  console.error(`[HotelService] Lỗi khi lấy thông tin khách sạn ${id}:`, error.response?.data || error.message);
             throw new Error('Không thể tải thông tin khách sạn');
         }
     }
@@ -186,15 +186,15 @@ class HotelService {
                 size: size.toString(),
             });
 
-            console.log(`[HotelService] Lấy danh sách phòng của khách sạn ${hotelId}`);
+            //   console.log(`[HotelService] Lấy danh sách phòng của khách sạn ${hotelId}`);
 
             const response = await this.api.get<ApiResponse<PaginatedData<Room>>>(`${this.roomsURL}?${params.toString()}`);
 
-            console.log('[HotelService] Danh sách phòng:', response.data.data);
+            //   console.log('[HotelService] Danh sách phòng:', response.data.data);
 
             return response.data.data;
         } catch (error: any) {
-            console.error(`[HotelService] Lỗi khi lấy danh sách phòng của hotel ${hotelId}:`, error.response?.data || error.message);
+            //  console.error(`[HotelService] Lỗi khi lấy danh sách phòng của hotel ${hotelId}:`, error.response?.data || error.message);
             throw new Error('Không thể tải danh sách phòng.');
         }
     }
@@ -204,15 +204,15 @@ class HotelService {
      */
     async getRoomById(roomId: string): Promise<RoomDetailResponse> {
         try {
-            console.log(`[HotelService] Lấy thông tin phòng ID: ${roomId}`);
+            //  console.log(`[HotelService] Lấy thông tin phòng ID: ${roomId}`);
 
             const response = await this.api.get<ApiResponse<RoomDetailResponse>>(`${this.roomsURL}/${roomId}`);
 
-            console.log('[HotelService] Thông tin phòng:', response.data.data);
+            //  console.log('[HotelService] Thông tin phòng:', response.data.data);
 
             return response.data.data;
         } catch (error: any) {
-            console.error(`[HotelService] Lỗi khi lấy thông tin phòng ${roomId}:`, error.response?.data || error.message);
+            //   console.error(`[HotelService] Lỗi khi lấy thông tin phòng ${roomId}:`, error.response?.data || error.message);
             throw new Error('Không thể tải thông tin chi tiết phòng');
         }
     }
@@ -223,13 +223,13 @@ class HotelService {
      */
     async getAllHotels(): Promise<HotelResponse[]> {
         try {
-            console.log('[HotelService] Lấy tất cả khách sạn');
+            // console.log('[HotelService] Lấy tất cả khách sạn');
 
             const response = await this.api.get<ApiResponse<HotelResponse[]>>(this.baseURL);
 
             return response.data.data;
         } catch (error: any) {
-            console.error('[HotelService] Lỗi khi lấy tất cả khách sạn:', error.response?.data || error.message);
+            //   console.error('[HotelService] Lỗi khi lấy tất cả khách sạn:', error.response?.data || error.message);
             throw new Error('Không thể tải danh sách khách sạn');
         }
     }
