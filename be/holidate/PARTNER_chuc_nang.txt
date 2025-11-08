@@ -29,6 +29,7 @@ CÁC CHỨC NĂNG CỦA ĐỐI TÁC (ROLE PARTNER)
    - Xóa đặt phòng (quyền này khách hàng không có)
    - Thực hiện check-in cho khách
    - Thực hiện check-out cho khách
+   - Hoàn tiền
 
 6. Quản lý đánh giá
    - Viết đánh giá
@@ -48,7 +49,7 @@ CÁC CHỨC NĂNG CỦA ĐỐI TÁC (ROLE PARTNER)
 8. Gửi yêu cầu cho quản trị viên
    - Gửi yêu cầu tạo khách sạn mới
    - Gửi yêu cầu tạo khuyến mãi (discount) cho khách sạn của mình
-   - Gửi các yêu cầu khác cần phê duyệt từ quản trị viên
+   - Gửi các yêu cầu tạo tài khoản nhân viên.
    - Xem trạng thái các yêu cầu đã gửi (đang chờ, đã duyệt, bị từ chối)
 
 LƯU Ý:

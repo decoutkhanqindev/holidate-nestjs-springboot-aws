@@ -66,6 +66,7 @@ CÁC CHỨC NĂNG CỦA KHÁCH HÀNG (ROLE USER)
    - Xem chi tiết một đặt phòng
    - Hủy đặt phòng
    - Đổi lịch đặt phòng (thay đổi ngày check-in/check-out)
+   - Thanh toán
    - Thực hiện check-in khi đến khách sạn
    - Thực hiện check-out khi rời khách sạn
 

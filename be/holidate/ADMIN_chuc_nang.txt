@@ -78,7 +78,6 @@ CÁC CHỨC NĂNG CỦA QUẢN TRỊ VIÊN (ROLE ADMIN)
     - Xem báo cáo tài chính (doanh thu, chi phí, lợi nhuận)
     - So sánh hiệu suất giữa các kỳ (tháng này so với tháng trước, năm này so với năm trước)
     - Xuất báo cáo dưới dạng file (PDF, Excel)
-    - Xem dashboard tổng quan với các chỉ số quan trọng (KPI)
 
 12. Xử lý yêu cầu từ đối tác
     - Xem danh sách yêu cầu từ đối tác (tạo khách sạn mới, tạo khuyến mãi, v.v.)
