@@ -171,7 +171,7 @@ function MyBookingsComponent() {
     }
 
     if (!bookingsData || bookingsData.content.length === 0) {
-        return <div className={styles.centered}>Bạn chưa có đơn đặt phòng nào.</div>;
+        return <div className={styles.centered}>Quý khách hiện chưa thực hiện thao tác đặt phòng.</div>;
     }
 
     return (

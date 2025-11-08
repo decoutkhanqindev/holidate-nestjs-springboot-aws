@@ -1,265 +1,129 @@
-'use client';
+import type { Metadata } from 'next';
+import apiClient, { ApiResponse } from '@/service/apiClient';
+import type { SuperDiscount, PagedResponse } from '@/types';
+import DiscountsPageClient from './DiscountsPageClient';
 
-import { useState, useEffect } from 'react';
-import { getPublicDiscounts } from '@/lib/client/discountService';
-import type { SuperDiscount } from '@/types';
-import Link from 'next/link';
+// ============================================
+// ISR CONFIGURATION
+// ============================================
+// Revalidate mỗi 30 phút (1800 giây) để đảm bảo mã giảm giá luôn mới nhất
+export const revalidate = 1800; // 30 phút
 
-// Helper để format ngày
-function formatDate(date: Date | string): string {
-    if (!date) return '';
-    const d = typeof date === 'string' ? new Date(date) : date;
-    return d.toLocaleDateString('vi-VN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-    });
-}
-
-// Helper để chọn icon dựa trên percentage
-function getDiscountIcon(percentage: number): string {
-    if (percentage >= 50) return '🎁';
-    if (percentage >= 20) return '🎟️';
-    if (percentage >= 10) return '🏨';
-    return '🌍';
-}
-
-export default function DiscountsPage() {
-    const [discounts, setDiscounts] = useState<SuperDiscount[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [currentPage, setCurrentPage] = useState(0);
-    const [totalPages, setTotalPages] = useState(0);
-
-    useEffect(() => {
-        const loadDiscounts = async () => {
-            setIsLoading(true);
-            try {
-                const response = await getPublicDiscounts({
-                    page: currentPage,
-                    size: 12, // Hiển thị 12 mã mỗi trang
-                    sortBy: 'validTo',
-                    sortDir: 'asc', // Sắp xếp theo ngày hết hạn (gần nhất trước)
-                });
-                setDiscounts(response.content);
-                setTotalPages(response.totalPages);
-            } catch (error) {
-                console.error('[DiscountsPage] Error loading discounts:', error);
-                setDiscounts([]);
-            } finally {
-                setIsLoading(false);
-            }
+// ============================================
+// HELPER FUNCTION - Fetch Discounts trên Server
+// ============================================
+async function getPublicDiscountsOnServer(page: number = 0, size: number = 12): Promise<PagedResponse<SuperDiscount>> {
+    try {
+        const params: any = {
+            page,
+            size,
+            sortBy: 'validTo',
+            sortDir: 'asc',
+            active: true,
+            currentlyValid: true,
         };
 
-        loadDiscounts();
-    }, [currentPage]);
+        const response = await apiClient.get<ApiResponse<PagedResponse<SuperDiscount>>>('/discounts', {
+            params,
+        });
 
-    const handleCopy = (code: string) => {
-        navigator.clipboard.writeText(code);
-        alert(`Đã sao chép mã: ${code}`);
-    };
+        if (response.data?.statusCode === 200 && response.data?.data) {
+            const data = response.data.data;
+            
+            // Map dates từ string sang Date
+            const mappedContent = data.content.map(discount => ({
+                ...discount,
+                validFrom: new Date(discount.validFrom),
+                validTo: new Date(discount.validTo),
+                createdAt: discount.createdAt ? new Date(discount.createdAt) : new Date(),
+                updatedAt: discount.updatedAt ? new Date(discount.updatedAt) : undefined,
+            }));
 
-    const handlePageChange = (page: number) => {
-        setCurrentPage(page - 1); // Convert từ 1-based sang 0-based
-    };
+            return {
+                ...data,
+                content: mappedContent,
+            };
+        }
 
-    return (
-        <div className="container py-5">
-            <div className="mb-4">
-                <Link href="/" className="text-decoration-none text-primary">
-                    ← Về trang chủ
-                </Link>
-            </div>
-
-            <h1 className="fw-bold mb-4 text-dark">🎁 Tất cả Mã Ưu Đãi</h1>
-
-            {isLoading ? (
-                <div className="text-center py-5">
-                    <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Đang tải...</span>
-                    </div>
-                    <p className="mt-2 text-muted">Đang tải mã ưu đãi...</p>
-                </div>
-            ) : discounts.length === 0 ? (
-                <div className="text-center py-5">
-                    <p className="text-muted">Hiện tại không có mã ưu đãi nào.</p>
-                </div>
-            ) : (
-                <>
-                    <div className="row g-3">
-                        {discounts.map((discount) => (
-                            <div key={discount.id} className="col-md-4 mb-3">
-                                <div
-                                    className="card h-100 border-0"
-                                    style={{
-                                        backgroundColor: '#2d3748',
-                                        borderRadius: '12px',
-                                        transition: 'transform 0.2s ease, box-shadow 0.2s ease'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.transform = 'translateY(-4px)';
-                                        e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.2)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.transform = 'translateY(0)';
-                                        e.currentTarget.style.boxShadow = 'none';
-                                    }}
-                                >
-                                    <div className="card-body p-3">
-                                        {/* Top section với icon */}
-                                        <div className="d-flex align-items-start gap-2 mb-2">
-                                            {/* Icon circle với màu teal */}
-                                            <div
-                                                style={{
-                                                    width: '32px',
-                                                    height: '32px',
-                                                    borderRadius: '50%',
-                                                    backgroundColor: '#14b8a6',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    flexShrink: 0,
-                                                    marginTop: '2px'
-                                                }}
-                                            >
-                                                <span style={{ color: 'white', fontSize: '18px' }}>
-                                                    {getDiscountIcon(discount.percentage)}
-                                                </span>
-                                            </div>
-                                            <div className="flex-grow-1">
-                                                <h6
-                                                    className="mb-1 fw-semibold"
-                                                    style={{
-                                                        color: '#e2e8f0',
-                                                        fontSize: '14px',
-                                                        lineHeight: '1.4'
-                                                    }}
-                                                >
-                                                    Giảm {discount.percentage}%
-                                                </h6>
-                                                <p
-                                                    className="mb-0 small"
-                                                    style={{
-                                                        color: '#a0aec0',
-                                                        fontSize: '12px'
-                                                    }}
-                                                >
-                                                    {discount.description || 'Áp dụng cho đơn hàng của bạn.'}
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        {/* Info section */}
-                                        <div className="mb-2" style={{ fontSize: '11px' }}>
-                                            <div style={{ color: '#a0aec0', marginBottom: '4px' }}>
-                                                <strong style={{ color: '#cbd5e0' }}>Đơn tối thiểu:</strong> {new Intl.NumberFormat('vi-VN').format(discount.minBookingPrice)} VNĐ
-                                            </div>
-                                            <div style={{ color: '#a0aec0', marginBottom: '4px' }}>
-                                                <strong style={{ color: '#cbd5e0' }}>Ưu đãi tới ngày:</strong> {formatDate(discount.validTo)}
-                                            </div>
-                                            <div style={{ color: '#a0aec0' }}>
-                                                <strong style={{ color: '#cbd5e0' }}>Đã sử dụng:</strong> {discount.timesUsed} / {discount.usageLimit}
-                                            </div>
-                                        </div>
-
-                                        {/* Dashed separator */}
-                                        <hr
-                                            className="my-2"
-                                            style={{
-                                                borderTop: '1px dashed #4a5568',
-                                                borderBottom: 'none',
-                                                margin: '8px 0'
-                                            }}
-                                        />
-
-                                        {/* Bottom section với promo code và copy button */}
-                                        <div className="d-flex justify-content-between align-items-center">
-                                            <div className="d-flex align-items-center gap-2">
-                                                <span style={{ color: '#a0aec0', fontSize: '14px' }}>📋</span>
-                                                <span
-                                                    className="fw-semibold"
-                                                    style={{
-                                                        color: '#e2e8f0',
-                                                        fontSize: '14px',
-                                                        letterSpacing: '0.5px'
-                                                    }}
-                                                >
-                                                    {discount.code}
-                                                </span>
-                                            </div>
-                                            <button
-                                                onClick={() => handleCopy(discount.code)}
-                                                className="btn btn-sm"
-                                                style={{
-                                                    backgroundColor: '#3b82f6',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    borderRadius: '6px',
-                                                    padding: '4px 12px',
-                                                    fontSize: '12px',
-                                                    fontWeight: '500',
-                                                    transition: 'background-color 0.2s ease, transform 0.2s ease'
-                                                }}
-                                                onMouseEnter={(e) => {
-                                                    e.currentTarget.style.backgroundColor = '#2563eb';
-                                                    e.currentTarget.style.transform = 'scale(1.05)';
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                    e.currentTarget.style.backgroundColor = '#3b82f6';
-                                                    e.currentTarget.style.transform = 'scale(1)';
-                                                }}
-                                            >
-                                                Copy
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Pagination */}
-                    {totalPages > 1 && (
-                        <div className="d-flex justify-content-center mt-4">
-                            <nav>
-                                <ul className="pagination">
-                                    <li className={`page-item ${currentPage === 0 ? 'disabled' : ''}`}>
-                                        <button
-                                            className="page-link"
-                                            onClick={() => handlePageChange(currentPage)}
-                                            disabled={currentPage === 0}
-                                        >
-                                            Trước
-                                        </button>
-                                    </li>
-                                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                                        <li
-                                            key={page}
-                                            className={`page-item ${currentPage === page - 1 ? 'active' : ''}`}
-                                        >
-                                            <button
-                                                className="page-link"
-                                                onClick={() => handlePageChange(page)}
-                                            >
-                                                {page}
-                                            </button>
-                                        </li>
-                                    ))}
-                                    <li className={`page-item ${currentPage >= totalPages - 1 ? 'disabled' : ''}`}>
-                                        <button
-                                            className="page-link"
-                                            onClick={() => handlePageChange(currentPage + 2)}
-                                            disabled={currentPage >= totalPages - 1}
-                                        >
-                                            Sau
-                                        </button>
-                                    </li>
-                                </ul>
-                            </nav>
-                        </div>
-                    )}
-                </>
-            )}
-        </div>
-    );
+        return {
+            content: [],
+            page: 0,
+            size: 12,
+            totalItems: 0,
+            totalPages: 0,
+            first: true,
+            last: true,
+            hasNext: false,
+            hasPrevious: false,
+        };
+    } catch (error) {
+        console.error('[DiscountsPage] Error fetching discounts:', error);
+        return {
+            content: [],
+            page: 0,
+            size: 12,
+            totalItems: 0,
+            totalPages: 0,
+            first: true,
+            last: true,
+            hasNext: false,
+            hasPrevious: false,
+        };
+    }
 }
 
+// ============================================
+// METADATA CHO SEO
+// ============================================
+export const metadata: Metadata = {
+    title: 'Mã Giảm Giá & Ưu Đãi Đặc Biệt | Holidate',
+    description: 'Khám phá các mã giảm giá và ưu đãi đặc biệt tại Holidate. Giảm giá lên đến 50% cho đặt phòng khách sạn. Áp dụng ngay mã giảm giá để tiết kiệm hơn!',
+    keywords: [
+        'mã giảm giá',
+        'voucher',
+        'ưu đãi',
+        'khuyến mãi',
+        'giảm giá khách sạn',
+        'promo code',
+        'discount code',
+        'Holidate',
+    ],
+    openGraph: {
+        title: 'Mã Giảm Giá & Ưu Đãi Đặc Biệt | Holidate',
+        description: 'Giảm giá lên đến 50% cho đặt phòng khách sạn. Áp dụng ngay mã giảm giá để tiết kiệm hơn!',
+        type: 'website',
+        siteName: 'Holidate',
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Mã Giảm Giá & Ưu Đãi Đặc Biệt | Holidate',
+        description: 'Giảm giá lên đến 50% cho đặt phòng khách sạn.',
+    },
+    robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+            index: true,
+            follow: true,
+            'max-video-preview': -1,
+            'max-image-preview': 'large',
+            'max-snippet': -1,
+        },
+    },
+};
+
+// ============================================
+// SERVER COMPONENT
+// ============================================
+export default async function DiscountsPage() {
+    // Fetch discounts từ server
+    const discountsData = await getPublicDiscountsOnServer(0, 12);
+
+    return (
+        <DiscountsPageClient
+            initialDiscounts={discountsData.content}
+            initialTotalPages={discountsData.totalPages}
+            initialPage={discountsData.page}
+        />
+    );
+}
