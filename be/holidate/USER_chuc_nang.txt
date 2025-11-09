@@ -1,10 +1,18 @@
 CÁC CHỨC NĂNG CỦA KHÁCH HÀNG (ROLE USER)
 
-1. Quản lý thông tin cá nhân
+1. Xác thực và đăng nhập
+   - Đăng ký tài khoản mới (tự đăng ký với role User)
+   - Đăng nhập bằng email và mật khẩu
+   - Đăng nhập bằng Google OAuth2
+   - Đăng xuất
+   - Xác thực email (OTP)
+   - Đặt lại mật khẩu (quên mật khẩu)
+
+2. Quản lý thông tin cá nhân
    - Xem thông tin tài khoản của mình
    - Cập nhật thông tin cá nhân (tên, email, số điện thoại, địa chỉ, v.v.)
 
-2. Tìm kiếm và khám phá phòng
+3. Tìm kiếm và khám phá phòng
    - Tìm kiếm khách sạn
      + Tìm kiếm theo tên khách sạn
      + Tìm kiếm theo địa điểm (quốc gia, tỉnh/thành phố, thành phố, quận/huyện, phường/xã, đường/phố)
@@ -59,7 +67,7 @@ CÁC CHỨC NĂNG CỦA KHÁCH HÀNG (ROLE USER)
      + Đặt câu hỏi về tiện ích, giá cả, vị trí để được tư vấn
      + Xem lịch sử trò chuyện với chatbot
 
-3. Quản lý đặt phòng
+4. Quản lý đặt phòng
    - Tạo đặt phòng mới
    - Xem trước giá trước khi đặt (tính tổng tiền dựa trên ngày, số đêm, phòng, khuyến mãi)
    - Xem danh sách đặt phòng của mình
@@ -70,7 +78,7 @@ CÁC CHỨC NĂNG CỦA KHÁCH HÀNG (ROLE USER)
    - Thực hiện check-in khi đến khách sạn
    - Thực hiện check-out khi rời khách sạn
 
-4. Quản lý đánh giá
+5. Quản lý đánh giá
    - Viết đánh giá sau khi sử dụng dịch vụ
    - Chỉnh sửa đánh giá đã viết
    - Xóa đánh giá của mình

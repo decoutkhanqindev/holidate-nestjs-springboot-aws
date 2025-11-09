@@ -1,25 +1,32 @@
 CÁC CHỨC NĂNG CỦA ĐỐI TÁC (ROLE PARTNER)
 
-1. Quản lý thông tin cá nhân
+1. Xác thực và đăng nhập
+   - Đăng nhập bằng email và mật khẩu
+   - Đăng nhập bằng Google OAuth2
+   - Đăng xuất
+   - Đặt lại mật khẩu (quên mật khẩu)
+   - Lưu ý: Đối tác không thể tự đăng ký tài khoản (chỉ quản trị viên mới có quyền tạo tài khoản đối tác)
+
+2. Quản lý thông tin cá nhân
    - Xem thông tin tài khoản của mình
    - Cập nhật thông tin cá nhân (tên, email, số điện thoại, địa chỉ, v.v.)
 
-2. Quản lý khách sạn
+3. Quản lý khách sạn
    - Cập nhật thông tin khách sạn của mình (tên, địa chỉ, mô tả, tiện ích, hình ảnh, v.v.)
    - Lưu ý: Đối tác không thể tạo khách sạn mới hoặc xóa khách sạn (chỉ quản trị viên mới có quyền này)
 
-3. Quản lý phòng
+4. Quản lý phòng
    - Tạo phòng mới cho khách sạn của mình
    - Cập nhật thông tin phòng (tên, loại, giá, mô tả, hình ảnh, v.v.)
    - Xóa phòng
 
-4. Quản lý kho phòng (Room Inventory)
+5. Quản lý kho phòng (Room Inventory)
    - Xem thông tin kho phòng (số lượng phòng còn trống theo từng ngày)
    - Tạo bản ghi kho phòng mới (thiết lập số lượng phòng có sẵn cho các ngày cụ thể)
    - Cập nhật thông tin kho phòng (thay đổi số lượng phòng có sẵn)
    - Xóa bản ghi kho phòng
 
-5. Quản lý đặt phòng
+6. Quản lý đặt phòng
    - Tạo đặt phòng mới (cho khách hàng)
    - Xem trước giá trước khi đặt
    - Xem danh sách đặt phòng
@@ -31,12 +38,12 @@ CÁC CHỨC NĂNG CỦA ĐỐI TÁC (ROLE PARTNER)
    - Thực hiện check-out cho khách
    - Hoàn tiền
 
-6. Quản lý đánh giá
+7. Quản lý đánh giá
    - Viết đánh giá
    - Chỉnh sửa đánh giá đã viết
    - Xóa đánh giá của mình
 
-7. Báo cáo và phân tích khách sạn
+8. Báo cáo và phân tích khách sạn
    - Xem báo cáo doanh thu (theo ngày, tuần, tháng, năm)
    - Xem thống kê số lượng đặt phòng (tổng số, đã hoàn thành, đã hủy)
    - Xem tỷ lệ lấp đầy phòng (occupancy rate)
@@ -46,7 +53,7 @@ CÁC CHỨC NĂNG CỦA ĐỐI TÁC (ROLE PARTNER)
    - Xem báo cáo theo thời gian (so sánh các kỳ)
    - Xuất báo cáo dưới dạng file (PDF, Excel)
 
-8. Gửi yêu cầu cho quản trị viên
+9. Gửi yêu cầu cho quản trị viên
    - Gửi yêu cầu tạo khách sạn mới
    - Gửi yêu cầu tạo khuyến mãi (discount) cho khách sạn của mình
    - Gửi các yêu cầu tạo tài khoản nhân viên.
