@@ -45,7 +45,9 @@ Tài liệu này hướng dẫn chi tiết cách vẽ Use Case Diagram cho hệ 
 - **Mô tả**: Hệ thống AI cung cấp dịch vụ Chatbot
 - **Vai trò**: Xử lý các yêu cầu AI và trả về phản hồi thông minh
 
-### 1.3. **Cấu trúc Generalization**
+### 1.3. **Cấu trúc Generalization và Role Hierarchy**
+
+#### **A. Cấu trúc Generalization trong Use Case Diagram**
 
 ```
 Khách hàng (User)
@@ -59,11 +61,45 @@ Khách hàng (User)
 Quản trị viên (Admin)
 ```
 
-**Giải thích:**
+#### **B. Role Hierarchy trong Code (SecurityConfig.java)**
 
-- **Partner → User**: Partner kế thừa tất cả use cases của User
+Role hierarchy được định nghĩa trong `SecurityConfig.java` như sau:
+
+```java
+@Bean
+RoleHierarchy roleHierarchy() {
+    // ADMIN > PARTNER > USER
+    return RoleHierarchyImpl.fromHierarchy(
+        RoleType.ADMIN.getValue() + " > " + RoleType.PARTNER.getValue() + "\n" +
+        RoleType.PARTNER.getValue() + " > " + RoleType.USER.getValue());
+}
+```
+
+**Cấu trúc Role Hierarchy:**
+
+- **ADMIN > PARTNER**: Admin có tất cả quyền của Partner
+- **PARTNER > USER**: Partner có tất cả quyền của User
+- **Kết quả**: ADMIN có tất cả quyền của PARTNER và USER (transitive)
+
+#### **C. Giải thích mối quan hệ**
+
+**Trong Use Case Diagram:**
+
+- **Partner → User**: Partner kế thừa tất cả use cases của User (Generalization)
 - **Admin → Partner**: Admin kế thừa tất cả use cases của Partner (và gián tiếp có tất cả use cases của User)
-- **Hierarchy**: User → Partner → Admin
+- **Hierarchy**: User → Partner → Admin (từ ít quyền đến nhiều quyền)
+
+**Trong Code (Spring Security):**
+
+- Khi một user có role **ADMIN**, Spring Security tự động cấp quyền cho các role **PARTNER** và **USER**
+- Khi một user có role **PARTNER**, Spring Security tự động cấp quyền cho role **USER**
+- Điều này cho phép Admin và Partner có thể truy cập các endpoints được bảo vệ bởi role thấp hơn trong hierarchy
+
+**Ví dụ:**
+
+- Endpoint yêu cầu `hasAuthority("USER")` → Admin và Partner cũng có thể truy cập
+- Endpoint yêu cầu `hasAuthority("PARTNER")` → Admin cũng có thể truy cập
+- Endpoint yêu cầu `hasAuthority("ADMIN")` → Chỉ Admin mới có thể truy cập
 
 ---
 
@@ -147,6 +183,15 @@ Quản trị viên (Admin)
 
 42. **Xóa đặt phòng** (User không có quyền này)
 43. **Hoàn tiền**
+
+**Lưu ý về Check-in và Check-out:**
+
+- **Check-in và Check-out** là use cases được kế thừa từ User (thông qua generalization)
+- **Vai trò khác nhau**:
+  - **User**: Tự thực hiện check-in/check-out bằng cách đưa mã booking
+  - **Partner**: Thực hiện check-in/check-out cho khách bằng cách xử lý mã booking từ user
+- **Trong Use Case Diagram**: Chỉ vẽ association từ User đến Check-in/Check-out
+- **Partner tự động có quyền** thực hiện check-in/check-out thông qua generalization (không cần vẽ lại association)
 
 #### **Nhóm 11: Báo cáo và phân tích khách sạn (Partner)**
 
@@ -284,63 +329,61 @@ Quản trị viên (Admin)
 
    - **Lý do**: Khi đổi lịch, hệ thống phải tính lại giá (có thể thay đổi do giá phòng khác nhau theo ngày)
    - **Từ code**: `BookingService.reschedule()` tính lại giá sau khi thay đổi ngày
-
-4. **Đổi lịch đặt phòng <<include>> Thanh toán** (nếu có phí đổi lịch)
-
-   - **Lý do**: Nếu có phí đổi lịch, hệ thống phải yêu cầu thanh toán phí này
-   - **Điều kiện**: Chỉ khi có phí đổi lịch (reschedule fee)
-
-5. **Hủy đặt phòng <<include>> Hoàn tiền** (nếu đã thanh toán)
-   - **Lý do**: Khi hủy đặt phòng đã thanh toán, hệ thống phải hoàn tiền
-   - **Điều kiện**: Chỉ khi đặt phòng đã thanh toán và trong thời gian được phép hoàn tiền
-   - **Lưu ý**: Đây có thể là extend thay vì include (tùy điều kiện)
+   - **Lưu ý**: "Thanh toán phí đổi lịch" là extend, không phải include (xem phần Extend)
 
 #### **B. Quản lý khách sạn và phòng**
 
-6. **Tạo phòng mới <<include>> Tạo bản ghi kho phòng**
+6. **Cập nhật thông tin phòng <<include>> Đăng nhập**
+
+   - **Lý do**: Trước khi cập nhật thông tin phòng, Partner phải đăng nhập (xác thực bắt buộc)
+   - **Từ code**: SecurityConfig yêu cầu authentication cho các endpoint cập nhật
+   - **Lưu ý**: "Xem chi tiết phòng" là extend, không phải include (xem phần Extend)
+
+7. **Cập nhật thông tin khách sạn <<include>> Đăng nhập**
+
+   - **Lý do**: Trước khi cập nhật thông tin khách sạn, Partner phải đăng nhập (xác thực bắt buộc)
+   - **Từ code**: SecurityConfig yêu cầu authentication cho các endpoint cập nhật
+
+8. **Tạo phòng mới <<include>> Tạo bản ghi kho phòng**
 
    - **Lý do**: Khi tạo phòng mới, hệ thống phải tạo bản ghi kho phòng ban đầu
    - **Hoặc**: Có thể tách riêng, nhưng thông thường khi tạo phòng cần thiết lập kho phòng
 
-7. **Cập nhật thông tin khách sạn <<include>> Xác thực quyền sở hữu**
-   - **Lý do**: Trước khi cập nhật, hệ thống phải kiểm tra xem Partner có quyền sở hữu khách sạn không
-   - **Lưu ý**: Đây có thể là logic bên trong, không cần thể hiện trong use case diagram
-
 #### **C. Quản lý đánh giá**
 
-8. **Viết đánh giá <<include>> Xác thực đã sử dụng dịch vụ**
+9. **Viết đánh giá <<include>> Xác thực đã sử dụng dịch vụ**
    - **Lý do**: Chỉ khách hàng đã check-out mới có thể viết đánh giá
-   - **Lưu ý**: Đây có thể là logic bên trong
+   - **Lưu ý**: Đây có thể là logic bên trong, không cần thể hiện trong use case diagram
 
 #### **D. Thanh toán**
 
-9. **Thanh toán <<include>> Xác thực đặt phòng**
+10. **Thanh toán <<include>> Xác thực đặt phòng**
 
-   - **Lý do**: Trước khi thanh toán, hệ thống phải xác thực đặt phòng tồn tại và hợp lệ
-   - **Lưu ý**: Đây có thể là logic bên trong
+- **Lý do**: Trước khi thanh toán, hệ thống phải xác thực đặt phòng tồn tại và hợp lệ
+- **Lưu ý**: Đây có thể là logic bên trong, không cần thể hiện trong use case diagram
 
-10. **Thanh toán <<include>> Gửi email xác nhận**
+11. **Thanh toán <<include>> Gửi email xác nhận**
     - **Lý do**: Sau khi thanh toán thành công, hệ thống luôn gửi email xác nhận
     - **Từ code**: `PaymentService.handleVnPayCallback()` gọi `sendBookingConfirmationEmail()`
 
 #### **E. Xác thực và đăng nhập**
 
-11. **Đăng ký tài khoản mới <<include>> Xác thực email**
+12. **Đăng ký tài khoản mới <<include>> Xác thực email**
 
     - **Lý do**: Khi đăng ký, hệ thống phải xác thực email bằng OTP
     - **Từ code**: Hệ thống có OTP verification cho email
 
-12. **Đăng nhập <<include>> Xác thực thông tin đăng nhập**
+13. **Đăng nhập <<include>> Xác thực thông tin đăng nhập**
 
     - **Lý do**: Khi đăng nhập, hệ thống phải xác thực email và mật khẩu
-    - **Lưu ý**: Đây có thể là logic bên trong
+    - **Lưu ý**: Đây có thể là logic bên trong, không cần thể hiện trong use case diagram
 
-13. **Đăng nhập <<include>> Tạo token**
+14. **Đăng nhập <<include>> Tạo token**
 
     - **Lý do**: Sau khi đăng nhập thành công, hệ thống luôn tạo access token và refresh token
     - **Từ code**: `AuthService.login()` luôn tạo token sau khi xác thực thành công
 
-14. **Đăng xuất <<include>> Vô hiệu hóa token**
+15. **Đăng xuất <<include>> Vô hiệu hóa token**
     - **Lý do**: Khi đăng xuất, hệ thống phải vô hiệu hóa refresh token
     - **Từ code**: `AuthService.logout()` lưu token vào InvalidToken table
 
@@ -360,96 +403,117 @@ Quản trị viên (Admin)
 
 #### **A. Tìm kiếm và khám phá phòng**
 
-1. **Tìm kiếm khách sạn <<extend>> Sử dụng Chatbot AI để tìm phòng**
+1. **Sử dụng Chatbot AI để tìm phòng <<extend>> Tìm kiếm khách sạn**
 
    - **Lý do**: Người dùng có thể sử dụng Chatbot AI để tìm phòng thay vì tìm kiếm thông thường
    - **Điều kiện**: Người dùng chọn sử dụng Chatbot AI
    - **Từ tài liệu**: "Chatbot AI hỗ trợ tìm kiếm phòng"
+   - **Lưu ý**: Chatbot AI là use case mở rộng (extension) của Tìm kiếm khách sạn, mũi tên từ "Sử dụng Chatbot AI" đến "Tìm kiếm khách sạn"
 
-2. **Xem chi tiết phòng <<extend>> Sử dụng Chatbot AI để tìm phòng**
-   - **Lý do**: Người dùng có thể hỏi Chatbot về chi tiết phòng
+2. **Sử dụng Chatbot AI để tìm phòng <<extend>> Xem chi tiết phòng**
+   - **Lý do**: Người dùng có thể hỏi Chatbot về chi tiết phòng khi đang xem chi tiết
    - **Điều kiện**: Người dùng đang xem chi tiết phòng và chọn hỏi Chatbot
+   - **Lưu ý**: Chatbot AI có thể mở rộng nhiều use case khác nhau (Tìm kiếm, Xem chi tiết phòng, v.v.)
 
 #### **B. Quản lý đặt phòng**
 
-3. **Tạo đặt phòng mới <<extend>> Áp dụng khuyến mãi**
+3. **Áp dụng khuyến mãi <<extend>> Tạo đặt phòng mới**
 
    - **Lý do**: Người dùng có thể (tùy chọn) áp dụng mã khuyến mãi khi tạo đặt phòng
    - **Điều kiện**: Người dùng có mã khuyến mãi và nhập vào
    - **Từ code**: `BookingCreationRequest` có trường `discountCode` (optional)
+   - **Lưu ý**: Áp dụng khuyến mãi là use case mở rộng (extension) của Tạo đặt phòng mới, mũi tên từ "Áp dụng khuyến mãi" đến "Tạo đặt phòng mới"
 
-4. **Hủy đặt phòng <<extend>> Hoàn tiền**
+4. **Hoàn tiền <<extend>> Hủy đặt phòng**
 
    - **Lý do**: Khi hủy đặt phòng, hệ thống có thể hoàn tiền (nếu đã thanh toán và trong thời gian cho phép)
    - **Điều kiện**:
      - Đặt phòng đã thanh toán
      - Trong thời gian được phép hoàn tiền (theo chính sách hủy)
-   - **Lưu ý**: Đây có thể là extend vì không phải lúc nào hủy cũng hoàn tiền (có thể quá hạn)
+   - **Lưu ý**: Hoàn tiền là use case mở rộng (extension) của Hủy đặt phòng, mũi tên từ "Hoàn tiền" đến "Hủy đặt phòng". Đây là extend vì không phải lúc nào hủy cũng hoàn tiền (có thể quá hạn)
 
-5. **Đổi lịch đặt phòng <<extend>> Thanh toán phí đổi lịch**
+5. **Thanh toán phí đổi lịch <<extend>> Đổi lịch đặt phòng**
    - **Lý do**: Khi đổi lịch, có thể phải trả phí đổi lịch (nếu có)
    - **Điều kiện**:
      - Có phí đổi lịch (reschedule fee)
      - Người dùng chấp nhận trả phí
    - **Từ code**: `BookingService.reschedule()` tính reschedule fee nếu có
+   - **Lưu ý**: Thanh toán phí đổi lịch là use case mở rộng (extension) của Đổi lịch đặt phòng, mũi tên từ "Thanh toán phí đổi lịch" đến "Đổi lịch đặt phòng"
 
 #### **C. Quản lý khách sạn**
 
-6. **Cập nhật thông tin khách sạn <<extend>> Upload hình ảnh**
+6. **Upload hình ảnh <<extend>> Cập nhật thông tin khách sạn**
 
    - **Lý do**: Khi cập nhật thông tin khách sạn, Partner có thể (tùy chọn) upload hình ảnh mới
    - **Điều kiện**: Partner chọn upload hình ảnh
+   - **Lưu ý**: Upload hình ảnh là use case mở rộng (extension) của Cập nhật thông tin khách sạn, mũi tên từ "Upload hình ảnh" đến "Cập nhật thông tin khách sạn"
 
-7. **Tạo phòng mới <<extend>> Upload hình ảnh phòng**
+7. **Upload hình ảnh phòng <<extend>> Tạo phòng mới**
+
    - **Lý do**: Khi tạo phòng, Partner có thể (tùy chọn) upload hình ảnh phòng
    - **Điều kiện**: Partner chọn upload hình ảnh
+   - **Lưu ý**: Upload hình ảnh phòng là use case mở rộng (extension) của Tạo phòng mới, mũi tên từ "Upload hình ảnh phòng" đến "Tạo phòng mới"
+
+8. **Xem chi tiết phòng <<extend>> Cập nhật thông tin phòng**
+   - **Lý do**: Khi cập nhật thông tin phòng, Partner có thể (tùy chọn) xem lại chi tiết phòng trước khi cập nhật
+   - **Điều kiện**: Partner chọn xem chi tiết phòng trước khi cập nhật
+   - **Lưu ý**: Xem chi tiết phòng là use case mở rộng (extension) của Cập nhật thông tin phòng, mũi tên từ "Xem chi tiết phòng" đến "Cập nhật thông tin phòng". Partner đã kế thừa "Xem chi tiết phòng" từ User
 
 #### **D. Báo cáo và phân tích**
 
-8. **Xem báo cáo doanh thu <<extend>> Xuất báo cáo dưới dạng file**
+9. **Xuất báo cáo dưới dạng file <<extend>> Xem báo cáo doanh thu**
 
    - **Lý do**: Sau khi xem báo cáo, người dùng có thể (tùy chọn) xuất file PDF/Excel
    - **Điều kiện**: Người dùng chọn xuất file
    - **Từ tài liệu**: "Xuất báo cáo dưới dạng file (PDF, Excel)"
+   - **Lưu ý**: Xuất báo cáo là use case mở rộng (extension) của Xem báo cáo doanh thu, mũi tên từ "Xuất báo cáo dưới dạng file" đến "Xem báo cáo doanh thu"
 
-9. **Xem thống kê đặt phòng <<extend>> Xuất báo cáo dưới dạng file**
-   - **Lý do**: Tương tự như trên
+10. **Xuất báo cáo dưới dạng file <<extend>> Xem thống kê đặt phòng**
+
+- **Lý do**: Tương tự như trên
+- **Lưu ý**: Xuất báo cáo có thể mở rộng nhiều use case xem báo cáo khác nhau
 
 #### **E. Quản lý đánh giá**
 
-10. **Xem đánh giá khách sạn <<extend>> Lọc đánh giá theo điểm số**
+11. **Lọc đánh giá theo điểm số <<extend>> Xem đánh giá khách sạn**
 
     - **Lý do**: Người dùng có thể (tùy chọn) lọc đánh giá theo điểm số
     - **Điều kiện**: Người dùng chọn lọc theo điểm số
     - **Từ tài liệu**: "Lọc đánh giá theo điểm số (từ điểm tối thiểu đến tối đa)"
+    - **Lưu ý**: Lọc đánh giá là use case mở rộng (extension) của Xem đánh giá khách sạn, mũi tên từ "Lọc đánh giá theo điểm số" đến "Xem đánh giá khách sạn"
 
-11. **Xem đánh giá khách sạn <<extend>> Sắp xếp đánh giá**
+12. **Sắp xếp đánh giá <<extend>> Xem đánh giá khách sạn**
     - **Lý do**: Người dùng có thể (tùy chọn) sắp xếp đánh giá
     - **Điều kiện**: Người dùng chọn sắp xếp
     - **Từ tài liệu**: "Sắp xếp đánh giá theo ngày tạo"
+    - **Lưu ý**: Sắp xếp đánh giá là use case mở rộng (extension) của Xem đánh giá khách sạn, mũi tên từ "Sắp xếp đánh giá" đến "Xem đánh giá khách sạn"
 
 #### **F. Tìm kiếm**
 
-15. **Tìm kiếm khách sạn <<extend>> Lọc theo hạng sao**
+13. **Lọc theo hạng sao <<extend>> Tìm kiếm khách sạn**
 
     - **Lý do**: Người dùng có thể (tùy chọn) lọc kết quả theo hạng sao
     - **Điều kiện**: Người dùng chọn lọc theo hạng sao
+    - **Lưu ý**: Lọc theo hạng sao là use case mở rộng (extension) của Tìm kiếm khách sạn, mũi tên từ "Lọc theo hạng sao" đến "Tìm kiếm khách sạn"
 
-16. **Tìm kiếm khách sạn <<extend>> Lọc theo tiện ích**
+14. **Lọc theo tiện ích <<extend>> Tìm kiếm khách sạn**
 
     - **Lý do**: Người dùng có thể (tùy chọn) lọc kết quả theo tiện ích
     - **Điều kiện**: Người dùng chọn lọc theo tiện ích
+    - **Lưu ý**: Lọc theo tiện ích là use case mở rộng (extension) của Tìm kiếm khách sạn, mũi tên từ "Lọc theo tiện ích" đến "Tìm kiếm khách sạn"
 
-17. **Tìm kiếm khách sạn <<extend>> Lọc theo khoảng giá**
+15. **Lọc theo khoảng giá <<extend>> Tìm kiếm khách sạn**
     - **Lý do**: Người dùng có thể (tùy chọn) lọc kết quả theo khoảng giá
     - **Điều kiện**: Người dùng chọn lọc theo khoảng giá
+    - **Lưu ý**: Lọc theo khoảng giá là use case mở rộng (extension) của Tìm kiếm khách sạn, mũi tên từ "Lọc theo khoảng giá" đến "Tìm kiếm khách sạn"
 
 #### **G. Xác thực**
 
-18. **Đăng nhập <<extend>> Đăng nhập bằng Google OAuth2**
+16. **Đăng nhập bằng Google OAuth2 <<extend>> Đăng nhập**
     - **Lý do**: Người dùng có thể (tùy chọn) đăng nhập bằng Google thay vì email/password
     - **Điều kiện**: Người dùng chọn đăng nhập bằng Google
     - **Từ code**: Hệ thống có OAuth2 integration với Google
+    - **Lưu ý**: Đăng nhập bằng Google OAuth2 là use case mở rộng (extension) của Đăng nhập, mũi tên từ "Đăng nhập bằng Google OAuth2" đến "Đăng nhập"
 
 ---
 
@@ -502,16 +566,29 @@ Quản trị viên (Admin)
 
 1. **Vẽ đường thẳng từ Actor đến Use Case:**
 
-   - Khách hàng → Tất cả use cases của User (bao gồm Đăng ký tài khoản mới)
-   - Đối tác Khách sạn → Tất cả use cases của User (kế thừa, trừ Đăng ký tài khoản mới) + Use cases riêng của Partner
-   - Quản trị viên → Tất cả use cases của User và Partner (kế thừa, trừ Đăng ký tài khoản mới) + Use cases riêng của Admin
-   - VNPay → Nhận yêu cầu thanh toán, Gửi kết quả thanh toán, Xử lý hoàn tiền
-   - OpenAI API → Nhận yêu cầu xử lý AI, Xử lý câu hỏi, Trả về phản hồi AI
+   - **Khách hàng (User)** → Tất cả use cases của User (bao gồm Đăng ký tài khoản mới, Check-in, Check-out, v.v.)
+   - **Đối tác Khách sạn (Partner)** → CHỈ vẽ associations đến các use cases riêng của Partner (KHÔNG vẽ lại các use cases của User)
+   - **Quản trị viên (Admin)** → CHỈ vẽ associations đến các use cases riêng của Admin (KHÔNG vẽ lại các use cases của User và Partner)
+   - **VNPay** → Nhận yêu cầu thanh toán, Gửi kết quả thanh toán, Xử lý hoàn tiền
+   - **OpenAI API** → Nhận yêu cầu xử lý AI, Xử lý câu hỏi, Trả về phản hồi AI
 
-2. **Lưu ý về Generalization:**
-   - Với generalization, không cần vẽ lại tất cả associations cho Admin và Partner
-   - Chỉ cần vẽ associations cho các use cases riêng của từng actor
-   - Các use cases được kế thừa sẽ tự động có association thông qua generalization
+2. **Lưu ý QUAN TRỌNG về Generalization:**
+
+   - **KHÔNG CẦN vẽ lại associations** từ Partner/Admin đến các use cases của User
+   - **Generalization tự động cấp** cho Partner và Admin tất cả use cases của User
+   - **Chỉ vẽ associations** đến các use cases riêng của từng actor
+   - **Ví dụ**: Check-in và Check-out là use cases của User → Chỉ vẽ `User --> CheckIn` và `User --> CheckOut`
+     - **KHÔNG vẽ** `Partner --> CheckIn` hoặc `Partner --> CheckOut` (vì Partner đã kế thừa từ User)
+     - Partner tự động có quyền thực hiện Check-in và Check-out thông qua generalization
+
+3. **Ví dụ cụ thể về Check-in và Check-out:**
+
+   - **Use Case**: "Thực hiện check-in" và "Thực hiện check-out" là use cases chung cho cả User và Partner
+   - **Vai trò khác nhau**:
+     - **User**: Tự thực hiện check-in/check-out bằng cách đưa mã booking
+     - **Partner**: Thực hiện check-in/check-out cho khách bằng cách xử lý mã booking
+   - **Trong Diagram**: Chỉ vẽ `User --> CheckIn` và `User --> CheckOut`
+   - **Partner tự động có quyền** thực hiện check-in/check-out thông qua generalization (không cần vẽ lại)
 
 ### 5.5. **Bước 5: Vẽ Include Relationships**
 
@@ -528,7 +605,10 @@ Quản trị viên (Admin)
    - Tạo đặt phòng mới → Thanh toán
    - Đổi lịch đặt phòng → Xem trước giá trước khi đặt
    - Thanh toán → Gửi email xác nhận
-   - Tạo phòng mới → Tạo bản ghi kho phòng (nếu cần)
+   - Tạo phòng mới → Tạo bản ghi kho phòng
+   - Cập nhật thông tin phòng → Đăng nhập
+   - Cập nhật thông tin khách sạn → Đăng nhập
+   - **Lưu ý**: Mũi tên include đi từ use case chính đến use case được include
 
 ### 5.6. **Bước 6: Vẽ Extend Relationships**
 
@@ -540,18 +620,23 @@ Quản trị viên (Admin)
 
 2. **Các Extend Relationships chính:**
 
-   - Đăng nhập bằng Google OAuth2 → Đăng nhập
    - Sử dụng Chatbot AI → Tìm kiếm khách sạn
+   - Sử dụng Chatbot AI → Xem chi tiết phòng
    - Áp dụng khuyến mãi → Tạo đặt phòng mới
-   - Hoàn tiền → Hủy đặt phòng
-   - Thanh toán phí đổi lịch → Đổi lịch đặt phòng
+   - Hoàn tiền → Hủy đặt phòng [nếu đã thanh toán]
+   - Thanh toán phí đổi lịch → Đổi lịch đặt phòng [nếu có phí]
    - Upload hình ảnh → Cập nhật thông tin khách sạn
-   - Upload hình ảnh → Tạo phòng mới
+   - Upload hình ảnh phòng → Tạo phòng mới
    - Xuất báo cáo → Xem báo cáo doanh thu
-   - Lọc đánh giá → Xem đánh giá khách sạn
+   - Xuất báo cáo → Xem thống kê đặt phòng
+   - Lọc đánh giá theo điểm số → Xem đánh giá khách sạn
+   - Sắp xếp đánh giá → Xem đánh giá khách sạn
    - Lọc theo hạng sao → Tìm kiếm khách sạn
    - Lọc theo tiện ích → Tìm kiếm khách sạn
    - Lọc theo khoảng giá → Tìm kiếm khách sạn
+   - Đăng nhập bằng Google OAuth2 → Đăng nhập
+   - Xem chi tiết phòng → Cập nhật thông tin phòng (Partner có thể xem trước khi cập nhật)
+   - **Lưu ý**: Mũi tên extend đi từ use case mở rộng (extension) đến use case gốc (base)
 
 3. **Lưu ý về Extend:**
    - Có thể thêm điều kiện (condition) trong ngoặc vuông: `[điều kiện]`
@@ -689,7 +774,9 @@ actor Admin as "Quản trị viên"
 actor VNPay
 actor "OpenAI API" as OpenAI
 
-' Generalization relationships (Hierarchy: User → Partner → Admin)
+' Generalization relationships
+' Hierarchy: User → Partner → Admin (từ ít quyền đến nhiều quyền)
+' Phản ánh Role Hierarchy trong SecurityConfig.java: ADMIN > PARTNER > USER
 User <|-- Partner
 Partner <|-- Admin
 
@@ -783,6 +870,8 @@ User --> UC_EditReview
 User --> UC_DeleteReview
 
 ' Partner associations (additional)
+' Lưu ý: Partner tự động kế thừa tất cả use cases của User (bao gồm Check-in, Check-out, v.v.)
+' thông qua generalization, nên KHÔNG CẦN vẽ lại associations từ Partner đến các use cases của User
 Partner --> UC_UpdateHotel
 Partner --> UC_CreateRoom
 Partner --> UC_UpdateRoom
@@ -819,6 +908,7 @@ OpenAI --> UC_ProcessQuestion
 OpenAI --> UC_AIResponse
 
 ' Include relationships
+' Lưu ý: Mũi tên include đi từ use case chính đến use case được include
 UC_Register ..> UC_VerifyEmail : <<include>>
 UC_Login ..> UC_GenerateToken : <<include>>
 UC_Logout ..> UC_InvalidateToken : <<include>>
@@ -827,18 +917,27 @@ UC_CreateBooking ..> UC_Payment : <<include>>
 UC_RescheduleBooking ..> UC_PricePreview : <<include>>
 UC_Payment ..> UC_SendPaymentResult : <<include>>
 UC_CreateRoom ..> UC_CreateInventory : <<include>>
+UC_UpdateRoom ..> UC_Login : <<include>>
+UC_UpdateHotel ..> UC_Login : <<include>>
 
 ' Extend relationships
+' Lưu ý: Mũi tên extend đi từ use case mở rộng đến use case gốc
 UC_LoginGoogle ..> UC_Login : <<extend>>
 UC_Chatbot ..> UC_SearchHotel : <<extend>>
+UC_Chatbot ..> UC_ViewRoomDetail : <<extend>>
 UC_Refund ..> UC_CancelBooking : <<extend>> [nếu đã thanh toán]
 UC_ExportHotelReport ..> UC_HotelReport : <<extend>>
 UC_ExportSystemReport ..> UC_SystemReport : <<extend>>
+UC_ViewRoomDetail ..> UC_UpdateRoom : <<extend>>
 
 note right of Admin
   Admin kế thừa tất cả use cases
   của Partner và User thông qua
-  generalization relationship
+  generalization relationship.
+
+  Phản ánh Role Hierarchy trong code:
+  ADMIN > PARTNER > USER
+  (SecurityConfig.java)
 end note
 
 note right of VNPay
@@ -867,11 +966,31 @@ end note
    - Mũi tên có đầu mũi tên rỗng (hollow triangle)
    - Mũi tên chỉ từ child đến parent (từ actor có nhiều quyền đến actor có ít quyền hơn)
    - Ví dụ: `Partner → User` (Partner kế thừa từ User)
+   - Ví dụ: `Admin → Partner` (Admin kế thừa từ Partner)
 
-2. **Không cần vẽ lại associations:**
-   - Với generalization, không cần vẽ lại tất cả associations cho Admin và Partner
-   - Chỉ cần vẽ associations cho các use cases riêng của từng actor
-   - Các use cases được kế thừa sẽ tự động có association
+2. **KHÔNG CẦN vẽ lại associations (QUAN TRỌNG):**
+
+   - Với generalization, **KHÔNG CẦN vẽ lại** tất cả associations cho Admin và Partner
+   - **Chỉ vẽ associations** đến các use cases riêng của từng actor
+   - Các use cases được kế thừa sẽ **tự động có association** thông qua generalization
+   - **Ví dụ cụ thể**:
+     - Check-in và Check-out là use cases của User → Chỉ vẽ `User --> CheckIn` và `User --> CheckOut`
+     - **KHÔNG vẽ** `Partner --> CheckIn` hoặc `Partner --> CheckOut` (vì Partner đã kế thừa từ User)
+     - Partner tự động có quyền thực hiện Check-in và Check-out thông qua generalization
+     - Tương tự, Admin cũng tự động có quyền thông qua generalization (Admin → Partner → User)
+   - **Lỗi thường gặp**: Vẽ lại associations từ Partner/Admin đến các use cases của User là **SAI** và **KHÔNG CẦN THIẾT**
+
+3. **Mối quan hệ với Role Hierarchy trong Code:**
+
+   - Generalization trong Use Case Diagram phản ánh Role Hierarchy trong code (`SecurityConfig.java`)
+   - Role Hierarchy: `ADMIN > PARTNER > USER`
+   - Khi vẽ Use Case Diagram, cần đảm bảo generalization phù hợp với role hierarchy trong code
+   - Điều này đảm bảo tính nhất quán giữa diagram và implementation
+
+4. **Lợi ích của Generalization:**
+   - Giảm độ phức tạp của diagram (không cần vẽ lại associations)
+   - Dễ dàng hiểu mối quan hệ giữa các actors
+   - Phản ánh chính xác cấu trúc quyền trong hệ thống
 
 ### 8.2. **Lưu ý về Include**
 
@@ -880,9 +999,16 @@ end note
    - Use case A luôn phải thực hiện Use case B
    - Không có điều kiện, luôn xảy ra
 
-2. **Khi nào dùng Include:**
+2. **Hướng của mũi tên Include:**
+
+   - **Mũi tên đi từ use case chính (calling use case) đến use case được include (included use case)**
+   - Ký hiệu: `A <<include>> B` (mũi tên từ A đến B)
+   - Ví dụ: `Tạo đặt phòng mới <<include>> Xem trước giá` (mũi tên từ "Tạo đặt phòng mới" đến "Xem trước giá")
+
+3. **Khi nào dùng Include:**
    - Khi một use case luôn cần một use case khác
    - Ví dụ: "Tạo đặt phòng" luôn cần "Xem trước giá"
+   - Ví dụ: "Cập nhật thông tin phòng" luôn cần "Đăng nhập" (xác thực bắt buộc)
 
 ### 8.3. **Lưu ý về Extend**
 
@@ -891,12 +1017,20 @@ end note
    - Use case A có thể được mở rộng bởi Use case B
    - Có điều kiện, không phải lúc nào cũng xảy ra
 
-2. **Khi nào dùng Extend:**
+2. **Hướng của mũi tên Extend:**
+
+   - **Mũi tên đi từ use case mở rộng (extension use case) đến use case gốc (base use case)**
+   - Ký hiệu: `B <<extend>> A` (mũi tên từ B đến A)
+   - Ví dụ: `Hoàn tiền <<extend>> Hủy đặt phòng` (mũi tên từ "Hoàn tiền" đến "Hủy đặt phòng")
+   - **Lưu ý quan trọng**: Hướng của extend ngược với include!
+
+3. **Khi nào dùng Extend:**
 
    - Khi một use case có thể (tùy chọn) được mở rộng bởi use case khác
    - Ví dụ: "Hủy đặt phòng" có thể được mở rộng bởi "Hoàn tiền" (nếu đã thanh toán)
+   - Ví dụ: "Cập nhật thông tin phòng" có thể được mở rộng bởi "Xem chi tiết phòng" (xem trước khi cập nhật)
 
-3. **Điều kiện Extend:**
+4. **Điều kiện Extend:**
    - Có thể thêm điều kiện trong ngoặc vuông: `[điều kiện]`
    - Ví dụ: `Hoàn tiền <<extend>> Hủy đặt phòng [nếu đã thanh toán]`
 
@@ -945,11 +1079,20 @@ end note
    - VNPay (External System)
    - OpenAI API (External System)
 
-### 9.2. **Generalization**
+### 9.2. **Generalization và Role Hierarchy**
+
+#### **A. Generalization trong Use Case Diagram:**
 
 - **Partner → User**: Partner kế thừa tất cả use cases của User
-- **Admin → Partner**: Admin kế thừa tất cả use cases của Partner
-- **Hierarchy**: User → Partner → Admin
+- **Admin → Partner**: Admin kế thừa tất cả use cases của Partner (và gián tiếp có tất cả use cases của User)
+- **Hierarchy**: User → Partner → Admin (từ ít quyền đến nhiều quyền)
+
+#### **B. Role Hierarchy trong Code (SecurityConfig.java):**
+
+- **ADMIN > PARTNER**: Admin có tất cả quyền của Partner
+- **PARTNER > USER**: Partner có tất cả quyền của User
+- **Kết quả**: ADMIN có tất cả quyền của PARTNER và USER (transitive)
+- Generalization trong Use Case Diagram phản ánh Role Hierarchy trong code
 
 ### 9.3. **Include Relationships**
 
@@ -958,19 +1101,32 @@ end note
 - Đổi lịch đặt phòng → Xem trước giá trước khi đặt
 - Thanh toán → Gửi email xác nhận
 - Tạo phòng mới → Tạo bản ghi kho phòng
+- Cập nhật thông tin phòng → Đăng nhập
+- Cập nhật thông tin khách sạn → Đăng nhập
+- Đăng ký tài khoản mới → Xác thực email
+- Đăng nhập → Tạo token
+- Đăng xuất → Vô hiệu hóa token
+- **Lưu ý**: Mũi tên include đi từ use case chính đến use case được include (bắt buộc)
 
 ### 9.4. **Extend Relationships**
 
-- Đăng nhập bằng Google OAuth2 → Đăng nhập
 - Sử dụng Chatbot AI → Tìm kiếm khách sạn
+- Sử dụng Chatbot AI → Xem chi tiết phòng
 - Áp dụng khuyến mãi → Tạo đặt phòng mới
 - Hoàn tiền → Hủy đặt phòng [nếu đã thanh toán]
-- Thanh toán phí đổi lịch → Đổi lịch đặt phòng
+- Thanh toán phí đổi lịch → Đổi lịch đặt phòng [nếu có phí]
 - Upload hình ảnh → Cập nhật thông tin khách sạn
-- Upload hình ảnh → Tạo phòng mới
+- Upload hình ảnh phòng → Tạo phòng mới
 - Xuất báo cáo → Xem báo cáo doanh thu
-- Lọc đánh giá → Xem đánh giá khách sạn
-- Lọc theo hạng sao/tiện ích/giá → Tìm kiếm khách sạn
+- Xuất báo cáo → Xem thống kê đặt phòng
+- Lọc đánh giá theo điểm số → Xem đánh giá khách sạn
+- Sắp xếp đánh giá → Xem đánh giá khách sạn
+- Lọc theo hạng sao → Tìm kiếm khách sạn
+- Lọc theo tiện ích → Tìm kiếm khách sạn
+- Lọc theo khoảng giá → Tìm kiếm khách sạn
+- Đăng nhập bằng Google OAuth2 → Đăng nhập
+- Xem chi tiết phòng → Cập nhật thông tin phòng
+- **Lưu ý**: Mũi tên extend đi từ use case mở rộng đến use case gốc
 
 ### 9.5. **Cách vẽ**
 
@@ -990,7 +1146,10 @@ end note
 - ADMIN_chuc_nang.txt - Chức năng của Quản trị viên
 - USE_CASE_ACTORS_ANALYSIS.md - Phân tích các Actors
 - USE_CASE_GENERALIZATION_ANALYSIS.md - Phân tích Generalization
-- SecurityConfig.java - Role Hierarchy trong code
+- SecurityConfig.java - Role Hierarchy trong code (ADMIN > PARTNER > USER)
+  - File: `src/main/java/com/webapp/holidate/config/security/SecurityConfig.java`
+  - Method: `roleHierarchy()` - Định nghĩa role hierarchy: ADMIN > PARTNER > USER
+  - Role hierarchy này phản ánh Generalization trong Use Case Diagram
 
 ---
 
@@ -1000,3 +1159,98 @@ end note
 - Tập trung vào các use cases chính và các mối quan hệ quan trọng
 - Có thể tách thành nhiều diagram nhỏ hơn nếu diagram quá phức tạp
 - Luôn cập nhật diagram khi hệ thống thay đổi
+
+---
+
+## 11. CÂU HỎI THƯỜNG GẶP (FAQ)
+
+### 11.1. **Check-in và Check-out có cần vẽ association từ Partner không?**
+
+**Câu trả lời: KHÔNG CẦN**
+
+- Check-in và Check-out là use cases của User
+- Partner kế thừa từ User thông qua generalization
+- **Generalization tự động cấp** cho Partner tất cả use cases của User
+- **Chỉ cần vẽ** `User --> CheckIn` và `User --> CheckOut`
+- **KHÔNG CẦN vẽ** `Partner --> CheckIn` hoặc `Partner --> CheckOut`
+- Partner tự động có quyền thực hiện check-in/check-out thông qua generalization
+
+**Luồng thực tế:**
+
+- **User**: Tự thực hiện check-in/check-out bằng cách đưa mã booking
+- **Partner**: Thực hiện check-in/check-out cho khách bằng cách xử lý mã booking từ user
+- Cả hai đều sử dụng cùng use case "Thực hiện check-in" và "Thực hiện check-out", nhưng vai trò khác nhau
+
+### 11.2. **Khi nào cần vẽ association từ Partner/Admin đến use case?**
+
+**Câu trả lời: Chỉ khi use case là riêng của Partner/Admin**
+
+- **Vẽ association** từ Partner/Admin đến các use cases riêng của họ
+- **KHÔNG vẽ association** từ Partner/Admin đến các use cases của User (đã được kế thừa)
+- **Ví dụ**:
+  - ✅ Vẽ `Partner --> UC_UpdateHotel` (use case riêng của Partner)
+  - ✅ Vẽ `Partner --> UC_DeleteBooking` (use case riêng của Partner)
+  - ❌ KHÔNG vẽ `Partner --> UC_CheckIn` (đã kế thừa từ User)
+  - ❌ KHÔNG vẽ `Partner --> UC_CreateBooking` (đã kế thừa từ User)
+
+### 11.3. **Generalization có ảnh hưởng đến Role Hierarchy trong code không?**
+
+**Câu trả lời: CÓ, chúng phản ánh lẫn nhau**
+
+- Generalization trong Use Case Diagram phản ánh Role Hierarchy trong code
+- Role Hierarchy: `ADMIN > PARTNER > USER` (SecurityConfig.java)
+- Khi một user có role ADMIN, Spring Security tự động cấp quyền cho PARTNER và USER
+- Điều này tương ứng với generalization: Admin kế thừa từ Partner, Partner kế thừa từ User
+- **Luôn đảm bảo** generalization trong diagram phù hợp với role hierarchy trong code
+
+### 11.4. **Include và Extend khác nhau như thế nào?**
+
+**Câu trả lời: Khác nhau về tính bắt buộc và hướng mũi tên**
+
+#### **A. Include (Bắt buộc):**
+
+- **Tính chất**: Bắt buộc, luôn xảy ra
+- **Hướng mũi tên**: Từ use case chính đến use case được include
+- **Ký hiệu**: `A <<include>> B` (mũi tên từ A đến B)
+- **Ví dụ**: `Tạo đặt phòng mới <<include>> Xem trước giá`
+- **Ý nghĩa**: Khi thực hiện A, luôn phải thực hiện B
+
+#### **B. Extend (Tùy chọn):**
+
+- **Tính chất**: Tùy chọn, có điều kiện
+- **Hướng mũi tên**: Từ use case mở rộng đến use case gốc
+- **Ký hiệu**: `B <<extend>> A` (mũi tên từ B đến A)
+- **Ví dụ**: `Hoàn tiền <<extend>> Hủy đặt phòng [nếu đã thanh toán]`
+- **Ý nghĩa**: B có thể mở rộng A trong một số điều kiện
+
+#### **C. Bảng so sánh:**
+
+| Đặc điểm      | Include                               | Extend                               |
+| ------------- | ------------------------------------- | ------------------------------------ |
+| Tính chất     | Bắt buộc                              | Tùy chọn                             |
+| Điều kiện     | Không có                              | Có điều kiện                         |
+| Hướng mũi tên | Từ chính → được include               | Từ mở rộng → gốc                     |
+| Ký hiệu       | `A <<include>> B`                     | `B <<extend>> A`                     |
+| Ví dụ         | `Tạo đặt phòng <<include>> Đăng nhập` | `Hoàn tiền <<extend>> Hủy đặt phòng` |
+
+### 11.5. **Làm thế nào để nhớ hướng mũi tên của Include và Extend?**
+
+**Câu trả lời: Sử dụng cách nhớ đơn giản**
+
+#### **A. Include (Bắt buộc):**
+
+- **Cách nhớ**: "Tôi (use case chính) cần bạn (use case được include)"
+- **Mũi tên**: Từ "tôi" đến "bạn"
+- **Ví dụ**: `Tạo đặt phòng` cần `Đăng nhập` → mũi tên từ "Tạo đặt phòng" đến "Đăng nhập"
+
+#### **B. Extend (Tùy chọn):**
+
+- **Cách nhớ**: "Tôi (use case mở rộng) có thể mở rộng bạn (use case gốc)"
+- **Mũi tên**: Từ "tôi" đến "bạn"
+- **Ví dụ**: `Hoàn tiền` có thể mở rộng `Hủy đặt phòng` → mũi tên từ "Hoàn tiền" đến "Hủy đặt phòng"
+
+#### **C. Lưu ý quan trọng:**
+
+- Include và Extend có hướng mũi tên NGƯỢC NHAU
+- Include: từ use case chính đến use case được include
+- Extend: từ use case mở rộng đến use case gốc
