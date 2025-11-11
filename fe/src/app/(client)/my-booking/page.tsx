@@ -149,6 +149,19 @@ function MyBookingsComponent() {
     const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('vi-VN');
     const formatDateTime = (dateTimeString: string) => new Date(dateTimeString).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
 
+    // Function để translate booking status theo API docs
+    const getBookingStatusText = (status: string): string => {
+        const statusMap: Record<string, string> = {
+            'pending_payment': 'Chờ thanh toán',
+            'confirmed': 'Đã xác nhận',
+            'checked_in': 'Đã nhận phòng',
+            'cancelled': 'Đã hủy',
+            'completed': 'Hoàn thành',
+            'rescheduled': 'Đã đổi lịch'
+        };
+        return statusMap[status.toLowerCase()] || status;
+    };
+
     if (isAuthLoading || isLoading) {
         return <div className={styles.centered}>Đang tải lịch sử đặt phòng...</div>;
     }
@@ -158,7 +171,7 @@ function MyBookingsComponent() {
     }
 
     if (!bookingsData || bookingsData.content.length === 0) {
-        return <div className={styles.centered}>Bạn chưa có đơn đặt phòng nào.</div>;
+        return <div className={styles.centered}>Quý khách hiện chưa thực hiện thao tác đặt phòng.</div>;
     }
 
     return (
@@ -173,8 +186,8 @@ function MyBookingsComponent() {
                         <div className={styles.cardHeader}>
                             <h3>{booking.hotel.name}</h3>
                             <div className={styles.headerRight}>
-                                <span className={`${styles.status} ${styles[booking.status.toLowerCase()]}`}>
-                                    {booking.status}
+                                <span className={`${styles.status} ${styles[booking.status.toLowerCase().replace(/_/g, '')]}`}>
+                                    {getBookingStatusText(booking.status)}
                                 </span>
                                 <button onClick={() => handleToggleDetails(booking.id)} className={`${styles.toggleButton} ${isExpanded ? styles.expanded : ''}`}>
                                     ^
@@ -219,7 +232,7 @@ function MyBookingsComponent() {
 
                         <div className={styles.cardActions}>
                             <button onClick={() => router.push(`/payment/success?bookingId=${booking.id}`)} className={styles.actionButton}>Xem chi tiết</button>
-                            {(booking.status.toUpperCase() === 'CONFIRMED' || booking.status.toUpperCase() === 'RESCHEDULED') &&
+                            {(booking.status.toLowerCase() === 'confirmed' || booking.status.toLowerCase() === 'rescheduled') &&
                                 <>
                                     <button onClick={() => handleOpenRescheduleModal(booking)} className={`${styles.actionButton} ${styles.reschedule}`}>Đổi lịch</button>
                                     <button onClick={() => handleCancelBooking(booking.id)} className={`${styles.actionButton} ${styles.cancel}`}>Hủy phòng</button>

@@ -4,8 +4,14 @@ import { createContext, useContext, useState, ReactNode, useEffect } from 'react
 import { useRouter } from 'next/navigation';
 
 type User = {
+    id: string;
     email: string;
-    role: 'SUPER_ADMIN' | 'HOTEL_ADMIN';
+    fullName: string;
+    role: {
+        id: string;
+        name: string;
+        description: string;
+    };
     hotelId?: string;
     hotelName?: string;
 };
@@ -51,14 +57,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('adminUser', JSON.stringify(userData));
         setUser(userData);
 
-        if (userData.role === 'SUPER_ADMIN') {
+        // QUAN TRỌNG: Xóa userId khỏi localStorage nếu có (để tránh conflict với Client context)
+        // Client context chỉ nên khôi phục session cho USER role
+        localStorage.removeItem('userId');
+
+        // Map role name sang frontend role
+        const roleName = userData.role.name.toLowerCase();
+        if (roleName === 'admin') {
             router.push('/super-admin');
         } else {
             router.push('/admin-dashboard');
         }
     };
 
-    const logout = () => {
+    const logout = async () => {
+        // Gọi API logout nếu cần
+        try {
+            const { logoutAdmin } = await import('@/lib/AdminAPI/adminAuthService');
+            await logoutAdmin();
+        } catch (error) {
+            console.error('[AuthContext] Logout API error:', error);
+        }
+
         localStorage.removeItem('adminUser');
         localStorage.removeItem('impersonatedUser');
         setUser(null);
@@ -67,10 +87,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const startImpersonation = (hotel: { id: string, name: string }) => {
-        if (user?.role === 'SUPER_ADMIN') {
+        if (user && user.role.name.toLowerCase() === 'admin') {
             const hotelAdminView: User = {
+                id: user.id,
                 email: `super_admin_viewing_${hotel.id}`,
-                role: 'HOTEL_ADMIN',
+                fullName: user.fullName,
+                role: {
+                    id: user.role.id,
+                    name: 'partner',
+                    description: 'Impersonating hotel admin',
+                },
                 hotelId: hotel.id,
                 hotelName: hotel.name,
             };

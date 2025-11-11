@@ -1,7 +1,6 @@
-import Link from 'next/link';
-import { getHotels } from '@/lib/AdminAPI/hotelService'; // Đổi đường dẫn nếu cần
-import HotelsTable from '@/components/Admin/HotelsTable';
-import { PlusIcon } from '@heroicons/react/24/solid';
+import { getHotels } from '@/lib/AdminAPI/hotelService';
+import HotelsTable from '@/components/Admin/hotels/HotelsTable';
+import AddHotelButton from '@/components/Admin/hotels/AddHotelButton';
 
 // Component PageHeader để code gọn hơn
 function PageHeader({ title, children }: { title: React.ReactNode, children?: React.ReactNode }) {
@@ -15,26 +14,36 @@ function PageHeader({ title, children }: { title: React.ReactNode, children?: Re
 
 export const dynamic = 'force-dynamic'; // Đảm bảo trang luôn lấy dữ liệu mới nhất khi F5
 
-export default async function HotelsPage() {
-    // 1. Lấy dữ liệu mẫu từ service
-    const hotels = await getHotels();
+interface HotelsPageProps {
+    searchParams: Promise<{ page?: string }>;
+}
 
-    // 2. Render giao diện
+export default async function HotelsPage({ searchParams }: HotelsPageProps) {
+    // Await searchParams trước khi sử dụng (Next.js 15+)
+    const params = await searchParams;
+
+    // Lấy page từ query params, mặc định là 0 (trang đầu tiên)
+    const currentPage = params.page ? parseInt(params.page, 10) - 1 : 0;
+    const page = Math.max(0, currentPage); // Đảm bảo page >= 0
+    const size = 10; // 10 khách sạn mỗi trang
+
+    // Lấy dữ liệu với phân trang
+    const paginatedData = await getHotels(page, size);
+
     return (
         <div className="p-6 md:p-8">
             <PageHeader title={<span style={{ color: '#2563eb', fontWeight: 700 }}>Quản lý Khách sạn</span>}>
-                {/* NÚT THÊM MỚI */}
-                <Link
-                    href="/admin-hotels/new" // << SỬA Ở ĐÂY
-                    className="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all"
-                >
-                    <PlusIcon className="h-5 w-5" />
-                    Thêm khách sạn
-                </Link>
+                {/* NÚT THÊM MỚI - Chỉ hiện cho admin */}
+                <AddHotelButton />
             </PageHeader>
 
-            {/* BẢNG HIỂN THỊ DỮ LIỆU */}
-            <HotelsTable hotels={hotels} />
+            {/* BẢNG HIỂN THỊ DỮ LIỆU VỚI PHÂN TRANG */}
+            <HotelsTable
+                hotels={paginatedData.hotels}
+                currentPage={page + 1} // Convert từ 0-based sang 1-based
+                totalPages={paginatedData.totalPages}
+                totalItems={paginatedData.totalItems}
+            />
         </div>
     );
 }

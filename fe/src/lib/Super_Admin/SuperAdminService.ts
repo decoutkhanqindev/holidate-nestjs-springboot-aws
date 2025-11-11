@@ -4,7 +4,7 @@
 const dashboardData = {
     stats: {
         totalHotels: 125,
-        totalUsers: 2450,
+        totalUsers: 450,
         totalRevenue: 5450000000,
         pendingTickets: 3,
     },

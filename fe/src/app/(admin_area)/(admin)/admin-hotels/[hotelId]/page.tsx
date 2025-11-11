@@ -7,11 +7,13 @@ import { PageHeader } from '@/components/Admin/ui/PageHeader';
 import { PencilIcon } from '@heroicons/react/24/outline';
 
 interface HotelDetailPageProps {
-    params: { hotelId: string };
+    params: Promise<{ hotelId: string }>;
 }
 
 export default async function HotelDetailPage({ params }: HotelDetailPageProps) {
-    const hotel = await getHotelById(params.hotelId);
+    // Await params trước khi sử dụng (Next.js 15+)
+    const { hotelId } = await params;
+    const hotel = await getHotelById(hotelId);
 
     if (!hotel) {
         notFound();

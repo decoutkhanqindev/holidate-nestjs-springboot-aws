@@ -1,70 +1,28 @@
 // components/Admin/UsersTable.tsx
 "use client";
 
-import { useState } from 'react';
 import Image from 'next/image';
-import { EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
-import type { User, UserStatus } from '@/types';
+import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import type { User } from '@/types';
 
-function RoleSelector({ user, currentUser }: { user: User; currentUser: User }) {
-    const canChangeRole = currentUser.id !== user.id;
-    const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        alert(`(Giả lập) Đổi quyền của ${user.username} thành ${e.target.value}`);
-    };
-    return (
-        <select
-            defaultValue={user.role}
-            onChange={handleRoleChange}
-            disabled={!canChangeRole}
-            className="w-full text-xs p-2 border-transparent rounded-md bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition disabled:bg-gray-200 disabled:opacity-70 disabled:cursor-not-allowed"
-        >
-            <option value="HOTEL_STAFF">Nhân viên</option>
-            <option value="CUSTOMER">Khách hàng</option>
-        </select>
-    );
-}
-
-function StatusSelector({ user, currentUser }: { user: User; currentUser: User }) {
-    const [status, setStatus] = useState<UserStatus>(user.status);
-    const canChangeStatus = currentUser.id !== user.id;
-    const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const newStatus = e.target.value as UserStatus;
-        setStatus(newStatus);
-        alert(`(Giả lập) Đổi trạng thái của ${user.username} thành ${newStatus}`);
-    };
-    const statusColorClass = {
-        ACTIVE: 'bg-green-100 text-green-800 hover:bg-green-200',
-        INACTIVE: 'bg-red-100 text-red-800 hover:bg-red-200',
-    };
-    return (
-        <select
-            value={status}
-            onChange={handleStatusChange}
-            disabled={!canChangeStatus}
-            // === THAY ĐỔI Ở ĐÂY: text-sm -> text-xs ===
-            className={`w-full text-[11px] leading-[1.2rem] py-[6px] px-2 
-rounded-md border border-gray-200 bg-gray-50 
-focus:outline-none focus:ring-2 focus:ring-blue-500 
-transition disabled:opacity-70 disabled:cursor-not-allowed ${statusColorClass[status]}`}
-
-        >
-            <option value="ACTIVE">Kích hoạt</option>
-            <option value="INACTIVE">Vô hiệu hóa</option>
-        </select>
-    );
-}
 
 
 interface UsersTableProps {
     users: User[];
     currentUser: User;
     onEdit: (user: User) => void;
+    onDelete?: (id: number, username: string) => void;
 }
 
-export default function UsersTable({ users, currentUser, onEdit }: UsersTableProps) {
+export default function UsersTable({ users, currentUser, onEdit, onDelete }: UsersTableProps) {
     const handleDelete = (id: number, username: string) => {
-        if (confirm(`Bạn chắc chắn muốn xóa người dùng "${username}"?`)) {
-            alert(`(Giả lập) Đã xóa người dùng ID: ${id}`);
+        if (onDelete) {
+            onDelete(id, username);
+        } else {
+            // Fallback nếu không có onDelete prop
+            if (confirm(`Bạn chắc chắn muốn xóa người dùng "${username}"?`)) {
+                alert(`Chức năng xóa chưa được cấu hình.`);
+            }
         }
     };
 
@@ -75,10 +33,9 @@ export default function UsersTable({ users, currentUser, onEdit }: UsersTablePro
                     <thead className="bg-gray-50">
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên tài khoản</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Họ và tên</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quyền</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng Thái</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
                         </tr>
                     </thead>
@@ -103,22 +60,28 @@ export default function UsersTable({ users, currentUser, onEdit }: UsersTablePro
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
-                                <td className="px-4 py-4 whitespace-nowrap w-[180px] pl-[16px]">
-                                    <RoleSelector user={user} currentUser={currentUser} />
-                                </td>
-                                <td className="px-4 py-4 whitespace-nowrap w-[180px] pl-[16px]">
-                                    <StatusSelector user={user} currentUser={currentUser} />
+                                <td className="px-4 py-4 whitespace-nowrap">
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        {(() => {
+                                            // Ưu tiên lấy roleName từ localStorage (roleName tự do nhập)
+                                            if (typeof window !== 'undefined') {
+                                                const savedRoleName = localStorage.getItem(`user_role_${user.id}`);
+                                                if (savedRoleName) return savedRoleName;
+                                            }
+                                            // Nếu không có, lấy từ user.role
+                                            if (typeof user.role === 'string') return user.role;
+                                            if (user.role && typeof user.role === 'object' && 'description' in user.role) {
+                                                return (user.role as { description?: string; name?: string }).description ||
+                                                    (user.role as { description?: string; name?: string }).name ||
+                                                    'Nhân viên';
+                                            }
+                                            return 'Nhân viên';
+                                        })()}
+                                    </span>
                                 </td>
 
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div className="inline-flex items-center justify-end gap-x-4">
-                                        <button
-                                            onClick={() => alert(`(Giả lập) Xem chi tiết người dùng: ${user.username}`)}
-                                            className="text-green-600 hover:text-green-700 transition-colors"
-                                            title="Xem chi tiết"
-                                        >
-                                            <EyeIcon className="h-5 w-5" />
-                                        </button>
                                         <button
                                             onClick={() => onEdit(user)}
                                             disabled={currentUser.id === user.id}

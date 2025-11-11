@@ -1,17 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './AddPhoneModal.module.css';
 
 interface AddPhoneModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSave: (phoneNumber: string) => void;
+    initialPhoneNumber?: string;
 }
 
-export default function AddPhoneModal({ isOpen, onClose, onSave }: AddPhoneModalProps) {
+export default function AddPhoneModal({ isOpen, onClose, onSave, initialPhoneNumber = '' }: AddPhoneModalProps) {
     const [phoneNumber, setPhoneNumber] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    // Reset phoneNumber khi modal mở/đóng hoặc initialPhoneNumber thay đổi
+    useEffect(() => {
+        if (isOpen) {
+            setPhoneNumber(initialPhoneNumber);
+        } else {
+            setPhoneNumber('');
+        }
+    }, [isOpen, initialPhoneNumber]);
 
     if (!isOpen) {
         return null;

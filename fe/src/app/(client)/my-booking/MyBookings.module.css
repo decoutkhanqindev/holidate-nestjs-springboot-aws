@@ -64,7 +64,7 @@
     color: #0f5132;
 }
 
-.pending_payment, .pending {
+.pendingpayment, .pending {
     background-color: #fff3cd;
     color: #664d03;
 }
@@ -77,6 +77,11 @@
 .completed {
     background-color: #cfe2ff;
     color: #052c65;
+}
+
+.checkedin {
+    background-color: #e7d5ff;
+    color: #6b21a8;
 }
 
 /* CẬP NHẬT LAYOUT Ở ĐÂY */
