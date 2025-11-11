@@ -209,3 +209,8 @@ export default function HomePageClient({ initialCities }) {
 - ✅ Thêm fetch data ở server (tùy chọn)
 - ✅ Truyền initial data xuống client component
 
+
+
+
+
+

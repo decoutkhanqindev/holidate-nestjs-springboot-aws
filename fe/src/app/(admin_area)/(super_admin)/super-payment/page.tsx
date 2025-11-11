@@ -8,8 +8,8 @@ import type { PaymentTransaction } from "@/types";
 const MOCK_PAYMENT_TRANSACTIONS: PaymentTransaction[] = [
     {
         id: "1",
-        adminName: "Nguyễn Văn A",
-        adminEmail: "admin1@hotel.com",
+        adminName: "partner_vt_6",
+        adminEmail: "partner_vt_6@gmail.com",
         hotelName: "Hoang Ngoc Beach Resort",
         hotelId: "00d60e60-d366-4d73-b3c0-614ecb95feb7",
         paymentDate: new Date("2025-01-15T10:30:00"),
@@ -18,12 +18,12 @@ const MOCK_PAYMENT_TRANSACTIONS: PaymentTransaction[] = [
         status: "PAID",
         paymentMethod: "VNPay",
         transactionId: "TXN-20250115-001",
-        description: "Thanh toán phí dịch vụ tháng 1/2025",
+        description: "Thanh toán phí dịch vụ tháng 9/2025",
     },
     {
         id: "2",
-        adminName: "Trần Thị B",
-        adminEmail: "admin2@hotel.com",
+        adminName: "	partner_pt_5",
+        adminEmail: "partner_pt_5@gmail.com",
         hotelName: "Sunset Hotel & Resort",
         hotelId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
         paymentDate: new Date("2025-01-10T14:20:00"),
@@ -32,12 +32,12 @@ const MOCK_PAYMENT_TRANSACTIONS: PaymentTransaction[] = [
         status: "PAID",
         paymentMethod: "Bank Transfer",
         transactionId: "TXN-20250110-002",
-        description: "Thanh toán phí dịch vụ tháng 1/2025",
+        description: "Thanh toán phí dịch vụ tháng 8/2025",
     },
     {
         id: "3",
-        adminName: "Lê Văn C",
-        adminEmail: "admin3@hotel.com",
+        adminName: "partner_dn_6",
+        adminEmail: "partner_dn_6@gmail.com",
         hotelName: "Ocean View Hotel",
         hotelId: "b2c3d4e5-f6a7-8901-bcde-f23456789012",
         paymentDate: new Date("2025-01-05T09:15:00"),
@@ -46,12 +46,12 @@ const MOCK_PAYMENT_TRANSACTIONS: PaymentTransaction[] = [
         status: "PENDING",
         paymentMethod: "VNPay",
         transactionId: "TXN-20250105-003",
-        description: "Thanh toán phí dịch vụ tháng 1/2025 - Đang chờ xử lý",
+        description: "Thanh toán phí dịch vụ quý 3 năm 2025 - Đang chờ xử lý",
     },
     {
         id: "4",
-        adminName: "Phạm Thị D",
-        adminEmail: "admin4@hotel.com",
+        adminName: "partner_pt_2",
+        adminEmail: "partner_pt_2@gmail.com",
         hotelName: "Mountain Peak Resort",
         hotelId: "c3d4e5f6-a7b8-9012-cdef-345678901234",
         paymentDate: new Date("2024-12-28T16:45:00"),
@@ -60,12 +60,12 @@ const MOCK_PAYMENT_TRANSACTIONS: PaymentTransaction[] = [
         status: "EXPIRED",
         paymentMethod: "Bank Transfer",
         transactionId: "TXN-20241228-004",
-        description: "Thanh toán phí dịch vụ tháng 12/2024 - Đã hết hạn",
+        description: "Thanh toán phí dịch vụ tháng 11/2025 - Đã hết hạn",
     },
     {
         id: "5",
-        adminName: "Hoàng Văn E",
-        adminEmail: "admin5@hotel.com",
+        adminName: "partner_hn_7",
+        adminEmail: "partner_hn_7@gmail.com",
         hotelName: "City Center Hotel",
         hotelId: "d4e5f6a7-b8c9-0123-defa-456789012345",
         paymentDate: new Date("2025-01-20T11:00:00"),
@@ -74,7 +74,7 @@ const MOCK_PAYMENT_TRANSACTIONS: PaymentTransaction[] = [
         status: "PAID",
         paymentMethod: "VNPay",
         transactionId: "TXN-20250120-005",
-        description: "Thanh toán phí dịch vụ tháng 1/2025",
+        description: "Thanh toán phí dịch vụ tháng 7/2025",
     },
 ];
 
@@ -205,6 +205,11 @@ export default function SuperPaymentPage() {
         </div>
     );
 }
+
+
+
+
+
 
 
 

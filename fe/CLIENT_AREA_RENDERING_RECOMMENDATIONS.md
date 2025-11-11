@@ -424,3 +424,8 @@ export default function TermsPage() {
 **Pages nên chuyển**: 7-8 pages  
 **Ước tính thời gian**: 3-5 tuần
 
+
+
+
+
+

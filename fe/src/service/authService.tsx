@@ -13,8 +13,7 @@ export const loginUser = (data: any) => {
 
 // 3 Đăng xuất
 export const logoutUser = (data: any) => {
-    console.log("[authService] 🔴 LOGOUT REQUEST - Gửi request logout đến backend");
-    console.log("[authService] Request data:", { token: data.token ? `${data.token.substring(0, 20)}...` : 'KHÔNG CÓ TOKEN' });
+
     console.log("[authService] Request URL: POST /auth/logout");
     return apiClient.post('/auth/logout', data);
 };
@@ -41,7 +40,8 @@ export const sendVerificationEmail = (data: any) => {
 
 // 5 Gửi lại email xác thực
 export const resendVerificationEmail = (data: any) => {
-    return apiClient.post('/auth/email/resend-verification-email', data);
+    return apiClient.post('/auth/email/send-email-verification-otp', data);
+    //return apiClient.post('/auth/email/resend-verification-email', data);
 };
 
 // 6 Xác thực email với OTP

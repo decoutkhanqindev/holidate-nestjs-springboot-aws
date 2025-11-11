@@ -8,8 +8,8 @@ import type { SupportRequest } from "@/types";
 const MOCK_SUPPORT_REQUESTS: SupportRequest[] = [
     {
         id: "1",
-        partnerName: "Nguyễn Văn A",
-        partnerEmail: "admin1@hotel.com",
+        partnerName: "partner_vt_6",
+        partnerEmail: "partner_vt_6@gmail.com",
         phoneNumber: "0123456789",
         hotelName: "Hoang Ngoc Beach Resort",
         request: "Yêu cầu hỗ trợ kỹ thuật: Hệ thống đặt phòng không hoạt động đúng. Khách hàng không thể đặt phòng qua website.",
@@ -20,11 +20,11 @@ const MOCK_SUPPORT_REQUESTS: SupportRequest[] = [
     },
     {
         id: "2",
-        partnerName: "Trần Thị B",
-        partnerEmail: "admin2@hotel.com",
+        partnerName: "partner_pt_5",
+        partnerEmail: "partner_pt_5@gmail.com",
         phoneNumber: "0987654321",
-        hotelName: "Sunset Hotel & Resort",
-        request: "Báo cáo vi phạm: Khách hàng đã hủy đặt phòng nhưng hệ thống vẫn tính phí. Yêu cầu kiểm tra và hoàn tiền.",
+        hotelName: "Khách sạn Muong Thanh Holiday Mui Ne",
+        request: "Gửi yêu cầu hỗ trợ đăng tải khách sạn mới ",
         requestType: "VIOLATION",
         status: "IN_PROGRESS",
         createdAt: new Date("2025-01-19T14:20:00"),
@@ -45,8 +45,8 @@ const MOCK_SUPPORT_REQUESTS: SupportRequest[] = [
     },
     {
         id: "4",
-        partnerName: "Phạm Thị D",
-        partnerEmail: "admin4@hotel.com",
+        partnerName: "partner_hn_7",
+        partnerEmail: "partner_hn_7@gmail.com",
         phoneNumber: "0923456789",
         hotelName: "Mountain Peak Resort",
         request: "Yêu cầu hỗ trợ thanh toán: Giao dịch thanh toán phí dịch vụ bị lỗi, không nhận được xác nhận từ hệ thống.",
@@ -57,8 +57,8 @@ const MOCK_SUPPORT_REQUESTS: SupportRequest[] = [
     },
     {
         id: "5",
-        partnerName: "Hoàng Văn E",
-        partnerEmail: "admin5@hotel.com",
+        partnerName: "	partner_hn_1",
+        partnerEmail: "partner_hn_1@gmail.com",
         phoneNumber: "0934567890",
         hotelName: "City Center Hotel",
         request: "Báo cáo lỗi: Hình ảnh phòng không hiển thị đúng trên trang chi tiết phòng. Cần kiểm tra và sửa lỗi.",
@@ -67,19 +67,7 @@ const MOCK_SUPPORT_REQUESTS: SupportRequest[] = [
         createdAt: new Date("2025-01-20T08:00:00"),
         priority: "MEDIUM",
     },
-    {
-        id: "6",
-        partnerName: "Võ Thị F",
-        partnerEmail: "admin6@hotel.com",
-        phoneNumber: "0945678901",
-        hotelName: "Riverside Hotel",
-        request: "Yêu cầu hỗ trợ: Không thể đăng nhập vào tài khoản admin. Quên mật khẩu và cần reset.",
-        requestType: "ACCOUNT",
-        status: "RESOLVED",
-        createdAt: new Date("2025-01-17T13:30:00"),
-        resolvedAt: new Date("2025-01-17T15:00:00"),
-        priority: "HIGH",
-    },
+
 ];
 
 export default function SuperSupportPage() {
@@ -116,7 +104,7 @@ export default function SuperSupportPage() {
             // Cập nhật số lượng PENDING vào localStorage để header có thể đọc
             const pendingCount = updatedRequests.filter((r) => r.status === "PENDING").length;
             localStorage.setItem("supportPendingCount", pendingCount.toString());
-            
+
             // Trigger custom event để header có thể cập nhật ngay lập tức
             window.dispatchEvent(new CustomEvent("supportCountUpdated"));
 

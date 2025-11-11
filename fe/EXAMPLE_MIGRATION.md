@@ -138,3 +138,8 @@ export default function SearchPageClient({
 2. Giữ nguyên tất cả logic trong Client Component
 3. Truyền initial data từ Server → Client
 
+
+
+
+
+

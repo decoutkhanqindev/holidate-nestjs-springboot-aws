@@ -38,9 +38,6 @@ export default function BookingsPage() {
                 // Admin PHẢI login trên chính trình duyệt đang dùng
                 const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
                 if (!token) {
-                    console.error("[BookingsPage] ❌ No accessToken found!");
-                    console.error("[BookingsPage] ⚠️ Lưu ý: Mỗi trình duyệt có localStorage riêng.");
-                    console.error("[BookingsPage] ⚠️ Admin PHẢI login trên chính trình duyệt đang dùng.");
                     console.error("[BookingsPage] ⚠️ Không thể dùng token từ trình duyệt khác.");
                     alert('Bạn chưa đăng nhập hoặc đã đăng nhập trên trình duyệt khác.\n\nVui lòng đăng nhập lại trên trình duyệt này.');
                     if (typeof window !== 'undefined') {
@@ -48,14 +45,13 @@ export default function BookingsPage() {
                     }
                     return;
                 }
-                
+
                 // Kiểm tra token có phải của admin/partner không
                 try {
                     const payload = JSON.parse(atob(token.split('.')[1]));
                     const tokenScope = payload.scope?.toLowerCase();
-                    console.log("[BookingsPage] ✅ Token found:", token.substring(0, 20) + '...');
                     console.log("[BookingsPage] Token scope:", tokenScope);
-                    
+
                     if (tokenScope !== 'partner' && tokenScope !== 'admin') {
                         console.warn("[BookingsPage] ⚠️ Token không phải của admin/partner, có thể là token của USER");
                         console.warn("[BookingsPage] ⚠️ Đây có thể là token từ client login trên cùng trình duyệt");
@@ -76,14 +72,10 @@ export default function BookingsPage() {
 
                 if (roleName?.toLowerCase() === 'partner' && userId) {
                     try {
-                        console.log("[BookingsPage] ===== PARTNER: FETCHING HOTELS =====");
-                        console.log("[BookingsPage] User ID:", userId);
-                        console.log("[BookingsPage] Role:", roleName);
+
                         const hotelsData = await getHotels(0, 1000, undefined, undefined, userId, roleName);
                         hotelIds = hotelsData.hotels.map(h => h.id);
-                        console.log("[BookingsPage] ✅ Found hotels for PARTNER:", hotelIds.length, "hotels");
-                        console.log("[BookingsPage] Hotel IDs:", hotelIds);
-                        console.log("[BookingsPage] ===== END FETCHING HOTELS =====");
+
 
                         // Nếu PARTNER không có hotels, không có bookings
                         if (hotelIds.length === 0) {
@@ -121,7 +113,7 @@ export default function BookingsPage() {
                     // 4. Paginate trên frontend
                     try {
                         const allBookings: Booking[] = [];
-                        
+
                         // Gọi API cho từng hotel
                         for (let i = 0; i < hotelIds.length; i++) {
                             const hotelId = hotelIds[i];
@@ -134,8 +126,6 @@ export default function BookingsPage() {
                                     sortDir: 'DESC',
                                     hotelId: hotelId, // Lấy bookings theo hotelId
                                 });
-                                console.log(`[BookingsPage] ✅✅✅ SUCCESS! Fetched ${hotelBookings.data.length} bookings for hotel ${hotelId}`);
-                                console.log(`[BookingsPage] ✅ Backend đã cho phép PARTNER truy cập /bookings với hotelId=${hotelId}`);
                                 console.log(`[BookingsPage] Response: totalItems=${hotelBookings.totalItems}, totalPages=${hotelBookings.totalPages}`);
                                 allBookings.push(...hotelBookings.data);
                             } catch (hotelBookingError: any) {
@@ -145,7 +135,7 @@ export default function BookingsPage() {
                                 // Tiếp tục với hotel tiếp theo nếu có lỗi
                             }
                         }
-                        
+
                         console.log("[BookingsPage] ===== END FETCHING BOOKINGS =====");
 
                         // Sort tất cả bookings theo createdAt DESC (mới nhất trước)
@@ -155,7 +145,6 @@ export default function BookingsPage() {
                             return dateB - dateA; // DESC
                         });
 
-                        console.log(`[BookingsPage] ✅ Total bookings from all hotels: ${allBookings.length}`);
 
                         // Paginate trên frontend
                         const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -184,15 +173,12 @@ export default function BookingsPage() {
                     setBookings(bookingsResponse.data);
                     setTotalPages(bookingsResponse.totalPages);
                     setTotalItems(bookingsResponse.totalItems);
-                    
-                    console.log("[BookingsPage] Received bookings:", bookingsResponse.data.length);
+
                     console.log("[BookingsPage] Total items:", bookingsResponse.totalItems);
                 }
             } catch (error: any) {
                 console.error('[BookingsPage] ===== ERROR DETAILS =====');
-                console.error('[BookingsPage] Error:', error);
-                console.error('[BookingsPage] Error message:', error.message);
-                console.error('[BookingsPage] Error response status:', error.response?.status);
+
                 console.error('[BookingsPage] Error response data:', error.response?.data);
 
                 // Kiểm tra token hiện tại
@@ -201,7 +187,6 @@ export default function BookingsPage() {
                 if (currentToken) {
                     try {
                         const payload = JSON.parse(atob(currentToken.split('.')[1]));
-                        console.error('[BookingsPage] Token payload scope:', payload.scope);
                         console.error('[BookingsPage] Token payload:', payload);
                     } catch (e) {
                         console.error('[BookingsPage] Cannot decode token:', e);
@@ -220,7 +205,7 @@ export default function BookingsPage() {
                     }
                 } else if (statusCode === 403 || errorMessage.includes('không có quyền') || errorMessage.includes('not allowed')) {
                     // Lỗi 403 - có thể backend chưa restart sau khi sửa SecurityConfig
-                    const detailedMessage = 
+                    const detailedMessage =
                         'Bạn không có quyền truy cập tài nguyên này.\n\n' +
                         'VẤN ĐỀ CÓ THỂ DO:\n' +
                         '1. Backend chưa được restart sau khi sửa SecurityConfig\n' +

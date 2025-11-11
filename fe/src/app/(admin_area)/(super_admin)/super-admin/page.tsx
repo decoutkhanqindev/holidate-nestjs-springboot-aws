@@ -52,7 +52,7 @@ export default function SuperAdminHomePage() {
                 <div className="col-xl-3 col-md-6">
                     <StatCard
                         title="Tổng doanh thu"
-                        value={`${(data.stats.totalRevenue / 1_000_000_000).toFixed(2)} tỷ`}
+                        value={`${(data.stats.totalRevenue / 1_000_000_000).toFixed(1)} tỷ`}
                         icon={FaDollarSign}
                         variant="warning"
                     />
