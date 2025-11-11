@@ -23,13 +23,13 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         if (!isLoading) {
-            if (!effectiveUser || effectiveUser.role !== "HOTEL_ADMIN") {
+            if (!effectiveUser || effectiveUser.role.name.toLowerCase() !== "partner") {
                 router.push("/admin-login");
             }
         }
     }, [isLoading, effectiveUser, router]);
 
-    if (isLoading || !effectiveUser || effectiveUser.role !== "HOTEL_ADMIN") {
+    if (isLoading || !effectiveUser || effectiveUser.role.name.toLowerCase() !== "partner") {
         return (
             <div className="flex items-center justify-center h-screen">
                 Đang tải và xác thực quyền...

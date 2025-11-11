@@ -8,17 +8,28 @@ import styles from './contact.module.css';
 
 //  các tab chủ đề
 const topicTabs = [
-    'Phổ biến nhất', 'Thông tin chung', 'Tài khoản và bảo mật', 'Vé máy bay', 'Khách sạn',
-    'Hoạt động du lịch', 'TravelokaPay', 'Đưa đón sân bay', 'Traveloka Points', 'Vé xe'
+    'Phổ biến nhất', 'Thông tin chung', 'Tài khoản và bảo mật', 'Khách sạn',
+    'Hoạt động lưu trú', 'Đưa đón sân bay', 'Traveloka Points',
 ];
 
 // Dữ liệu cho các chủ đề trong tab "Phổ biến nhất"
 const popularTopics = [
-    { title: 'Cách đổi lịch vé máy bay của tôi', href: '#' },
-    { title: 'Đặt chỗ trực tiếp để đảm bảo an toàn', href: '#' },
-    { title: 'Cách hủy vé và hoàn tiền cho đặt chỗ máy bay', href: '#' },
-    { title: 'Cách sửa hoặc hoàn tất tên hành khách bay', href: '#' },
+    { title: 'Cách đổi lịch vé máy bay của tôi', href: '/contact/doi-lich-dat-phong' },
+    { title: 'Đặt chỗ trực tiếp để đảm bảo an toàn', href: '/contact/dat-cho-truc-tiep' },
+    { title: 'Cách hủy vé và hoàn tiền cho đặt chỗ máy bay', href: '/contact/huy-ve-va-hoan-tien' },
+    { title: 'Cách sửa hoặc hoàn tất tên hành khách bay', href: '/contact/sua-doi-ten-hanh-khach' },
 ];
+
+// Mapping cho các topic tabs
+const topicTabMapping: Record<string, string> = {
+    'Phổ biến nhất': '/contact',
+    'Thông tin chung': '/contact/thong-tin-chung',
+    'Tài khoản và bảo mật': '/contact/tai-khoan-va-bao-mat',
+    'Khách sạn': '/contact/khach-san',
+    'Hoạt động lưu trú': '/contact/hoat-dong-du-lich',
+    'Đưa đón sân bay': '/contact/dua-don-san-bay',
+    'Traveloka Points': '/contact/holidate-points',
+};
 
 export default function ContactPage() {
     const { user } = useAuth();
@@ -41,7 +52,7 @@ export default function ContactPage() {
                             <a className={`nav-link active ${styles.tabLink}`} href="#">Hỗ trợ Khách hàng</a>
                         </li>
                         <li className="nav-item">
-                            <a className={`nav-link ${styles.tabLink}`} href="#">Tuyển dụng & Đối tác</a>
+                            <Link className={`nav-link ${styles.tabLink}`} href="/contact/tuyen-dung-doi-tac">Tuyển dụng & Đối tác</Link>
                         </li>
                     </ul>
                 </div>
@@ -84,7 +95,7 @@ export default function ContactPage() {
                             <div>
                                 <h5 className="fw-bold mb-0">Chủ đề phổ biến</h5>
                                 <small className="text-muted">
-                                    Xem thêm tại <Link href="#" className="text-primary fw-bold text-decoration-none">Trung tâm Hỗ trợ</Link>
+                                    Xem thêm tại <Link href="/contact" className="text-primary fw-bold text-decoration-none">Trung tâm Hỗ trợ</Link>
                                 </small>
                             </div>
                         </div>
@@ -94,13 +105,13 @@ export default function ContactPage() {
                             <ul className="nav nav-pills">
                                 {topicTabs.map(tab => (
                                     <li className="nav-item" key={tab}>
-                                        <a
+                                        <Link
                                             className={`nav-link ${styles.topicTab} ${activeTopicTab === tab ? styles.active : ''}`}
-                                            href="#"
-                                            onClick={e => { e.preventDefault(); setActiveTopicTab(tab); }}
+                                            href={topicTabMapping[tab] || '/contact'}
+                                            onClick={e => { setActiveTopicTab(tab); }}
                                         >
                                             {tab}
-                                        </a>
+                                        </Link>
                                     </li>
                                 ))}
                             </ul>

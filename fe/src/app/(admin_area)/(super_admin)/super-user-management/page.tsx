@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { getHotelAdmins } from "@/lib/Super_Admin/hotelAdminService";
+import { createHotelAdminAction, deleteHotelAdminAction } from "@/lib/actions/hotelAdminActions";
 import HotelAdminsTable from "@/components/AdminSuper/ManageAdmin/HotelAdminsTable";
 import Pagination from "@/components/Admin/pagination/Pagination";
 import type { HotelAdmin } from "@/types";
 import HotelAdminFormModal from "@/components/AdminSuper/ManageAdmin/HotelAdminFormModal";
+import { toast } from "react-toastify";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -41,21 +43,75 @@ export default function SuperAdminsPage() {
         setIsModalOpen(true);
     };
 
-    const handleDelete = (id: number, name: string) => {
-        if (confirm(`Bạn có chắc muốn xóa tài khoản admin "${name}"?`)) {
-            alert(`(Giả lập) Đã xóa admin ID: ${id}`);
+    const handleDelete = async (id: number, name: string) => {
+        if (!confirm(`Bạn có chắc muốn xóa tài khoản admin "${name}"?`)) {
+            return;
+        }
+
+        try {
+            await deleteHotelAdminAction(id.toString());
+            toast.success('Xóa admin khách sạn thành công!', {
+                position: "top-right",
+                autoClose: 2000,
+            });
+
+            // Reload data
+            const response = await getHotelAdmins({ page: currentPage, limit: ITEMS_PER_PAGE });
+            setAdmins(response.data);
+            setTotalPages(response.totalPages);
+        } catch (error: any) {
+            console.error('[SuperAdminsPage] Error deleting admin:', error);
+            toast.error(error.message || 'Không thể xóa admin khách sạn. Vui lòng thử lại.', {
+                position: "top-right",
+                autoClose: 3000,
+            });
         }
     };
 
-    const handleSave = (formData: FormData) => {
-        const username = formData.get('username');
-        if (editingAdmin) {
-            alert(`(Giả lập) Đã cập nhật admin: ${username}`);
-        } else {
-            alert(`(Giả lập) Đã thêm mới admin: ${username}`);
+    const handleSave = async (formData: FormData) => {
+        try {
+            const id = formData.get('id') as string;
+            const fullName = formData.get('fullName') as string;
+
+            if (id) {
+                // Cập nhật - Hiện tại backend không hỗ trợ update user trực tiếp
+                // Có thể cần implement updateUserAction tương tự như user management
+                toast.info('Chức năng cập nhật đang được phát triển', {
+                    position: "top-right",
+                    autoClose: 2000,
+                });
+                setIsModalOpen(false);
+                return;
+            } else {
+                // Tạo mới
+                const result = await createHotelAdminAction(formData);
+                if (result?.error) {
+                    toast.error(result.error, {
+                        position: "top-right",
+                        autoClose: 3000,
+                    });
+                    return;
+                }
+                toast.success('Tạo admin khách sạn thành công!', {
+                    position: "top-right",
+                    autoClose: 2000,
+                });
+            }
+
+            // Đóng modal và refresh data
+            setIsModalOpen(false);
+            
+            // Reload data
+            const response = await getHotelAdmins({ page: currentPage, limit: ITEMS_PER_PAGE });
+            setAdmins(response.data);
+            setTotalPages(response.totalPages);
+        } catch (error: any) {
+            console.error('[SuperAdminsPage] Error saving admin:', error);
+            toast.error(error.message || 'Có lỗi xảy ra. Vui lòng thử lại.', {
+                position: "top-right",
+                autoClose: 3000,
+            });
         }
-        setIsModalOpen(false);
-        // Cân nhắc tải lại dữ liệu ở đây
     };
 
     return (

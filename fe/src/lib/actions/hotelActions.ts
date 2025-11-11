@@ -2,42 +2,84 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createHotel, updateHotel, deleteHotel as deleteHotelService } from "@/lib/AdminAPI/hotelService";
+import { createHotelServer, updateHotel, deleteHotel as deleteHotelService } from "@/lib/AdminAPI/hotelService";
 import type { HotelStatus } from "@/types";
 
 // ACTION ĐỂ TẠO KHÁCH SẠN MỚI
-export async function createHotelAction(formData: FormData) {
-    // 1. Lấy và xử lý ảnh TRƯỚC TIÊN
-    const imageFile = formData.get('image') as File;
-    let imageUrl = ''; // Khởi tạo imageUrl mặc định
+// noRedirect: nếu true, không redirect (dùng cho modal)
+export async function createHotelAction(formData: FormData, noRedirect: boolean = false) {
+    try {
+        const name = formData.get('name') as string;
+        const address = formData.get('address') as string; // Có thể optional
+        const description = formData.get('description') as string;
 
-    if (imageFile && imageFile.size > 0) {
-        // **LOGIC UPLOAD ẢNH THẬT SẼ Ở ĐÂY**
-        // Ví dụ: imageUrl = await uploadToCloudinary(imageFile);
-        console.log("Đã nhận được file ảnh:", imageFile.name);
-        imageUrl = `/placeholder-uploaded-${Date.now()}.png`; // Giả lập URL duy nhất sau khi upload
+        // Lấy các field location - PHẢI CÓ ID từ dropdown
+        const countryId = formData.get('countryId') as string;
+        const provinceId = formData.get('provinceId') as string;
+        const cityId = formData.get('cityId') as string;
+        const districtId = formData.get('districtId') as string;
+        const wardId = formData.get('wardId') as string;
+        const streetId = formData.get('streetId') as string;
+        const partnerId = formData.get('partnerId') as string;
+
+        // Validation
+        if (!name) {
+            return { error: "Tên khách sạn là bắt buộc." };
+        }
+
+        // Validate required fields cho API - TẤT CẢ PHẢI CÓ ID (trừ address có thể optional)
+        if (!countryId || !provinceId || !cityId || !districtId || !wardId || !streetId || !partnerId) {
+            return { error: "Vui lòng điền đầy đủ thông tin địa chỉ (chọn từ danh sách) và đối tác." };
+        }
+
+        console.log('[createHotelAction] Creating hotel with location IDs:', {
+            countryId, provinceId, cityId, districtId, wardId, streetId, partnerId
+        });
+
+        // Xây dựng JSON payload để gửi lên API (CREATE dùng JSON)
+        // Note: description là required trong API docs, không được để rỗng
+        // address có thể optional, nhưng API có thể yêu cầu, nên dùng giá trị mặc định nếu không có
+        const payload = {
+            name: name.trim(),
+            description: (description && description.trim()) || 'Không có mô tả', // Đảm bảo description không rỗng
+            address: (address && address.trim()) || 'Chưa có địa chỉ', // Address có thể optional
+            countryId: countryId.trim(),
+            provinceId: provinceId.trim(),
+            cityId: cityId.trim(),
+            districtId: districtId.trim(),
+            wardId: wardId.trim(),
+            streetId: streetId.trim(),
+            partnerId: partnerId.trim(),
+        };
+
+        console.log('[createHotelAction] Final payload before sending:', JSON.stringify(payload, null, 2));
+
+        // Dùng createHotelServer (dành cho server actions - lấy token từ cookies)
+        await createHotelServer(payload);
+
+        // TODO: Nếu cần upload ảnh riêng sau khi tạo hotel, thực hiện ở đây
+
+        revalidatePath("/admin-hotels");
+        revalidatePath("/super-hotels");
+        
+        // Nếu noRedirect, không redirect (dùng cho modal)
+        if (noRedirect) {
+            return { success: true };
+        }
+        
+        redirect("/admin-hotels");
+    } catch (error: any) {
+        console.error("[createHotelAction] Error:", error);
+        // NEXT_REDIRECT không phải là error thực sự, chỉ là cách Next.js redirect
+        if (error.message === 'NEXT_REDIRECT' || error.digest?.includes('NEXT_REDIRECT')) {
+            // Nếu là redirect và noRedirect = true, thì coi như success
+            if (noRedirect) {
+                return { success: true };
+            }
+            throw error; // Re-throw để Next.js xử lý redirect
+        }
+        return { error: error.message || "Không thể tạo khách sạn. Vui lòng thử lại." };
     }
-
-    // 2. Tạo đối tượng data hoàn chỉnh, BAO GỒM CẢ imageUrl
-    const dataToCreate = {
-        name: formData.get('name') as string,
-        address: formData.get('address') as string,
-        status: 'PENDING' as HotelStatus,
-        stt: Number(formData.get('stt')),
-        description: formData.get('description') as string,
-        imageUrl: imageUrl, // << GỘP imageUrl VÀO ĐÂY
-    };
-
-    // 3. Validation
-    if (!dataToCreate.name || !dataToCreate.address) {
-        return { error: "Tên và địa chỉ là bắt buộc." };
-    }
-
-    // 4. Gọi service với đối tượng data đã hoàn chỉnh
-    await createHotel(dataToCreate);
-
-    revalidatePath("/admin-hotels");
-    redirect("/admin-hotels");
 }
 
 // ACTION ĐỂ CẬP NHẬT KHÁCH SẠN
@@ -76,6 +118,7 @@ export async function deleteHotelAction(id: string) {
     try {
         await deleteHotelService(id);
         revalidatePath("/admin-hotels");
+        revalidatePath("/super-hotels");
         return { success: true };
     } catch (error) {
         return { success: false, error: "Xóa khách sạn thất bại." };

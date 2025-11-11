@@ -6,11 +6,13 @@ import { updateHotelAction } from '@/lib/actions/hotelActions';
 import { PageHeader } from '@/components/Admin/ui/PageHeader';
 
 interface EditHotelPageProps {
-    params: { hotelId: string };
+    params: Promise<{ hotelId: string }>;
 }
 
 export default async function EditHotelPage({ params }: EditHotelPageProps) {
-    const hotel = await getHotelById(params.hotelId);
+    // Await params trước khi sử dụng (Next.js 15+)
+    const { hotelId } = await params;
+    const hotel = await getHotelById(hotelId);
 
     if (!hotel) {
         notFound();

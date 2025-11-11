@@ -8,7 +8,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
     FaHome, FaUsersCog, FaBuilding, FaUserShield, FaUsers, FaLifeRing,
-    FaNewspaper, FaCreditCard, FaChartPie, FaChartBar, FaCog, FaFileContract, FaGlobe
+    FaNewspaper, FaCreditCard, FaChartPie, FaChartBar, FaCog, FaFileContract, FaGlobe,
+    FaTicketAlt
 } from "react-icons/fa";
 
 const superAdminMenu = [
@@ -16,7 +17,8 @@ const superAdminMenu = [
     { href: "/super-user-management", label: "Quản lý  Admin Khách sạn", icon: FaUsersCog },
     { href: "/super-hotels", label: "Quản lý khách sạn", icon: FaBuilding },
     // { href: "/super-admins", label: "Quản lý Admin khách sạn", icon: FaUserShield },
-    { href: "/super-customers", label: "Quản lý người dùng", icon: FaUsers },
+    { href: "/super-discounts", label: "Quản lý mã giảm giá", icon: FaTicketAlt },
+
     { href: "/super-support", label: "Hỗ trợ / Báo cáo vi phạm", icon: FaLifeRing },
     { href: "/super-news", label: "Tin tức & thông báo", icon: FaNewspaper },
     { href: "/super-payment", label: "Quản lý giao dịch", icon: FaCreditCard },
@@ -39,13 +41,13 @@ export default function SuperAdminAreaLayout({ children }: { children: ReactNode
 
     useEffect(() => {
         if (!isLoading) {
-            if (!effectiveUser || effectiveUser.role !== 'SUPER_ADMIN') {
+            if (!effectiveUser || effectiveUser.role.name.toLowerCase() !== 'admin') {
                 router.push('/admin-login');
             }
         }
     }, [isLoading, effectiveUser, router]);
 
-    if (isLoading || !effectiveUser || effectiveUser.role !== 'SUPER_ADMIN') {
+    if (isLoading || !effectiveUser || effectiveUser.role.name.toLowerCase() !== 'admin') {
         return (
             <div className="d-flex justify-content-center align-items-center vh-100">
                 Đang tải và xác thực quyền...
