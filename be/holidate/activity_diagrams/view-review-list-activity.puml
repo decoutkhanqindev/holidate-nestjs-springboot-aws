@@ -1,0 +1,20 @@
+@startuml
+||Người dùng|
+start
+:Xem chi tiết khách sạn hoặc phòng;
+
+||Hệ thống|
+:Lấy danh sách đánh giá từ CSDL;
+
+if (Có đánh giá?) then (Không)
+  :Thông báo không có đánh giá;
+else (Có)
+  |Hệ thống|
+  :Hiển thị danh sách đánh giá;
+  :Thông báo số lượng đánh giá;
+
+endif
+
+stop
+@enduml
+

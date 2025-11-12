@@ -1,0 +1,20 @@
+@startuml
+|Người dùng|
+start
+:Xem chi tiết khách sạn;
+
+|Hệ thống|
+:Lấy danh sách phòng của khách sạn từ CSDL;
+
+if (Có phòng?) then (Không)
+  :Thông báo không có phòng;
+else (Có)
+  |Hệ thống|
+  :Hiển thị danh sách phòng;
+  :Thông báo số lượng phòng;
+
+endif
+
+stop
+@enduml
+

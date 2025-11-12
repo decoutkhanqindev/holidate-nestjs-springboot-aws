@@ -1,16 +1,16 @@
 @startuml
-|Người dùng|
+|Khách hàng|
 start
 :Truy cập trang đăng ký;
 :Nhập thông tin\n(họ tên, email, mật khẩu);
-:Gửi yêu cầu đăng ký;
+:Nhấn nút "Đăng ký";
 
 |Hệ thống|
 :Kiểm tra định dạng thông tin;
 
 if (Thông tin hợp lệ?) then (Không)
   :Thông báo lỗi sai định dạng;
-  |Người dùng|
+  |Khách hàng|
   -> Nhập lại thông tin;
 else (Có)
   |Hệ thống|
@@ -18,21 +18,21 @@ else (Có)
 
   if (Email đã tồn tại\nvà đã kích hoạt?) then (Có)
     :Thông báo lỗi\ntài khoản đã tồn tại;
-    |Người dùng|
+    |Khách hàng|
     -> Nhập lại thông tin;
   else (Không)
     |Hệ thống|
     :Tạo tài khoản tạm thời;
     :Lưu thông tin vào CSDL;
 
-    |Người dùng|
-    :Yêu cầu gửi mã OTP\nxác nhận email;
+    |Khách hàng|
+    :Nhấn nút "Gửi mã OTP";
 
     |Hệ thống|
     :Tạo mã OTP;
     :Gửi email chứa mã OTP\nđến người dùng;
 
-    |Người dùng|
+    |Khách hàng|
     :Nhập mã OTP nhận được;
 
     |Hệ thống|
@@ -40,7 +40,7 @@ else (Có)
 
     if (Mã OTP hợp lệ?) then (Không)
       :Thông báo lỗi\nmã OTP không đúng;
-      |Người dùng|
+      |Khách hàng|
       -> Nhập lại mã OTP;
     else (Có)
       |Hệ thống|
