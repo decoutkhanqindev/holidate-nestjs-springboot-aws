@@ -16,6 +16,67 @@
     color: #555;
 }
 
+/* Review Section Styles */
+.reviewSection {
+    padding: 20px;
+    background: #f8f9fa;
+    border-top: 1px solid #e0e0e0;
+}
+
+.reviewSection h5 {
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.userReviewCard {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.reviewHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.reviewStars {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+}
+
+.reviewScore {
+    font-size: 0.875rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.reviewDate {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    margin-left: auto;
+}
+
+.reviewComment {
+    color: #374151;
+    line-height: 1.6;
+    margin-top: 12px;
+    font-size: 0.9375rem;
+}
+
+.reviewPhotos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
 .bookingCard {
     background: #fff;
     border: 1px solid #e0e0e0;

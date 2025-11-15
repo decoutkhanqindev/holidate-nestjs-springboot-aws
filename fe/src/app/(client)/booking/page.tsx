@@ -321,7 +321,7 @@ function BookingComponent() {
                                 {discountError && <p className={styles.discountError}>{discountError}</p>}
                             </div>
 
-                            <div className={styles.formSection}>
+                            {/* <div className={styles.formSection}>
                                 <h2 className={styles.sectionTitle}>Bạn có yêu cầu đặc biệt nào không?</h2>
                                 <div className={styles.checkboxGrid}>
                                     <label className={styles.checkboxLabel}><input type="checkbox" value="Phòng không hút thuốc" onChange={(e) => handleSpecialRequestChange(e.target.value, e.target.checked)} /> Phòng không hút thuốc</label>
@@ -331,7 +331,7 @@ function BookingComponent() {
                                     <label className={styles.checkboxLabel}><input type="checkbox" value="Yêu cầu giờ nhận phòng" onChange={(e) => handleSpecialRequestChange(e.target.value, e.target.checked)} /> Giờ nhận phòng</label>
                                     <label className={styles.checkboxLabel}><input type="checkbox" value="Yêu cầu giờ trả phòng" onChange={(e) => handleSpecialRequestChange(e.target.value, e.target.checked)} /> Giờ trả phòng</label>
                                 </div>
-                            </div>
+                            </div> */}
                         </>
                     )}
 

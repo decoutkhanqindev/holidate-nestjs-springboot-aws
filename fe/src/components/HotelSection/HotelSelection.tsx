@@ -489,7 +489,7 @@ export default function HotelSelection() {
                                                 <p className="card-text text-muted small " title={getFullAddress(hotel)}>📍 {getFullAddress(hotel)}</p>
                                                 <div className="mt-auto pt-2">
                                                     <p className="card-text text-danger fw-bold fs-5 mb-0">{formatPrice(hotel.currentPricePerNight)}</p>
-                                                    {hotel.rawPricePerNight > hotel.currentPricePerNight && (<small className="text-muted text-decoration-line-through">{formatPrice(hotel.rawPricePerNight)}</small>)}
+                                                    {hotel.rawPricePerNight > hotel.currentPricePerNight && (<small className="text-muted text-decoration-line-through d-block">{formatPrice(hotel.rawPricePerNight)}</small>)}
                                                     <small className="text-muted d-block">Chưa bao gồm thuế và phí</small>
                                                 </div>
                                             </div>

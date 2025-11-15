@@ -6,6 +6,7 @@ import { Suspense, useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { bookingService, BookingResponse, PagedResponse } from '@/service/bookingService';
+// Không cần import CreateReviewForm và reviewService nữa vì sẽ xử lý ở trang detail
 import styles from './MyBookings.module.css';
 import 'react-datepicker/dist/react-datepicker.css';
 import ReactDatePicker from 'react-datepicker';
@@ -112,6 +113,8 @@ function MyBookingsComponent() {
                 'user-id': user.id, 'page': 0, 'size': 20, 'sort-by': 'created-at', 'sort-dir': 'desc',
             });
             setBookingsData(data);
+
+            // Không cần fetch reviews ở đây nữa vì sẽ chuyển đến trang detail để đánh giá
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -145,6 +148,13 @@ function MyBookingsComponent() {
         setSelectedBooking(booking);
         setIsModalOpen(true);
     };
+
+    const handleOpenReviewForm = (booking: BookingResponse) => {
+        // Chuyển đến trang detail hotel với bookingId để đánh giá
+        router.push(`/hotels/${booking.hotel.id}?bookingId=${booking.id}&review=true`);
+    };
+
+    // Không cần handleReviewSuccess nữa vì sẽ xử lý ở trang detail
 
     const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('vi-VN');
     const formatDateTime = (dateTimeString: string) => new Date(dateTimeString).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -230,6 +240,7 @@ function MyBookingsComponent() {
                             </div>
                         )}
 
+
                         <div className={styles.cardActions}>
                             <button onClick={() => router.push(`/payment/success?bookingId=${booking.id}`)} className={styles.actionButton}>Xem chi tiết</button>
                             {(booking.status.toLowerCase() === 'confirmed' || booking.status.toLowerCase() === 'rescheduled') &&
@@ -238,6 +249,10 @@ function MyBookingsComponent() {
                                     <button onClick={() => handleCancelBooking(booking.id)} className={`${styles.actionButton} ${styles.cancel}`}>Hủy phòng</button>
                                 </>
                             }
+                            {/* Chỉ hiển thị button "Đánh giá" nếu booking đã confirmed (đã thanh toán) */}
+                            {booking.status.toLowerCase() === 'confirmed' && (
+                                <button onClick={() => handleOpenReviewForm(booking)} className={`${styles.actionButton} ${styles.review}`}>Đánh giá</button>
+                            )}
                         </div>
                     </div>
                 )
@@ -246,6 +261,7 @@ function MyBookingsComponent() {
             {isModalOpen && selectedBooking && (
                 <RescheduleModal booking={selectedBooking} onClose={() => setIsModalOpen(false)} onRescheduleSuccess={fetchBookings} />
             )}
+
         </div>
     );
 }

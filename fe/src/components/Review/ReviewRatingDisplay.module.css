@@ -1,0 +1,71 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.labelText {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-bottom: 2px;
+}
+
+.ratingContainer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.categoryBadge {
+    display: inline-block;
+    padding: 4px 12px;
+    background-color: #f3f4f6;
+    color: #374151;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: 1px solid #e5e7eb;
+}
+
+.starRating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.starNumber {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.starIcon {
+    color: #fbbf24;
+    width: 16px;
+    height: 16px;
+}
+
+.loadingContainer,
+.noReviewsContainer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.loading {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-style: italic;
+}
+
+.noReviews {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    font-style: italic;
+}
+
+
+
+
+
+

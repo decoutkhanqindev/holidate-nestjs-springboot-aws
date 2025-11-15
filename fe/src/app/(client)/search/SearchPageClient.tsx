@@ -18,19 +18,11 @@ import PriceSlider from './PriceSlider';
 import LocationSearchInput from '@/components/Location/LocationSearchInput';
 import { LocationSuggestion } from '@/service/locationService';
 import GuestPicker from '@/components/DateSupport/GuestPicker';
+import ReviewRatingDisplay from '@/components/Review/ReviewRatingDisplay';
 
 registerLocale('vi', vi);
 
 // Utils
-const getRatingText = (score: number) => {
-    if (score >= 9.0) return 'Xuất sắc';
-    if (score >= 8.5) return 'Rất tốt';
-    if (score >= 8.0) return 'Tốt';
-    if (score >= 7.0) return 'Khá';
-    if (score === 0) return 'Chưa có đánh giá';
-    return 'Bình thường';
-};
-
 const formatDateForDisplay = (checkin: Date, nights: number): string => {
     try {
         const checkoutDate = new Date(checkin);
@@ -42,14 +34,6 @@ const formatDateForDisplay = (checkin: Date, nights: number): string => {
     }
 };
 
-const StarRating = ({ count }: { count: number }) => (
-    <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-        <span>{count}</span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style={{ color: '#ffc107' }}>
-            <path d="M3.612 15.443c-.396.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.35.79-.746.592L8 13.187l-4.389 2.256z" />
-        </svg>
-    </div>
-);
 
 // Helper build params
 const buildApiParams = (sp: URLSearchParams, page: number, size: number, selectedAmenities: string[], priceRange: [number, number], defaults: { min: number; max: number }) => {
@@ -268,7 +252,7 @@ export default function SearchPageClient({
     // Chỉ fetch nếu không có initial data hoặc params đã thay đổi
     useEffect(() => {
         // Nếu có initial data và chưa có filter nào thay đổi, không cần fetch lại
-        if (initialHotels.length > 0 && selectedAmenities.length === 0 && 
+        if (initialHotels.length > 0 && selectedAmenities.length === 0 &&
             priceRange[0] === DEFAULT_MIN_PRICE && priceRange[1] === DEFAULT_MAX_PRICE) {
             // Chỉ fetch lại nếu searchParams thay đổi (so sánh với URL hiện tại)
             const currentUrlParams = new URLSearchParams(window.location.search);
@@ -465,17 +449,13 @@ export default function SearchPageClient({
                                         </div>
                                         <div className={styles.infoColumn}>
                                             <h3 className="fw-bold text-dark mb-1 fs-5">{hotel.name}</h3>
-                                            <div className="d-flex align-items-center gap-2 mb-2">
-                                                {hotel.averageScore > 0 && (
-                                                    <>
-                                                        <span className={styles.ratingBadge}>{hotel.averageScore.toFixed(1)}</span>
-                                                        <span className="fw-bold text-dark">{getRatingText(hotel.averageScore)}</span>
-                                                    </>
-                                                )}
-                                            </div>
-                                            <div className="d-flex align-items-center gap-2 mb-2">
-                                                <span className="badge bg-light text-dark border">Khách sạn</span>
-                                                <StarRating count={hotel.starRating || 0} />
+                                            <div className="mb-2">
+                                                <ReviewRatingDisplay
+                                                    hotelId={hotel.id}
+                                                    categoryLabel="Khách sạn"
+                                                    lazyLoad={true}
+                                                    showLabel={true}
+                                                />
                                             </div>
                                             <div className="text-muted small mb-3">
                                                 <i className="bi bi-geo-alt-fill text-danger me-1"></i>

@@ -32,6 +32,36 @@ export interface EntertainmentVenueGroup {
     entertainmentVenues: EntertainmentVenue[];
 }
 
+export interface HotelPolicy {
+    id?: string;
+    checkInTime?: string;
+    checkOutTime?: string;
+    allowsPayAtHotel?: boolean;
+    requiredIdentificationDocuments?: Array<{ id: string; name: string }>;
+    cancellationPolicy?: {
+        id: string;
+        name: string;
+        description: string;
+        rules?: Array<{
+            id: string;
+            daysBeforeCheckIn?: number;
+            daysBeforeCheckin?: number;
+            penaltyPercentage?: number;
+            feePercentage?: number;
+        }>;
+    };
+    reschedulePolicy?: {
+        id: string;
+        name: string;
+        description: string;
+        rules?: Array<{
+            id: string;
+            daysBeforeCheckin?: number;
+            feePercentage?: number;
+        }>;
+    };
+}
+
 export interface HotelResponse {
     id: string;
     name: string;
@@ -56,6 +86,7 @@ export interface HotelResponse {
     rawPricePerNight: number;
     currentPricePerNight: number;
     availableRooms: number;
+    policy?: HotelPolicy;
     createdAt?: string;
     updatedAt?: string;
 }
@@ -68,10 +99,13 @@ export interface Room {
     maxAdults: number;
     maxChildren?: number;
     basePricePerNight: number;
+    currentPricePerNight?: number;
     bedType?: { id: string; name: string; };
     photos?: { id: string; name: string; photos: { id: string; url: string }[]; }[];
     amenities?: AmenityGroup[];
     quantity: number;
+    availableRooms?: number;
+    totalRooms?: number;
     status: string;
     cancellationPolicy?: any;
     reschedulePolicy?: any;

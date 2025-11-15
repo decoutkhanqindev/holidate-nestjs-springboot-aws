@@ -429,3 +429,12 @@ export default function TermsPage() {
 
 
 
+
+
+
+
+
+
+
+
+
