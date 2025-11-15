@@ -167,6 +167,7 @@ public class HotelService {
     return hotelMapper.toHotelDetailsResponse(hotel);
   }
 
+  @Transactional(readOnly = true)
   public PagedResponse<HotelResponse> getAll(
       String name, String countryId, String provinceId, String cityId, String districtId,
       String wardId, String streetId, List<String> amenityIds, Integer starRating, String status,
@@ -270,12 +271,15 @@ public class HotelService {
       return pagedMapper.createEmptyPagedResponse(page, size);
     }
 
-    // Get hotel IDs and fetch room data
+    // Get hotel IDs and fetch room data and photos separately (to avoid N+1 queries
+    // and collection fetch warning)
     List<String> hotelIds = hotelPage.getContent().stream().map(Hotel::getId).toList();
     List<Hotel> hotelsWithRooms = hotelRepository.findAllByIdsWithRoomsAndInventories(hotelIds);
+    List<Hotel> hotelsWithPhotos = hotelRepository.findAllByIdsWithPhotos(hotelIds);
 
-    // Add room data to hotels
+    // Merge room data and photos to hotels
     mergeRoomData(hotelPage.getContent(), hotelsWithRooms);
+    mergePhotoData(hotelPage.getContent(), hotelsWithPhotos);
 
     // Convert entities to response DTOs
     List<HotelResponse> hotelResponses = hotelPage.getContent().stream()
@@ -345,12 +349,15 @@ public class HotelService {
       return pagedMapper.createEmptyPagedResponse(page, size);
     }
 
-    // Step 2: Get hotel IDs and fetch room data separately (to avoid N+1 queries)
+    // Step 2: Get hotel IDs and fetch room data and photos separately (to avoid N+1
+    // queries and collection fetch warning)
     List<String> hotelIds = hotelPage.getContent().stream().map(Hotel::getId).toList();
     List<Hotel> hotelsWithRooms = hotelRepository.findAllByIdsWithRoomsAndInventories(hotelIds);
+    List<Hotel> hotelsWithPhotos = hotelRepository.findAllByIdsWithPhotos(hotelIds);
 
-    // Step 3: Merge room data while preserving pagination order
+    // Step 3: Merge room data and photos while preserving pagination order
     mergeRoomData(hotelPage.getContent(), hotelsWithRooms);
+    mergePhotoData(hotelPage.getContent(), hotelsWithPhotos);
 
     // Step 4: Convert to response DTOs
     List<HotelResponse> hotelResponses = hotelPage.getContent().stream()
@@ -448,6 +455,16 @@ public class HotelService {
           .filter(h -> h.getId().equals(hotel.getId()))
           .findFirst()
           .ifPresent(h -> hotel.setRooms(h.getRooms()));
+    });
+  }
+
+  // Combine photo data from separate query into main hotel list
+  private void mergePhotoData(List<Hotel> hotels, List<Hotel> hotelsWithPhotos) {
+    hotels.forEach(hotel -> {
+      hotelsWithPhotos.stream()
+          .filter(h -> h.getId().equals(hotel.getId()))
+          .findFirst()
+          .ifPresent(h -> hotel.setPhotos(h.getPhotos()));
     });
   }
 
@@ -697,6 +714,7 @@ public class HotelService {
         .toList();
   }
 
+  @Transactional(readOnly = true)
   public HotelDetailsResponse getById(String id) {
     Hotel hotel = hotelRepository.findByIdWithDetails(id)
         .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));

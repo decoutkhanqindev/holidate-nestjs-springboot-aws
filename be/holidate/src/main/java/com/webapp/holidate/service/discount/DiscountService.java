@@ -87,6 +87,7 @@ public class DiscountService {
     return getById(discount.getId());
   }
 
+  @Transactional(readOnly = true)
   public PagedResponse<DiscountResponse> getAll(
     String code, Boolean active, Boolean currentlyValid, LocalDate validFrom, LocalDate validTo,
     Double minPercentage, Double maxPercentage, Integer minBookingPrice, Integer maxBookingPrice,
@@ -250,7 +251,7 @@ public class DiscountService {
       discountPage.getTotalPages());
   }
 
-  @Transactional
+  @Transactional(readOnly = true)
   public DiscountDetailsResponse getById(String id) {
     Discount discount = discountRepository.findByIdWithDetails(id)
       .orElseThrow(() -> new AppException(ErrorType.DISCOUNT_NOT_FOUND));

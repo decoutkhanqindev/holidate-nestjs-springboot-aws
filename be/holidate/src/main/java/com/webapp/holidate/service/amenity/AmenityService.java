@@ -13,6 +13,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -37,6 +38,7 @@ public class AmenityService {
     return mapper.toAmenityDetailsResponse(amenity);
   }
 
+  @Transactional(readOnly = true)
   public List<AmenityDetailsResponse> getAll() {
     return repository.findAllWithCategory()
       .stream()
@@ -44,6 +46,7 @@ public class AmenityService {
       .toList();
   }
 
+  @Transactional(readOnly = true)
   public List<AmenityDetailsResponse> getAllByCategoryId(String categoryId) {
     return repository.findAllByCategoryId(categoryId)
       .stream()

@@ -56,7 +56,11 @@ public interface HotelRepository extends JpaRepository<Hotel, String>, JpaSpecif
   @Query(HotelQueries.FIND_ALL_BY_IDS_WITH_ROOMS_AND_INVENTORIES)
   List<Hotel> findAllByIdsWithRoomsAndInventories(List<String> hotelIds);
 
-  @Query(HotelQueries.FIND_WITH_DETAILS_BASE)
+  @Query(HotelQueries.FIND_ALL_BY_IDS_WITH_PHOTOS)
+  List<Hotel> findAllByIdsWithPhotos(List<String> hotelIds);
+
+  // Use basic details query for pagination to avoid collection fetch warning
+  @Query(HotelQueries.FIND_WITH_BASIC_DETAILS_BASE)
   Page<Hotel> findAllWithDetails(Pageable pageable);
 
   @Query(HotelQueries.FIND_BY_ID_WITH_DETAILS)

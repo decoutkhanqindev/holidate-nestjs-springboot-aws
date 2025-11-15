@@ -21,13 +21,13 @@ import com.webapp.holidate.repository.accommodation.room.RoomInventoryRepository
 import com.webapp.holidate.repository.accommodation.room.RoomRepository;
 import com.webapp.holidate.type.ErrorType;
 import com.webapp.holidate.type.accommodation.RoomInventoryStatusType;
-import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -100,6 +100,7 @@ public class RoomInventoryService {
     return response;
   }
 
+  @Transactional(readOnly = true)
   public PagedResponse<RoomInventoryResponse> getAllByRoomIdForDateBetween(
     String roomId, LocalDate startDate, LocalDate endDate, String status,
     int page, int size, String sortBy, String sortDir) {
@@ -382,6 +383,7 @@ public class RoomInventoryService {
       .orElseGet(room::getBasePricePerNight);
   }
 
+  @Transactional(readOnly = true)
   public List<RoomInventoryPriceByDateResponse> getPricesByDateRange(
     String roomId, LocalDate checkInDate, LocalDate checkOutDate) {
     // Get room inventories for the booking period

@@ -19,17 +19,22 @@ public interface RoomRepository extends JpaRepository<Room, String> {
   @Query(RoomQueries.FIND_ALL_BY_HOTEL_ID_WITH_WITH_DETAILS)
   List<Room> findAllByHotelIdWithDetails(String hotelId);
 
-  @Query(RoomQueries.FIND_ALL_BY_HOTEL_ID_WITH_WITH_DETAILS)
+  // Use basic details query for pagination to avoid collection fetch warning
+  @Query(RoomQueries.FIND_ALL_BY_HOTEL_ID_WITH_BASIC_DETAILS)
   Page<Room> findAllByHotelIdWithDetailsPaged(String hotelId, Pageable pageable);
 
   @Query(RoomQueries.FIND_ALL_BY_HOTEL_ID_WITH_FILTERS)
   List<Room> findAllByHotelIdWithFilters(String hotelId, @Nullable String status);
 
-  @Query(RoomQueries.FIND_ALL_BY_HOTEL_ID_WITH_FILTERS)
+  // Use basic details query for pagination to avoid collection fetch warning
+  @Query(RoomQueries.FIND_ALL_BY_HOTEL_ID_WITH_FILTERS_PAGED)
   Page<Room> findAllByHotelIdWithFiltersPaged(String hotelId, @Nullable String status, Pageable pageable);
 
   @Query(RoomQueries.FIND_BY_ID_WITH_DETAILS)
   Optional<Room> findByIdWithDetails(String id);
+
+  @Query(RoomQueries.FIND_ALL_BY_IDS_WITH_PHOTOS_AND_AMENITIES)
+  List<Room> findAllByIdsWithPhotosAndAmenities(List<String> roomIds);
 
   @Query(RoomQueries.FIND_AVAILABLE_ROOM_CANDIDATES)
   List<RoomCandidate> findAvailableRoomCandidates(

@@ -1,6 +1,7 @@
 package com.webapp.holidate.constants.db.query.accommodation;
 
 public class HotelQueries {
+  // Base query with all relationships including collections (for single entity fetch)
   public static final String FIND_WITH_DETAILS_BASE = "SELECT DISTINCT h FROM Hotel h " +
       "LEFT JOIN FETCH h.country " +
       "LEFT JOIN FETCH h.province " +
@@ -14,6 +15,19 @@ public class HotelQueries {
       "LEFT JOIN FETCH h.policy pol " +
       "LEFT JOIN FETCH pol.requiredIdentificationDocuments rid " +
       "LEFT JOIN FETCH rid.identificationDocument " +
+      "LEFT JOIN FETCH pol.cancellationPolicy " +
+      "LEFT JOIN FETCH pol.reschedulePolicy ";
+
+  // Base query for pagination - only ManyToOne relationships, no collections
+  // This avoids HHH90003004 warning when using pagination with collection fetch
+  public static final String FIND_WITH_BASIC_DETAILS_BASE = "SELECT DISTINCT h FROM Hotel h " +
+      "LEFT JOIN FETCH h.country " +
+      "LEFT JOIN FETCH h.province " +
+      "LEFT JOIN FETCH h.city " +
+      "LEFT JOIN FETCH h.district " +
+      "LEFT JOIN FETCH h.ward " +
+      "LEFT JOIN FETCH h.street " +
+      "LEFT JOIN FETCH h.policy pol " +
       "LEFT JOIN FETCH pol.cancellationPolicy " +
       "LEFT JOIN FETCH pol.reschedulePolicy ";
 
@@ -44,7 +58,8 @@ public class HotelQueries {
 
   public static final String FIND_ALL_BY_IDS = FIND_WITH_DETAILS_BASE + "WHERE h.id IN :hotelIds";
 
-  public static final String FIND_ALL_WITH_FILTERS_PAGED = FIND_WITH_DETAILS_BASE +
+  // Pagination query without collection fetches to avoid HHH90003004 warning
+  public static final String FIND_ALL_WITH_FILTERS_PAGED = FIND_WITH_BASIC_DETAILS_BASE +
       "WHERE " +
       "(:name IS NULL OR LOWER(h.name) LIKE LOWER(CONCAT('%', :name, '%'))) " +
       "AND (:countryId IS NULL OR h.country.id = :countryId) " +
@@ -74,6 +89,13 @@ public class HotelQueries {
   public static final String FIND_ALL_BY_IDS_WITH_ROOMS_AND_INVENTORIES = "SELECT DISTINCT h FROM Hotel h " +
       "LEFT JOIN FETCH h.rooms r " +
       "LEFT JOIN FETCH r.inventories ri " +
+      "WHERE h.id IN :hotelIds";
+
+  // Query to fetch hotels with photos for batch loading after pagination
+  public static final String FIND_ALL_BY_IDS_WITH_PHOTOS = "SELECT DISTINCT h FROM Hotel h " +
+      "LEFT JOIN FETCH h.photos hp " +
+      "LEFT JOIN FETCH hp.photo p " +
+      "LEFT JOIN FETCH p.category " +
       "WHERE h.id IN :hotelIds";
 
   public static final String FIND_BY_ID_WITH_DETAILS = FIND_WITH_DETAILS_BASE +

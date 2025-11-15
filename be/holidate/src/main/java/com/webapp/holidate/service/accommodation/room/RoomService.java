@@ -162,6 +162,7 @@ public class RoomService {
     return roomMapper.toRoomDetailsResponse(room);
   }
 
+  @Transactional(readOnly = true)
   public PagedResponse<RoomResponse> getAllByHotelId(
     String hotelId, String status, int page, int size, String sortBy, String sortDir) {
     // Clean up and validate pagination parameters
@@ -210,6 +211,13 @@ public class RoomService {
       return pagedMapper.createEmptyPagedResponse(page, size);
     }
 
+    // Fetch photos and amenities separately to avoid collection fetch warning with pagination
+    List<String> roomIds = roomPage.getContent().stream().map(Room::getId).toList();
+    List<Room> roomsWithPhotosAndAmenities = roomRepository.findAllByIdsWithPhotosAndAmenities(roomIds);
+
+    // Merge photos and amenities data
+    mergePhotosAndAmenitiesData(roomPage.getContent(), roomsWithPhotosAndAmenities);
+
     // Convert entities to response DTOs
     List<RoomResponse> roomResponses = roomPage.getContent().stream()
       .map(roomMapper::toRoomResponse)
@@ -250,10 +258,24 @@ public class RoomService {
     };
   }
 
+  @Transactional(readOnly = true)
   public RoomDetailsResponse getById(String id) {
     Room room = roomRepository.findByIdWithDetails(id)
       .orElseThrow(() -> new AppException(ErrorType.ROOM_NOT_FOUND));
     return roomMapper.toRoomDetailsResponse(room);
+  }
+
+  // Combine photos and amenities data from separate query into main room list
+  private void mergePhotosAndAmenitiesData(List<Room> rooms, List<Room> roomsWithPhotosAndAmenities) {
+    rooms.forEach(room -> {
+      roomsWithPhotosAndAmenities.stream()
+        .filter(r -> r.getId().equals(room.getId()))
+        .findFirst()
+        .ifPresent(r -> {
+          room.setPhotos(r.getPhotos());
+          room.setAmenities(r.getAmenities());
+        });
+    });
   }
 
   @Transactional

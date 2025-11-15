@@ -614,16 +614,30 @@ export default function HotelDetailPageClient({
         }
     }, [searchParams]);
 
-    // Fetch hotel nếu chưa có initial data
+    // ============================================
+    // FETCH TUẦN TỰ: HOTEL → ROOMS → REVIEWS
+    // ============================================
+    
+    // Bước 1: Fetch hotel details trước (nếu chưa có)
     useEffect(() => {
-        if (!hotelId || initialHotel) return;
+        if (!hotelId) return;
+        
+        // Nếu đã có initialHotel, không cần fetch lại
+        if (initialHotel) {
+            setHotel(initialHotel);
+            setIsHotelLoading(false);
+            return;
+        }
+        
         const hotelIdStr = hotelId as string;
         const fetchHotelData = async () => {
             setIsHotelLoading(true);
             setHotelError(null);
             try {
+                console.log('[HotelDetailPage] 🏨 Bước 1: Fetching hotel details...');
                 const hotelData = await hotelService.getHotelById(hotelIdStr);
                 setHotel(hotelData);
+                console.log('[HotelDetailPage] ✅ Bước 1: Hotel details loaded');
             } catch (err) {
                 console.error("LỖI: Không thể tải thông tin khách sạn.", err);
                 setHotelError("Không thể tải thông tin chi tiết khách sạn.");
@@ -634,18 +648,29 @@ export default function HotelDetailPageClient({
         fetchHotelData();
     }, [hotelId, initialHotel]);
 
-    // Fetch rooms nếu chưa có initial data
+    // Bước 2: Fetch rooms SAU KHI hotel đã load xong
     useEffect(() => {
-        if (!hotelId || (initialRooms.length > 0 && initialHotel)) return;
+        if (!hotelId || !hotel || isHotelLoading) return; // Chờ hotel load xong
+        if (initialRooms.length > 0) {
+            // Nếu đã có initial rooms, không fetch lại
+            setRooms(initialRooms);
+            setPage(initialPage);
+            setHasMore(initialHasMore);
+            setInitialRoomsLoading(false);
+            return;
+        }
+        
         const hotelIdStr = hotelId as string;
         const fetchInitialRooms = async () => {
             setInitialRoomsLoading(true);
             setRoomsError(null);
             try {
+                console.log('[HotelDetailPage] 🛏️ Bước 2: Fetching rooms...');
                 const initialRoomsData = await hotelService.getRoomsByHotelId(hotelIdStr, 0, 10);
                 setRooms(initialRoomsData.content);
                 setPage(initialRoomsData.page);
                 setHasMore(!initialRoomsData.last);
+                console.log('[HotelDetailPage] ✅ Bước 2: Rooms loaded');
             } catch (err) {
                 console.error("Lỗi khi tải danh sách phòng:", err);
                 setRoomsError("Có lỗi xảy ra khi tải danh sách phòng.");
@@ -654,16 +679,18 @@ export default function HotelDetailPageClient({
             }
         };
         fetchInitialRooms();
-    }, [hotelId, initialRooms.length, initialHotel]);
+    }, [hotelId, hotel, isHotelLoading, initialRooms.length, initialPage, initialHasMore]);
 
-    // Fetch reviews khi hotelId thay đổi
+    // Bước 3: Fetch reviews SAU KHI rooms đã load xong (hoặc song song với rooms)
     useEffect(() => {
-        if (!hotelId) return;
+        if (!hotelId || !hotel || isHotelLoading) return; // Chờ hotel load xong
+        
         const hotelIdStr = hotelId as string;
         const fetchReviews = async () => {
             setIsReviewsLoading(true);
             setReviewsError(null);
             try {
+                console.log('[HotelDetailPage] ⭐ Bước 3: Fetching reviews...');
                 const params: GetReviewsParams = {
                     hotelId: hotelIdStr,
                     page: 0,
@@ -675,6 +702,7 @@ export default function HotelDetailPageClient({
                 setReviews(result.data);
                 setReviewsPage(result.currentPage);
                 setReviewsHasMore(result.hasNext);
+                console.log('[HotelDetailPage] ✅ Bước 3: Reviews loaded');
             } catch (err: any) {
                 console.error("Lỗi khi tải đánh giá:", err);
                 setReviewsError(err.message || "Có lỗi xảy ra khi tải đánh giá.");
@@ -683,7 +711,7 @@ export default function HotelDetailPageClient({
             }
         };
         fetchReviews();
-    }, [hotelId]);
+    }, [hotelId, hotel, isHotelLoading]);
 
     // Load more reviews
     const loadMoreReviews = useCallback(async () => {

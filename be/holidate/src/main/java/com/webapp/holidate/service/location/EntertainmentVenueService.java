@@ -12,6 +12,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,7 @@ public class EntertainmentVenueService {
   EntertainmentVenueRepository entertainmentVenueRepository;
   CityRepository cityRepository;
 
+  @Transactional(readOnly = true)
   public List<EntertainmentVenueCategoryResponse> getAllByCityId(String cityId) {
     cityRepository.findById(cityId)
       .orElseThrow(() -> new AppException(ErrorType.CITY_NOT_FOUND));

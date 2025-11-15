@@ -134,6 +134,7 @@ public class ReviewService {
     return reviewMapper.toReviewDetailsResponse(finalReview);
   }
 
+  @Transactional(readOnly = true)
   public PagedResponse<ReviewResponse> getAll(
     String hotelId, String userId, String bookingId,
     Integer minScore, Integer maxScore,
@@ -169,6 +170,13 @@ public class ReviewService {
     if (reviewPage.isEmpty()) {
       return pagedMapper.createEmptyPagedResponse(page, size);
     }
+
+    // Fetch photos separately to avoid collection fetch warning with pagination
+    List<String> reviewIds = reviewPage.getContent().stream().map(Review::getId).toList();
+    List<Review> reviewsWithPhotos = reviewRepository.findAllByIdsWithPhotos(reviewIds);
+
+    // Merge photos data
+    mergePhotosData(reviewPage.getContent(), reviewsWithPhotos);
 
     // Convert entities to response DTOs
     List<ReviewResponse> reviewResponses = reviewPage.getContent().stream()
@@ -209,6 +217,17 @@ public class ReviewService {
     };
   }
 
+  // Combine photos data from separate query into main review list
+  private void mergePhotosData(List<Review> reviews, List<Review> reviewsWithPhotos) {
+    reviews.forEach(review -> {
+      reviewsWithPhotos.stream()
+        .filter(r -> r.getId().equals(review.getId()))
+        .findFirst()
+        .ifPresent(r -> review.setPhotos(r.getPhotos()));
+    });
+  }
+
+  @Transactional(readOnly = true)
   public ReviewDetailsResponse getById(String id) {
     Review review = reviewRepository.findByIdWithDetails(id)
       .orElseThrow(() -> new AppException(ErrorType.REVIEW_NOT_FOUND));
