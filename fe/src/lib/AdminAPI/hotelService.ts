@@ -3,6 +3,38 @@ import type { Hotel, HotelStatus } from "@/types";
 import apiClient, { ApiResponse } from "@/service/apiClient";
 import { createServerApiClient } from "./serverApiClient";
 
+// Interface cho Policy
+interface HotelPolicyResponse {
+    id: string;
+    checkInTime: string;
+    checkOutTime: string;
+    allowsPayAtHotel: boolean;
+    requiredIdentificationDocuments?: Array<{
+        id: string;
+        name: string;
+    }>;
+    cancellationPolicy?: {
+        id: string;
+        name: string;
+        description: string;
+        rules?: Array<{
+            id: string;
+            daysBeforeCheckIn: number;
+            penaltyPercentage: number;
+        }>;
+    };
+    reschedulePolicy?: {
+        id: string;
+        name: string;
+        description: string;
+        rules?: Array<{
+            id: string;
+            daysBeforeCheckin: number;
+            feePercentage: number;
+        }>;
+    };
+}
+
 // Interface từ API response
 interface HotelResponse {
     id: string;
@@ -26,10 +58,15 @@ interface HotelResponse {
     street?: { id: string; name: string };
     starRating?: number;
     status: string;
-    amenities?: Array<{ id: string; name: string }>;
+    amenities?: Array<{ id: string; name: string }> | Array<{
+        id: string;
+        name: string;
+        amenities?: Array<{ id: string; name: string }>;
+    }>;
     photos?: Array<{ id: string; url: string; category?: string }>;
     partner?: { id: string; name?: string; fullName?: string; email?: string };
     partnerId?: string; // Nếu API trả về partnerId trực tiếp
+    policy?: HotelPolicyResponse | null;
     createdAt?: string;
     updatedAt?: string;
 }
@@ -267,7 +304,16 @@ interface HotelDetailsResponse extends HotelResponse {
         email: string;
         role?: { id: string; name: string; };
     };
+    policy?: HotelPolicyResponse | null;
+    amenities?: Array<{
+        id: string;
+        name: string;
+        amenities?: Array<{ id: string; name: string }>;
+    }>;
 }
+
+// Export policy interface để dùng ở nơi khác
+export type { HotelPolicyResponse };
 
 /**
  * Lấy một khách sạn theo ID (detail API - có partner info)
@@ -304,6 +350,31 @@ export const getHotelById = async (id: string): Promise<Hotel | null> => {
         return null;
     } catch (error: any) {
         console.error(`[hotelService] Error fetching hotel ${id}:`, error);
+        if (error.response?.status === 404) {
+            return null;
+        }
+        throw new Error(error.response?.data?.message || 'Không thể tải thông tin khách sạn');
+    }
+};
+
+/**
+ * Lấy thông tin chi tiết khách sạn với policy và amenities (dùng cho detail page)
+ */
+export const getHotelDetailById = async (id: string): Promise<HotelDetailsResponse | null> => {
+    try {
+        console.log(`[hotelService] Fetching hotel detail with policy and amenities for id: ${id}`);
+
+        const response = await apiClient.get<ApiResponse<HotelDetailsResponse>>(
+            `${baseURL}/${id}`
+        );
+
+        if (response.data.statusCode === 200 && response.data.data) {
+            return response.data.data;
+        }
+
+        return null;
+    } catch (error: any) {
+        console.error(`[hotelService] Error fetching hotel detail ${id}:`, error);
         if (error.response?.status === 404) {
             return null;
         }

@@ -59,7 +59,7 @@ async function getRoomsByHotelIdOnServer(hotelId: string, page: number = 0, size
 // ============================================
 export async function generateMetadata({ params }: { params: Promise<{ hotelId: string }> }): Promise<Metadata> {
     const { hotelId } = await params;
-    
+
     let hotel: HotelResponse | null = null;
     try {
         hotel = await getHotelByIdOnServer(hotelId);
@@ -83,8 +83,8 @@ export async function generateMetadata({ params }: { params: Promise<{ hotelId: 
     ].filter(Boolean).join(', ');
 
     const mainImage = hotel.photos?.[0]?.photos?.[0]?.url || '';
-    const price = hotel.currentPricePerNight > 0 
-        ? `${hotel.currentPricePerNight.toLocaleString('vi-VN')} VND` 
+    const price = hotel.currentPricePerNight > 0
+        ? `${hotel.currentPricePerNight.toLocaleString('vi-VN')} VND`
         : 'Liên hệ giá';
 
     // Build description để tránh nested template strings
@@ -147,7 +147,7 @@ interface HotelDetailPageProps {
 
 export default async function HotelDetailPage({ params, searchParams }: HotelDetailPageProps) {
     const { hotelId } = await params;
-    
+
     // Fetch hotel và rooms song song từ server
     let hotel: HotelResponse | null = null;
     let roomsData: PaginatedData<Room> = {

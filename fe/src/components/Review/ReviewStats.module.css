@@ -1,0 +1,76 @@
+.statsContainer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ratingBadge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 0.875rem;
+    min-width: 40px;
+    text-align: center;
+}
+
+.scoreValue {
+    font-size: 1rem;
+}
+
+.ratingInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.stars {
+    display: flex;
+    gap: 0.125rem;
+    align-items: center;
+}
+
+.starFull {
+    color: #fbbf24;
+    font-size: 0.875rem;
+}
+
+.starHalf {
+    color: #fbbf24;
+    font-size: 0.875rem;
+}
+
+.starEmpty {
+    color: #d1d5db;
+    font-size: 0.875rem;
+}
+
+.ratingText {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #1a1a1a;
+}
+
+.reviewCount {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.loading {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.noReviews {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    font-style: italic;
+}
+
+
+
+
+
+
+

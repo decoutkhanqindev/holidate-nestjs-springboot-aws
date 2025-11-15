@@ -28,6 +28,9 @@
     min-width: calc((100% - 3 * 1.5rem) / 4);
     cursor: pointer;
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    display: block;
+    text-decoration: none;
+    color: inherit;
 }
 
 .hotelCardWrapper:hover {

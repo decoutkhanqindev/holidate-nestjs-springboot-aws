@@ -1,0 +1,273 @@
+.reviewsContainer {
+    width: 100%;
+}
+
+.reviewsList {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.reviewCard {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: box-shadow 0.2s;
+}
+
+.reviewCard:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.reviewHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    gap: 1rem;
+}
+
+.reviewUser {
+    display: flex;
+    gap: 1rem;
+    flex: 1;
+}
+
+.userAvatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.userAvatarPlaceholder {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.userInfo {
+    flex: 1;
+}
+
+.userName {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #1a1a1a;
+    margin-bottom: 0.25rem;
+}
+
+.reviewDate {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.starRating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.stars {
+    display: flex;
+    gap: 0.125rem;
+}
+
+.starFull {
+    color: #fbbf24;
+    font-size: 1.125rem;
+}
+
+.starHalf {
+    color: #fbbf24;
+    font-size: 1.125rem;
+}
+
+.starEmpty {
+    color: #d1d5db;
+    font-size: 1.125rem;
+}
+
+.scoreText {
+    font-size: 0.875rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.reviewComment {
+    color: #374151;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    white-space: pre-wrap;
+}
+
+.reviewPhotos {
+    margin-bottom: 1rem;
+}
+
+.photoGallery {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.photoThumbnail {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    border: 2px solid #e5e7eb;
+}
+
+.photoThumbnail:hover {
+    opacity: 0.8;
+}
+
+.photoCount {
+    font-size: 0.875rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.photoModal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.photoModalContent {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+}
+
+.photoModalImage {
+    max-width: 100%;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.photoModalClose {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.5rem;
+    transition: background 0.2s;
+}
+
+.photoModalClose:hover {
+    background: rgba(0, 0, 0, 0.75);
+}
+
+.photoModalNav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.5rem;
+    transition: background 0.2s;
+}
+
+.photoModalNav:hover {
+    background: rgba(0, 0, 0, 0.75);
+}
+
+.reviewRoom {
+    font-size: 0.875rem;
+    color: #6b7280;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.roomLabel {
+    font-weight: 500;
+    color: #374151;
+}
+
+.loading {
+    text-align: center;
+    padding: 2rem;
+    color: #6b7280;
+}
+
+.emptyState {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #6b7280;
+}
+
+.emptyState p {
+    font-size: 1rem;
+    margin: 0;
+}
+
+.loadMoreContainer {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.loadMoreButton {
+    padding: 0.75rem 2rem;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.loadMoreButton:hover:not(:disabled) {
+    background: #2563eb;
+}
+
+.loadMoreButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+
+
+
+
+
+

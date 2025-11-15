@@ -437,15 +437,16 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Image from 'next/image';
 import { hotelService, HotelResponse } from '@/service/hotelService';
 import { locationService, LocationSuggestion, LocationType } from '@/service/locationService';
+import ReviewRatingDisplay from '@/components/Review/ReviewRatingDisplay';
 import styles from './HotelsCard.module.css';
 
 // ---  hàm tiện ích  ---
 const formatLocationNameForDisplay = (fullName: string) => fullName.replace(/^(Thành phố|Tỉnh|Thủ đô)\s/, '');
 const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN').format(price) + ' VND';
-const formatRating = (rating?: number) => rating && rating > 0 ? `${rating.toFixed(1)}/10` : 'Chưa có đánh giá';
 const getHotelImageUrl = (hotel: HotelResponse) => hotel.photos?.[0]?.photos?.[0]?.url || '/placeholder.svg';
 const getTypeLabel = (type: LocationType) => {
     switch (type) {
@@ -846,7 +847,7 @@ export default function HotelsCard() {
                         ) : (
                             <>
                                 {currentHotels.map((hotel) => (
-                                    <div key={hotel.id} className={styles.hotelCardWrapper} onClick={() => router.push(`/hotels/${hotel.id}`)}>
+                                    <Link key={hotel.id} href={`/hotels/${hotel.id}`} className={styles.hotelCardWrapper} style={{ textDecoration: 'none', color: 'inherit' }}>
                                         <div className="card h-100 shadow-sm border-0 position-relative">
                                             <Image src={getHotelImageUrl(hotel)} width={400} height={200} alt={hotel.name} className="card-img-top" style={{ objectFit: 'cover', height: '180px', borderRadius: '12px 12px 0 0' }} />
                                             <div className="position-absolute top-0 start-0 m-2 px-2 py-1 bg-dark bg-opacity-75 text-white rounded fw-bold small">
@@ -859,13 +860,20 @@ export default function HotelsCard() {
                                             )}
                                             <div className="card-body">
                                                 <h6 className="fw-bold mb-1 text-truncate">{hotel.name}</h6>
-                                                <div className="mb-1 text-success fw-semibold"><i className="bi bi-star-fill text-warning me-1"></i>{formatRating(hotel.averageScore)}</div>
+                                                <div className="mb-2" onClick={(e) => e.stopPropagation()}>
+                                                    <ReviewRatingDisplay
+                                                        hotelId={hotel.id}
+                                                        categoryLabel="Khách sạn"
+                                                        lazyLoad={true}
+                                                        showLabel={false}
+                                                    />
+                                                </div>
                                                 {hotel.rawPricePerNight > hotel.currentPricePerNight && (<div className="mb-1 text-muted text-decoration-line-through small">{formatPrice(hotel.rawPricePerNight)}</div>)}
                                                 <div className="mb-1 fw-bold text-danger fs-5">{formatPrice(hotel.currentPricePerNight)}</div>
                                                 <div className="text-muted small">Chưa bao gồm thuế và phí</div>
                                             </div>
                                         </div>
-                                    </div>
+                                    </Link>
                                 ))}
                                 {isLoadingMore && (
                                     <div className={styles.loadingMoreSpinner}>

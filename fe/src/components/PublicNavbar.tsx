@@ -106,7 +106,7 @@ export default function PublicNavbar() {
                                     <li><a className="dropdown-item" href="#">Bạn là thành viên Bronze</a></li>
                                     <li><hr className="dropdown-divider" /></li>
                                     <li><Link className="dropdown-item" href="/account/settings">Chỉnh sửa hồ sơ</Link></li>
-                                    <li><a className="dropdown-item" href="my-booking">Đặt chỗ của tôi</a></li>
+                                    <li><Link className="dropdown-item" href="/my-booking">Đặt chỗ của tôi</Link></li>
                                     <li><a className="dropdown-item" href="#">Hoàn tiền</a></li>
                                     <li><hr className="dropdown-divider" /></li>
                                     <li><button className="dropdown-item" onClick={logout}>Đăng xuất</button></li>
