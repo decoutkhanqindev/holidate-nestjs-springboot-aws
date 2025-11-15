@@ -123,10 +123,12 @@ public class UserService {
     return userMapper.toUserResponse(user);
   }
 
+  @Transactional(readOnly = true)
   public List<UserResponse> getAll() {
     return userRepository.findAll().stream().map(userMapper::toUserResponse).toList();
   }
 
+  @Transactional(readOnly = true)
   public UserResponse getById(String id) {
     User user = userRepository.findById(id)
       .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));

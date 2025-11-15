@@ -37,12 +37,12 @@ import com.webapp.holidate.service.discount.DiscountService;
 import com.webapp.holidate.type.ErrorType;
 import com.webapp.holidate.type.booking.BookingStatusType;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.PessimisticLockingFailureException;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -266,6 +266,7 @@ public class BookingService {
     return calculatePriceDetailsFromValues(originalPrice, discountAmount, appliedDiscount);
   }
 
+  @Transactional(readOnly = true)
   public PagedResponse<BookingResponse> getAll(
     String userId, String roomId, String hotelId, String status,
     LocalDate checkInDate, LocalDate checkOutDate,
@@ -486,6 +487,7 @@ public class BookingService {
     return response;
   }
 
+  @Transactional(readOnly = true)
   public BookingResponse getById(String id) {
     Booking booking = bookingRepository.findByIdWithAllRelations(id)
       .orElseThrow(() -> new AppException(ErrorType.BOOKING_NOT_FOUND));

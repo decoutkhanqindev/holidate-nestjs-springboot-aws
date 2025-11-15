@@ -263,6 +263,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Image from 'next/image';
 import { hotelService, HotelResponse } from '@/service/hotelService';
 import styles from './HotelSelection.module.css';
@@ -477,7 +478,7 @@ export default function HotelSelection() {
                         ) : (
                             <>
                                 {currentHotels.map((hotel) => (
-                                    <div key={hotel.id} className="col-lg-3 col-md-6 col-sm-8 col-10" style={{ flex: '0 0 auto' }} onClick={() => router.push(`/hotels/${hotel.id}`)}>
+                                    <Link key={hotel.id} href={`/hotels/${hotel.id}`} className="col-lg-3 col-md-6 col-sm-8 col-10" style={{ flex: '0 0 auto', textDecoration: 'none', color: 'inherit' }}>
                                         <div className="card h-100 shadow-sm border-0" style={{ cursor: 'pointer' }}>
                                             <div className="position-relative">
                                                 <Image src={getHotelImageUrl(hotel)} width={400} height={300} alt={hotel.name} className="card-img-top" style={{ objectFit: 'cover', height: '200px' }} />
@@ -494,7 +495,7 @@ export default function HotelSelection() {
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    </Link>
                                 ))}
                                 {isLoadingMore && (
                                     <div className="col-auto d-flex align-items-center justify-content-center p-5" style={{ flex: '0 0 auto' }}>

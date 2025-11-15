@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.lang.Nullable;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ReviewRepository extends JpaRepository<Review, String> {
@@ -22,4 +23,7 @@ public interface ReviewRepository extends JpaRepository<Review, String> {
 
   @Query(ReviewQueries.FIND_BY_ID_WITH_DETAILS)
   Optional<Review> findByIdWithDetails(String id);
+
+  @Query(ReviewQueries.FIND_ALL_BY_IDS_WITH_PHOTOS)
+  List<Review> findAllByIdsWithPhotos(List<String> reviewIds);
 }
