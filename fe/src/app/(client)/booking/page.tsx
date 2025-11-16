@@ -81,6 +81,13 @@ function BookingComponent() {
     };
 
     const fetchPricePreview = useCallback(async (codeToApply?: string) => {
+        // Kiểm tra login trước khi gọi API
+        if (!isLoggedIn || isAuthLoading) {
+            setGeneralError('Vui lòng đăng nhập để xem giá phòng và tiếp tục đặt phòng.');
+            setIsPriceLoading(false);
+            return;
+        }
+
         if (!roomDetails || !checkin || !nights) {
             setIsPriceLoading(false);
             return;
@@ -108,8 +115,13 @@ function BookingComponent() {
                 setDiscountError("Mã giảm giá không hợp lệ hoặc không thể áp dụng.");
             }
         } catch (error: any) {
-            // Chỉ reset giá nếu không phải lỗi mã giảm giá
-            if (!codeToApply) {
+            // Xử lý lỗi 401 (chưa đăng nhập)
+            if (error.response?.status === 401 || error.message === 'Network Error') {
+                setPriceDetails(null);
+                setGeneralError('Vui lòng đăng nhập để xem giá phòng và tiếp tục đặt phòng.');
+                // Không hiển thị lỗi generic nếu là lỗi authentication
+            } else if (!codeToApply) {
+                // Chỉ reset giá nếu không phải lỗi mã giảm giá
                 setPriceDetails(null);
                 setGeneralError(error.message || "Không thể tính toán giá.");
             } else {
@@ -119,13 +131,23 @@ function BookingComponent() {
         } finally {
             setIsPriceLoading(false);
         }
-    }, [roomDetails, checkin, nights]);
+    }, [roomDetails, checkin, nights, isLoggedIn, isAuthLoading]);
 
     useEffect(() => {
-        if (roomDetails) {
+        // Chỉ fetch price preview khi đã login và có roomDetails
+        if (roomDetails && isLoggedIn && !isAuthLoading) {
+            // Clear error khi login thành công
+            setGeneralError('');
             fetchPricePreview();
+        } else if (roomDetails && !isLoggedIn && !isAuthLoading) {
+            // Nếu chưa login, không fetch price preview
+            // Chỉ hiển thị thông báo yêu cầu đăng nhập
+            setIsPriceLoading(false);
+            if (!priceDetails) {
+                setGeneralError('Vui lòng đăng nhập để xem giá phòng và tiếp tục đặt phòng.');
+            }
         }
-    }, [roomDetails, fetchPricePreview]);
+    }, [roomDetails, isLoggedIn, isAuthLoading, fetchPricePreview]);
 
     const handleApplyDiscount = () => {
         if (discountCode.trim()) {
@@ -154,6 +176,12 @@ function BookingComponent() {
         if (!isLoggedIn) {
             setBookingIntent(true);
             openModal();
+            return;
+        }
+        // Kiểm tra nếu chưa có price details, cần fetch trước
+        if (!priceDetails && roomDetails) {
+            fetchPricePreview();
+            // Chờ price details load xong trước khi chuyển step
             return;
         }
         if (validateForm()) {
@@ -212,7 +240,9 @@ function BookingComponent() {
         return <div className={styles.centered}>Đang tải thông tin...</div>;
     }
 
-    if (generalError && !priceDetails) {
+    // Chỉ hiển thị lỗi full page nếu không có roomDetails
+    // Nếu có roomDetails nhưng chưa login, vẫn hiển thị form để user có thể login
+    if (generalError && !roomDetails) {
         return <div className={styles.centered}>{generalError}</div>;
     }
 
@@ -352,6 +382,32 @@ function BookingComponent() {
                         <h2 className={styles.sectionTitle}>Chi tiết giá</h2>
                         {isPriceLoading ? (
                             <div style={{ textAlign: 'center', padding: '20px' }}>Đang tính toán giá...</div>
+                        ) : !isLoggedIn ? (
+                            <div style={{ 
+                                textAlign: 'center', 
+                                padding: '20px', 
+                                backgroundColor: '#fff3cd',
+                                border: '1px solid #ffc107',
+                                borderRadius: '4px',
+                                color: '#856404'
+                            }}>
+                                <p style={{ margin: '0 0 10px 0', fontWeight: 'bold' }}>Vui lòng đăng nhập để xem giá phòng</p>
+                                <button 
+                                    onClick={openModal} 
+                                    className={styles.loginLink}
+                                    style={{
+                                        background: '#1565c0',
+                                        color: 'white',
+                                        border: 'none',
+                                        padding: '8px 16px',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontWeight: 'bold'
+                                    }}
+                                >
+                                    Đăng nhập ngay
+                                </button>
+                            </div>
                         ) : priceDetails ? (
                             <div className={styles.priceDetailsContainer}>
                                 <div className={styles.priceRow}>
