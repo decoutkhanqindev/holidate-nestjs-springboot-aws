@@ -8,6 +8,7 @@ public class DbFieldNames {
 
   // accommodation related fields
   public static final String HOTEL_ID = "hotel_id";
+  public static final String HOTEL_ID_CAMEL = "hotelId";
   public static final String ROOM_ID = "room_id";
   public static final String ROOM_ID_CAMEL = "roomId";
   public static final String BED_TYPE_ID = "bed_type_id";

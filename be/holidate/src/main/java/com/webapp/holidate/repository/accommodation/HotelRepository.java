@@ -63,8 +63,14 @@ public interface HotelRepository extends JpaRepository<Hotel, String>, JpaSpecif
   @Query(HotelQueries.FIND_WITH_BASIC_DETAILS_BASE)
   Page<Hotel> findAllWithDetails(Pageable pageable);
 
+  @Query(HotelQueries.FIND_BY_ID_WITH_BASIC_DETAILS)
+  Optional<Hotel> findByIdWithBasicDetails(String id);
+
   @Query(HotelQueries.FIND_BY_ID_WITH_DETAILS)
   Optional<Hotel> findByIdWithDetails(String id);
+
+  @Query(HotelQueries.FIND_BY_ID_WITH_ENTERTAINMENT_VENUES_AND_AMENITIES)
+  Optional<Hotel> findByIdWithEntertainmentVenuesAndAmenities(String id);
 
   long countByCountryId(String countryId);
 

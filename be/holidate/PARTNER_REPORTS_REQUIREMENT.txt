@@ -134,7 +134,7 @@ Các API này sẽ chỉ đọc dữ liệu từ các bảng tổng hợp, đả
 
 API 1: Báo cáo Doanh thu
 
-Endpoint: GET /api/v1/partner/reports/revenue
+Endpoint: GET /partner/reports/revenue
 
 Logic Nghiệp vụ API: API này không tính toán doanh thu. Nó chỉ tổng hợp lại dữ liệu đã được tính sẵn trong HotelDailyReport. Khi nhận yêu cầu groupBy=month, nó sẽ nhóm các bản ghi hàng ngày theo tháng và tính tổng totalRevenue.
 
@@ -148,7 +148,7 @@ Cấu trúc Response: (Như đã mô tả ở phiên trước, tập trung vào 
 
 API 2: Thống kê Đặt phòng
 
-Endpoint: GET /api/v1/partner/reports/bookings/summary
+Endpoint: GET /partner/reports/bookings/summary
 
 Logic Nghiệp vụ API: API tổng hợp các cột createdBookings, completedBookings, cancelledBookings từ HotelDailyReport trong khoảng thời gian yêu cầu. Tỷ lệ hủy phòng (cancellationRate) được tính động tại thời điểm gọi API: (SUM(cancelledBookings) / SUM(createdBookings)) * 100.
 
@@ -158,7 +158,7 @@ Nếu SUM(createdBookings) là 0, cancellationRate sẽ là 0 để tránh lỗi
 
 API 3: Tỷ lệ lấp đầy
 
-Endpoint: GET /api/v1/partner/reports/occupancy
+Endpoint: GET /partner/reports/occupancy
 
 Logic Nghiệp vụ API:
 
@@ -172,7 +172,7 @@ Nếu SUM(totalRoomNights) bằng 0 (ví dụ khách sạn không có phòng nà
 
 API 4: Hiệu suất phòng
 
-Endpoint: GET /api/v1/partner/reports/rooms/performance
+Endpoint: GET /partner/reports/rooms/performance
 
 Logic Nghiệp vụ API: API này truy vấn trên bảng RoomDailyPerformance, nhóm theo roomId, và tính SUM(revenue) và SUM(bookedRoomNights). Sau đó JOIN với bảng Room để lấy roomName.
 
@@ -182,7 +182,7 @@ Các phòng không có hoạt động nào trong kỳ sẽ không xuất hiện 
 
 API 5: Thống kê Khách hàng
 
-Endpoint: GET /api/v1/partner/reports/customers/summary
+Endpoint: GET /partner/reports/customers/summary
 
 Logic Nghiệp vụ API: Rất đơn giản, chỉ cần SUM các cột newCustomerBookings và returningCustomerBookings từ HotelDailyReport.
 
@@ -190,7 +190,7 @@ Lưu ý: Việc tính totalUniqueCustomers là phức tạp và tốn kém, khô
 
 API 6: Phân tích Đánh giá
 
-Endpoint: GET /api/v1/partner/reports/reviews/summary
+Endpoint: GET /partner/reports/reviews/summary
 
 Logic Nghiệp vụ API:
 

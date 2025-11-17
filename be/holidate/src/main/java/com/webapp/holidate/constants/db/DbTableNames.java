@@ -56,4 +56,9 @@ public class DbTableNames {
   public static final String HOTEL_PHOTOS = "hotel_photos";
   public static final String ROOM_PHOTOS = "room_photos";
   public static final String REVIEW_PHOTOS = "review_photos";
+
+  // report related tables
+  public static final String HOTEL_DAILY_REPORTS = "hotel_daily_reports";
+  public static final String ROOM_DAILY_PERFORMANCES = "room_daily_performances";
+  public static final String SYSTEM_DAILY_REPORTS = "system_daily_reports";
 }

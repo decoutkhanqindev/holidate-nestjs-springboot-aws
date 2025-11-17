@@ -43,4 +43,6 @@ public class HotelCreationRequest {
 
   @NotBlank(message = "PARTNER_ID_NOT_BLANK")
   String partnerId;
+
+  Double commissionRate;
 }

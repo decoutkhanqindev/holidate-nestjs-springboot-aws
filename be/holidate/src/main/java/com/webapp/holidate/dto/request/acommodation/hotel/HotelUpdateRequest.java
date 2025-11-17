@@ -56,4 +56,8 @@ public class HotelUpdateRequest {
 
   @Pattern(regexp = ValidationPatterns.ACCOMMODATION_STATUS, message = "HOTEL_STATUS_INVALID")
   String status;
+
+  @DecimalMin(value = "0.0", message = "COMMISSION_RATE_INVALID")
+  @DecimalMax(value = "100.0", message = "COMMISSION_RATE_INVALID")
+  Double commissionRate;
 }
