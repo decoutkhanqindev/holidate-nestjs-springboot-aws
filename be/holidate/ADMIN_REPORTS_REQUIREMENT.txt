@@ -1,0 +1,217 @@
+Để đảm bảo hiệu năng, chúng ta sẽ không truy vấn trực tiếp trên các bảng nghiệp vụ (Booking, Payment...). Thay vào đó, chúng ta sẽ tạo ra các bảng tổng hợp dữ liệu (Data Aggregate Tables) được tối ưu cho việc đọc. Một tác vụ nền (background job) sẽ chạy hàng đêm để tính toán và điền dữ liệu vào các bảng này.
+
+Phần 1: Đặc tả chi tiết các Entity Báo cáo mới
+
+Đây là các entity mới bạn cần thêm vào hệ thống. Chúng được thiết kế theo mô hình "denormalized" để tối ưu hóa tốc độ truy vấn báo cáo.
+
+1.1. Entity HotelDailyReport
+
+Mô tả: Đây là entity trung tâm, lưu trữ bản tóm tắt toàn bộ các chỉ số hoạt động kinh doanh quan trọng của một khách sạn theo từng ngày. Mọi báo cáo tổng hợp theo tuần, tháng, năm của Partner đều sẽ dựa trên dữ liệu từ đây.
+
+Các trường chính:
+
+id: HotelDailyReportId (Composite Primary Key) - Khóa chính kết hợp.
+
+totalRevenue: double (not null, default=0)
+
+Mô tả nghiệp vụ: Tổng doanh thu thực nhận trong ngày. Doanh thu được ghi nhận vào ngày khách trả phòng (checkOutDate) và chỉ từ các booking có trạng thái COMPLETED.
+
+createdBookings: int (not null, default=0)
+
+Mô tả nghiệp vụ: Tổng số booking mới được tạo thành công trong ngày (dựa vào createdAt), không bao gồm các booking PENDING_PAYMENT không thành công.
+
+completedBookings: int (not null, default=0)
+
+Mô tả nghiệp vụ: Tổng số booking được hoàn thành trong ngày (dựa vào checkOutDate và chuyển sang trạng thái COMPLETED).
+
+cancelledBookings: int (not null, default=0)
+
+Mô tả nghiệp vụ: Tổng số booking bị hủy trong ngày (dựa vào thời điểm updatedAt khi status chuyển thành CANCELLED).
+
+occupiedRoomNights: int (not null, default=0)
+
+Mô tả nghiệp vụ: Tổng số "phòng-đêm" đã được bán trong ngày. Ví dụ: 1 booking đặt 2 phòng thì sẽ được tính là 2 "phòng-đêm" cho mỗi đêm khách ở. Chỉ tính các booking có trạng thái CONFIRMED hoặc CHECKED_IN.
+
+totalRoomNights: int (not null, default=0)
+
+Mô tả nghiệp vụ: Tổng số "phòng-đêm" có sẵn để bán trong ngày. Đây là SUM(quantity) của tất cả các phòng có status = 'ACTIVE' của khách sạn.
+
+newCustomerBookings: int (not null, default=0)
+
+Mô tả nghiệp vụ: Số lượt booking hoàn thành trong ngày đến từ những khách hàng chưa từng có booking COMPLETED nào tại khách sạn này trước đó.
+
+returningCustomerBookings: int (not null, default=0)
+
+Mô tả nghiệp vụ: Số lượt booking hoàn thành trong ngày đến từ những khách hàng đã có ít nhất một booking COMPLETED tại khách sạn này trong quá khứ.
+
+averageReviewScore: double (nullable)
+
+Mô tả nghiệp vụ: Điểm đánh giá trung bình của tất cả các Review được tạo trong ngày.
+
+reviewCount: int (not null, default=0)
+
+Mô tả nghiệp vụ: Số lượng Review mới được tạo trong ngày.
+
+updatedAt: LocalDateTime (not null) - Thời điểm bản ghi này được cập nhật lần cuối bởi tác vụ nền.
+
+1.2. Entity HotelDailyReportId (Composite Key)
+
+Mô tả: Khóa chính kết hợp để đảm bảo mỗi khách sạn chỉ có một bản ghi báo cáo duy nhất cho một ngày.
+
+Các trường:
+
+hotelId: UUID (not null)
+
+reportDate: LocalDate (not null)
+
+1.3. Entity RoomDailyPerformance
+
+Mô tả: Entity này đi sâu hơn, phân tích hiệu suất của từng loại phòng cụ thể theo ngày. Nó giúp trả lời câu hỏi "Phòng nào đang mang lại nhiều doanh thu nhất?".
+
+Các trường chính:
+
+id: RoomDailyPerformanceId (Composite Primary Key)
+
+hotelId: UUID (not null, index) - Thêm hotelId để tiện truy vấn theo khách sạn.
+
+revenue: double (not null, default=0)
+
+Mô tả nghiệp vụ: Doanh thu mà loại phòng này mang lại, được ghi nhận vào ngày checkOutDate của các booking COMPLETED.
+
+bookedRoomNights: int (not null, default=0)
+
+Mô tả nghiệp vụ: Tổng số "phòng-đêm" đã được bán của loại phòng này, tính cho các booking CONFIRMED và CHECKED_IN.
+
+updatedAt: LocalDateTime (not null)
+
+1.4. Entity RoomDailyPerformanceId (Composite Key)
+
+Mô tả: Khóa chính kết hợp cho hiệu suất phòng.
+
+Các trường:
+
+roomId: UUID (not null)
+
+reportDate: LocalDate (not null)
+
+Phần 2: Luồng nghiệp vụ của Tác vụ nền (Data Aggregation Background Job)
+
+Đây là "bộ não" của hệ thống báo cáo. Nó chịu trách nhiệm tính toán và đảm bảo dữ liệu trong các bảng tổng hợp luôn chính xác.
+
+Thời điểm kích hoạt: Lập lịch chạy hàng ngày vào thời điểm ít tải nhất (ví dụ: 2:00 AM).
+
+Nguyên tắc hoạt động: Tác vụ sẽ xử lý dữ liệu của ngày hôm qua (T-1). Nó phải có khả năng Idempotent, nghĩa là nếu chạy lại cho cùng một ngày, nó sẽ ghi đè kết quả cũ chứ không tạo ra dữ liệu trùng lặp. Logic UPSERT (INSERT ... ON CONFLICT UPDATE) là cực kỳ quan trọng ở đây.
+
+Luồng xử lý chi tiết cho ngày D:
+
+Lấy danh sách khách sạn: Lấy tất cả hotelId đang hoạt động.
+
+Lặp qua từng khách sạn (H):
+a. Tính totalRoomNights: SUM(quantity) từ tất cả Room thuộc khách sạn H có status = 'ACTIVE'.
+b. Xử lý Bookings:
+* Lấy tất cả Booking liên quan đến khách sạn H và ngày D. Cụ thể là các booking có checkOutDate = D, createdAt = D, updatedAt = D (khi hủy), hoặc đang diễn ra trong ngày D.
+* Khởi tạo các biến đếm: revenue = 0, completed = 0, cancelled = 0, occupied = 0...
+* Lặp qua từng booking:
+* Nếu status = 'COMPLETED' và checkOutDate = D:
+* revenue += booking.finalPrice.
+* completed++.
+* Kiểm tra xem userId của booking này là khách mới hay khách quay lại để tăng biến đếm tương ứng (newCustomerBookings hoặc returningCustomerBookings).
+* Cập nhật doanh thu cho phòng tương ứng trong RoomDailyPerformance.
+* Nếu status = 'CANCELLED' và updatedAt trong ngày D: cancelled++.
+* Nếu createdAt trong ngày D: createdBookings++.
+* Nếu status IN ('CONFIRMED', 'CHECKED_IN') và checkInDate <= D < checkOutDate:
+* occupied += booking.numberOfRooms.
+* Cập nhật bookedRoomNights cho phòng tương ứng trong RoomDailyPerformance.
+c. Xử lý Reviews:
+* Tính AVG(score) và COUNT(id) từ bảng Review có hotelId = H và createdAt trong ngày D.
+d. Lưu vào Database:
+* Thực hiện lệnh UPSERT vào bảng HotelDailyReport với các giá trị đã tính toán cho hotelId = H và reportDate = D.
+* Thực hiện lệnh UPSERT vào bảng RoomDailyPerformance cho mỗi phòng có phát sinh dữ liệu.
+
+Phần 3: Phân tích chi tiết API và Logic Backend
+
+Các API này sẽ chỉ đọc dữ liệu từ các bảng tổng hợp, đảm bảo hiệu suất cao.
+
+API 1: Báo cáo Doanh thu
+
+Endpoint: GET /reports/revenue
+
+Logic Nghiệp vụ API: API này không tính toán doanh thu. Nó chỉ tổng hợp lại dữ liệu đã được tính sẵn trong HotelDailyReport. Khi nhận yêu cầu groupBy=month, nó sẽ nhóm các bản ghi hàng ngày theo tháng và tính tổng totalRevenue.
+
+Xử lý trường hợp biên:
+
+Nếu khoảng thời gian yêu cầu không có dữ liệu, trả về mảng data rỗng và summary.totalRevenue = 0.
+
+Nếu from > to, trả về lỗi 400 Bad Request.
+
+Cấu trúc Response: (Như đã mô tả ở phiên trước, tập trung vào dữ liệu và tóm tắt).
+
+API 2: Thống kê Đặt phòng
+
+Endpoint: GET /reports/bookings/summary
+
+Logic Nghiệp vụ API: API tổng hợp các cột createdBookings, completedBookings, cancelledBookings từ HotelDailyReport trong khoảng thời gian yêu cầu. Tỷ lệ hủy phòng (cancellationRate) được tính động tại thời điểm gọi API: (SUM(cancelledBookings) / SUM(createdBookings)) * 100.
+
+Xử lý trường hợp biên:
+
+Nếu SUM(createdBookings) là 0, cancellationRate sẽ là 0 để tránh lỗi chia cho không.
+
+API 3: Tỷ lệ lấp đầy
+
+Endpoint: GET /reports/occupancy
+
+Logic Nghiệp vụ API:
+
+Để hiển thị biểu đồ theo ngày, API chỉ cần lấy các bản ghi HotelDailyReport và tính (occupiedRoomNights / totalRoomNights) * 100 cho mỗi ngày.
+
+Để tính tỷ lệ trung bình cho cả kỳ (summary.averageRate), công thức đúng phải là (SUM(occupiedRoomNights) / SUM(totalRoomNights)) * 100, không phải là trung bình của các tỷ lệ hàng ngày.
+
+Xử lý trường hợp biên:
+
+Nếu SUM(totalRoomNights) bằng 0 (ví dụ khách sạn không có phòng nào active), trả về averageRate = 0.
+
+API 4: Hiệu suất phòng
+
+Endpoint: GET /reports/rooms/performance
+
+Logic Nghiệp vụ API: API này truy vấn trên bảng RoomDailyPerformance, nhóm theo roomId, và tính SUM(revenue) và SUM(bookedRoomNights). Sau đó JOIN với bảng Room để lấy roomName.
+
+Xử lý trường hợp biên:
+
+Các phòng không có hoạt động nào trong kỳ sẽ không xuất hiện trong kết quả.
+
+API 5: Thống kê Khách hàng
+
+Endpoint: GET /reports/customers/summary
+
+Logic Nghiệp vụ API: Rất đơn giản, chỉ cần SUM các cột newCustomerBookings và returningCustomerBookings từ HotelDailyReport.
+
+Lưu ý: Việc tính totalUniqueCustomers là phức tạp và tốn kém, không nên thực hiện trong API này. Con số này nếu cần có thể được tính riêng trong một tác vụ nền khác.
+
+API 6: Phân tích Đánh giá
+
+Endpoint: GET /reports/reviews/summary
+
+Logic Nghiệp vụ API:
+
+averageScore của cả kỳ được tính bằng SUM(averageReviewScore * reviewCount) / SUM(reviewCount) để đảm bảo tính chính xác (trung bình có trọng số).
+
+totalReviews là SUM(reviewCount).
+
+scoreDistribution yêu cầu một truy vấn riêng, trực tiếp vào bảng Review vì dữ liệu này không được tổng hợp trước. Đây là một ngoại lệ chấp nhận được vì nó ít được gọi và có thể được tối ưu bằng index.
+
+API 7: So sánh các kỳ
+
+Logic Nghiệp vụ API: Đây là một wrapper logic trong service của bạn.
+
+Nhận 2 khoảng thời gian: currentPeriod và previousPeriod.
+
+Gọi phương thức lấy dữ liệu báo cáo cơ sở (ví dụ getRevenueData(from, to)) hai lần.
+
+Nhận hai bộ kết quả.
+
+Tính toán các chỉ số so sánh (difference, percentageChange).
+
+Xây dựng và trả về đối tượng JSON cuối cùng.
+
+Thiết kế này giúp tái sử dụng code và giữ logic báo cáo cốt lõi sạch sẽ.
