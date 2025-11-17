@@ -41,6 +41,7 @@ public class HotelDetailsResponse {
   double longitude;
   int starRating;
   String status;
+  double commissionRate;
   LocalDateTime createdAt;
   LocalDateTime updatedAt;
 }

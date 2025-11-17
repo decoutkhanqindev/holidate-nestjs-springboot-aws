@@ -35,6 +35,7 @@ public class HotelResponse {
   int starRating;
   HotelPolicyResponse policy;
   String status;
+  double commissionRate;
   double rawPricePerNight;
   double currentPricePerNight;
   int availableRooms;

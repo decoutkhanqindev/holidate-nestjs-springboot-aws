@@ -161,10 +161,17 @@ public class HotelService {
         .orElseThrow(() -> new AppException(ErrorType.STREET_NOT_FOUND));
     hotel.setStreet(street);
 
+    Double commissionRate = request.getCommissionRate();
+    if (commissionRate != null) {
+      hotel.setCommissionRate(commissionRate);
+    }
+
     hotel.setStatus(AccommodationStatusType.INACTIVE.getValue());
 
     hotelRepository.save(hotel);
-    return hotelMapper.toHotelDetailsResponse(hotel);
+
+    // Fetch hotel with all required data for response (using optimized approach)
+    return getById(hotel.getId());
   }
 
   @Transactional(readOnly = true)
@@ -716,15 +723,47 @@ public class HotelService {
 
   @Transactional(readOnly = true)
   public HotelDetailsResponse getById(String id) {
-    Hotel hotel = hotelRepository.findByIdWithDetails(id)
+    // Step 1: Fetch hotel with basic relationships (location, policy, partner)
+    // This avoids cartesian product from joining multiple collections
+    Hotel hotel = hotelRepository.findByIdWithBasicDetails(id)
         .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
+
+    // Step 2: Fetch collections separately to avoid cartesian product
+    // Photos
+    List<Hotel> hotelsWithPhotos = hotelRepository.findAllByIdsWithPhotos(List.of(id));
+    if (!hotelsWithPhotos.isEmpty()) {
+      hotel.setPhotos(hotelsWithPhotos.get(0).getPhotos());
+    }
+
+    // Entertainment venues and amenities (fetch together to reduce queries)
+    Hotel hotelWithVenuesAndAmenities = hotelRepository.findByIdWithEntertainmentVenuesAndAmenities(id)
+        .orElse(null);
+    if (hotelWithVenuesAndAmenities != null) {
+      hotel.setEntertainmentVenues(hotelWithVenuesAndAmenities.getEntertainmentVenues());
+      hotel.setAmenities(hotelWithVenuesAndAmenities.getAmenities());
+    }
+
     return hotelMapper.toHotelDetailsResponse(hotel);
   }
 
   @Transactional
   public HotelDetailsResponse update(String id, HotelUpdateRequest request) throws IOException {
-    Hotel hotel = hotelRepository.findByIdWithDetails(id)
+    // Use optimized query to fetch hotel (avoid cartesian product)
+    Hotel hotel = hotelRepository.findByIdWithBasicDetails(id)
         .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
+
+    // Fetch collections separately if needed for update operations
+    List<Hotel> hotelsWithPhotos = hotelRepository.findAllByIdsWithPhotos(List.of(id));
+    if (!hotelsWithPhotos.isEmpty()) {
+      hotel.setPhotos(hotelsWithPhotos.get(0).getPhotos());
+    }
+
+    Hotel hotelWithVenuesAndAmenities = hotelRepository.findByIdWithEntertainmentVenuesAndAmenities(id)
+        .orElse(null);
+    if (hotelWithVenuesAndAmenities != null) {
+      hotel.setEntertainmentVenues(hotelWithVenuesAndAmenities.getEntertainmentVenues());
+      hotel.setAmenities(hotelWithVenuesAndAmenities.getAmenities());
+    }
 
     updateInfo(hotel, request);
     updateLocation(hotel, request);
@@ -734,7 +773,9 @@ public class HotelService {
     updatePolicy(hotel, request);
 
     hotelRepository.save(hotel);
-    return hotelMapper.toHotelDetailsResponse(hotel);
+
+    // Return using optimized getById to ensure all data is properly loaded
+    return getById(id);
   }
 
   private void updateInfo(Hotel hotel, HotelUpdateRequest request) {
@@ -758,6 +799,12 @@ public class HotelService {
     boolean statusChanged = newStatus != null && !newStatus.equals(hotel.getStatus());
     if (statusChanged) {
       hotel.setStatus(newStatus);
+    }
+
+    Double newCommissionRate = request.getCommissionRate();
+    boolean commissionRateChanged = newCommissionRate != null && hotel.getCommissionRate() != newCommissionRate;
+    if (commissionRateChanged) {
+      hotel.setCommissionRate(newCommissionRate);
     }
 
     LocalDateTime now = LocalDateTime.now();
@@ -908,7 +955,7 @@ public class HotelService {
           EntertainmentVenue entertainmentVenue = entertainmentVenueRepository.findById(venueId)
               .orElseThrow(() -> new AppException(ErrorType.ENTERTAINMENT_VENUE_NOT_FOUND));
 
-          Integer distance = venueRequest.getDistance();
+          Double distance = venueRequest.getDistance();
           if (distance == null || distance <= 0) {
             throw new AppException(ErrorType.INVALID_DISTANCE_VALUE);
           }
@@ -931,7 +978,7 @@ public class HotelService {
     if (hasVenuesWithDistanceToUpdate) {
       for (HotelEntertainmentVenueRequest venueRequest : venuesWithDistanceToUpdate) {
         String venueId = venueRequest.getEntertainmentVenueId();
-        Integer newDistance = venueRequest.getDistance();
+        Double newDistance = venueRequest.getDistance();
         if (newDistance == null || newDistance <= 0) {
           throw new AppException(ErrorType.INVALID_DISTANCE_VALUE);
         }
@@ -941,7 +988,8 @@ public class HotelService {
             .findFirst()
             .orElseThrow(() -> new AppException(ErrorType.ENTERTAINMENT_VENUE_NOT_FOUND));
 
-        if (existingVenue.getDistance() != newDistance) {
+        // Use Double.compare for accurate double comparison (handles precision issues)
+        if (Double.compare(existingVenue.getDistance(), newDistance) != 0) {
           existingVenue.setDistance(newDistance);
           hotelEntertainmentVenueRepository.save(existingVenue);
         }
@@ -1171,7 +1219,8 @@ public class HotelService {
 
   @Transactional
   public HotelDetailsResponse delete(String id) {
-    Hotel hotel = hotelRepository.findByIdWithDetails(id)
+    // Use optimized query - we only need basic info for validation and response
+    Hotel hotel = hotelRepository.findByIdWithBasicDetails(id)
         .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
 
     // Check if hotel has rooms
@@ -1186,7 +1235,8 @@ public class HotelService {
       throw new AppException(ErrorType.CANNOT_DELETE_HOTEL_HAS_BOOKINGS);
     }
 
-    HotelDetailsResponse response = hotelMapper.toHotelDetailsResponse(hotel);
+    // Fetch full data for response before deleting (using optimized approach)
+    HotelDetailsResponse response = getById(id);
     hotelRepository.delete(hotel);
     return response;
   }

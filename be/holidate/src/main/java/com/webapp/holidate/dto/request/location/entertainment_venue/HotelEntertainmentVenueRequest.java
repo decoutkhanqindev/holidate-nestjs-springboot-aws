@@ -18,7 +18,8 @@ import lombok.experimental.FieldDefaults;
 public class HotelEntertainmentVenueRequest {
   @NotBlank(message = "ENTERTAINMENT_VENUE_ID_NOT_BLANK")
   String entertainmentVenueId;
+  
   @NotNull(message = "DISTANCE_MUST_BE_POSITIVE")
   @Positive(message = "DISTANCE_MUST_BE_POSITIVE")
-  Integer distance;
+  Double distance;
 }

@@ -105,6 +105,10 @@ public class Hotel {
   @Column(nullable = false)
   String status;
 
+  @Column(nullable = false)
+  @Builder.Default
+  double commissionRate = 15.0;
+
   @OneToMany(mappedBy = "hotel")
   @ToString.Exclude
   @Builder.Default
