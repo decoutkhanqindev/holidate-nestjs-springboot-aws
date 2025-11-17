@@ -960,6 +960,63 @@ export const updateHotelServer = async (id: string, formData: FormData): Promise
             });
         }
 
+        // Xử lý entertainment venues cần REMOVE (bị bỏ chọn)
+        const venueIdsToRemove = formData.getAll('entertainmentVenueIdsToRemove[]');
+        if (venueIdsToRemove.length > 0) {
+            console.log(`[hotelService] Removing ${venueIdsToRemove.length} entertainment venues`);
+            venueIdsToRemove.forEach((venueId) => {
+                if (venueId && venueId.toString().trim() !== '') {
+                    updateFormData.append('entertainmentVenueIdsToRemove[]', venueId.toString().trim());
+                }
+            });
+        }
+
+        // Xử lý policy data
+        // Backend expect format: policy.checkInTime, policy.checkOutTime, policy.allowsPayAtHotel,
+        // policy.cancellationPolicyId, policy.reschedulePolicyId, policy.requiredIdentificationDocumentIdsToAdd[]
+        const policyCheckInTime = formData.get('policy.checkInTime');
+        if (policyCheckInTime) {
+            updateFormData.append('policy.checkInTime', policyCheckInTime.toString());
+            console.log(`[hotelService] Policy checkInTime: ${policyCheckInTime}`);
+        }
+
+        const policyCheckOutTime = formData.get('policy.checkOutTime');
+        if (policyCheckOutTime) {
+            updateFormData.append('policy.checkOutTime', policyCheckOutTime.toString());
+            console.log(`[hotelService] Policy checkOutTime: ${policyCheckOutTime}`);
+        }
+
+        const policyAllowsPayAtHotel = formData.get('policy.allowsPayAtHotel');
+        if (policyAllowsPayAtHotel !== null && policyAllowsPayAtHotel !== undefined) {
+            updateFormData.append('policy.allowsPayAtHotel', policyAllowsPayAtHotel.toString());
+            console.log(`[hotelService] Policy allowsPayAtHotel: ${policyAllowsPayAtHotel}`);
+        }
+
+        // Cancellation Policy ID
+        const cancellationPolicyId = formData.get('policy.cancellationPolicyId');
+        if (cancellationPolicyId && cancellationPolicyId.toString().trim() !== '') {
+            updateFormData.append('policy.cancellationPolicyId', cancellationPolicyId.toString().trim());
+            console.log(`[hotelService] Policy cancellationPolicyId: ${cancellationPolicyId}`);
+        }
+
+        // Reschedule Policy ID
+        const reschedulePolicyId = formData.get('policy.reschedulePolicyId');
+        if (reschedulePolicyId && reschedulePolicyId.toString().trim() !== '') {
+            updateFormData.append('policy.reschedulePolicyId', reschedulePolicyId.toString().trim());
+            console.log(`[hotelService] Policy reschedulePolicyId: ${reschedulePolicyId}`);
+        }
+
+        // Required Identification Documents
+        const requiredDocumentIds = formData.getAll('policy.requiredIdentificationDocumentIdsToAdd[]');
+        if (requiredDocumentIds.length > 0) {
+            console.log(`[hotelService] Adding ${requiredDocumentIds.length} required identification documents`);
+            requiredDocumentIds.forEach((docId) => {
+                if (docId && docId.toString().trim() !== '') {
+                    updateFormData.append('policy.requiredIdentificationDocumentIdsToAdd[]', docId.toString().trim());
+                }
+            });
+        }
+
         // KHÔNG set Content-Type header - axios sẽ tự động set với boundary cho FormData
         const response = await serverClient.put<ApiResponse<HotelResponse>>(
             `${baseURL}/${id}`,

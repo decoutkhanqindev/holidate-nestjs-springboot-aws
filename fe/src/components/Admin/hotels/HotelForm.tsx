@@ -43,20 +43,16 @@ function SubmitButton({ isEditing }: { isEditing: boolean }) {
 interface HotelFormProps {
     hotel?: Hotel | null;
     formAction: (formData: FormData) => void;
-    // Thêm prop này để kiểm soát vai trò, ví dụ: isSuperAdmin={user.role.name.toLowerCase() === 'admin'}
     isSuperAdmin?: boolean;
 }
 
 export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: HotelFormProps) {
     const isEditing = !!hotel;
     const { effectiveUser } = useAuth();
-
-    // Kiểm tra role của user hiện tại
     const isAdmin = effectiveUser?.role.name.toLowerCase() === 'admin';
     const isPartner = effectiveUser?.role.name.toLowerCase() === 'partner';
     const currentPartnerId = effectiveUser?.id || '';
 
-    // State cho location dropdowns
     const [countries, setCountries] = useState<LocationOption[]>([]);
     const [provinces, setProvinces] = useState<LocationOption[]>([]);
     const [cities, setCities] = useState<LocationOption[]>([]);
@@ -64,7 +60,6 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
     const [wards, setWards] = useState<LocationOption[]>([]);
     const [streets, setStreets] = useState<LocationOption[]>([]);
 
-    // Selected values
     const [selectedCountryId, setSelectedCountryId] = useState<string>('');
     const [selectedProvinceId, setSelectedProvinceId] = useState<string>('');
     const [selectedCityId, setSelectedCityId] = useState<string>('');
@@ -72,20 +67,17 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
     const [selectedWardId, setSelectedWardId] = useState<string>('');
     const [selectedStreetId, setSelectedStreetId] = useState<string>('');
 
-    // State cho partners (chỉ dùng khi là admin)
     const [partners, setPartners] = useState<Partner[]>([]);
     const [selectedPartnerId, setSelectedPartnerId] = useState<string>('');
     const [isLoadingPartners, setIsLoadingPartners] = useState(false);
 
-    // Modal state cho "Thêm mới location"
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [createModalType, setCreateModalType] = useState<'street' | 'ward' | 'district' | 'city' | 'province'>('street');
     const [newLocationName, setNewLocationName] = useState('');
-    const [newLocationCode, setNewLocationCode] = useState(''); // Mã cho province và city
+    const [newLocationCode, setNewLocationCode] = useState('');
     const [isCreating, setIsCreating] = useState(false);
     const [createError, setCreateError] = useState<string | null>(null);
 
-    // Modal state cho "Tạo partner mới"
     const [showCreatePartnerModal, setShowCreatePartnerModal] = useState(false);
     const [newPartnerEmail, setNewPartnerEmail] = useState('');
     const [newPartnerPassword, setNewPartnerPassword] = useState('');
@@ -156,7 +148,6 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                         setSelectedAmenityIds(freeAmenityIds);
                     }
                 } catch (error) {
-                    console.error('[HotelForm] Error loading amenities:', error);
                 }
 
                 // Load cancellation policies (có thể không tồn tại API)
@@ -164,8 +155,6 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                     const cancellationPoliciesData = await getAllCancellationPolicies();
                     setCancellationPolicies(cancellationPoliciesData);
                 } catch (error: any) {
-                    // Nếu API không tồn tại (404), để trống danh sách
-                    console.warn('[HotelForm] Cancellation policies API không tồn tại hoặc có lỗi:', error?.response?.status || error?.message);
                     setCancellationPolicies([]);
                 }
 
@@ -174,8 +163,6 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                     const reschedulePoliciesData = await getAllReschedulePolicies();
                     setReschedulePolicies(reschedulePoliciesData);
                 } catch (error: any) {
-                    // Nếu API không tồn tại (404), để trống danh sách
-                    console.warn('[HotelForm] Reschedule policies API không tồn tại hoặc có lỗi:', error?.response?.status || error?.message);
                     setReschedulePolicies([]);
                 }
 
@@ -184,8 +171,6 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                     const identificationDocumentsData = await getAllIdentificationDocuments();
                     setIdentificationDocuments(identificationDocumentsData);
                 } catch (error: any) {
-                    // Nếu API không tồn tại (404), để trống danh sách
-                    console.warn('[HotelForm] Identification documents API không tồn tại hoặc có lỗi:', error?.response?.status || error?.message);
                     setIdentificationDocuments([]);
                 }
             }
@@ -199,23 +184,16 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                     const partnerRole = await getPartnerRole();
                     if (partnerRole) {
                         setPartnerRoleId(partnerRole.id);
-                        console.log(`[HotelForm] Partner role ID: ${partnerRole.id}`);
                     }
 
-                    // Load danh sách partners
                     const partnersData = await getPartners();
                     setPartners(partnersData);
-                    console.log(`[HotelForm] Loaded ${partnersData.length} partners`);
                 } catch (error: any) {
-                    console.error('[HotelForm] Error loading partners:', error);
-                    // Không hiển thị lỗi cho user, chỉ log
                 } finally {
                     setIsLoadingPartners(false);
                 }
             } else if (userRole === 'partner' && currentPartnerId) {
-                // Nếu là partner, tự động set partnerId của chính họ
                 setSelectedPartnerId(currentPartnerId);
-                console.log(`[HotelForm] Auto-set partnerId for partner user: ${currentPartnerId}`);
             }
         };
         loadInitialData();
@@ -266,26 +244,12 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
         setWards([]);
         setStreets([]);
 
-        // Validate cityId
         if (!cityId || cityId.trim() === '') {
-            console.error('[HotelForm] Invalid cityId:', cityId);
             setDistricts([]);
             return;
         }
 
-        console.log(`[HotelForm] Loading districts for cityId: ${cityId.trim()}`);
-
-        // Load districts của cityId này - backend sẽ filter theo cityId
         const data = await getDistricts(cityId.trim(), selectedProvinceId);
-        console.log(`[HotelForm] Loaded ${data.length} districts for cityId: ${cityId.trim()}`);
-
-        // Log để debug
-        if (data.length > 0) {
-            console.log('[HotelForm] First few districts:', data.slice(0, 3).map(d => d.name));
-        } else {
-            console.warn('[HotelForm] No districts found for cityId:', cityId);
-        }
-
         setDistricts(data);
 
         // Nếu chỉ có 1 district, tự động chọn và load wards
@@ -302,9 +266,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
         setSelectedStreetId('');
         setStreets([]);
 
-        // Load wards của districtId này, kèm cityId và provinceId để filter tốt hơn
         const data = await getWards(districtId, cityId || selectedCityId, selectedProvinceId);
-        console.log(`[HotelForm] Loaded ${data.length} wards for districtId: ${districtId}, cityId: ${cityId || selectedCityId}, provinceId: ${selectedProvinceId}`);
         setWards(data);
 
         // Nếu chỉ có 1 ward, tự động chọn và load streets
@@ -319,9 +281,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
         // Reset street selection
         setSelectedStreetId('');
 
-        // Load streets của wardId này, kèm districtId, cityId và provinceId để filter tốt hơn
         const data = await getStreets(wardId, districtId || selectedDistrictId, cityId || selectedCityId, selectedProvinceId);
-        console.log(`[HotelForm] Loaded ${data.length} streets for wardId: ${wardId}, districtId: ${districtId || selectedDistrictId}, cityId: ${cityId || selectedCityId}, provinceId: ${selectedProvinceId}`);
         setStreets(data);
     };
 
@@ -398,7 +358,6 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                         setNewVenueCategoryId('a4d8d350-a850-11f0-a7b7-0a6aab4924ab');
                     }
                 } catch (error) {
-                    console.error('[HotelForm] Error loading entertainment venues:', error);
                     setEntertainmentVenuesByCategory([]);
                     setNewVenueCategoryId('a4d8d350-a850-11f0-a7b7-0a6aab4924ab');
                 }
@@ -429,7 +388,6 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                 const docIds = new Set<string>(policy.requiredIdentificationDocuments.map((doc: { id: string }) => doc.id));
                 setSelectedDocumentIds(docIds);
             }
-            // Load policy IDs nếu có
             if (policy.cancellationPolicy?.id) {
                 setCancellationPolicyId(policy.cancellationPolicy.id);
             }
@@ -475,49 +433,29 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                 }
             });
 
-            console.log('[HotelForm] 🧪 Testing venue update:');
-            console.log('  - Venues to UPDATE:', venuesToUpdate);
-            console.log('  - Venues to ADD:', venuesToAdd);
-            console.log('  - Venues to REMOVE:', venuesToRemove);
-            console.log('  - New venues:', newVenues);
-
-            // Append venues cần REMOVE
             venuesToRemove.forEach((venueId) => {
                 formData.append('entertainmentVenueIdsToRemove[]', venueId);
-                console.log(`  - REMOVE: ${venueId}`);
             });
 
-            // Append venues cần UPDATE
             venuesToUpdate.forEach((venue, index) => {
                 const distanceInMeters = Math.round(venue.distance * 1000);
                 formData.append(`entertainmentVenuesWithDistanceToUpdate[${index}].entertainmentVenueId`, venue.venueId);
                 formData.append(`entertainmentVenuesWithDistanceToUpdate[${index}].distance`, distanceInMeters.toString());
-                console.log(`  - UPDATE[${index}]: ${venue.venueId} = ${distanceInMeters}m (${venue.distance}km)`);
             });
 
-            // Append venues cần ADD
             venuesToAdd.forEach((venue, index) => {
                 const distanceInMeters = Math.round(venue.distance * 1000);
                 formData.append(`entertainmentVenuesWithDistanceToAdd[${index}].entertainmentVenueId`, venue.venueId);
                 formData.append(`entertainmentVenuesWithDistanceToAdd[${index}].distance`, distanceInMeters.toString());
-                console.log(`  - ADD[${index}]: ${venue.venueId} = ${distanceInMeters}m (${venue.distance}km)`);
             });
 
-            // Append new venues
             newVenues.forEach((venue, index) => {
                 const distanceInMeters = Math.round(venue.distance * 1000);
                 formData.append(`entertainmentVenuesToAdd[${index}].name`, venue.name);
                 formData.append(`entertainmentVenuesToAdd[${index}].distance`, distanceInMeters.toString());
                 formData.append(`entertainmentVenuesToAdd[${index}].cityId`, selectedCityId);
                 formData.append(`entertainmentVenuesToAdd[${index}].categoryId`, venue.categoryId);
-                console.log(`  - NEW[${index}]: ${venue.name} = ${distanceInMeters}m (${venue.distance}km)`);
             });
-
-            // Log tất cả FormData entries
-            console.log('[HotelForm] 📤 FormData entries:');
-            for (const [key, value] of formData.entries()) {
-                console.log(`  ${key}:`, value);
-            }
 
             const result = await updateHotelAction(hotel.id, formData);
 
@@ -531,10 +469,8 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                 autoClose: 3000,
             });
 
-            // Reload page để xem kết quả
             window.location.reload();
         } catch (error: any) {
-            console.error('[HotelForm] ❌ Error updating venues:', error);
             const { toast } = await import('react-toastify');
             toast.error(error.message || 'Không thể cập nhật địa điểm. Vui lòng thử lại.', {
                 position: "top-right",
@@ -572,64 +508,38 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
             const venuesToAdd: Array<{ venueId: string; distance: number }> = [];
             const venuesToRemove: string[] = [];
 
-            console.log('[HotelForm] 📋 Processing venues for submit:');
-            console.log('  - Existing venue IDs from hotel:', Array.from(existingVenueIds));
-            console.log('  - Selected venue IDs:', Array.from(selectedVenueIds));
-            console.log('  - Selected venues:', selectedVenues);
-
-            // Tìm venues cần REMOVE (có trong hotel nhưng không còn trong selectedVenues)
             existingVenueIds.forEach((venueId) => {
                 if (!selectedVenueIds.has(venueId)) {
                     venuesToRemove.push(venueId);
-                    console.log(`  🗑️ Venue ${venueId} → REMOVE (đã bỏ chọn)`);
                 }
             });
 
             selectedVenues.forEach((venue) => {
                 if (existingVenueIds.has(venue.venueId)) {
-                    // Venue đã có trong hotel → UPDATE
                     venuesToUpdate.push(venue);
-                    console.log(`  ✅ Venue ${venue.venueId} → UPDATE (distance: ${venue.distance} km)`);
                 } else {
-                    // Venue chưa có trong hotel → ADD
                     venuesToAdd.push(venue);
-                    console.log(`  ➕ Venue ${venue.venueId} → ADD (distance: ${venue.distance} km)`);
                 }
             });
 
-            console.log(`[HotelForm] 📊 Summary: ${venuesToUpdate.length} to UPDATE, ${venuesToAdd.length} to ADD, ${venuesToRemove.length} to REMOVE`);
-
-            // Append venues cần REMOVE (bị bỏ chọn)
             venuesToRemove.forEach((venueId) => {
                 formData.append('entertainmentVenueIdsToRemove[]', venueId);
-                console.log(`[HotelForm] 📤 REMOVE: ${venueId}`);
             });
 
-            // Append venues cần UPDATE (đã có trong hotel)
-            // Backend lưu distance theo meters, form nhập theo km → cần convert km → meters
             venuesToUpdate.forEach((venue, index) => {
                 formData.append(`entertainmentVenuesWithDistanceToUpdate[${index}].entertainmentVenueId`, venue.venueId);
-                // Convert km → meters (nhân 1000)
                 const distanceInMeters = Math.round(venue.distance * 1000);
                 formData.append(`entertainmentVenuesWithDistanceToUpdate[${index}].distance`, distanceInMeters.toString());
-                console.log(`[HotelForm] 📤 UPDATE[${index}]: ${venue.venueId} = ${distanceInMeters}m (${venue.distance}km)`);
             });
 
-            // Append venues cần ADD (chưa có trong hotel)
-            // Backend lưu distance theo meters, form nhập theo km → cần convert km → meters
             venuesToAdd.forEach((venue, index) => {
                 formData.append(`entertainmentVenuesWithDistanceToAdd[${index}].entertainmentVenueId`, venue.venueId);
-                // Convert km → meters (nhân 1000)
                 const distanceInMeters = Math.round(venue.distance * 1000);
                 formData.append(`entertainmentVenuesWithDistanceToAdd[${index}].distance`, distanceInMeters.toString());
-                console.log(`[HotelForm] 📤 ADD[${index}]: ${venue.venueId} = ${distanceInMeters}m (${venue.distance}km)`);
             });
 
-            // Append entertainment venues mới (entertainmentVenuesToAdd)
-            // Backend lưu distance theo meters, form nhập theo km → cần convert km → meters
             newVenues.forEach((venue, index) => {
                 formData.append(`entertainmentVenuesToAdd[${index}].name`, venue.name);
-                // Convert km → meters (nhân 1000)
                 const distanceInMeters = Math.round(venue.distance * 1000);
                 formData.append(`entertainmentVenuesToAdd[${index}].distance`, distanceInMeters.toString());
                 formData.append(`entertainmentVenuesToAdd[${index}].cityId`, selectedCityId);
@@ -650,28 +560,12 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                 formData.append('policy.requiredIdentificationDocumentIdsToAdd[]', docId);
             });
 
-            // Append cancellation and reschedule policy IDs (chọn từ danh sách)
             if (cancellationPolicyId) {
                 formData.append('policy.cancellationPolicyId', cancellationPolicyId);
             }
+
             if (reschedulePolicyId) {
                 formData.append('policy.reschedulePolicyId', reschedulePolicyId);
-            }
-
-            // Debug: Log tất cả FormData entries liên quan đến policy TRƯỚC KHI GỬI
-            console.log('[HotelForm] 📤 FormData entries (policy-related) BEFORE submit:');
-            const policyEntries: Array<[string, any]> = [];
-            for (const [key, value] of formData.entries()) {
-                if (key.includes('policy')) {
-                    policyEntries.push([key, value instanceof File ? `[File: ${value.name}]` : value]);
-                    console.log(`  ${key}:`, value instanceof File ? `[File: ${value.name}]` : value);
-                }
-            }
-
-            if (policyEntries.length === 0) {
-                console.warn('[HotelForm] ⚠️ No policy-related entries found in FormData!');
-            } else {
-                console.log(`[HotelForm] ✅ Found ${policyEntries.length} policy-related entries`);
             }
         }
 
@@ -852,7 +746,6 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                     value={selectedCityId}
                                     onChange={async (e) => {
                                         const newCityId = e.target.value;
-                                        console.log('[HotelForm] City changed to:', newCityId);
                                         setSelectedCityId(newCityId);
                                         if (newCityId && newCityId.trim() !== '') {
                                             await loadDistricts(newCityId);
@@ -1982,8 +1875,6 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                                 }
                                             }
                                         } catch (checkError: any) {
-                                            // Nếu check fail, vẫn tiếp tục tạo (backend sẽ validate)
-                                            console.warn('[HotelForm] Pre-check warning:', checkError);
                                         }
 
                                         try {
@@ -2041,14 +1932,6 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                             setNewLocationName('');
                                             setNewLocationCode('');
                                         } catch (error: any) {
-                                            console.error('[HotelForm] Error creating location:', error);
-                                            console.error('[HotelForm] Error details:', {
-                                                message: error.message,
-                                                response: error.response?.data,
-                                                stack: error.stack,
-                                            });
-
-                                            // Xử lý error message chi tiết hơn
                                             let errorMessage = error.message || error.response?.data?.message || 'Không thể tạo location. Vui lòng thử lại.';
 
                                             // Nếu là lỗi "đã tồn tại", hiển thị rõ hơn
@@ -2214,9 +2097,6 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                             };
 
                                             const createdPartner = await createPartner(newPartner);
-                                            console.log('[HotelForm] Partner created:', createdPartner);
-
-                                            // Refresh danh sách partners
                                             const partnersData = await getPartners();
                                             setPartners(partnersData);
 
@@ -2230,7 +2110,6 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                             setNewPartnerFullName('');
                                             setNewPartnerPhone('');
                                         } catch (error: any) {
-                                            console.error('[HotelForm] Error creating partner:', error);
                                             setCreatePartnerError(error.message || 'Không thể tạo đối tác. Vui lòng thử lại.');
                                         } finally {
                                             setIsCreatingPartner(false);
