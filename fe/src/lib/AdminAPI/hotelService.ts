@@ -466,6 +466,7 @@ interface CreateHotelPayload {
     wardId: string;
     streetId: string;
     partnerId: string;
+    commissionRate?: number;
 }
 
 /**

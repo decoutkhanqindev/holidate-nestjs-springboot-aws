@@ -21,6 +21,10 @@ export async function createHotelAction(formData: FormData, noRedirect: boolean 
         const wardId = formData.get('wardId') as string;
         const streetId = formData.get('streetId') as string;
         const partnerId = formData.get('partnerId') as string;
+        
+        // Lấy commission_rate từ formData hoặc dùng giá trị mặc định 15% (15)
+        const commissionRateStr = formData.get('commissionRate') as string;
+        const commissionRate = commissionRateStr ? parseFloat(commissionRateStr) : 15;
 
         // Validation
         if (!name) {
@@ -42,10 +46,8 @@ export async function createHotelAction(formData: FormData, noRedirect: boolean 
         // Nếu không có address nhưng có streetId, có thể để rỗng hoặc dùng giá trị mặc định
         const payload = {
             name: name.trim(),
-            description: (description && description.trim()) || 'Không có mô tả', // Đảm bảo description không rỗng
-            // Chỉ set "Chưa có địa chỉ" nếu thực sự không có address và không có street
-            // Nếu có street, có thể để rỗng hoặc dùng giá trị mặc định
-            address: (address && address.trim()) || 'Chưa có địa chỉ', // Address có thể optional
+            description: (description && description.trim()) || 'Không có mô tả',
+            address: (address && address.trim()) || 'Chưa có địa chỉ',
             countryId: countryId.trim(),
             provinceId: provinceId.trim(),
             cityId: cityId.trim(),
@@ -53,6 +55,7 @@ export async function createHotelAction(formData: FormData, noRedirect: boolean 
             wardId: wardId.trim(),
             streetId: streetId.trim(),
             partnerId: partnerId.trim(),
+            commissionRate: commissionRate,
         };
 
         console.log('[createHotelAction] Final payload before sending:', JSON.stringify(payload, null, 2));

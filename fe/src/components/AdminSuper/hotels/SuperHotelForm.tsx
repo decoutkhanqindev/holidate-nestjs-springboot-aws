@@ -1034,6 +1034,8 @@ export default function SuperHotelForm({ hotel, formAction }: SuperHotelFormProp
                                 className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm resize-y transition-all"
                             />
                         </div>
+                        {/* Hidden input cho commission_rate - mặc định 15% */}
+                        <input type="hidden" name="commissionRate" value="15" />
                     </div>
 
                     {/* Images */}
@@ -1103,32 +1105,54 @@ export default function SuperHotelForm({ hotel, formAction }: SuperHotelFormProp
                                             const files = Array.from(e.target.files || []);
                                             if (files.length === 0) return;
 
-                                            // Kiểm tra kích thước từng file (10MB)
                                             const invalidFiles = files.filter(file => file.size > 10 * 1024 * 1024);
                                             if (invalidFiles.length > 0) {
                                                 alert(`Các file sau vượt quá 10MB: ${invalidFiles.map(f => f.name).join(', ')}`);
+                                                e.target.value = '';
                                                 return;
                                             }
 
-                                            // Tạo preview cho các file mới
-                                            const newPreviews: Array<{ file: File; preview: string }> = [];
-                                            let loadedCount = 0;
+                                            const totalFiles = files.length;
+                                            const results: Array<{ file: File; preview: string }> = [];
+                                            let completedCount = 0;
+
+                                            const checkComplete = () => {
+                                                completedCount++;
+                                                if (completedCount === totalFiles) {
+                                                    if (results.length > 0) {
+                                                        setImagePreviews(prev => [...prev, ...results]);
+                                                    }
+                                                    e.target.value = '';
+                                                }
+                                            };
 
                                             files.forEach((file) => {
                                                 const reader = new FileReader();
-                                                reader.onloadend = () => {
-                                                    newPreviews.push({
-                                                        file,
-                                                        preview: reader.result as string
-                                                    });
-                                                    loadedCount++;
 
-                                                    // Khi tất cả file đã load xong, cập nhật state
-                                                    if (loadedCount === files.length) {
-                                                        setImagePreviews(prev => [...prev, ...newPreviews]);
+                                                reader.onloadend = () => {
+                                                    try {
+                                                        if (reader.result && typeof reader.result === 'string') {
+                                                            results.push({
+                                                                file,
+                                                                preview: reader.result
+                                                            });
+                                                        }
+                                                    } catch (err) {
+                                                        // Ignore errors when processing result
+                                                    } finally {
+                                                        checkComplete();
                                                     }
                                                 };
-                                                reader.readAsDataURL(file);
+
+                                                reader.onerror = () => {
+                                                    checkComplete();
+                                                };
+
+                                                try {
+                                                    reader.readAsDataURL(file);
+                                                } catch (error) {
+                                                    checkComplete();
+                                                }
                                             });
                                         }}
                                     />
