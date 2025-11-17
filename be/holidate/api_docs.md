@@ -19,8 +19,10 @@ Base URL: `http://localhost:8080`
 13. [Photo Categories](#photo-categories)
 14. [Locations](#locations)
 15. [Discounts](#discounts)
-16. [Special Days](#special-days)
-17. [Status Types Reference](#status-types-reference)
+16. [Policies](#policies)
+17. [Documents](#documents)
+18. [Special Days](#special-days)
+19. [Status Types Reference](#status-types-reference)
 
 ---
 
@@ -1782,6 +1784,142 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 - **Path Parameters**:
   - `id`: string (UUID format)
 - **Response**: Same as Create Discount response
+
+---
+
+## Policies
+
+### Cancellation Policies
+
+#### 1. Get All Cancellation Policies
+
+**GET** `/policy/cancellation-policies`
+
+- **Role Required**: PARTNER, ADMIN
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": [
+    {
+      "id": "string",
+      "name": "string",
+      "description": "string",
+      "rules": [
+        {
+          "id": "string",
+          "daysBeforeCheckIn": "integer",
+          "penaltyPercentage": "integer (0-100)"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Cancellation Rules
+
+#### 1. Get All Cancellation Rules
+
+**GET** `/policy/cancellation-rules`
+
+- **Role Required**: PARTNER, ADMIN
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": [
+    {
+      "id": "string",
+      "daysBeforeCheckIn": "integer",
+      "penaltyPercentage": "integer (0-100)"
+    }
+  ]
+}
+```
+
+### Reschedule Policies
+
+#### 1. Get All Reschedule Policies
+
+**GET** `/policy/reschedule-policies`
+
+- **Role Required**: PARTNER, ADMIN
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": [
+    {
+      "id": "string",
+      "name": "string",
+      "description": "string",
+      "rules": [
+        {
+          "id": "string",
+          "daysBeforeCheckin": "integer",
+          "feePercentage": "integer (0-100)"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Reschedule Rules
+
+#### 1. Get All Reschedule Rules
+
+**GET** `/policy/reschedule-rules`
+
+- **Role Required**: PARTNER, ADMIN
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": [
+    {
+      "id": "string",
+      "daysBeforeCheckin": "integer",
+      "feePercentage": "integer (0-100)"
+    }
+  ]
+}
+```
+
+---
+
+## Documents
+
+### Identification Documents
+
+#### 1. Get All Identification Documents
+
+**GET** `/document/identification-documents`
+
+- **Role Required**: PARTNER, ADMIN
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": [
+    {
+      "id": "string",
+      "name": "string"
+    }
+  ]
+}
+```
 
 ---
 

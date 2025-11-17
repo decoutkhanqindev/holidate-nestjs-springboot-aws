@@ -45,7 +45,7 @@ CÁC CHỨC NĂNG CỦA ĐỐI TÁC (ROLE PARTNER)
 
 8. Báo cáo và phân tích khách sạn
    - Xem báo cáo doanh thu (theo ngày, tuần, tháng, năm)
-   - Xem thống kê số lượng đặt phòng (tổng số, đã hoàn thành, đã hủy)
+   - Xem thống kê số lượng đặt phòng (tổng số, đã hoàn thành, đã hủy, )
    - Xem tỷ lệ lấp đầy phòng (occupancy rate)
    - Xem phân tích hiệu suất từng phòng (phòng nào được đặt nhiều nhất, ít nhất)
    - Xem thống kê khách hàng (số lượng khách, khách quay lại, khách mới)

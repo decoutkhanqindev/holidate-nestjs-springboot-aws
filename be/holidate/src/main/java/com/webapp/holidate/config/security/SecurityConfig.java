@@ -181,6 +181,28 @@ public class SecurityConfig {
                                                 AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
                                                                 + CommonEndpoints.ID)
                                 .hasAuthority(RoleType.PARTNER.getValue())
+                                // 3.2. policy endpoints (partner and admin can view policies and rules)
+                                .requestMatchers(HttpMethod.GET,
+                                                PolicyEndpoints.POLICY + PolicyEndpoints.CANCELLATION_POLICIES
+                                                                + ALL_ENDPOINTS)
+                                .hasAnyAuthority(RoleType.PARTNER.getValue(), RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                PolicyEndpoints.POLICY + PolicyEndpoints.CANCELLATION_RULES
+                                                                + ALL_ENDPOINTS)
+                                .hasAnyAuthority(RoleType.PARTNER.getValue(), RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                PolicyEndpoints.POLICY + PolicyEndpoints.RESCHEDULE_POLICIES
+                                                                + ALL_ENDPOINTS)
+                                .hasAnyAuthority(RoleType.PARTNER.getValue(), RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                PolicyEndpoints.POLICY + PolicyEndpoints.RESCHEDULE_RULES
+                                                                + ALL_ENDPOINTS)
+                                .hasAnyAuthority(RoleType.PARTNER.getValue(), RoleType.ADMIN.getValue())
+                                // 3.3. document endpoints (partner and admin can view identification documents)
+                                .requestMatchers(HttpMethod.GET,
+                                                DocumentEndpoints.DOCUMENT + DocumentEndpoints.IDENTIFICATION_DOCUMENTS
+                                                                + ALL_ENDPOINTS)
+                                .hasAnyAuthority(RoleType.PARTNER.getValue(), RoleType.ADMIN.getValue())
                                 // 3.1. room inventory management endpoints (partner specific)
                                 .requestMatchers(HttpMethod.POST,
                                                 AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
@@ -303,6 +325,10 @@ public class SecurityConfig {
                                 .hasAuthority(RoleType.ADMIN.getValue())
                                 // Note: Other booking endpoints are already defined in USER section above
                                 // Note: DELETE booking endpoint is already defined in PARTNER section above
+                                // 8. policy endpoints (admin can also view policies and rules)
+                                // Note: GET policy endpoints are already defined in PARTNER section above
+                                // 9. document endpoints (admin can also view identification documents)
+                                // Note: GET document endpoints are already defined in PARTNER section above
 
                                 // C. any other endpoints
                                 .anyRequest().authenticated());
