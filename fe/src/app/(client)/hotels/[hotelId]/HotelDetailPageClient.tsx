@@ -1415,10 +1415,13 @@ const formatDateForDisplay = (checkin: Date, nights: number): string => {
 };
 
 const formatDistance = (distanceInMeters: number) => {
+    // Backend lưu distance theo meters (comment: // in meters)
+    // Form update nhập theo km → convert km → meters trước khi gửi (nhân 1000)
+    // Khi hiển thị, distance đã là meters từ backend
     if (distanceInMeters < 1000) {
-        return `${distanceInMeters} m`;
+        return `${Math.round(distanceInMeters)} m`;
     }
-    return `${(distanceInMeters / 1000).toFixed(2)} km`;
+    return `${(distanceInMeters / 1000).toFixed(1)} km`;
 };
 
 const customStylesForPage = `

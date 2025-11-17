@@ -12,10 +12,10 @@ import {
 import { getPartners, createPartner, type Partner, type CreatePartnerRequest } from "@/lib/AdminAPI/partnerService";
 import { getPartnerRole } from "@/lib/AdminAPI/roleService";
 import { useAuth } from "@/components/Admin/AuthContext_Admin/AuthContextAdmin";
-import { PlusIcon, XMarkIcon, ClockIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, XMarkIcon, ChevronDownIcon, ChevronUpIcon, ClockIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
 import { getAmenities, getAmenityCategories, type Amenity, type AmenityCategory } from "@/lib/AdminAPI/amenityService";
 import { getEntertainmentVenuesByCity, type EntertainmentVenueByCategory, type EntertainmentVenue } from "@/lib/AdminAPI/entertainmentVenueService";
-import { getAllCancellationPolicies, getAllReschedulePolicies, getAllIdentificationDocuments } from "@/lib/AdminAPI/policyService";
+import { getAllCancellationPolicies, getAllReschedulePolicies } from "@/lib/AdminAPI/policyService";
 
 function SubmitButton({ isEditing }: { isEditing: boolean }) {
     const { pending } = useFormStatus();
@@ -40,21 +40,19 @@ function SubmitButton({ isEditing }: { isEditing: boolean }) {
     );
 }
 
-interface HotelFormProps {
+interface SuperHotelFormProps {
     hotel?: Hotel | null;
     formAction: (formData: FormData) => void;
-    // Thêm prop này để kiểm soát vai trò, ví dụ: isSuperAdmin={user.role.name.toLowerCase() === 'admin'}
-    isSuperAdmin?: boolean;
 }
 
-export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: HotelFormProps) {
+export default function SuperHotelForm({ hotel, formAction }: SuperHotelFormProps) {
     const isEditing = !!hotel;
     const { effectiveUser } = useAuth();
 
-    // Kiểm tra role của user hiện tại
-    const isAdmin = effectiveUser?.role.name.toLowerCase() === 'admin';
-    const isPartner = effectiveUser?.role.name.toLowerCase() === 'partner';
-    const currentPartnerId = effectiveUser?.id || '';
+    // Super-admin luôn có quyền admin và không phải partner
+    const isAdmin = true; // Super-admin luôn có quyền admin
+    const isPartner = false; // Super-admin không phải partner
+    const currentPartnerId = ''; // Super-admin không tự động gán partnerId
 
     // State cho location dropdowns
     const [countries, setCountries] = useState<LocationOption[]>([]);
@@ -98,32 +96,33 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
     // State cho preview nhiều ảnh khi upload
     const [imagePreviews, setImagePreviews] = useState<Array<{ file: File; preview: string }>>([]);
 
-    // State cho amenities (chỉ dùng khi edit)
+    // State cho amenities
     const [amenities, setAmenities] = useState<Amenity[]>([]);
     const [selectedAmenityIds, setSelectedAmenityIds] = useState<Set<string>>(new Set());
     const [searchAmenityQuery, setSearchAmenityQuery] = useState<string>('');
     const [showAllMainAmenities, setShowAllMainAmenities] = useState<boolean>(false);
 
-    // State cho policy (chỉ dùng khi edit)
+    // State cho policy
     const [checkInTime, setCheckInTime] = useState<string>('14:00');
     const [checkOutTime, setCheckOutTime] = useState<string>('12:00');
     const [allowsPayAtHotel, setAllowsPayAtHotel] = useState<boolean>(false);
     const [selectedDocumentIds, setSelectedDocumentIds] = useState<Set<string>>(new Set());
-    // State cho policy (chọn từ danh sách)
+    // State cho policy (super-admin chọn từ danh sách)
     const [cancellationPolicyId, setCancellationPolicyId] = useState<string>('');
     const [reschedulePolicyId, setReschedulePolicyId] = useState<string>('');
     const [cancellationPolicies, setCancellationPolicies] = useState<Array<{ id: string; name: string; description?: string }>>([]);
     const [reschedulePolicies, setReschedulePolicies] = useState<Array<{ id: string; name: string; description?: string }>>([]);
     const [identificationDocuments, setIdentificationDocuments] = useState<Array<{ id: string; name: string }>>([]);
 
-    // State cho entertainment venues (chỉ dùng khi edit)
+    // State cho entertainment venues
     const [entertainmentVenuesByCategory, setEntertainmentVenuesByCategory] = useState<EntertainmentVenueByCategory[]>([]);
     const [selectedVenues, setSelectedVenues] = useState<Array<{ venueId: string; distance: number }>>([]);
     const [newVenues, setNewVenues] = useState<Array<{ name: string; distance: number; categoryId: string }>>([]);
     const [newVenueName, setNewVenueName] = useState('');
     const [newVenueDistance, setNewVenueDistance] = useState<number>(0);
     const [newVenueCategoryId, setNewVenueCategoryId] = useState<string>('');
-
+    // Lưu venue distance từ hotel data để dùng khi tích checkbox
+    const [hotelVenueDistances, setHotelVenueDistances] = useState<Map<string, number>>(new Map());
 
     // Load countries and partners on mount
     useEffect(() => {
@@ -138,88 +137,41 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                 loadProvinces(vietnam.id);
             }
 
-            // Chỉ load amenities, venues và policies khi đang EDIT (partner update hotel)
-            if (isEditing) {
-                // Load amenities
-                try {
-                    const amenitiesData = await getAmenities();
-                    setAmenities(amenitiesData);
+            // Load amenities
+            try {
+                const amenitiesData = await getAmenities();
+                setAmenities(amenitiesData);
 
-                    // Nếu hotel đã có amenities, load chúng
-                    const hotelData = hotel as any;
-                    if (hotelData?.amenities && Array.isArray(hotelData.amenities)) {
-                        const existingAmenityIds = new Set<string>(hotelData.amenities.map((a: any) => a.id || a.amenityId).filter(Boolean));
-                        setSelectedAmenityIds(existingAmenityIds);
-                    } else {
-                        // Nếu không có, tự động chọn các amenities miễn phí
-                        const freeAmenityIds = new Set(amenitiesData.filter(a => a.free).map(a => a.id));
-                        setSelectedAmenityIds(freeAmenityIds);
-                    }
-                } catch (error) {
-                    console.error('[HotelForm] Error loading amenities:', error);
-                }
-
-                // Load cancellation policies (có thể không tồn tại API)
-                try {
-                    const cancellationPoliciesData = await getAllCancellationPolicies();
-                    setCancellationPolicies(cancellationPoliciesData);
-                } catch (error: any) {
-                    // Nếu API không tồn tại (404), để trống danh sách
-                    console.warn('[HotelForm] Cancellation policies API không tồn tại hoặc có lỗi:', error?.response?.status || error?.message);
-                    setCancellationPolicies([]);
-                }
-
-                // Load reschedule policies (có thể không tồn tại API)
-                try {
-                    const reschedulePoliciesData = await getAllReschedulePolicies();
-                    setReschedulePolicies(reschedulePoliciesData);
-                } catch (error: any) {
-                    // Nếu API không tồn tại (404), để trống danh sách
-                    console.warn('[HotelForm] Reschedule policies API không tồn tại hoặc có lỗi:', error?.response?.status || error?.message);
-                    setReschedulePolicies([]);
-                }
-
-                // Load identification documents (có thể không tồn tại API)
-                try {
-                    const identificationDocumentsData = await getAllIdentificationDocuments();
-                    setIdentificationDocuments(identificationDocumentsData);
-                } catch (error: any) {
-                    // Nếu API không tồn tại (404), để trống danh sách
-                    console.warn('[HotelForm] Identification documents API không tồn tại hoặc có lỗi:', error?.response?.status || error?.message);
-                    setIdentificationDocuments([]);
-                }
+                // Tự động chọn các amenities miễn phí (free = true) - tiện ích phổ biến
+                const freeAmenityIds = new Set(amenitiesData.filter(a => a.free).map(a => a.id));
+                setSelectedAmenityIds(freeAmenityIds);
+            } catch (error) {
+                console.error('[SuperHotelForm] Error loading amenities:', error);
             }
 
-            // Chỉ load partners nếu user là admin (vì partner không có quyền truy cập /users)
-            const userRole = effectiveUser?.role.name.toLowerCase();
-            if (userRole === 'admin') {
-                setIsLoadingPartners(true);
-                try {
-                    // Load roles để lấy roleId của "partner"
-                    const partnerRole = await getPartnerRole();
-                    if (partnerRole) {
-                        setPartnerRoleId(partnerRole.id);
-                        console.log(`[HotelForm] Partner role ID: ${partnerRole.id}`);
-                    }
-
-                    // Load danh sách partners
-                    const partnersData = await getPartners();
-                    setPartners(partnersData);
-                    console.log(`[HotelForm] Loaded ${partnersData.length} partners`);
-                } catch (error: any) {
-                    console.error('[HotelForm] Error loading partners:', error);
-                    // Không hiển thị lỗi cho user, chỉ log
-                } finally {
-                    setIsLoadingPartners(false);
+            // Super-admin luôn load partners
+            setIsLoadingPartners(true);
+            try {
+                // Load roles để lấy roleId của "partner"
+                const partnerRole = await getPartnerRole();
+                if (partnerRole) {
+                    setPartnerRoleId(partnerRole.id);
+                    console.log(`[SuperHotelForm] Partner role ID: ${partnerRole.id}`);
                 }
-            } else if (userRole === 'partner' && currentPartnerId) {
-                // Nếu là partner, tự động set partnerId của chính họ
-                setSelectedPartnerId(currentPartnerId);
-                console.log(`[HotelForm] Auto-set partnerId for partner user: ${currentPartnerId}`);
+
+                // Load danh sách partners
+                const partnersData = await getPartners();
+                setPartners(partnersData);
+                console.log(`[SuperHotelForm] Loaded ${partnersData.length} partners`);
+            } catch (error: any) {
+                console.error('[SuperHotelForm] Error loading partners:', error);
+                // Không hiển thị lỗi cho user, chỉ log
+            } finally {
+                setIsLoadingPartners(false);
             }
         };
         loadInitialData();
-    }, [effectiveUser?.role.name, effectiveUser?.id, currentPartnerId]);
+    }, []); // Super-admin không phụ thuộc vào user role
 
     const loadProvinces = async (countryId: string) => {
         // Reset tất cả state phía dưới
@@ -268,22 +220,22 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
 
         // Validate cityId
         if (!cityId || cityId.trim() === '') {
-            console.error('[HotelForm] Invalid cityId:', cityId);
+            console.error('[SuperHotelForm] Invalid cityId:', cityId);
             setDistricts([]);
             return;
         }
 
-        console.log(`[HotelForm] Loading districts for cityId: ${cityId.trim()}`);
+        console.log(`[SuperHotelForm] Loading districts for cityId: ${cityId.trim()}`);
 
         // Load districts của cityId này - backend sẽ filter theo cityId
         const data = await getDistricts(cityId.trim(), selectedProvinceId);
-        console.log(`[HotelForm] Loaded ${data.length} districts for cityId: ${cityId.trim()}`);
+        console.log(`[SuperHotelForm] Loaded ${data.length} districts for cityId: ${cityId.trim()}`);
 
         // Log để debug
         if (data.length > 0) {
-            console.log('[HotelForm] First few districts:', data.slice(0, 3).map(d => d.name));
+            console.log('[SuperHotelForm] First few districts:', data.slice(0, 3).map(d => d.name));
         } else {
-            console.warn('[HotelForm] No districts found for cityId:', cityId);
+            console.warn('[SuperHotelForm] No districts found for cityId:', cityId);
         }
 
         setDistricts(data);
@@ -304,7 +256,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
 
         // Load wards của districtId này, kèm cityId và provinceId để filter tốt hơn
         const data = await getWards(districtId, cityId || selectedCityId, selectedProvinceId);
-        console.log(`[HotelForm] Loaded ${data.length} wards for districtId: ${districtId}, cityId: ${cityId || selectedCityId}, provinceId: ${selectedProvinceId}`);
+        console.log(`[SuperHotelForm] Loaded ${data.length} wards for districtId: ${districtId}, cityId: ${cityId || selectedCityId}, provinceId: ${selectedProvinceId}`);
         setWards(data);
 
         // Nếu chỉ có 1 ward, tự động chọn và load streets
@@ -321,63 +273,60 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
 
         // Load streets của wardId này, kèm districtId, cityId và provinceId để filter tốt hơn
         const data = await getStreets(wardId, districtId || selectedDistrictId, cityId || selectedCityId, selectedProvinceId);
-        console.log(`[HotelForm] Loaded ${data.length} streets for wardId: ${wardId}, districtId: ${districtId || selectedDistrictId}, cityId: ${cityId || selectedCityId}, provinceId: ${selectedProvinceId}`);
+        console.log(`[SuperHotelForm] Loaded ${data.length} streets for wardId: ${wardId}, districtId: ${districtId || selectedDistrictId}, cityId: ${cityId || selectedCityId}, provinceId: ${selectedProvinceId}`);
         setStreets(data);
     };
 
-    // Lưu venue distance từ hotel data để dùng khi tích checkbox
-    const [hotelVenueDistances, setHotelVenueDistances] = useState<Map<string, number>>(new Map());
-
-    // Load entertainment venues khi city được chọn (chỉ khi edit)
+    // Load entertainment venues khi city được chọn
     useEffect(() => {
-        if (!isEditing) return; // Chỉ load khi edit
-
         const loadVenues = async () => {
             if (selectedCityId) {
                 try {
                     const venuesData = await getEntertainmentVenuesByCity(selectedCityId);
                     setEntertainmentVenuesByCategory(venuesData || []);
 
-                    // Nếu hotel đã có venues, load chúng và lưu distance map
+                    // Nếu hotel đã có venues (khi edit), load chúng và lưu distance map
                     // Backend trả về distance theo meters, form hiển thị theo km → cần convert meters → km (chia 1000)
-                    const hotelData = hotel as any;
-                    const distanceMap = new Map<string, number>();
+                    if (isEditing && hotel) {
+                        const hotelData = hotel as any;
+                        const distanceMap = new Map<string, number>();
 
-                    if (hotelData?.entertainmentVenues && Array.isArray(hotelData.entertainmentVenues)) {
-                        // Flatten venues từ các categories
-                        const allVenues: Array<{ id?: string; entertainmentVenueId?: string; distance: number }> = [];
-                        hotelData.entertainmentVenues.forEach((categoryGroup: any) => {
-                            if (categoryGroup?.entertainmentVenues && Array.isArray(categoryGroup.entertainmentVenues)) {
-                                categoryGroup.entertainmentVenues.forEach((venue: any) => {
-                                    if (venue?.id && venue?.distance != null) {
-                                        const venueId = venue.id;
-                                        const distanceInMeters = venue.distance;
-                                        // Lưu distance vào map (meters) để dùng sau
-                                        distanceMap.set(venueId, distanceInMeters);
+                        if (hotelData?.entertainmentVenues && Array.isArray(hotelData.entertainmentVenues)) {
+                            // Flatten venues từ các categories
+                            const allVenues: Array<{ id?: string; entertainmentVenueId?: string; distance: number }> = [];
+                            hotelData.entertainmentVenues.forEach((categoryGroup: any) => {
+                                if (categoryGroup?.entertainmentVenues && Array.isArray(categoryGroup.entertainmentVenues)) {
+                                    categoryGroup.entertainmentVenues.forEach((venue: any) => {
+                                        if (venue?.id && venue?.distance != null) {
+                                            const venueId = venue.id;
+                                            const distanceInMeters = venue.distance;
+                                            // Lưu distance vào map (meters) để dùng sau
+                                            distanceMap.set(venueId, distanceInMeters);
 
-                                        allVenues.push({
-                                            id: venueId,
-                                            entertainmentVenueId: venueId,
-                                            distance: distanceInMeters // meters từ backend
-                                        });
-                                    }
-                                });
-                            }
-                        });
+                                            allVenues.push({
+                                                id: venueId,
+                                                entertainmentVenueId: venueId,
+                                                distance: distanceInMeters // meters từ backend
+                                            });
+                                        }
+                                    });
+                                }
+                            });
 
-                        // Lưu distance map để dùng khi tích checkbox
-                        setHotelVenueDistances(distanceMap);
+                            // Lưu distance map để dùng khi tích checkbox
+                            setHotelVenueDistances(distanceMap);
 
-                        // Convert meters → km cho form
-                        const existingVenues = allVenues.map((v: any) => ({
-                            venueId: v.id || v.entertainmentVenueId,
-                            // Convert meters → km (chia 1000) để hiển thị trong form
-                            distance: v.distance ? (v.distance / 1000) : 1
-                        })).filter((v: any) => v.venueId);
-                        setSelectedVenues(existingVenues);
-                    } else {
-                        // Không có venues, reset map
-                        setHotelVenueDistances(new Map());
+                            // Convert meters → km cho form
+                            const existingVenues = allVenues.map((v: any) => ({
+                                venueId: v.id || v.entertainmentVenueId,
+                                // Convert meters → km (chia 1000) để hiển thị trong form
+                                distance: v.distance ? (v.distance / 1000) : 1
+                            })).filter((v: any) => v.venueId);
+                            setSelectedVenues(existingVenues);
+                        } else {
+                            // Không có venues, reset map
+                            setHotelVenueDistances(new Map());
+                        }
                     }
 
                     // Tự động tìm category "Địa Điểm Lân Cận" để dùng cho venue mới
@@ -392,29 +341,62 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                         if (nearbyCategory && nearbyCategory.id) {
                             setNewVenueCategoryId(nearbyCategory.id);
                         } else {
+                            // Nếu không tìm thấy, dùng category đầu tiên
                             setNewVenueCategoryId(venuesData[0].id);
                         }
                     } else {
+                        // Nếu không có venues nào, set ID mặc định "Địa Điểm Lân Cận"
+                        // Backend sẽ xử lý nếu category chưa tồn tại
                         setNewVenueCategoryId('a4d8d350-a850-11f0-a7b7-0a6aab4924ab');
                     }
                 } catch (error) {
-                    console.error('[HotelForm] Error loading entertainment venues:', error);
+                    console.error('[SuperHotelForm] Error loading entertainment venues:', error);
                     setEntertainmentVenuesByCategory([]);
+                    // Set ID mặc định khi có lỗi
                     setNewVenueCategoryId('a4d8d350-a850-11f0-a7b7-0a6aab4924ab');
                 }
             } else {
                 setEntertainmentVenuesByCategory([]);
+                // Reset categoryId khi không có city
                 setNewVenueCategoryId('');
             }
         };
         loadVenues();
     }, [selectedCityId, isEditing, hotel]);
 
+    // Load policies khi component mount (super-admin chọn từ danh sách)
+    useEffect(() => {
+        const loadPolicies = async () => {
+            // Load cancellation policies (có thể không tồn tại API)
+            try {
+                const cancellationPoliciesData = await getAllCancellationPolicies();
+                setCancellationPolicies(cancellationPoliciesData);
+            } catch (error: any) {
+                // Nếu API không tồn tại (404), để trống danh sách
+                console.warn('[SuperHotelForm] Cancellation policies API không tồn tại hoặc có lỗi:', error?.response?.status || error?.message);
+                setCancellationPolicies([]);
+            }
+
+            // Load reschedule policies (có thể không tồn tại API)
+            try {
+                const reschedulePoliciesData = await getAllReschedulePolicies();
+                setReschedulePolicies(reschedulePoliciesData);
+            } catch (error: any) {
+                // Nếu API không tồn tại (404), để trống danh sách
+                console.warn('[SuperHotelForm] Reschedule policies API không tồn tại hoặc có lỗi:', error?.response?.status || error?.message);
+                setReschedulePolicies([]);
+            }
+
+            // Identification documents - API không tồn tại, để trống
+            // TODO: Thêm API endpoint hoặc hardcode danh sách documents
+            setIdentificationDocuments([]);
+        };
+        loadPolicies();
+    }, []);
+
     // Load policy data từ hotel nếu đang edit
     useEffect(() => {
-        if (!isEditing || !hotel) return;
-
-        if ('policy' in hotel && hotel.policy) {
+        if (hotel && 'policy' in hotel && hotel.policy) {
             const policy = hotel.policy as any;
             if (policy.checkInTime) {
                 setCheckInTime(policy.checkInTime);
@@ -429,7 +411,6 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                 const docIds = new Set<string>(policy.requiredIdentificationDocuments.map((doc: { id: string }) => doc.id));
                 setSelectedDocumentIds(docIds);
             }
-            // Load policy IDs nếu có
             if (policy.cancellationPolicy?.id) {
                 setCancellationPolicyId(policy.cancellationPolicy.id);
             }
@@ -437,8 +418,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                 setReschedulePolicyId(policy.reschedulePolicy.id);
             }
         }
-    }, [hotel, isEditing]);
-
+    }, [hotel]);
 
     // Handler để cập nhật venues riêng (test)
     const handleUpdateVenuesOnly = async () => {
@@ -448,24 +428,15 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
         }
 
         try {
-            const { updateHotelAction } = await import('@/lib/actions/hotelActions');
+            const { updateHotelServer } = await import('@/lib/AdminAPI/hotelService');
             const { toast } = await import('react-toastify');
 
             const formData = new FormData();
 
-            // Phân biệt venues cần ADD (mới), UPDATE (đã có trong hotel) và REMOVE (bị bỏ chọn)
+            // Phân biệt venues cần ADD (mới) và UPDATE (đã có trong hotel)
             const existingVenueIds = new Set(hotelVenueDistances.keys());
-            const selectedVenueIds = new Set(selectedVenues.map(v => v.venueId));
             const venuesToUpdate: Array<{ venueId: string; distance: number }> = [];
             const venuesToAdd: Array<{ venueId: string; distance: number }> = [];
-            const venuesToRemove: string[] = [];
-
-            // Tìm venues cần REMOVE (có trong hotel nhưng không còn trong selectedVenues)
-            existingVenueIds.forEach((venueId) => {
-                if (!selectedVenueIds.has(venueId)) {
-                    venuesToRemove.push(venueId);
-                }
-            });
 
             selectedVenues.forEach((venue) => {
                 if (existingVenueIds.has(venue.venueId)) {
@@ -475,17 +446,10 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                 }
             });
 
-            console.log('[HotelForm] 🧪 Testing venue update:');
+            console.log('[SuperHotelForm] 🧪 Testing venue update:');
             console.log('  - Venues to UPDATE:', venuesToUpdate);
             console.log('  - Venues to ADD:', venuesToAdd);
-            console.log('  - Venues to REMOVE:', venuesToRemove);
             console.log('  - New venues:', newVenues);
-
-            // Append venues cần REMOVE
-            venuesToRemove.forEach((venueId) => {
-                formData.append('entertainmentVenueIdsToRemove[]', venueId);
-                console.log(`  - REMOVE: ${venueId}`);
-            });
 
             // Append venues cần UPDATE
             venuesToUpdate.forEach((venue, index) => {
@@ -514,19 +478,14 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
             });
 
             // Log tất cả FormData entries
-            console.log('[HotelForm] 📤 FormData entries:');
+            console.log('[SuperHotelForm] 📤 FormData entries:');
             for (const [key, value] of formData.entries()) {
                 console.log(`  ${key}:`, value);
             }
 
-            const result = await updateHotelAction(hotel.id, formData);
+            await updateHotelServer(hotel.id, formData);
 
-            if (result?.error) {
-                throw new Error(result.error);
-            }
-
-            const removeMsg = venuesToRemove.length > 0 ? `, xóa ${venuesToRemove.length} địa điểm` : '';
-            toast.success(`✅ Đã cập nhật ${venuesToUpdate.length} địa điểm${removeMsg}, thêm ${venuesToAdd.length + newVenues.length} địa điểm mới!`, {
+            toast.success(`✅ Đã cập nhật ${venuesToUpdate.length} địa điểm và thêm ${venuesToAdd.length + newVenues.length} địa điểm mới!`, {
                 position: "top-right",
                 autoClose: 3000,
             });
@@ -534,7 +493,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
             // Reload page để xem kết quả
             window.location.reload();
         } catch (error: any) {
-            console.error('[HotelForm] ❌ Error updating venues:', error);
+            console.error('[SuperHotelForm] ❌ Error updating venues:', error);
             const { toast } = await import('react-toastify');
             toast.error(error.message || 'Không thể cập nhật địa điểm. Vui lòng thử lại.', {
                 position: "top-right",
@@ -554,128 +513,91 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
             formData.append('images', item.file);
         });
 
-        // Chỉ append amenities, venues và policy khi đang EDIT
-        if (isEditing) {
-            // Append amenities (amenityIdsToAdd)
-            selectedAmenityIds.forEach((amenityId) => {
-                formData.append('amenityIdsToAdd[]', amenityId);
-            });
+        // Append amenities (amenityIdsToAdd)
+        selectedAmenityIds.forEach((amenityId) => {
+            formData.append('amenityIdsToAdd[]', amenityId);
+        });
 
-            // Phân biệt venues cần ADD (mới), UPDATE (đã có trong hotel) và REMOVE (bị bỏ chọn)
-            // Venues đã có trong hotel (có trong hotelVenueDistances) → dùng entertainmentVenuesWithDistanceToUpdate
-            // Venues chưa có → dùng entertainmentVenuesWithDistanceToAdd
-            // Venues bị bỏ chọn (có trong hotel nhưng không còn trong selectedVenues) → dùng entertainmentVenueIdsToRemove
+        // Phân biệt venues cần ADD (mới) và UPDATE (đã có trong hotel)
+        // Venues đã có trong hotel (có trong hotelVenueDistances) → dùng entertainmentVenuesWithDistanceToUpdate
+        // Venues chưa có → dùng entertainmentVenuesWithDistanceToAdd
 
-            const existingVenueIds = new Set(hotelVenueDistances.keys()); // Venues đã có trong hotel
-            const selectedVenueIds = new Set(selectedVenues.map(v => v.venueId)); // Venues hiện đang được chọn
-            const venuesToUpdate: Array<{ venueId: string; distance: number }> = [];
-            const venuesToAdd: Array<{ venueId: string; distance: number }> = [];
-            const venuesToRemove: string[] = [];
+        const existingVenueIds = new Set(hotelVenueDistances.keys()); // Venues đã có trong hotel
+        const venuesToUpdate: Array<{ venueId: string; distance: number }> = [];
+        const venuesToAdd: Array<{ venueId: string; distance: number }> = [];
 
-            console.log('[HotelForm] 📋 Processing venues for submit:');
-            console.log('  - Existing venue IDs from hotel:', Array.from(existingVenueIds));
-            console.log('  - Selected venue IDs:', Array.from(selectedVenueIds));
-            console.log('  - Selected venues:', selectedVenues);
+        console.log('[SuperHotelForm] 📋 Processing venues for submit:');
+        console.log('  - Existing venue IDs from hotel:', Array.from(existingVenueIds));
+        console.log('  - Selected venues:', selectedVenues);
 
-            // Tìm venues cần REMOVE (có trong hotel nhưng không còn trong selectedVenues)
-            existingVenueIds.forEach((venueId) => {
-                if (!selectedVenueIds.has(venueId)) {
-                    venuesToRemove.push(venueId);
-                    console.log(`  🗑️ Venue ${venueId} → REMOVE (đã bỏ chọn)`);
-                }
-            });
-
-            selectedVenues.forEach((venue) => {
-                if (existingVenueIds.has(venue.venueId)) {
-                    // Venue đã có trong hotel → UPDATE
-                    venuesToUpdate.push(venue);
-                    console.log(`  ✅ Venue ${venue.venueId} → UPDATE (distance: ${venue.distance} km)`);
-                } else {
-                    // Venue chưa có trong hotel → ADD
-                    venuesToAdd.push(venue);
-                    console.log(`  ➕ Venue ${venue.venueId} → ADD (distance: ${venue.distance} km)`);
-                }
-            });
-
-            console.log(`[HotelForm] 📊 Summary: ${venuesToUpdate.length} to UPDATE, ${venuesToAdd.length} to ADD, ${venuesToRemove.length} to REMOVE`);
-
-            // Append venues cần REMOVE (bị bỏ chọn)
-            venuesToRemove.forEach((venueId) => {
-                formData.append('entertainmentVenueIdsToRemove[]', venueId);
-                console.log(`[HotelForm] 📤 REMOVE: ${venueId}`);
-            });
-
-            // Append venues cần UPDATE (đã có trong hotel)
-            // Backend lưu distance theo meters, form nhập theo km → cần convert km → meters
-            venuesToUpdate.forEach((venue, index) => {
-                formData.append(`entertainmentVenuesWithDistanceToUpdate[${index}].entertainmentVenueId`, venue.venueId);
-                // Convert km → meters (nhân 1000)
-                const distanceInMeters = Math.round(venue.distance * 1000);
-                formData.append(`entertainmentVenuesWithDistanceToUpdate[${index}].distance`, distanceInMeters.toString());
-                console.log(`[HotelForm] 📤 UPDATE[${index}]: ${venue.venueId} = ${distanceInMeters}m (${venue.distance}km)`);
-            });
-
-            // Append venues cần ADD (chưa có trong hotel)
-            // Backend lưu distance theo meters, form nhập theo km → cần convert km → meters
-            venuesToAdd.forEach((venue, index) => {
-                formData.append(`entertainmentVenuesWithDistanceToAdd[${index}].entertainmentVenueId`, venue.venueId);
-                // Convert km → meters (nhân 1000)
-                const distanceInMeters = Math.round(venue.distance * 1000);
-                formData.append(`entertainmentVenuesWithDistanceToAdd[${index}].distance`, distanceInMeters.toString());
-                console.log(`[HotelForm] 📤 ADD[${index}]: ${venue.venueId} = ${distanceInMeters}m (${venue.distance}km)`);
-            });
-
-            // Append entertainment venues mới (entertainmentVenuesToAdd)
-            // Backend lưu distance theo meters, form nhập theo km → cần convert km → meters
-            newVenues.forEach((venue, index) => {
-                formData.append(`entertainmentVenuesToAdd[${index}].name`, venue.name);
-                // Convert km → meters (nhân 1000)
-                const distanceInMeters = Math.round(venue.distance * 1000);
-                formData.append(`entertainmentVenuesToAdd[${index}].distance`, distanceInMeters.toString());
-                formData.append(`entertainmentVenuesToAdd[${index}].cityId`, selectedCityId);
-                formData.append(`entertainmentVenuesToAdd[${index}].categoryId`, venue.categoryId);
-            });
-
-            // Append policy data
-            if (checkInTime) {
-                formData.append('policy.checkInTime', checkInTime);
-            }
-            if (checkOutTime) {
-                formData.append('policy.checkOutTime', checkOutTime);
-            }
-            formData.append('policy.allowsPayAtHotel', allowsPayAtHotel.toString());
-
-            // Append required identification documents
-            selectedDocumentIds.forEach((docId) => {
-                formData.append('policy.requiredIdentificationDocumentIdsToAdd[]', docId);
-            });
-
-            // Append cancellation and reschedule policy IDs (chọn từ danh sách)
-            if (cancellationPolicyId) {
-                formData.append('policy.cancellationPolicyId', cancellationPolicyId);
-            }
-            if (reschedulePolicyId) {
-                formData.append('policy.reschedulePolicyId', reschedulePolicyId);
-            }
-
-            // Debug: Log tất cả FormData entries liên quan đến policy TRƯỚC KHI GỬI
-            console.log('[HotelForm] 📤 FormData entries (policy-related) BEFORE submit:');
-            const policyEntries: Array<[string, any]> = [];
-            for (const [key, value] of formData.entries()) {
-                if (key.includes('policy')) {
-                    policyEntries.push([key, value instanceof File ? `[File: ${value.name}]` : value]);
-                    console.log(`  ${key}:`, value instanceof File ? `[File: ${value.name}]` : value);
-                }
-            }
-
-            if (policyEntries.length === 0) {
-                console.warn('[HotelForm] ⚠️ No policy-related entries found in FormData!');
+        selectedVenues.forEach((venue) => {
+            if (existingVenueIds.has(venue.venueId)) {
+                // Venue đã có trong hotel → UPDATE
+                venuesToUpdate.push(venue);
+                console.log(`  ✅ Venue ${venue.venueId} → UPDATE (distance: ${venue.distance} km)`);
             } else {
-                console.log(`[HotelForm] ✅ Found ${policyEntries.length} policy-related entries`);
+                // Venue chưa có trong hotel → ADD
+                venuesToAdd.push(venue);
+                console.log(`  ➕ Venue ${venue.venueId} → ADD (distance: ${venue.distance} km)`);
             }
+        });
+
+        console.log(`[SuperHotelForm] 📊 Summary: ${venuesToUpdate.length} to UPDATE, ${venuesToAdd.length} to ADD`);
+
+        // Append venues cần UPDATE (đã có trong hotel)
+        // Backend lưu distance theo meters, form nhập theo km → cần convert km → meters
+        venuesToUpdate.forEach((venue, index) => {
+            formData.append(`entertainmentVenuesWithDistanceToUpdate[${index}].entertainmentVenueId`, venue.venueId);
+            // Convert km → meters (nhân 1000)
+            const distanceInMeters = Math.round(venue.distance * 1000);
+            formData.append(`entertainmentVenuesWithDistanceToUpdate[${index}].distance`, distanceInMeters.toString());
+            console.log(`[SuperHotelForm] 📤 UPDATE[${index}]: ${venue.venueId} = ${distanceInMeters}m (${venue.distance}km)`);
+        });
+
+        // Append venues cần ADD (chưa có trong hotel)
+        // Backend lưu distance theo meters, form nhập theo km → cần convert km → meters
+        venuesToAdd.forEach((venue, index) => {
+            formData.append(`entertainmentVenuesWithDistanceToAdd[${index}].entertainmentVenueId`, venue.venueId);
+            // Convert km → meters (nhân 1000)
+            const distanceInMeters = Math.round(venue.distance * 1000);
+            formData.append(`entertainmentVenuesWithDistanceToAdd[${index}].distance`, distanceInMeters.toString());
+            console.log(`[SuperHotelForm] 📤 ADD[${index}]: ${venue.venueId} = ${distanceInMeters}m (${venue.distance}km)`);
+        });
+
+        // Append entertainment venues mới (entertainmentVenuesToAdd)
+        // Backend lưu distance theo meters, form nhập theo km → cần convert km → meters
+        newVenues.forEach((venue, index) => {
+            formData.append(`entertainmentVenuesToAdd[${index}].name`, venue.name);
+            // Convert km → meters (nhân 1000)
+            const distanceInMeters = Math.round(venue.distance * 1000);
+            formData.append(`entertainmentVenuesToAdd[${index}].distance`, distanceInMeters.toString());
+            formData.append(`entertainmentVenuesToAdd[${index}].cityId`, selectedCityId);
+            formData.append(`entertainmentVenuesToAdd[${index}].categoryId`, venue.categoryId);
+        });
+
+        // Append policy data
+        if (checkInTime) {
+            formData.append('policy.checkInTime', checkInTime);
+        }
+        if (checkOutTime) {
+            formData.append('policy.checkOutTime', checkOutTime);
+        }
+        formData.append('policy.allowsPayAtHotel', allowsPayAtHotel.toString());
+
+        // Append required identification documents
+        selectedDocumentIds.forEach((docId) => {
+            formData.append('policy.requiredIdentificationDocumentIdsToAdd[]', docId);
+        });
+
+        // Append cancellation and reschedule policy IDs (super-admin chọn từ danh sách)
+        if (cancellationPolicyId) {
+            formData.append('policy.cancellationPolicyId', cancellationPolicyId);
+        }
+        if (reschedulePolicyId) {
+            formData.append('policy.reschedulePolicyId', reschedulePolicyId);
         }
 
-        // Gọi formAction với FormData
+        // Gọi formAction với FormData đã có ảnh, amenities, venues và policy
         formAction(formData);
     };
 
@@ -852,7 +774,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                     value={selectedCityId}
                                     onChange={async (e) => {
                                         const newCityId = e.target.value;
-                                        console.log('[HotelForm] City changed to:', newCityId);
+                                        console.log('[SuperHotelForm] City changed to:', newCityId);
                                         setSelectedCityId(newCityId);
                                         if (newCityId && newCityId.trim() !== '') {
                                             await loadDistricts(newCityId);
@@ -1047,80 +969,51 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                         <div className="space-y-2">
                             <label htmlFor="partnerId" className="block text-sm font-semibold text-gray-700">
                                 Đối tác <span className="text-red-500">*</span>
-                                {isPartner && (
-                                    <span className="ml-2 text-xs text-gray-500 font-normal">
-                                        (Bạn đang tạo khách sạn cho chính mình)
-                                    </span>
-                                )}
                             </label>
 
-                            {/* Nếu là partner: hiển thị thông tin và dùng hidden input */}
-                            {isPartner ? (
-                                <div>
-                                    <input
-                                        type="hidden"
-                                        name="partnerId"
-                                        id="partnerId"
-                                        value={currentPartnerId}
-                                    />
-                                    <div className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 text-sm">
-                                        {effectiveUser?.fullName} ({effectiveUser?.email})
-                                    </div>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        Khách sạn sẽ được tạo cho tài khoản của bạn
-                                    </p>
+                            {/* Super-admin luôn hiển thị dropdown để chọn partner */}
+                            {isLoadingPartners ? (
+                                <div className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-500 text-sm">
+                                    Đang tải danh sách đối tác...
                                 </div>
-                            ) : isAdmin ? (
-                                // Nếu là admin: hiển thị dropdown để chọn partner
-                                <>
-                                    {isLoadingPartners ? (
-                                        <div className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-500 text-sm">
-                                            Đang tải danh sách đối tác...
-                                        </div>
-                                    ) : partners.length === 0 ? (
-                                        <div className="block w-full px-3 py-2.5 border border-yellow-300 rounded-md shadow-sm bg-yellow-50 text-yellow-700 text-sm">
-                                            ⚠️ Chưa có đối tác nào trong hệ thống. Vui lòng tạo đối tác trước khi tạo khách sạn.
-                                        </div>
-                                    ) : (
-                                        <select
-                                            id="partnerId"
-                                            name="partnerId"
-                                            required
-                                            value={selectedPartnerId}
-                                            onChange={(e) => setSelectedPartnerId(e.target.value)}
-                                            className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
-                                        >
-                                            <option value="">Chọn đối tác</option>
-                                            {partners.filter(p => p.id && String(p.id).trim()).map((partner, index) => (
-                                                <option key={`partner-${partner.id}-${index}`} value={partner.id}>
-                                                    {partner.fullName} ({partner.email})
-                                                </option>
-                                            ))}
-                                        </select>
-                                    )}
-                                    <div className="mt-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setShowCreatePartnerModal(true);
-                                                setCreatePartnerError(null);
-                                                setNewPartnerEmail('');
-                                                setNewPartnerPassword('');
-                                                setNewPartnerFullName('');
-                                                setNewPartnerPhone('');
-                                            }}
-                                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors"
-                                        >
-                                            <PlusIcon className="h-4 w-4" />
-                                            {partners.length === 0 ? 'Tạo đối tác mới' : 'Thêm đối tác mới'}
-                                        </button>
-                                    </div>
-                                </>
+                            ) : partners.length === 0 ? (
+                                <div className="block w-full px-3 py-2.5 border border-yellow-300 rounded-md shadow-sm bg-yellow-50 text-yellow-700 text-sm">
+                                    ⚠️ Chưa có đối tác nào trong hệ thống. Vui lòng tạo đối tác trước khi tạo khách sạn.
+                                </div>
                             ) : (
-                                <div className="block w-full px-3 py-2.5 border border-red-300 rounded-md shadow-sm bg-red-50 text-red-700 text-sm">
-                                    ⚠️ Bạn không có quyền tạo khách sạn
-                                </div>
+                                <select
+                                    id="partnerId"
+                                    name="partnerId"
+                                    required
+                                    value={selectedPartnerId}
+                                    onChange={(e) => setSelectedPartnerId(e.target.value)}
+                                    className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
+                                >
+                                    <option value="">Chọn đối tác</option>
+                                    {partners.filter(p => p.id && String(p.id).trim()).map((partner, index) => (
+                                        <option key={`partner-${partner.id}-${index}`} value={partner.id}>
+                                            {partner.fullName} ({partner.email})
+                                        </option>
+                                    ))}
+                                </select>
                             )}
+                            <div className="mt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowCreatePartnerModal(true);
+                                        setCreatePartnerError(null);
+                                        setNewPartnerEmail('');
+                                        setNewPartnerPassword('');
+                                        setNewPartnerFullName('');
+                                        setNewPartnerPhone('');
+                                    }}
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors"
+                                >
+                                    <PlusIcon className="h-4 w-4" />
+                                    {partners.length === 0 ? 'Tạo đối tác mới' : 'Thêm đối tác mới'}
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -1250,576 +1143,604 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                         </div>
                     </div>
 
-                    {/* Tiện ích, Địa điểm lân cận, Chính sách - CHỈ HIỂN THỊ KHI EDIT (Partner update hotel) */}
-                    {isEditing && (
-                        <>
-                            {/* Tiện ích (Amenities) */}
-                            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                                <div className="flex items-center gap-2 mb-6 pb-3 border-b border-gray-200">
-                                    <div className="w-1 h-6 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></div>
-                                    <h3 className="text-lg font-semibold text-gray-800">Tiện ích</h3>
-                                </div>
-                                <div className="space-y-4">
-                                    {/* Tiện ích chính */}
-                                    {(() => {
-                                        const freeAmenities = amenities.filter(a => a.free);
-                                        const selectedOtherAmenities = amenities.filter(a => !a.free && selectedAmenityIds.has(a.id));
-                                        const displayLimit = 10;
-                                        const amenitiesToShow = showAllMainAmenities
-                                            ? [...freeAmenities, ...selectedOtherAmenities]
-                                            : [...freeAmenities, ...selectedOtherAmenities].slice(0, displayLimit);
-                                        const hasMore = (freeAmenities.length + selectedOtherAmenities.length) > displayLimit;
+                    {/* Tiện ích (Amenities) */}
+                    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                        <div className="flex items-center gap-2 mb-6 pb-3 border-b border-gray-200">
+                            <div className="w-1 h-6 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></div>
+                            <h3 className="text-lg font-semibold text-gray-800">Tiện ích</h3>
+                        </div>
+                        <div className="space-y-4">
 
-                                        if (freeAmenities.length > 0 || selectedOtherAmenities.length > 0) {
-                                            return (
-                                                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                                                    <h4 className="text-sm font-semibold text-green-800 mb-3 flex items-center gap-2">
-                                                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                        </svg>
-                                                        Tiện ích chính
-                                                    </h4>
-                                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                                                        {amenitiesToShow
-                                                            .filter(amenity => amenity?.id && amenity?.name)
-                                                            .map((amenity) => (
-                                                                <div
-                                                                    key={amenity.id}
-                                                                    className="flex items-center gap-2 p-2 bg-white rounded-md border border-green-300 shadow-sm"
-                                                                >
-                                                                    <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                                    </svg>
-                                                                    <span className="text-sm text-gray-700 font-medium">{amenity.name || 'Không có tên'}</span>
-                                                                </div>
-                                                            ))}
-                                                    </div>
-                                                    {hasMore && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setShowAllMainAmenities(!showAllMainAmenities)}
-                                                            className="mt-3 text-sm font-medium text-green-700 hover:text-green-800 flex items-center gap-1 transition-colors"
+                            {/* Tiện ích chính */}
+                            {(() => {
+                                const freeAmenities = amenities.filter(a => a.free);
+                                const selectedOtherAmenities = amenities.filter(a => !a.free && selectedAmenityIds.has(a.id));
+                                const displayLimit = 10;
+                                const amenitiesToShow = showAllMainAmenities
+                                    ? [...freeAmenities, ...selectedOtherAmenities]
+                                    : [...freeAmenities, ...selectedOtherAmenities].slice(0, displayLimit);
+                                const hasMore = (freeAmenities.length + selectedOtherAmenities.length) > displayLimit;
+
+                                if (freeAmenities.length > 0 || selectedOtherAmenities.length > 0) {
+                                    return (
+                                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                                            <h4 className="text-sm font-semibold text-green-800 mb-3 flex items-center gap-2">
+                                                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                                Tiện ích chính
+                                            </h4>
+                                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                                                {amenitiesToShow
+                                                    .filter(amenity => amenity?.id && amenity?.name)
+                                                    .map((amenity) => (
+                                                        <div
+                                                            key={amenity.id}
+                                                            className="flex items-center gap-2 p-2 bg-white rounded-md border border-green-300 shadow-sm"
                                                         >
-                                                            {showAllMainAmenities ? (
-                                                                <>
-                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                                                                    </svg>
-                                                                    Thu gọn
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    Xem thêm ({freeAmenities.length + selectedOtherAmenities.length - displayLimit} tiện ích)
-                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                                                    </svg>
-                                                                </>
-                                                            )}
-                                                        </button>
-                                                    )}
-                                                    <p className="text-xs text-green-700 mt-3">
-                                                        {freeAmenities.length > 0 && "Các tiện ích miễn phí phổ biến đã được tự động gán vào khách sạn"}
-                                                        {selectedOtherAmenities.length > 0 && freeAmenities.length > 0 && " • "}
-                                                        {selectedOtherAmenities.length > 0 && `${selectedOtherAmenities.length} tiện ích khác đã được thêm`}
-                                                    </p>
-                                                </div>
-                                            );
-                                        }
-                                        return null;
-                                    })()}
-
-                                    {/* Thêm tiện ích khác */}
-                                    <div className="space-y-3">
-                                        <h4 className="text-sm font-semibold text-gray-700">Thêm tiện ích khác (nếu có)</h4>
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                value={searchAmenityQuery}
-                                                onChange={(e) => setSearchAmenityQuery(e.target.value)}
-                                                placeholder="Tìm kiếm và chọn thêm tiện ích..."
-                                                className="block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
-                                            />
-                                            {searchAmenityQuery && (
+                                                            <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                            <span className="text-sm text-gray-700 font-medium">{amenity.name || 'Không có tên'}</span>
+                                                        </div>
+                                                    ))}
+                                            </div>
+                                            {hasMore && (
                                                 <button
                                                     type="button"
-                                                    onClick={() => setSearchAmenityQuery('')}
-                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                                    onClick={() => setShowAllMainAmenities(!showAllMainAmenities)}
+                                                    className="mt-3 text-sm font-medium text-green-700 hover:text-green-800 flex items-center gap-1 transition-colors"
                                                 >
-                                                    <XMarkIcon className="h-5 w-5" />
+                                                    {showAllMainAmenities ? (
+                                                        <>
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                                            </svg>
+                                                            Thu gọn
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            Xem thêm ({freeAmenities.length + selectedOtherAmenities.length - displayLimit} tiện ích)
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                            </svg>
+                                                        </>
+                                                    )}
                                                 </button>
                                             )}
+                                            <p className="text-xs text-green-700 mt-3">
+                                                {freeAmenities.length > 0 && "Các tiện ích miễn phí phổ biến đã được tự động gán vào khách sạn"}
+                                                {selectedOtherAmenities.length > 0 && freeAmenities.length > 0 && " • "}
+                                                {selectedOtherAmenities.length > 0 && `${selectedOtherAmenities.length} tiện ích khác đã được thêm`}
+                                            </p>
                                         </div>
+                                    );
+                                }
+                                return null;
+                            })()}
 
-                                        {/* Danh sách amenities để chọn */}
-                                        {(() => {
-                                            const otherAmenities = amenities.filter(a => !a.free);
-                                            const filteredAmenities = searchAmenityQuery.trim()
-                                                ? otherAmenities.filter(a =>
-                                                    a.name.toLowerCase().includes(searchAmenityQuery.toLowerCase())
-                                                )
-                                                : otherAmenities;
+                            {/* Thêm tiện ích khác (nếu có) */}
+                            <div className="space-y-3">
+                                <h4 className="text-sm font-semibold text-gray-700">Thêm tiện ích khác (nếu có)</h4>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        value={searchAmenityQuery}
+                                        onChange={(e) => setSearchAmenityQuery(e.target.value)}
+                                        placeholder="Tìm kiếm và chọn thêm tiện ích..."
+                                        className="block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
+                                    />
+                                    {searchAmenityQuery && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setSearchAmenityQuery('')}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                        >
+                                            <XMarkIcon className="h-5 w-5" />
+                                        </button>
+                                    )}
+                                </div>
 
-                                            if (filteredAmenities.length > 0) {
-                                                return (
-                                                    <div className="border border-gray-200 rounded-lg p-4 max-h-64 overflow-y-auto">
+                                {/* Danh sách amenities để chọn (lọc theo search query, loại trừ free amenities) */}
+                                {(() => {
+                                    const otherAmenities = amenities.filter(a => !a.free);
+                                    const filteredAmenities = searchAmenityQuery.trim()
+                                        ? otherAmenities.filter(a =>
+                                            a.name.toLowerCase().includes(searchAmenityQuery.toLowerCase())
+                                        )
+                                        : otherAmenities;
+
+                                    if (filteredAmenities.length > 0) {
+                                        return (
+                                            <div className="border border-gray-200 rounded-lg p-4 max-h-64 overflow-y-auto">
+                                                <div className="space-y-2">
+                                                    {filteredAmenities
+                                                        .filter(amenity => amenity?.id && amenity?.name)
+                                                        .map((amenity) => (
+                                                            <label
+                                                                key={amenity.id}
+                                                                className="flex items-center space-x-3 cursor-pointer p-2 rounded-md hover:bg-gray-50 border border-gray-200"
+                                                            >
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={selectedAmenityIds.has(amenity.id)}
+                                                                    onChange={(e) => {
+                                                                        const newSet = new Set(selectedAmenityIds);
+                                                                        if (e.target.checked) {
+                                                                            newSet.add(amenity.id);
+                                                                        } else {
+                                                                            newSet.delete(amenity.id);
+                                                                        }
+                                                                        setSelectedAmenityIds(newSet);
+                                                                    }}
+                                                                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                                />
+                                                                <span className="text-sm text-gray-700 flex-1">
+                                                                    {amenity.name || 'Không có tên'}
+                                                                </span>
+                                                                {amenity?.category?.name && (
+                                                                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                                                        {amenity.category.name}
+                                                                    </span>
+                                                                )}
+                                                            </label>
+                                                        ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    } else if (searchAmenityQuery.trim()) {
+                                        return (
+                                            <div className="border border-gray-200 rounded-lg p-4 text-center text-sm text-gray-500">
+                                                Không tìm thấy tiện ích nào phù hợp với "{searchAmenityQuery}"
+                                            </div>
+                                        );
+                                    }
+                                    return null;
+                                })()}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Địa điểm lân cận (Entertainment Venues) */}
+                    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                        <div className="flex items-center gap-2 mb-6 pb-3 border-b border-gray-200">
+                            <div className="w-1 h-6 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></div>
+                            <h3 className="text-lg font-semibold text-gray-800">Địa điểm lân cận</h3>
+                        </div>
+                        <div className="space-y-4">
+                            {!selectedCityId ? (
+                                <p className="text-sm text-gray-500">Vui lòng chọn thành phố để xem danh sách địa điểm lân cận</p>
+                            ) : (
+                                <>
+                                    {/* Danh sách venues có sẵn */}
+                                    {entertainmentVenuesByCategory.length > 0 && (
+                                        <div className="space-y-4">
+                                            {entertainmentVenuesByCategory
+                                                .filter(categoryGroup => categoryGroup?.id && categoryGroup?.name)
+                                                .map((categoryGroup) => (
+                                                    <div key={categoryGroup.id || 'unknown'} className="border border-gray-200 rounded-lg p-4">
+                                                        <h4 className="text-sm font-medium text-gray-700 mb-3">{categoryGroup.name || 'Không có tên'}</h4>
                                                         <div className="space-y-2">
-                                                            {filteredAmenities
-                                                                .filter(amenity => amenity?.id && amenity?.name)
-                                                                .map((amenity) => (
-                                                                    <label
-                                                                        key={amenity.id}
-                                                                        className="flex items-center space-x-3 cursor-pointer p-2 rounded-md hover:bg-gray-50 border border-gray-200"
-                                                                    >
+                                                            {(categoryGroup.entertainmentVenues || []).map((venue) => {
+                                                                if (!venue?.id || !venue?.name) return null;
+                                                                const isSelected = selectedVenues.some(v => v.venueId === venue.id);
+                                                                const selectedVenue = selectedVenues.find(v => v.venueId === venue.id);
+                                                                return (
+                                                                    <div key={venue.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-50 border border-gray-200">
                                                                         <input
                                                                             type="checkbox"
-                                                                            checked={selectedAmenityIds.has(amenity.id)}
+                                                                            checked={isSelected}
                                                                             onChange={(e) => {
-                                                                                const newSet = new Set(selectedAmenityIds);
                                                                                 if (e.target.checked) {
-                                                                                    newSet.add(amenity.id);
+                                                                                    // Nếu venue đã có trong selectedVenues, không thêm lại
+                                                                                    const existingVenue = selectedVenues.find(v => v.venueId === venue.id);
+                                                                                    if (existingVenue) {
+                                                                                        // Đã có, không thêm lại
+                                                                                        return;
+                                                                                    }
+
+                                                                                    // Chưa có, kiểm tra xem có distance từ hotel data không
+                                                                                    let distanceToUse = 1; // Mặc định 1 km
+
+                                                                                    // Nếu có distance từ hotel data (đã lưu trước), dùng nó
+                                                                                    const savedDistanceInMeters = hotelVenueDistances.get(venue.id);
+                                                                                    if (savedDistanceInMeters != null) {
+                                                                                        // Convert meters → km
+                                                                                        distanceToUse = savedDistanceInMeters / 1000;
+                                                                                    } else if (venue.distance != null) {
+                                                                                        // Nếu venue từ API có distance (meters), convert sang km
+                                                                                        distanceToUse = venue.distance / 1000;
+                                                                                    }
+
+                                                                                    // Thêm venue với distance đã lấy được
+                                                                                    setSelectedVenues([...selectedVenues, { venueId: venue.id, distance: distanceToUse }]);
                                                                                 } else {
-                                                                                    newSet.delete(amenity.id);
+                                                                                    setSelectedVenues(selectedVenues.filter(v => v.venueId !== venue.id));
                                                                                 }
-                                                                                setSelectedAmenityIds(newSet);
                                                                             }}
                                                                             className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                                                         />
-                                                                        <span className="text-sm text-gray-700 flex-1">
-                                                                            {amenity.name || 'Không có tên'}
-                                                                        </span>
-                                                                        {amenity?.category?.name && (
-                                                                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                                                                {amenity.category.name}
-                                                                            </span>
+                                                                        <span className="flex-1 text-sm text-gray-700">{venue.name || 'Không có tên'}</span>
+                                                                        {isSelected && (
+                                                                            <input
+                                                                                type="number"
+                                                                                min="0.1"
+                                                                                step="0.1"
+                                                                                value={selectedVenue?.distance || 1}
+                                                                                onChange={(e) => {
+                                                                                    const distance = parseFloat(e.target.value);
+                                                                                    // Chỉ update nếu distance hợp lệ (> 0)
+                                                                                    if (!isNaN(distance) && distance > 0) {
+                                                                                        setSelectedVenues(selectedVenues.map(v =>
+                                                                                            v.venueId === venue.id ? { ...v, distance } : v
+                                                                                        ));
+                                                                                    }
+                                                                                }}
+                                                                                className="w-20 px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                                                placeholder="Km"
+                                                                            />
                                                                         )}
-                                                                    </label>
-                                                                ))}
+                                                                        {isSelected && (
+                                                                            <span className="text-xs text-gray-500">km</span>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })}
                                                         </div>
                                                     </div>
-                                                );
-                                            } else if (searchAmenityQuery.trim()) {
-                                                return (
-                                                    <div className="border border-gray-200 rounded-lg p-4 text-center text-sm text-gray-500">
-                                                        Không tìm thấy tiện ích nào phù hợp với "{searchAmenityQuery}"
-                                                    </div>
-                                                );
-                                            }
-                                            return null;
-                                        })()}
-                                    </div>
-                                </div>
-                            </div>
+                                                ))}
+                                        </div>
+                                    )}
 
-                            {/* Địa điểm lân cận (Entertainment Venues) */}
-                            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                                <div className="flex items-center gap-2 mb-6 pb-3 border-b border-gray-200">
-                                    <div className="w-1 h-6 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></div>
-                                    <h3 className="text-lg font-semibold text-gray-800">Địa điểm lân cận</h3>
-                                </div>
-                                <div className="space-y-4">
-                                    {!selectedCityId ? (
-                                        <p className="text-sm text-gray-500">Vui lòng chọn thành phố để xem danh sách địa điểm lân cận</p>
-                                    ) : (
-                                        <>
-                                            {/* Danh sách venues có sẵn */}
-                                            {entertainmentVenuesByCategory.length > 0 && (
-                                                <div className="space-y-4">
-                                                    {entertainmentVenuesByCategory
-                                                        .filter(categoryGroup => categoryGroup?.id && categoryGroup?.name)
-                                                        .map((categoryGroup) => (
-                                                            <div key={categoryGroup.id || 'unknown'} className="border border-gray-200 rounded-lg p-4">
-                                                                <h4 className="text-sm font-medium text-gray-700 mb-3">{categoryGroup.name || 'Không có tên'}</h4>
-                                                                <div className="space-y-2">
-                                                                    {(categoryGroup.entertainmentVenues || []).map((venue) => {
-                                                                        if (!venue?.id || !venue?.name) return null;
-                                                                        const isSelected = selectedVenues.some(v => v.venueId === venue.id);
-                                                                        const selectedVenue = selectedVenues.find(v => v.venueId === venue.id);
-                                                                        return (
-                                                                            <div key={venue.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-50 border border-gray-200">
-                                                                                <input
-                                                                                    type="checkbox"
-                                                                                    checked={isSelected}
-                                                                                    onChange={(e) => {
-                                                                                        if (e.target.checked) {
-                                                                                            // Nếu venue đã có trong selectedVenues, không thêm lại
-                                                                                            const existingVenue = selectedVenues.find(v => v.venueId === venue.id);
-                                                                                            if (existingVenue) {
-                                                                                                // Đã có, không thêm lại
-                                                                                                return;
-                                                                                            }
-
-                                                                                            // Chưa có, kiểm tra xem có distance từ hotel data không
-                                                                                            let distanceToUse = 1; // Mặc định 1 km
-
-                                                                                            // Nếu có distance từ hotel data (đã lưu trước), dùng nó
-                                                                                            const savedDistanceInMeters = hotelVenueDistances.get(venue.id);
-                                                                                            if (savedDistanceInMeters != null) {
-                                                                                                // Convert meters → km
-                                                                                                distanceToUse = savedDistanceInMeters / 1000;
-                                                                                            } else if (venue.distance != null) {
-                                                                                                // Nếu venue từ API có distance (meters), convert sang km
-                                                                                                distanceToUse = venue.distance / 1000;
-                                                                                            }
-
-                                                                                            // Thêm venue với distance đã lấy được
-                                                                                            setSelectedVenues([...selectedVenues, { venueId: venue.id, distance: distanceToUse }]);
-                                                                                        } else {
-                                                                                            setSelectedVenues(selectedVenues.filter(v => v.venueId !== venue.id));
-                                                                                        }
-                                                                                    }}
-                                                                                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                                                                />
-                                                                                <span className="flex-1 text-sm text-gray-700">{venue.name || 'Không có tên'}</span>
-                                                                                {isSelected && (
-                                                                                    <input
-                                                                                        type="number"
-                                                                                        min="0.1"
-                                                                                        step="0.1"
-                                                                                        value={selectedVenue?.distance || 1}
-                                                                                        onChange={(e) => {
-                                                                                            const distance = parseFloat(e.target.value);
-                                                                                            // Chỉ update nếu distance hợp lệ (> 0)
-                                                                                            if (!isNaN(distance) && distance > 0) {
-                                                                                                setSelectedVenues(selectedVenues.map(v =>
-                                                                                                    v.venueId === venue.id ? { ...v, distance } : v
-                                                                                                ));
-                                                                                            }
-                                                                                        }}
-                                                                                        className="w-20 px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                                                        placeholder="Km"
-                                                                                    />
-                                                                                )}
-                                                                                {isSelected && (
-                                                                                    <span className="text-xs text-gray-500">km</span>
-                                                                                )}
-                                                                            </div>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                </div>
-                                            )}
-
-                                            {/* Form thêm venue mới */}
-                                            <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                                                <h4 className="text-sm font-medium text-gray-700 mb-3">Thêm địa điểm mới</h4>
-                                                <p className="text-xs text-gray-500 mb-3">
-                                                    Địa điểm mới sẽ được tự động thêm vào danh mục "Địa Điểm Lân Cận"
-                                                </p>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                    <div>
-                                                        <input
-                                                            type="text"
-                                                            value={newVenueName}
-                                                            onChange={(e) => setNewVenueName(e.target.value)}
-                                                            placeholder="Tên địa điểm"
-                                                            className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <input
-                                                            type="number"
-                                                            min="0.1"
-                                                            step="0.1"
-                                                            value={newVenueDistance > 0 ? newVenueDistance : ''}
-                                                            onChange={(e) => {
-                                                                const value = e.target.value;
-                                                                const numValue = value ? parseFloat(value) : 0;
-                                                                setNewVenueDistance(numValue);
-                                                            }}
-                                                            placeholder="Khoảng cách (km)"
-                                                            className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        let categoryIdToUse = newVenueCategoryId;
-                                                        if (!categoryIdToUse) {
-                                                            if (entertainmentVenuesByCategory.length > 0) {
-                                                                const nearbyCategory = entertainmentVenuesByCategory.find(cat =>
-                                                                    cat?.name && (
-                                                                        cat.name.toLowerCase().includes('lân cận') ||
-                                                                        cat.name.toLowerCase().includes('địa điểm lân cận') ||
-                                                                        cat.name.toLowerCase().includes('nearby')
-                                                                    )
-                                                                );
-                                                                categoryIdToUse = nearbyCategory?.id || entertainmentVenuesByCategory[0].id;
-                                                            }
-                                                        }
-                                                        if (!categoryIdToUse) {
-                                                            categoryIdToUse = 'a4d8d350-a850-11f0-a7b7-0a6aab4924ab';
-                                                        }
-
-                                                        const isValid = newVenueName.trim() &&
-                                                            newVenueDistance > 0 &&
-                                                            categoryIdToUse &&
-                                                            selectedCityId;
-
-                                                        if (isValid) {
-                                                            setNewVenues([...newVenues, {
-                                                                name: newVenueName.trim(),
-                                                                distance: newVenueDistance,
-                                                                categoryId: categoryIdToUse
-                                                            }]);
-                                                            setNewVenueName('');
-                                                            setNewVenueDistance(0);
-                                                        }
-                                                    }}
-                                                    disabled={!newVenueName.trim() ||
-                                                        !newVenueDistance ||
-                                                        newVenueDistance <= 0 ||
-                                                        !selectedCityId}
-                                                    className="mt-3 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-sm"
-                                                >
-                                                    <PlusIcon className="h-4 w-4 inline mr-1" />
-                                                    Thêm địa điểm
-                                                </button>
+                                    {/* Form thêm venue mới */}
+                                    <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                                        <h4 className="text-sm font-medium text-gray-700 mb-3">Thêm địa điểm mới</h4>
+                                        <p className="text-xs text-gray-500 mb-3">
+                                            Địa điểm mới sẽ được tự động thêm vào danh mục "Địa Điểm Lân Cận"
+                                        </p>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            <div>
+                                                <input
+                                                    type="text"
+                                                    value={newVenueName}
+                                                    onChange={(e) => setNewVenueName(e.target.value)}
+                                                    placeholder="Tên địa điểm"
+                                                    className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
+                                                />
                                             </div>
+                                            <div>
+                                                <input
+                                                    type="number"
+                                                    min="0.1"
+                                                    step="0.1"
+                                                    value={newVenueDistance > 0 ? newVenueDistance : ''}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        const numValue = value ? parseFloat(value) : 0;
+                                                        setNewVenueDistance(numValue);
+                                                        console.log('[SuperHotelForm] Distance changed:', numValue);
+                                                    }}
+                                                    placeholder="Khoảng cách (km)"
+                                                    className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
+                                                />
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                // Tự động tìm category "Địa Điểm Lân Cận"
+                                                let categoryIdToUse = newVenueCategoryId;
 
-                                            {/* Danh sách venues đã chọn */}
-                                            {(selectedVenues.length > 0 || newVenues.length > 0) && (
-                                                <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
-                                                    <div className="flex items-center justify-between mb-3">
-                                                        <h4 className="text-sm font-medium text-gray-700">
-                                                            Địa điểm đã chọn ({selectedVenues.length + newVenues.length})
-                                                        </h4>
-                                                        {isEditing && (
+                                                // Nếu chưa có, tìm từ danh sách đã load hoặc dùng ID mặc định
+                                                if (!categoryIdToUse) {
+                                                    if (entertainmentVenuesByCategory.length > 0) {
+                                                        // Tìm category có tên chứa "lân cận" hoặc "địa điểm lân cận"
+                                                        const nearbyCategory = entertainmentVenuesByCategory.find(cat =>
+                                                            cat?.name && (
+                                                                cat.name.toLowerCase().includes('lân cận') ||
+                                                                cat.name.toLowerCase().includes('địa điểm lân cận') ||
+                                                                cat.name.toLowerCase().includes('nearby')
+                                                            )
+                                                        );
+                                                        categoryIdToUse = nearbyCategory?.id || entertainmentVenuesByCategory[0].id;
+                                                    }
+                                                }
+
+                                                // Luôn có fallback ID mặc định nếu vẫn chưa có
+                                                if (!categoryIdToUse) {
+                                                    categoryIdToUse = 'a4d8d350-a850-11f0-a7b7-0a6aab4924ab';
+                                                }
+
+                                                const isValid = newVenueName.trim() &&
+                                                    newVenueDistance > 0 &&
+                                                    categoryIdToUse &&
+                                                    selectedCityId;
+
+                                                if (isValid) {
+                                                    // Thêm vào newVenues để backend tạo venue mới
+                                                    setNewVenues([...newVenues, {
+                                                        name: newVenueName.trim(),
+                                                        distance: newVenueDistance,
+                                                        categoryId: categoryIdToUse
+                                                    }]);
+                                                    // Reset form
+                                                    setNewVenueName('');
+                                                    setNewVenueDistance(0);
+                                                } else {
+                                                    console.log('[SuperHotelForm] Cannot add venue:', {
+                                                        hasName: !!newVenueName.trim(),
+                                                        hasDistance: newVenueDistance > 0,
+                                                        hasCity: !!selectedCityId,
+                                                        categoryId: categoryIdToUse
+                                                    });
+                                                }
+                                            }}
+                                            disabled={(() => {
+                                                const isDisabled = !newVenueName.trim() ||
+                                                    !newVenueDistance ||
+                                                    newVenueDistance <= 0 ||
+                                                    !selectedCityId;
+
+                                                // Debug log khi button bị disabled
+                                                if (isDisabled && newVenueName.trim() && newVenueDistance > 0) {
+                                                    console.log('[SuperHotelForm] Button disabled - missing:', {
+                                                        hasName: !!newVenueName.trim(),
+                                                        hasDistance: newVenueDistance > 0,
+                                                        hasCity: !!selectedCityId,
+                                                        cityId: selectedCityId
+                                                    });
+                                                }
+
+                                                return isDisabled;
+                                            })()}
+                                            className="mt-3 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-sm"
+                                        >
+                                            <PlusIcon className="h-4 w-4 inline mr-1" />
+                                            Thêm địa điểm
+                                        </button>
+                                    </div>
+
+                                    {/* Danh sách venues đã chọn */}
+                                    {(selectedVenues.length > 0 || newVenues.length > 0) && (
+                                        <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <h4 className="text-sm font-medium text-gray-700">
+                                                    Địa điểm đã chọn ({selectedVenues.length + newVenues.length})
+                                                </h4>
+                                                {isEditing && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleUpdateVenuesOnly}
+                                                        className="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-600 rounded-lg hover:from-green-700 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all shadow-sm"
+                                                    >
+                                                        🔄 Cập nhật địa điểm
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div className="space-y-2">
+                                                {/* Venues có sẵn */}
+                                                {selectedVenues.map((venue, index) => {
+                                                    const venueInfo = entertainmentVenuesByCategory
+                                                        .flatMap(cat => cat?.entertainmentVenues || [])
+                                                        .find(v => v?.id === venue.venueId);
+                                                    return (
+                                                        <div key={`existing-${index}`} className="flex items-center justify-between p-2 bg-white rounded-md border border-gray-200">
+                                                            <span className="text-sm text-gray-700">
+                                                                {venueInfo?.name || 'Không xác định'}
+                                                            </span>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-sm text-gray-600">{venue.distance} km</span>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setSelectedVenues(selectedVenues.filter((_, i) => i !== index));
+                                                                    }}
+                                                                    className="text-red-600 hover:text-red-800"
+                                                                >
+                                                                    <XMarkIcon className="h-4 w-4" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                                {/* Venues mới */}
+                                                {newVenues.map((venue, index) => (
+                                                    <div key={`new-${index}`} className="flex items-center justify-between p-2 bg-white rounded-md border border-gray-200">
+                                                        <span className="text-sm text-gray-700">
+                                                            {venue.name} <span className="text-xs text-blue-600">(Mới)</span>
+                                                        </span>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-sm text-gray-600">{venue.distance} km</span>
                                                             <button
                                                                 type="button"
-                                                                onClick={handleUpdateVenuesOnly}
-                                                                className="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-600 rounded-lg hover:from-green-700 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all shadow-sm"
-                                                            >
-                                                                🔄 Cập nhật địa điểm
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        {selectedVenues.map((venue, index) => {
-                                                            const venueInfo = entertainmentVenuesByCategory
-                                                                .flatMap(cat => cat?.entertainmentVenues || [])
-                                                                .find(v => v?.id === venue.venueId);
-                                                            return (
-                                                                <div key={`existing-${index}`} className="flex items-center justify-between p-2 bg-white rounded-md border border-gray-200">
-                                                                    <span className="text-sm text-gray-700">
-                                                                        {venueInfo?.name || 'Không xác định'}
-                                                                    </span>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span className="text-sm text-gray-600">{venue.distance} km</span>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => {
-                                                                                setSelectedVenues(selectedVenues.filter((_, i) => i !== index));
-                                                                            }}
-                                                                            className="text-red-600 hover:text-red-800"
-                                                                        >
-                                                                            <XMarkIcon className="h-4 w-4" />
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                        {newVenues.map((venue, index) => (
-                                                            <div key={`new-${index}`} className="flex items-center justify-between p-2 bg-white rounded-md border border-gray-200">
-                                                                <span className="text-sm text-gray-700">
-                                                                    {venue.name} <span className="text-xs text-blue-600">(Mới)</span>
-                                                                </span>
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="text-sm text-gray-600">{venue.distance} km</span>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => {
-                                                                            setNewVenues(newVenues.filter((_, i) => i !== index));
-                                                                        }}
-                                                                        className="text-red-600 hover:text-red-800"
-                                                                    >
-                                                                        <XMarkIcon className="h-4 w-4" />
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Chính sách (Policy) */}
-                            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                                <div className="flex items-center gap-2 mb-6 pb-3 border-b border-gray-200">
-                                    <div className="w-1 h-6 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></div>
-                                    <h3 className="text-lg font-semibold text-gray-800">Chính sách</h3>
-                                </div>
-                                <div className="space-y-6">
-                                    {/* Check-in/Check-out Time */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label htmlFor="checkInTime" className="block text-sm font-medium text-gray-700 mb-2">
-                                                Giờ nhận phòng <span className="text-red-500">*</span>
-                                            </label>
-                                            <input
-                                                type="time"
-                                                id="checkInTime"
-                                                value={checkInTime}
-                                                onChange={(e) => setCheckInTime(e.target.value)}
-                                                required
-                                                className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label htmlFor="checkOutTime" className="block text-sm font-medium text-gray-700 mb-2">
-                                                Giờ trả phòng <span className="text-red-500">*</span>
-                                            </label>
-                                            <input
-                                                type="time"
-                                                id="checkOutTime"
-                                                value={checkOutTime}
-                                                onChange={(e) => setCheckOutTime(e.target.value)}
-                                                required
-                                                className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Allows Pay at Hotel */}
-                                    <div>
-                                        <label className="flex items-center gap-3 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={allowsPayAtHotel}
-                                                onChange={(e) => setAllowsPayAtHotel(e.target.checked)}
-                                                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 w-5 h-5"
-                                            />
-                                            <span className="text-sm font-medium text-gray-700">
-                                                Cho phép thanh toán tại khách sạn
-                                            </span>
-                                        </label>
-                                        <p className="text-xs text-gray-500 mt-1 ml-8">
-                                            Khách hàng có thể thanh toán trực tiếp tại khách sạn khi check-in
-                                        </p>
-                                    </div>
-
-                                    {/* Required Identification Documents */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Giấy tờ tùy thân yêu cầu
-                                        </label>
-                                        {identificationDocuments.length > 0 ? (
-                                            <div className="border border-gray-200 rounded-lg p-4 max-h-48 overflow-y-auto">
-                                                <div className="space-y-2">
-                                                    {identificationDocuments.map((doc) => (
-                                                        <label
-                                                            key={doc.id}
-                                                            className="flex items-center space-x-3 cursor-pointer p-2 rounded-md hover:bg-gray-50 border border-gray-200"
-                                                        >
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={selectedDocumentIds.has(doc.id)}
-                                                                onChange={(e) => {
-                                                                    const newSet = new Set(selectedDocumentIds);
-                                                                    if (e.target.checked) {
-                                                                        newSet.add(doc.id);
-                                                                    } else {
-                                                                        newSet.delete(doc.id);
-                                                                    }
-                                                                    setSelectedDocumentIds(newSet);
+                                                                onClick={() => {
+                                                                    setNewVenues(newVenues.filter((_, i) => i !== index));
                                                                 }}
-                                                                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                                            />
-                                                            <span className="text-sm text-gray-700 flex-1">{doc.name}</span>
-                                                        </label>
-                                                    ))}
-                                                </div>
+                                                                className="text-red-600 hover:text-red-800"
+                                                            >
+                                                                <XMarkIcon className="h-4 w-4" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
                                             </div>
-                                        ) : (
-                                            <p className="text-sm text-gray-500">Đang tải danh sách giấy tờ...</p>
-                                        )}
-                                    </div>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </div>
 
-                                    {/* Cancellation Policy - Chọn từ danh sách */}
-                                    <div>
-                                        <label htmlFor="cancellationPolicy" className="block text-sm font-medium text-gray-700 mb-2">
-                                            Chính sách hủy phòng
-                                        </label>
-                                        {cancellationPolicies.length > 0 ? (
-                                            <select
-                                                id="cancellationPolicy"
-                                                value={cancellationPolicyId}
-                                                onChange={(e) => setCancellationPolicyId(e.target.value)}
-                                                className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
-                                            >
-                                                <option value="">-- Chọn chính sách hủy phòng --</option>
-                                                {cancellationPolicies.map((policy) => (
-                                                    <option key={policy.id} value={policy.id}>
-                                                        {policy.name} {policy.description && `- ${policy.description}`}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        ) : (
-                                            <p className="text-sm text-gray-500">Đang tải danh sách chính sách hủy phòng...</p>
-                                        )}
-                                    </div>
-
-                                    {/* Reschedule Policy - Chọn từ danh sách */}
-                                    <div>
-                                        <label htmlFor="reschedulePolicy" className="block text-sm font-medium text-gray-700 mb-2">
-                                            Chính sách đổi lịch
-                                        </label>
-                                        {reschedulePolicies.length > 0 ? (
-                                            <select
-                                                id="reschedulePolicy"
-                                                value={reschedulePolicyId}
-                                                onChange={(e) => setReschedulePolicyId(e.target.value)}
-                                                className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
-                                            >
-                                                <option value="">-- Chọn chính sách đổi lịch --</option>
-                                                {reschedulePolicies.map((policy) => (
-                                                    <option key={policy.id} value={policy.id}>
-                                                        {policy.name} {policy.description && `- ${policy.description}`}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        ) : (
-                                            <p className="text-sm text-gray-500">Đang tải danh sách chính sách đổi lịch...</p>
-                                        )}
-                                    </div>
+                    {/* Chính sách (Policy) */}
+                    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                        <div className="flex items-center gap-2 mb-6 pb-3 border-b border-gray-200">
+                            <div className="w-1 h-6 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></div>
+                            <h3 className="text-lg font-semibold text-gray-800">Chính sách</h3>
+                        </div>
+                        <div className="space-y-6">
+                            {/* Check-in/Check-out Time */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label htmlFor="checkInTime" className="block text-sm font-medium text-gray-700 mb-2">
+                                        Giờ nhận phòng <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="time"
+                                        id="checkInTime"
+                                        value={checkInTime}
+                                        onChange={(e) => setCheckInTime(e.target.value)}
+                                        required
+                                        className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="checkOutTime" className="block text-sm font-medium text-gray-700 mb-2">
+                                        Giờ trả phòng <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="time"
+                                        id="checkOutTime"
+                                        value={checkOutTime}
+                                        onChange={(e) => setCheckOutTime(e.target.value)}
+                                        required
+                                        className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
+                                    />
                                 </div>
                             </div>
-                        </>
-                    )}
 
-                    {isEditing && isSuperAdmin && (
+                            {/* Allows Pay at Hotel */}
+                            <div>
+                                <label className="flex items-center gap-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={allowsPayAtHotel}
+                                        onChange={(e) => setAllowsPayAtHotel(e.target.checked)}
+                                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 w-5 h-5"
+                                    />
+                                    <span className="text-sm font-medium text-gray-700">
+                                        Cho phép thanh toán tại khách sạn
+                                    </span>
+                                </label>
+                                <p className="text-xs text-gray-500 mt-1 ml-8">
+                                    Khách hàng có thể thanh toán trực tiếp tại khách sạn khi check-in
+                                </p>
+                            </div>
+
+                            {/* Required Identification Documents */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Giấy tờ tùy thân yêu cầu
+                                </label>
+                                {identificationDocuments.length > 0 ? (
+                                    <div className="border border-gray-200 rounded-lg p-4 max-h-48 overflow-y-auto">
+                                        <div className="space-y-2">
+                                            {identificationDocuments.map((doc) => (
+                                                <label
+                                                    key={doc.id}
+                                                    className="flex items-center space-x-3 cursor-pointer p-2 rounded-md hover:bg-gray-50 border border-gray-200"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedDocumentIds.has(doc.id)}
+                                                        onChange={(e) => {
+                                                            const newSet = new Set(selectedDocumentIds);
+                                                            if (e.target.checked) {
+                                                                newSet.add(doc.id);
+                                                            } else {
+                                                                newSet.delete(doc.id);
+                                                            }
+                                                            setSelectedDocumentIds(newSet);
+                                                        }}
+                                                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                    />
+                                                    <span className="text-sm text-gray-700 flex-1">{doc.name}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-500">Đang tải danh sách giấy tờ...</p>
+                                )}
+                            </div>
+
+                            {/* Cancellation Policy - Super-admin chọn từ danh sách */}
+                            <div>
+                                <label htmlFor="cancellationPolicy" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Chính sách hủy phòng
+                                </label>
+                                {cancellationPolicies.length > 0 ? (
+                                    <select
+                                        id="cancellationPolicy"
+                                        value={cancellationPolicyId}
+                                        onChange={(e) => setCancellationPolicyId(e.target.value)}
+                                        className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
+                                    >
+                                        <option value="">-- Chọn chính sách hủy phòng --</option>
+                                        {cancellationPolicies.map((policy) => (
+                                            <option key={policy.id} value={policy.id}>
+                                                {policy.name} {policy.description && `- ${policy.description}`}
+                                            </option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <p className="text-sm text-gray-500">Đang tải danh sách chính sách hủy phòng...</p>
+                                )}
+                            </div>
+
+                            {/* Reschedule Policy - Super-admin chọn từ danh sách */}
+                            <div>
+                                <label htmlFor="reschedulePolicy" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Chính sách đổi lịch
+                                </label>
+                                {reschedulePolicies.length > 0 ? (
+                                    <select
+                                        id="reschedulePolicy"
+                                        value={reschedulePolicyId}
+                                        onChange={(e) => setReschedulePolicyId(e.target.value)}
+                                        className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
+                                    >
+                                        <option value="">-- Chọn chính sách đổi lịch --</option>
+                                        {reschedulePolicies.map((policy) => (
+                                            <option key={policy.id} value={policy.id}>
+                                                {policy.name} {policy.description && `- ${policy.description}`}
+                                            </option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <p className="text-sm text-gray-500">Đang tải danh sách chính sách đổi lịch...</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Super-admin luôn có quyền quản lý status (cả khi create và edit) */}
+                    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                        <div className="flex items-center gap-2 mb-6 pb-3 border-b border-gray-200">
+                            <div className="w-1 h-6 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></div>
+                            <h3 className="text-lg font-semibold text-gray-800">Trạng thái</h3>
+                        </div>
                         <div className="space-y-2">
                             <label htmlFor="status" className="block text-sm font-medium text-gray-700">
-                                Trạng thái (chỉ Super Admin có thể sửa)
+                                Trạng thái <span className="text-red-500">*</span>
                             </label>
                             <select
                                 id="status"
                                 name="status"
                                 defaultValue={hotel?.status?.toLowerCase() || 'active'}
-                                className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
                             >
                                 <option value="active">Đang hoạt động</option>
+                                <option value="pending">Chờ duyệt</option>
                                 <option value="inactive">Ngừng hoạt động</option>
                                 <option value="maintenance">Bảo trì</option>
                                 <option value="closed">Đóng cửa</option>
+                                <option value="hidden">Đã ẩn</option>
                             </select>
-                        </div>
-                    )}
-
-                    {/* Hiển thị trạng thái hiện tại (chỉ đọc) cho admin thường khi sửa */}
-                    {isEditing && !isSuperAdmin && (
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">Trạng thái hiện tại</label>
-                            <p className="px-3 py-2.5 bg-gray-100 border border-gray-200 rounded-md text-gray-600">
-                                {hotel?.status === 'ACTIVE' ? 'Đã được duyệt' : hotel?.status === 'PENDING' ? 'Đang chờ duyệt' : 'Đã ẩn'}
+                            <p className="text-xs text-gray-500 mt-1">
+                                Super Admin có quyền quản lý trạng thái khách sạn
                             </p>
                         </div>
-                    )}
+                    </div>
 
                     {/* Các nút hành động */}
                     <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
@@ -1828,10 +1749,10 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                 type="button"
                                 onClick={() => {
                                     // Check if form is inside a modal by checking for modal wrapper
-                                    const formWrapper = document.getElementById('hotel-form-wrapper');
+                                    const formWrapper = document.getElementById('super-hotel-form-wrapper');
                                     if (formWrapper) {
                                         // If inside modal, trigger close - handled by parent
-                                        const closeEvent = new CustomEvent('closeHotelFormModal');
+                                        const closeEvent = new CustomEvent('closeSuperHotelFormModal');
                                         window.dispatchEvent(closeEvent);
                                     }
                                 }}
@@ -1983,7 +1904,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                             }
                                         } catch (checkError: any) {
                                             // Nếu check fail, vẫn tiếp tục tạo (backend sẽ validate)
-                                            console.warn('[HotelForm] Pre-check warning:', checkError);
+                                            console.warn('[SuperHotelForm] Pre-check warning:', checkError);
                                         }
 
                                         try {
@@ -2041,8 +1962,8 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                             setNewLocationName('');
                                             setNewLocationCode('');
                                         } catch (error: any) {
-                                            console.error('[HotelForm] Error creating location:', error);
-                                            console.error('[HotelForm] Error details:', {
+                                            console.error('[SuperHotelForm] Error creating location:', error);
+                                            console.error('[SuperHotelForm] Error details:', {
                                                 message: error.message,
                                                 response: error.response?.data,
                                                 stack: error.stack,
@@ -2214,7 +2135,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                             };
 
                                             const createdPartner = await createPartner(newPartner);
-                                            console.log('[HotelForm] Partner created:', createdPartner);
+                                            console.log('[SuperHotelForm] Partner created:', createdPartner);
 
                                             // Refresh danh sách partners
                                             const partnersData = await getPartners();
@@ -2230,7 +2151,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                                             setNewPartnerFullName('');
                                             setNewPartnerPhone('');
                                         } catch (error: any) {
-                                            console.error('[HotelForm] Error creating partner:', error);
+                                            console.error('[SuperHotelForm] Error creating partner:', error);
                                             setCreatePartnerError(error.message || 'Không thể tạo đối tác. Vui lòng thử lại.');
                                         } finally {
                                             setIsCreatingPartner(false);

@@ -30,6 +30,19 @@ export async function createServerApiClient(): Promise<AxiosInstance> {
         throw new Error('Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.');
     }
 
+    // Decode token để kiểm tra role (nếu có thể)
+    try {
+        const jwtPayload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+        console.log("[serverApiClient] Token payload:", {
+            sub: jwtPayload.sub,
+            role: jwtPayload.role || jwtPayload.scope,
+            exp: jwtPayload.exp ? new Date(jwtPayload.exp * 1000).toISOString() : 'N/A',
+            isExpired: jwtPayload.exp ? Date.now() > jwtPayload.exp * 1000 : 'N/A'
+        });
+    } catch (e) {
+        console.warn("[serverApiClient] Cannot decode token:", e);
+    }
+
     console.log("[serverApiClient] Creating axios instance with baseURL:", API_BASE_URL);
 
     const instance = axios.create({

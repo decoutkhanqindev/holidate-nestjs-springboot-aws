@@ -47,6 +47,7 @@ export const getProvinces = async (countryId?: string, name?: string): Promise<L
 };
 
 // Get cities by provinceId (hoặc lấy tất cả nếu không có provinceId)
+// Hàm này dùng cho CLIENT-SIDE (browser)
 export const getCities = async (provinceId?: string, name?: string): Promise<LocationOption[]> => {
     try {
         let url = '/location/cities?';
@@ -70,6 +71,53 @@ export const getCities = async (provinceId?: string, name?: string): Promise<Loc
         return response.data.data || [];
     } catch (error) {
         console.error('[locationService] Error fetching cities:', error);
+        return [];
+    }
+};
+
+// Get cities cho SERVER-SIDE (Next.js Server Component)
+// Sử dụng axios trực tiếp vì không có localStorage/cookies ở server
+export const getCitiesServer = async (provinceId?: string, name?: string): Promise<LocationOption[]> => {
+    try {
+        const axios = (await import('axios')).default;
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+        
+        let url = '/location/cities?';
+        const params: string[] = [];
+
+        if (provinceId && provinceId.trim() !== '') {
+            params.push(`province-id=${encodeURIComponent(provinceId.trim())}`);
+        }
+        if (name && name.trim() !== '') {
+            params.push(`name=${encodeURIComponent(name.trim())}`);
+        }
+
+        if (params.length > 0) {
+            url = `/location/cities?${params.join('&')}`;
+        } else {
+            url = '/location/cities';
+        }
+
+        const fullUrl = `${API_BASE_URL}${url}`;
+        console.log('[locationService] [SERVER] Fetching cities:', fullUrl);
+        
+        const response = await axios.get<ApiResponse<LocationOption[]>>(fullUrl, {
+            timeout: 10000, // 10 seconds timeout
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        return response.data.data || [];
+    } catch (error: any) {
+        // Chỉ log lỗi nếu không phải ECONNREFUSED (backend không chạy là expected trong dev)
+        if (error.code !== 'ECONNREFUSED' && error.code !== 'ETIMEDOUT') {
+            console.error('[locationService] [SERVER] Error fetching cities:', error.message || error);
+        } else {
+            // Backend không chạy hoặc không accessible từ server - đây là expected behavior
+            // Client component sẽ tự fetch lại từ browser
+            console.log('[locationService] [SERVER] Backend không accessible từ server (expected). Client sẽ tự fetch.');
+        }
         return [];
     }
 };

@@ -46,7 +46,7 @@ export default function SuperHotelsTable({
     totalPages, 
     totalItems,
     selectedPartnerId = '',
-    onPartnerChange 
+    onPartnerChange
 }: SuperHotelsTableProps) {
     const router = useRouter();
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
@@ -54,6 +54,8 @@ export default function SuperHotelsTable({
     const [isLoadingPartners, setIsLoadingPartners] = useState(false);
     const [partnerMap, setPartnerMap] = useState<Map<string, { name: string; email: string; id: string }>>(new Map());
     const [hotelOwnerMap, setHotelOwnerMap] = useState<Map<string, { id: string; name: string; email?: string }>>(new Map()); // Map hotelId -> owner info
+    // Lưu partners với UUID string để dùng trong dropdown
+    const [partnersWithUuid, setPartnersWithUuid] = useState<Array<{ id: string; uuid: string; username: string; email: string }>>([]);
 
     // Load partners để hiển thị trong dropdown và map với hotels
     useEffect(() => {
@@ -64,8 +66,9 @@ export default function SuperHotelsTable({
                 setPartners(response.data);
                 
                 // Tạo map partnerId (UUID string) -> partner info để lookup nhanh
-                // Lưu ý: cần fetch raw data từ API để lấy UUID string, không phải parsed number
                 const map = new Map<string, { name: string; email: string; id: string }>();
+                // Lưu partners với UUID string để dùng trong dropdown
+                const partnersWithUuidList: Array<{ id: string; uuid: string; username: string; email: string }> = [];
                 
                 // Fetch raw users data để lấy UUID string
                 try {
@@ -79,7 +82,7 @@ export default function SuperHotelsTable({
                             const uuidId = user.id; // UUID string từ backend
                             // Tìm partner tương ứng trong response.data (đã parsed)
                             const parsedPartner = response.data.find(p => {
-                                // So sánh bằng cách tìm trong raw users list
+                                // So sánh bằng email hoặc username
                                 return p.email === user.email || p.username === user.fullName;
                             });
                             
@@ -89,6 +92,15 @@ export default function SuperHotelsTable({
                                     email: parsedPartner.email || user.email,
                                     id: uuidId
                                 });
+                                
+                                // Lưu partner với UUID để dùng trong dropdown
+                                partnersWithUuidList.push({
+                                    id: parsedPartner.id.toString(), // Number ID (để tương thích)
+                                    uuid: uuidId, // UUID string (để filter)
+                                    username: parsedPartner.username || user.fullName,
+                                    email: parsedPartner.email || user.email
+                                });
+                                
                                 console.log(`[SuperHotelsTable] Mapped partner UUID ${uuidId} -> ${parsedPartner.username}`);
                             } else {
                                 // Nếu không tìm thấy trong parsed list, dùng raw data
@@ -97,6 +109,14 @@ export default function SuperHotelsTable({
                                     email: user.email,
                                     id: uuidId
                                 });
+                                
+                                partnersWithUuidList.push({
+                                    id: '0', // Fallback
+                                    uuid: uuidId,
+                                    username: user.fullName || user.email,
+                                    email: user.email
+                                });
+                                
                                 console.log(`[SuperHotelsTable] Mapped partner UUID ${uuidId} -> ${user.fullName} (from raw data)`);
                             }
                         }
@@ -113,13 +133,22 @@ export default function SuperHotelsTable({
                             email: partner.email,
                             id: idStr
                         });
+                        
+                        partnersWithUuidList.push({
+                            id: idStr,
+                            uuid: idStr, // Fallback: dùng chính nó
+                            username: partner.username,
+                            email: partner.email
+                        });
                     });
                 }
                 
                 setPartnerMap(map);
+                setPartnersWithUuid(partnersWithUuidList);
                 
                 console.log(`[SuperHotelsTable] Loaded ${response.data.length} partners`);
                 console.log(`[SuperHotelsTable] Partner map sample:`, Array.from(map.entries()).slice(0, 3));
+                console.log(`[SuperHotelsTable] Partners with UUID sample:`, partnersWithUuidList.slice(0, 3));
                 
                 // Log hotels để debug
                 console.log(`[SuperHotelsTable] Hotels with ownerIds:`, 
@@ -134,32 +163,31 @@ export default function SuperHotelsTable({
         loadPartners();
     }, [hotels]); // Thêm hotels vào dependency để log khi hotels thay đổi
 
-    // Fetch owner info cho TẤT CẢ hotels để đảm bảo có partner info
+    // Map owner info từ partnerMap cho hotels có ownerId nhưng chưa có ownerName
+    // Tách riêng để tránh conflict với fetch API
     useEffect(() => {
-        const fetchOwnerInfo = async () => {
-            // Fetch detail cho tất cả hotels để lấy partner info (vì list API không trả về partner)
-            const hotelsToFetch = hotels.filter(h => {
-                // Chỉ fetch những hotel chưa có trong map HOẶC không có ownerId trong initial data
-                return !hotelOwnerMap.has(h.id) && !h.ownerId;
-            });
+        if (partnerMap.size === 0 || hotels.length === 0) return;
+        
+        setHotelOwnerMap(prev => {
+            const newOwnerMap = new Map(prev);
+            let hasUpdate = false;
             
-            // Nếu hotels đã có ownerId trong initial data, thử map từ partnerMap (UUID string)
             hotels.forEach(hotel => {
-                if (hotel.ownerId && !hotelOwnerMap.has(hotel.id)) {
+                // Chỉ map nếu:
+                // 1. Có ownerId
+                // 2. Chưa có ownerName (list API không trả về)
+                // 3. Chưa có trong hotelOwnerMap
+                if (hotel.ownerId && !hotel.ownerName && !newOwnerMap.has(hotel.id)) {
                     // Tìm trong partnerMap (đã map với UUID string)
                     const partnerInfo = partnerMap.get(hotel.ownerId);
                     
                     if (partnerInfo) {
-                        setHotelOwnerMap(prev => {
-                            const newMap = new Map(prev);
-                            newMap.set(hotel.id, {
-                                id: hotel.ownerId!,
-                                name: partnerInfo.name,
-                                email: partnerInfo.email
-                            });
-                            return newMap;
+                        newOwnerMap.set(hotel.id, {
+                            id: hotel.ownerId,
+                            name: partnerInfo.name,
+                            email: partnerInfo.email
                         });
-                        console.log(`[SuperHotelsTable] ✅ Mapped owner from partnerMap for hotel ${hotel.name}: ${partnerInfo.name} (UUID: ${hotel.ownerId})`);
+                        hasUpdate = true;
                     } else {
                         // Fallback: tìm trong partners list (number ID)
                         const partner = partners.find(p => {
@@ -169,27 +197,39 @@ export default function SuperHotelsTable({
                         });
                         
                         if (partner) {
-                            setHotelOwnerMap(prev => {
-                                const newMap = new Map(prev);
-                                newMap.set(hotel.id, {
-                                    id: hotel.ownerId!,
-                                    name: partner.username,
-                                    email: partner.email
-                                });
-                                return newMap;
+                            newOwnerMap.set(hotel.id, {
+                                id: hotel.ownerId,
+                                name: partner.username,
+                                email: partner.email
                             });
-                            console.log(`[SuperHotelsTable] ✅ Mapped owner from partners list for hotel ${hotel.name}: ${partner.username} (ID: ${hotel.ownerId})`);
+                            hasUpdate = true;
                         }
                     }
                 }
             });
             
+            return hasUpdate ? newOwnerMap : prev;
+        });
+    }, [hotels, partnerMap, partners]); // Dùng functional update để tránh dependency loop
+    
+    // Fetch owner info CHỈ cho hotels CHƯA CÓ ownerName và CHƯA MAP được từ partnerMap
+    useEffect(() => {
+        const fetchOwnerInfo = async () => {
+            // CHỈ fetch detail cho hotels:
+            // 1. Chưa có ownerName (list API không trả về partner info)
+            // 2. Chưa có trong hotelOwnerMap (chưa map hoặc fetch)
+            // KHÔNG cần ownerId vì có thể hotel có partner nhưng list API không trả về
+            const hotelsToFetch = hotels.filter(h => {
+                return !h.ownerName && 
+                       !hotelOwnerMap.has(h.id);
+            });
+            
             if (hotelsToFetch.length === 0) {
-                console.log(`[SuperHotelsTable] No hotels need to fetch owner info`);
+                console.log(`[SuperHotelsTable] All hotels already have owner info`);
                 return;
             }
             
-            console.log(`[SuperHotelsTable] Fetching owner info for ${hotelsToFetch.length} hotels from detail API`);
+            console.log(`[SuperHotelsTable] Fetching owner info for ${hotelsToFetch.length} hotels from detail API (hotels without ownerName)`);
             
             // Fetch detail cho từng hotel để lấy partner info
             const ownerMap = new Map<string, { id: string; name: string; email?: string }>();
@@ -218,14 +258,55 @@ export default function SuperHotelsTable({
                             // Tìm trong partnerMap để lấy tên đầy đủ
                             const partnerInfo = partnerMap.get(partnerId);
                             
+                            // Ưu tiên: partnerInfo từ partnerMap > fullName từ detail > email từ detail
+                            const ownerName = partnerInfo?.name || 
+                                            detailData.partner.fullName || 
+                                            detailData.partner.name ||
+                                            detailData.partner.email || 
+                                            `Partner ID: ${partnerId}`;
+                            
                             ownerMap.set(hotel.id, {
                                 id: partnerId,
-                                name: partnerInfo?.name || detailData.partner.fullName || detailData.partner.email || `Partner ID: ${partnerId}`,
+                                name: ownerName,
                                 email: partnerInfo?.email || detailData.partner.email
                             });
-                            console.log(`[SuperHotelsTable] ✅ Found owner from detail API for hotel ${hotel.name}: ${partnerInfo?.name || detailData.partner.fullName} (UUID: ${partnerId})`);
+                            console.log(`[SuperHotelsTable] ✅ Found owner from detail API for hotel ${hotel.name}: ${ownerName} (UUID: ${partnerId})`);
+                        } else if (detailData?.partnerId) {
+                            // Nếu chỉ có partnerId (không có partner object)
+                            const partnerId = detailData.partnerId;
+                            const partnerInfo = partnerMap.get(partnerId);
+                            
+                            if (partnerInfo) {
+                                ownerMap.set(hotel.id, {
+                                    id: partnerId,
+                                    name: partnerInfo.name,
+                                    email: partnerInfo.email
+                                });
+                                console.log(`[SuperHotelsTable] ✅ Found owner from partnerMap (via partnerId) for hotel ${hotel.name}: ${partnerInfo.name} (UUID: ${partnerId})`);
+                            } else {
+                                // Fallback: tìm trong partners list
+                                const partner = partners.find(p => {
+                                    const pIdStr = p.id.toString();
+                                    return pIdStr === partnerId;
+                                });
+                                
+                                if (partner) {
+                                    ownerMap.set(hotel.id, {
+                                        id: partnerId,
+                                        name: partner.username,
+                                        email: partner.email
+                                    });
+                                    console.log(`[SuperHotelsTable] ✅ Found owner from partners list (via partnerId) for hotel ${hotel.name}: ${partner.username} (ID: ${partnerId})`);
+                                } else {
+                                    ownerMap.set(hotel.id, {
+                                        id: partnerId,
+                                        name: `Partner ID: ${partnerId}`,
+                                    });
+                                    console.log(`[SuperHotelsTable] ⚠️ Hotel ${hotel.name} has partnerId ${partnerId} but partner not found`);
+                                }
+                            }
                         } else {
-                            // Fallback: Dùng getHotelById và tìm trong partnerMap
+                            // Fallback: Dùng getHotelById
                             const hotelDetail = await getHotelById(hotel.id);
                             
                             if (hotelDetail?.ownerId) {
@@ -238,7 +319,7 @@ export default function SuperHotelsTable({
                                         name: partnerInfo.name,
                                         email: partnerInfo.email
                                     });
-                                    console.log(`[SuperHotelsTable] ✅ Found owner from partnerMap for hotel ${hotel.name}: ${partnerInfo.name} (UUID: ${hotelDetail.ownerId})`);
+                                    console.log(`[SuperHotelsTable] ✅ Found owner from partnerMap (via getHotelById) for hotel ${hotel.name}: ${partnerInfo.name} (UUID: ${hotelDetail.ownerId})`);
                                 } else {
                                     // Fallback: tìm trong partners list (number ID)
                                     const partner = partners.find(p => {
@@ -253,7 +334,7 @@ export default function SuperHotelsTable({
                                             name: partner.username,
                                             email: partner.email
                                         });
-                                        console.log(`[SuperHotelsTable] ✅ Found owner from partners list for hotel ${hotel.name}: ${partner.username} (ID: ${hotelDetail.ownerId})`);
+                                        console.log(`[SuperHotelsTable] ✅ Found owner from partners list (via getHotelById) for hotel ${hotel.name}: ${partner.username} (ID: ${hotelDetail.ownerId})`);
                                     } else {
                                         ownerMap.set(hotel.id, {
                                             id: hotelDetail.ownerId,
@@ -263,7 +344,7 @@ export default function SuperHotelsTable({
                                     }
                                 }
                             } else {
-                                console.log(`[SuperHotelsTable] ⚠️ Hotel ${hotel.id} - ${hotel.name} has no partner info`);
+                                console.log(`[SuperHotelsTable] ⚠️ Hotel ${hotel.id} - ${hotel.name} has no partner info in detail API`);
                             }
                         }
                     } catch (error) {
@@ -287,10 +368,8 @@ export default function SuperHotelsTable({
         // Chỉ fetch nếu đã có partners và hotels
         if (partners.length > 0 && hotels.length > 0) {
             fetchOwnerInfo();
-        } else {
-            console.log(`[SuperHotelsTable] Waiting for partners or hotels... partners: ${partners.length}, hotels: ${hotels.length}`);
         }
-    }, [hotels, partners]); // Bỏ hotelOwnerMap khỏi dependency để tránh loop
+    }, [hotels, partners]); // Bỏ partnerMap và hotelOwnerMap khỏi dependency để tránh loop
 
     const handleDelete = async (id: string, name: string) => {
         if (!confirm(`Bạn có chắc chắn muốn xóa khách sạn "${name}" không?`)) {
@@ -299,17 +378,36 @@ export default function SuperHotelsTable({
 
         setIsDeleting(id);
         try {
-            await deleteHotelAction(id);
-            toast.success('Xóa khách sạn thành công!', {
-                position: "top-right",
-                autoClose: 2000,
-            });
-            router.refresh();
+            const result = await deleteHotelAction(id);
+            if (result?.success) {
+                toast.success('Xóa khách sạn thành công!', {
+                    position: "top-right",
+                    autoClose: 2000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                });
+                router.refresh();
+            } else {
+                toast.error(result?.error || 'Không thể xóa khách sạn. Vui lòng thử lại.', {
+                    position: "top-right",
+                    autoClose: 3000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                });
+            }
         } catch (error: any) {
             console.error('[SuperHotelsTable] Error deleting hotel:', error);
             toast.error(error.message || 'Không thể xóa khách sạn. Vui lòng thử lại.', {
                 position: "top-right",
                 autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
             });
         } finally {
             setIsDeleting(null);
@@ -339,8 +437,8 @@ export default function SuperHotelsTable({
                         disabled={isLoadingPartners}
                     >
                         <option value="">Tất cả Partners</option>
-                        {partners.map(partner => (
-                            <option key={partner.id} value={partner.id.toString()}>
+                        {partnersWithUuid.map(partner => (
+                            <option key={partner.uuid} value={partner.uuid}>
                                 {partner.username} ({partner.email})
                             </option>
                         ))}
@@ -349,7 +447,7 @@ export default function SuperHotelsTable({
                         <div className="flex items-center gap-2">
                             <span className="text-sm text-gray-600">
                                 Đã chọn: <span className="font-medium text-blue-600">
-                                    {partners.find(p => p.id.toString() === selectedPartnerId)?.username || selectedPartnerId}
+                                    {partnersWithUuid.find(p => p.uuid === selectedPartnerId)?.username || selectedPartnerId}
                                 </span>
                             </span>
                             <button
@@ -431,24 +529,24 @@ export default function SuperHotelsTable({
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm text-gray-900">
                                             {(() => {
-                                                // Kiểm tra owner info từ hotelOwnerMap (fetch từ detail API)
-                                                const ownerInfo = hotelOwnerMap.get(hotel.id);
-                                                
-                                                // Sử dụng ownerId từ hotel hoặc từ ownerInfo
-                                                const ownerId = hotel.ownerId || ownerInfo?.id;
-                                                
-                                                // Debug: Log ownerId để kiểm tra
-                                                if (ownerId) {
-                                                    console.log(`[SuperHotelsTable] Hotel ${hotel.name} - ownerId:`, ownerId, 
-                                                               `- Type:`, typeof ownerId,
-                                                               `- From hotel:`, !!hotel.ownerId,
-                                                               `- From detail:`, !!ownerInfo,
-                                                               `- In map:`, partnerMap.has(ownerId) || partnerMap.has(String(ownerId)));
-                                                } else {
-                                                    console.log(`[SuperHotelsTable] Hotel ${hotel.name} - NO ownerId, checking detail API...`);
+                                                // ƯU TIÊN 1: Dùng ownerName từ hotel object (từ list API) - NHANH NHẤT, KHÔNG CẦN FETCH
+                                                if (hotel.ownerName) {
+                                                    return (
+                                                        <div>
+                                                            <span className="font-medium block text-gray-900">
+                                                                {hotel.ownerName}
+                                                            </span>
+                                                            {hotel.ownerEmail && (
+                                                                <span className="text-xs text-gray-400 block">
+                                                                    {hotel.ownerEmail}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    );
                                                 }
                                                 
-                                                // Ưu tiên dùng ownerInfo từ detail API (đã fetch)
+                                                // ƯU TIÊN 2: Dùng ownerInfo từ hotelOwnerMap (đã fetch từ detail API)
+                                                const ownerInfo = hotelOwnerMap.get(hotel.id);
                                                 if (ownerInfo) {
                                                     return (
                                                         <div>
@@ -464,11 +562,10 @@ export default function SuperHotelsTable({
                                                     );
                                                 }
                                                 
-                                                // Nếu có ownerId, tìm partner từ partnerMap (UUID string)
+                                                // ƯU TIÊN 3: Tìm trong partnerMap với ownerId (UUID string)
+                                                const ownerId = hotel.ownerId;
                                                 if (ownerId) {
-                                                    // Tìm trong partnerMap với UUID string
                                                     const partnerInfo = partnerMap.get(ownerId);
-                                                    
                                                     if (partnerInfo) {
                                                         return (
                                                             <div>
@@ -485,13 +582,10 @@ export default function SuperHotelsTable({
                                                     }
                                                     
                                                     // Fallback: Tìm trong partners array (number ID)
-                                                    let partner = partners.find(p => {
+                                                    const partner = partners.find(p => {
                                                         const pIdStr = p.id.toString();
                                                         const ownerIdStr = String(ownerId);
-                                                        
-                                                        return pIdStr === ownerIdStr || 
-                                                               pIdStr === ownerId ||
-                                                               (typeof ownerId === 'string' && !isNaN(Number(ownerId)) && p.id === parseInt(ownerId));
+                                                        return pIdStr === ownerIdStr;
                                                     });
                                                     
                                                     if (partner) {
@@ -508,16 +602,13 @@ export default function SuperHotelsTable({
                                                             </div>
                                                         );
                                                     }
-                                                    
-                                                    // Không tìm thấy partner, không hiển thị gì
-                                                    return (
-                                                        <span className="text-gray-400 italic">Chưa có thông tin</span>
-                                                    );
                                                 }
                                                 
-                                                // Không có ownerId và ownerInfo
+                                                // Nếu không tìm thấy, hiển thị "Chưa có thông tin"
                                                 return (
-                                                    <span className="text-gray-400 italic">Chưa có thông tin</span>
+                                                    <span className="text-gray-400 italic">
+                                                        Chưa có thông tin
+                                                    </span>
                                                 );
                                             })()}
                                         </div>
@@ -553,19 +644,13 @@ export default function SuperHotelsTable({
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div className="flex items-center justify-end gap-x-2">
                                             <Link
-                                                href={`/admin-hotels/${hotel.id}`}
+                                                href={`/super-hotels/${hotel.id}`}
                                                 className="p-2 bg-gray-100 text-green-600 hover:bg-gray-200 rounded-md transition-colors"
                                                 title="Xem chi tiết"
                                             >
                                                 <EyeIcon className="h-5 w-5" />
                                             </Link>
-                                            <Link
-                                                href={`/admin-hotels/${hotel.id}/edit`}
-                                                className="p-2 bg-gray-100 text-blue-600 hover:bg-gray-200 rounded-md transition-colors"
-                                                title="Chỉnh sửa"
-                                            >
-                                                <PencilIcon className="h-5 w-5" />
-                                            </Link>
+                                            {/* Super-admin chỉ xem, không edit - quyền edit chỉ dành cho PARTNER */}
                                             <button
                                                 onClick={() => handleDelete(hotel.id, hotel.name)}
                                                 disabled={isDeleting === hotel.id}

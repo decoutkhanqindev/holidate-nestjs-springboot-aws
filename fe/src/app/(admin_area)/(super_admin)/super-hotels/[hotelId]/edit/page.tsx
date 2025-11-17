@@ -1,4 +1,4 @@
-// src/app/(admin)/hotels/[hotelId]/edit/page.tsx
+// src/app/(super_admin)/super-hotels/[hotelId]/edit/page.tsx
 import { getHotelByIdServer } from '@/lib/AdminAPI/hotelService';
 import { notFound, redirect } from 'next/navigation';
 import { PageHeader } from '@/components/Admin/ui/PageHeader';
@@ -8,7 +8,7 @@ interface EditHotelPageProps {
     params: Promise<{ hotelId: string }>;
 }
 
-export default async function EditHotelPage({ params }: EditHotelPageProps) {
+export default async function SuperEditHotelPage({ params }: EditHotelPageProps) {
     // Await params trước khi sử dụng (Next.js 15+)
     const { hotelId } = await params;
     
@@ -27,12 +27,11 @@ export default async function EditHotelPage({ params }: EditHotelPageProps) {
             </>
         );
     } catch (error: any) {
-        console.error('[EditHotelPage] Error loading hotel:', error);
+        console.error('[SuperEditHotelPage] Error loading hotel:', error);
         
         // Nếu là lỗi authentication (401/403), redirect về login
-        // Nhưng chỉ khi thực sự là lỗi authentication, không phải lỗi khác
         if (error.response?.status === 401 || error.response?.status === 403) {
-            console.error('[EditHotelPage] Authentication/Authorization error (401/403), redirecting to login');
+            console.error('[SuperEditHotelPage] Authentication/Authorization error (401/403), redirecting to login');
             redirect('/admin-login');
         }
         
@@ -40,14 +39,14 @@ export default async function EditHotelPage({ params }: EditHotelPageProps) {
         if ((error.message?.includes('Token') || 
              error.message?.includes('đăng nhập') || 
              error.message?.includes('authentication')) &&
-            !error.code && // Không phải lỗi network (ECONNREFUSED, ETIMEDOUT, etc.)
+            !error.code &&
             !error.message?.includes('ECONNREFUSED') &&
             !error.message?.includes('ETIMEDOUT')) {
-            console.error('[EditHotelPage] Authentication error detected, redirecting to login');
+            console.error('[SuperEditHotelPage] Authentication error detected, redirecting to login');
             redirect('/admin-login');
         }
         
-        // Nếu là lỗi khác (404, 500, network, etc.), throw để Next.js xử lý (có thể là notFound hoặc error page)
+        // Nếu là lỗi khác, throw để Next.js xử lý
         throw error;
     }
 }

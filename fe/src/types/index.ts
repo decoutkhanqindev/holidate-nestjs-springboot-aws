@@ -8,6 +8,8 @@ export interface Hotel {
     address: string;
     status: HotelStatus;
     ownerId?: string;
+    ownerName?: string; // Tên partner (từ list API hoặc detail API)
+    ownerEmail?: string; // Email partner (từ list API hoặc detail API)
     imageUrl?: string;
     stt?: number;
     description?: string;

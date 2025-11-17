@@ -91,9 +91,9 @@ export default function HotelsTable({ hotels, currentPage, totalPages, totalItem
     const searchParams = useSearchParams();
     const { effectiveUser } = useAuth();
 
-    // Chỉ admin mới có quyền edit/delete, partner chỉ xem
-    const isAdmin = effectiveUser?.role.name.toLowerCase() === 'admin';
-    const showActions = isAdmin; // Chỉ hiển thị cột hành động nếu là admin
+    // Chỉ PARTNER mới có quyền edit/update hotel
+    const isPartner = effectiveUser?.role.name.toLowerCase() === 'partner';
+    const showActions = isPartner; // Chỉ hiển thị cột hành động nếu là PARTNER
 
     const handleDelete = (id: string, name: string) => {
         if (confirm(`Bạn có chắc chắn muốn xóa khách sạn "${name}" không?`)) {
