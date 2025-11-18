@@ -38,11 +38,27 @@ public class HotelDailyReport {
 
   @Column(nullable = false)
   @Builder.Default
+  int pendingPaymentBookings = 0;
+
+  @Column(nullable = false)
+  @Builder.Default
+  int confirmedBookings = 0;
+
+  @Column(nullable = false)
+  @Builder.Default
+  int checkedInBookings = 0;
+
+  @Column(nullable = false)
+  @Builder.Default
   int completedBookings = 0;
 
   @Column(nullable = false)
   @Builder.Default
   int cancelledBookings = 0;
+
+  @Column(nullable = false)
+  @Builder.Default
+  int rescheduledBookings = 0;
 
   @Column(nullable = false)
   @Builder.Default
@@ -70,4 +86,3 @@ public class HotelDailyReport {
   @Column(nullable = false)
   LocalDateTime updatedAt;
 }
-
