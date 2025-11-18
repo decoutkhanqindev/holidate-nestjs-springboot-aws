@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getCities } from '@/lib/AdminAPI/locationService';
+import { getCitiesServer } from '@/lib/AdminAPI/locationService';
 import HomePageClient from './HomePageClient';
 
 // ============================================
@@ -55,14 +55,17 @@ export const revalidate = 3600; // 1 giờ
 // ============================================
 export default async function HomePage() {
   // Fetch cities từ server để có data sẵn cho SEO
-  // Nếu lỗi, trả về mảng rỗng - component client sẽ tự fetch lại
+  // Nếu lỗi (backend không chạy hoặc không accessible), trả về mảng rỗng
+  // Client component sẽ tự fetch lại từ browser nếu cần
   let cities: any[] = [];
   try {
-    cities = await getCities();
-  } catch (error) {
-    console.error('[HomePage] Error fetching cities:', error);
-    // Không throw error - để page vẫn render được
-    // Client component sẽ tự fetch lại nếu cần
+    cities = await getCitiesServer();
+  } catch (error: any) {
+    // Không log lỗi ECONNREFUSED vì đây là expected behavior khi backend không chạy
+    // Client component sẽ tự fetch lại từ browser
+    if (error.code !== 'ECONNREFUSED' && error.code !== 'ETIMEDOUT') {
+      console.error('[HomePage] Error fetching cities:', error);
+    }
   }
 
   return <HomePageClient initialCities={cities} />;

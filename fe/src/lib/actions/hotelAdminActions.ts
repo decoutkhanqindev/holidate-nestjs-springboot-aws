@@ -16,23 +16,36 @@ export async function createHotelAdminAction(formData: FormData) {
         const hotelId = formData.get('hotelId') as string;
         const authProvider = formData.get('authProvider') as string || 'LOCAL';
 
-        // Validation
-        if (!email || !password || !fullName || !hotelId) {
-            return { error: 'Email, mật khẩu, họ tên và khách sạn là bắt buộc.' };
+        // Validation - hotelId không bắt buộc vì đã ẩn field chọn khách sạn
+        if (!email || !password || !fullName) {
+            return { error: 'Email, mật khẩu và họ tên là bắt buộc.' };
         }
 
         if (password.length < 8) {
             return { error: 'Mật khẩu phải có ít nhất 8 ký tự.' };
         }
 
-        console.log('[createHotelAdminAction] Creating hotel admin:', { email, fullName, hotelId });
+        // Validation fullName: 3-100 ký tự
+        if (fullName.trim().length < 3 || fullName.trim().length > 100) {
+            return { error: 'Họ và tên phải có từ 3 đến 100 ký tự.' };
+        }
+
+        // Validation phoneNumber nếu có: phải bắt đầu bằng +84 hoặc 0, sau đó 9-10 chữ số
+        if (phoneNumber && phoneNumber.trim()) {
+            const phoneRegex = /^(\+84|0)[0-9]{9,10}$/;
+            if (!phoneRegex.test(phoneNumber.trim())) {
+                return { error: 'Số điện thoại không hợp lệ. Phải bắt đầu bằng +84 hoặc 0, sau đó 9-10 chữ số (VD: 0123456789, +84123456789).' };
+            }
+        }
+
+        console.log('[createHotelAdminAction] Creating hotel admin:', { email, fullName, hotelId: hotelId || 'N/A' });
 
         const payload = {
             email: email.trim(),
             password: password.trim(),
             fullName: fullName.trim(),
             phoneNumber: phoneNumber?.trim() || undefined,
-            hotelId: hotelId.trim(),
+            hotelId: hotelId?.trim() || '', // Optional - có thể để trống nếu không chọn hotel
             authProvider: authProvider.trim(),
         };
 

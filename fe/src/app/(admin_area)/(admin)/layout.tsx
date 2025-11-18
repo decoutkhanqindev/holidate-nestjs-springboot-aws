@@ -23,13 +23,17 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         if (!isLoading) {
-            if (!effectiveUser || effectiveUser.role.name.toLowerCase() !== "partner") {
+            // Cho phép PARTNER và ADMIN truy cập (ADMIN có quyền cao hơn PARTNER)
+            const roleName = effectiveUser?.role.name.toLowerCase();
+            if (!effectiveUser || (roleName !== "partner" && roleName !== "admin")) {
                 router.push("/admin-login");
             }
         }
     }, [isLoading, effectiveUser, router]);
 
-    if (isLoading || !effectiveUser || effectiveUser.role.name.toLowerCase() !== "partner") {
+    // Cho phép PARTNER và ADMIN truy cập (ADMIN có quyền cao hơn PARTNER)
+    const roleName = effectiveUser?.role.name.toLowerCase();
+    if (isLoading || !effectiveUser || (roleName !== "partner" && roleName !== "admin")) {
         return (
             <div className="flex items-center justify-center h-screen">
                 Đang tải và xác thực quyền...

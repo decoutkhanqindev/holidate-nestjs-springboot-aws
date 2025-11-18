@@ -8,6 +8,60 @@ export interface BedType {
 }
 
 /**
+ * Normalize bedType name để matching tốt hơn
+ * - Loại bỏ số ở đầu (1, 2, ...)
+ * - Normalize khoảng trắng
+ * - Lowercase
+ */
+function normalizeBedTypeName(name: string): string {
+    return name
+        .trim()
+        .replace(/^\d+\s*/, '') // Loại bỏ số ở đầu (1, 2, ...)
+        .replace(/\s+/g, ' ') // Normalize khoảng trắng
+        .toLowerCase();
+}
+
+/**
+ * So sánh 2 bedType names với fuzzy matching
+ * - Exact match (case-insensitive)
+ * - Normalized match (loại bỏ số ở đầu)
+ * - Partial match (một tên chứa tên kia)
+ * - Word-based match (có chung từ khóa quan trọng)
+ */
+function bedTypeNamesMatch(name1: string, name2: string): boolean {
+    const normalized1 = normalizeBedTypeName(name1);
+    const normalized2 = normalizeBedTypeName(name2);
+    
+    // Exact match (sau khi normalize)
+    if (normalized1 === normalized2) {
+        return true;
+    }
+    
+    // Partial match - một tên chứa tên kia (ít nhất 70% ký tự giống)
+    const longer = normalized1.length > normalized2.length ? normalized1 : normalized2;
+    const shorter = normalized1.length > normalized2.length ? normalized2 : normalized1;
+    
+    if (longer.includes(shorter) && shorter.length >= longer.length * 0.7) {
+        return true;
+    }
+    
+    // Word-based match - có chung từ khóa quan trọng (loại bỏ từ phổ biến như "giường", "đôi", "đơn")
+    const commonWords = ['giường', 'bed', 'đôi', 'đơn', 'single', 'double', 'king', 'queen'];
+    const words1 = normalized1.split(/\s+/).filter(w => w.length > 2 && !commonWords.includes(w));
+    const words2 = normalized2.split(/\s+/).filter(w => w.length > 2 && !commonWords.includes(w));
+    
+    if (words1.length > 0 && words2.length > 0) {
+        const commonWordCount = words1.filter(w => words2.includes(w)).length;
+        const totalUniqueWords = new Set([...words1, ...words2]).size;
+        if (commonWordCount > 0 && commonWordCount / totalUniqueWords >= 0.5) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+/**
  * Tìm bedType ID từ tên bằng cách query rooms từ TẤT CẢ hotels
  * Note: Đây là workaround vì không có API để query bedTypes trực tiếp
  */
@@ -27,8 +81,8 @@ export const findBedTypeIdByName = async (bedTypeName: string, hotelId?: string)
                         const roomDetails = await getRoomById(room.id);
                         if (roomDetails?.bedType) {
                             const existingBedTypeName = roomDetails.bedType.name;
-                            if (existingBedTypeName.trim().toLowerCase() === bedTypeName.trim().toLowerCase()) {
-                                console.log(`[bedTypeService] Found bedType ID in hotel ${hotelId}: ${roomDetails.bedType.id}`);
+                            if (bedTypeNamesMatch(existingBedTypeName, bedTypeName)) {
+                                console.log(`[bedTypeService] Found bedType ID in hotel ${hotelId}: ${roomDetails.bedType.id} (matched "${existingBedTypeName}" with "${bedTypeName}")`);
                                 return roomDetails.bedType.id;
                             }
                         }
@@ -59,8 +113,8 @@ export const findBedTypeIdByName = async (bedTypeName: string, hotelId?: string)
                         const roomDetails = await getRoomById(room.id);
                         if (roomDetails?.bedType) {
                             const existingBedTypeName = roomDetails.bedType.name;
-                            if (existingBedTypeName.trim().toLowerCase() === bedTypeName.trim().toLowerCase()) {
-                                console.log(`[bedTypeService] Found bedType ID in hotel ${hotel.id}: ${roomDetails.bedType.id}`);
+                            if (bedTypeNamesMatch(existingBedTypeName, bedTypeName)) {
+                                console.log(`[bedTypeService] Found bedType ID in hotel ${hotel.id}: ${roomDetails.bedType.id} (matched "${existingBedTypeName}" with "${bedTypeName}")`);
                                 return roomDetails.bedType.id;
                             }
                         }
@@ -82,27 +136,174 @@ export const findBedTypeIdByName = async (bedTypeName: string, hotelId?: string)
 };
 
 /**
+ * Lấy danh sách bedTypes có sẵn trong hệ thống (từ các rooms)
+ * Dùng để hiển thị cho user chọn
+ */
+export const getAvailableBedTypes = async (hotelId?: string): Promise<BedType[]> => {
+    try {
+        const bedTypesMap = new Map<string, BedType>(); // Map id -> BedType để tránh duplicate
+
+        // Bước 1: Lấy từ hotel hiện tại trước
+        if (hotelId) {
+            try {
+                const { getRoomsByHotelId, getRoomById } = await import('./roomService');
+                const roomsResult = await getRoomsByHotelId(hotelId, 0, 100);
+
+                for (const room of roomsResult.rooms.slice(0, 20)) {
+                    try {
+                        const roomDetails = await getRoomById(room.id);
+                        if (roomDetails?.bedType) {
+                            bedTypesMap.set(roomDetails.bedType.id, {
+                                id: roomDetails.bedType.id,
+                                name: roomDetails.bedType.name
+                            });
+                        }
+                    } catch (error) {
+                        continue;
+                    }
+                }
+            } catch (error) {
+                console.warn(`[bedTypeService] Could not query rooms from hotel ${hotelId}`);
+            }
+        }
+
+        // Bước 2: Lấy từ các hotels khác
+        const { getHotels } = await import('./hotelService');
+        const hotelsResult = await getHotels(0, 20);
+
+        const { getRoomsByHotelId, getRoomById } = await import('./roomService');
+
+        for (const hotel of hotelsResult.hotels.slice(0, 10)) {
+            try {
+                const roomsResult = await getRoomsByHotelId(hotel.id, 0, 10);
+                for (const room of roomsResult.rooms.slice(0, 5)) {
+                    try {
+                        const roomDetails = await getRoomById(room.id);
+                        if (roomDetails?.bedType) {
+                            bedTypesMap.set(roomDetails.bedType.id, {
+                                id: roomDetails.bedType.id,
+                                name: roomDetails.bedType.name
+                            });
+                        }
+                    } catch (error) {
+                        continue;
+                    }
+                }
+            } catch (error) {
+                continue;
+            }
+        }
+
+        // Sắp xếp theo tên
+        const bedTypes = Array.from(bedTypesMap.values()).sort((a, b) => 
+            a.name.localeCompare(b.name, 'vi')
+        );
+
+        console.log(`[bedTypeService] Found ${bedTypes.length} available bedTypes`);
+        return bedTypes;
+    } catch (error: any) {
+        console.error("[bedTypeService] Error getting available bedTypes:", error);
+        return [];
+    }
+};
+
+/**
+ * Tạo bedType mới với tên cho trước
+ * Note: Backend không có API tạo bedType, nhưng có thể tạo trực tiếp qua repository
+ * Workaround: Tạo một room tạm để backend tự động tạo bedType, sau đó xóa room đó
+ * HOẶC: Tìm bedType theo name và nếu không có thì tạo mới
+ */
+async function createBedTypeByName(bedTypeName: string): Promise<string | null> {
+    try {
+        console.log(`[bedTypeService] Attempting to create bedType: "${bedTypeName}"`);
+        
+        // Backend không có API tạo bedType trực tiếp
+        // Nhưng có thể tạo bedType thông qua việc tạo room với bedTypeName mới
+        // Tuy nhiên, backend yêu cầu bedTypeId, không phải bedTypeName
+        
+        // Vì không có API tạo bedType, không thể tạo từ frontend
+        // Cần backend hỗ trợ API tạo bedType hoặc tự động tạo khi không tìm thấy
+        
+        console.warn(`[bedTypeService] Cannot create bedType "${bedTypeName}" - no API endpoint available`);
+        return null;
+    } catch (error: any) {
+        console.error("[bedTypeService] Error creating bedType:", error);
+        return null;
+    }
+}
+
+/**
  * Tìm hoặc tạo bedType theo tên
- * Tìm bedType ID từ tên bằng cách query rooms từ tất cả hotels
- * Nếu không tìm thấy, throw error vì không có API để tạo bedType mới
+ * - Tìm bedType theo name (fuzzy match)
+ * - Nếu không tìm thấy, tạo bedType mới (nếu có thể)
+ * - Nếu không thể tạo, gợi ý các bedType tương tự
  */
 export const findOrCreateBedTypeByName = async (bedTypeName: string, hotelId: string): Promise<string> => {
     try {
-        // Tìm bedType ID từ tên (tìm trong tất cả hotels)
-        const bedTypeId = await findBedTypeIdByName(bedTypeName.trim(), hotelId);
+        const trimmedName = bedTypeName.trim();
+        if (!trimmedName) {
+            throw new Error('Tên loại giường không được để trống');
+        }
+
+        // Bước 1: Tìm bedType ID từ tên (tìm trong tất cả hotels) với fuzzy matching
+        const bedTypeId = await findBedTypeIdByName(trimmedName, hotelId);
 
         if (bedTypeId) {
+            console.log(`[bedTypeService] ✅ Found existing bedType: "${trimmedName}" -> ${bedTypeId}`);
             return bedTypeId;
         }
 
-        // Nếu không tìm thấy, throw error vì không có API để tạo bedType mới
-        throw new Error(
-            `Loại giường "${bedTypeName}" chưa tồn tại trong hệ thống. ` +
-            `Vui lòng sử dụng một loại giường có sẵn hoặc liên hệ admin để tạo loại giường mới trước. ` +
-            `\n\nCác loại giường phổ biến: "Giường đôi", "Giường King (cỡ lớn)", "2 giường đơn", "Giường đơn", "Giường Queen", ...`
-        );
+        // Bước 2: Nếu không tìm thấy, thử tạo bedType mới
+        // Lưu ý: Backend không có API tạo bedType, nên không thể tạo từ frontend
+        // Nhưng có thể thử tìm lại với các biến thể của tên
+        console.log(`[bedTypeService] BedType "${trimmedName}" not found, checking for similar names...`);
+
+        // Bước 3: Tìm các bedType tương tự để gợi ý
+        const availableBedTypes = await getAvailableBedTypes(hotelId);
+        
+        // Tìm các bedType tương tự (có chứa một phần của tên)
+        const normalizedInput = normalizeBedTypeName(trimmedName);
+        const similarBedTypes = availableBedTypes.filter(bt => {
+            const normalized = normalizeBedTypeName(bt.name);
+            // Tìm các bedType có chứa từ khóa hoặc ngược lại
+            return normalized.includes(normalizedInput) || 
+                   normalizedInput.includes(normalized) ||
+                   normalized.split(' ').some(word => word.length > 2 && normalizedInput.includes(word)) ||
+                   normalizedInput.split(' ').some(word => word.length > 2 && normalized.includes(word));
+        }).slice(0, 5); // Lấy 5 cái tương tự nhất
+
+        // Bước 4: Thử tìm lại với các biến thể của tên (trước khi hiển thị error)
+        // Ví dụ: "1 Giường đôi lớn" -> "Giường đôi lớn" -> "Giường đôi"
+        const nameVariants = [
+            trimmedName.replace(/^\d+\s*/, ''), // Loại bỏ số ở đầu
+            trimmedName.replace(/\s+(lớn|nhỏ|vừa|king|queen|double|single)/i, ''), // Loại bỏ từ mô tả
+            trimmedName.replace(/^\d+\s*/, '').replace(/\s+(lớn|nhỏ|vừa|king|queen|double|single)/i, ''), // Cả hai
+        ].filter((v, i, arr) => arr.indexOf(v) === i && v.trim() !== '' && v !== trimmedName); // Loại bỏ duplicate, empty và trùng với tên gốc
+
+        for (const variant of nameVariants) {
+            const variantId = await findBedTypeIdByName(variant, hotelId);
+            if (variantId) {
+                console.log(`[bedTypeService] ✅ Found bedType with variant name: "${variant}" -> ${variantId} (original: "${trimmedName}")`);
+                return variantId;
+            }
+        }
+
+        // Bước 5: Nếu vẫn không tìm thấy, hiển thị error với gợi ý
+        let errorMessage = `Không tìm thấy loại giường "${trimmedName}" trong hệ thống.`;
+        
+        if (similarBedTypes.length > 0) {
+            errorMessage += `\n\nCó thể bạn muốn dùng một trong các loại giường sau:\n${similarBedTypes.map(bt => `- ${bt.name}`).join('\n')}`;
+            errorMessage += `\n\nHoặc vui lòng nhập chính xác tên loại giường có sẵn trong hệ thống.`;
+        } else if (availableBedTypes.length > 0) {
+            errorMessage += `\n\nCác loại giường có sẵn trong hệ thống:\n${availableBedTypes.slice(0, 10).map(bt => `- ${bt.name}`).join('\n')}`;
+            errorMessage += `\n\nVui lòng chọn một trong các loại giường trên hoặc nhập chính xác tên loại giường.`;
+        } else {
+            errorMessage += `\n\nVui lòng kiểm tra lại tên loại giường hoặc liên hệ admin để được hỗ trợ.`;
+        }
+
+        throw new Error(errorMessage);
     } catch (error: any) {
-        console.error("[bedTypeService] Error finding or creating bedType:", error);
+        console.error("[bedTypeService] Error finding bedType:", error);
         throw error;
     }
 };

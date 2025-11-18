@@ -58,34 +58,41 @@ export default function HotelAdminForm({ admin, onSave, onCancel }: FormProps) {
 
     return (
         <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-                <label htmlFor="hotelId" className="form-label">
-                    Khách sạn quản lý <span className="text-danger">*</span>
-                </label>
-                {isLoadingHotels ? (
-                    <div className="form-select">Đang tải danh sách khách sạn...</div>
-                ) : (
-                    <select
-                        id="hotelId"
-                        name="hotelId"
-                        className="form-select"
-                        value={selectedHotelId}
-                        onChange={(e) => setSelectedHotelId(e.target.value)}
-                        required
-                        disabled={isEditing} // Hotel không thể đổi khi edit
-                    >
-                        <option value="">-- Chọn khách sạn --</option>
-                        {hotels.map(hotel => (
-                            <option key={hotel.id} value={hotel.id}>
-                                {hotel.name}
-                            </option>
-                        ))}
-                    </select>
-                )}
-                {isEditing && (
-                    <small className="form-text text-muted">Khách sạn không thể thay đổi</small>
-                )}
-            </div>
+            {/* Ẩn mục chọn khách sạn - sẽ được gán tự động hoặc xử lý ở backend */}
+            {false && (
+                <div className="mb-3">
+                    <label htmlFor="hotelId" className="form-label">
+                        Khách sạn quản lý <span className="text-danger">*</span>
+                    </label>
+                    {isLoadingHotels ? (
+                        <div className="form-select">Đang tải danh sách khách sạn...</div>
+                    ) : (
+                        <select
+                            id="hotelId"
+                            name="hotelId"
+                            className="form-select"
+                            value={selectedHotelId}
+                            onChange={(e) => setSelectedHotelId(e.target.value)}
+                            required
+                            disabled={isEditing} // Hotel không thể đổi khi edit
+                        >
+                            <option value="">-- Chọn khách sạn --</option>
+                            {hotels.map(hotel => (
+                                <option key={hotel.id} value={hotel.id}>
+                                    {hotel.name}
+                                </option>
+                            ))}
+                        </select>
+                    )}
+                    {isEditing && (
+                        <small className="form-text text-muted">Khách sạn không thể thay đổi</small>
+                    )}
+                </div>
+            )}
+            {/* Hidden input để vẫn gửi hotelId nếu có (khi edit) */}
+            {isEditing && selectedHotelId && (
+                <input type="hidden" name="hotelId" value={selectedHotelId} />
+            )}
             <div className="mb-3">
                 <label htmlFor="fullName" className="form-label">
                     Họ và tên <span className="text-danger">*</span>
@@ -152,7 +159,7 @@ export default function HotelAdminForm({ admin, onSave, onCancel }: FormProps) {
                 <button
                     type="submit"
                     className="btn btn-primary"
-                    disabled={isLoadingHotels || (!isEditing && !selectedHotelId)}
+                    disabled={isLoadingHotels}
                 >
                     {isEditing ? 'Cập nhật' : 'Thêm mới'}
                 </button>
