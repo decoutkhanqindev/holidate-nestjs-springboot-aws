@@ -48,9 +48,10 @@ export async function createServerApiClient(): Promise<AxiosInstance> {
     const instance = axios.create({
         baseURL: API_BASE_URL,
         timeout: 65000,
-        // KHÔNG set default Content-Type cho multipart/form-data
+        // Set default Content-Type cho JSON requests
         // Axios sẽ tự động set boundary khi dùng FormData
         headers: {
+            'Content-Type': 'application/json',
             ...(token && { Authorization: `Bearer ${token}` }),
         },
     });
@@ -61,8 +62,16 @@ export async function createServerApiClient(): Promise<AxiosInstance> {
     // Thêm request interceptor để log request
     instance.interceptors.request.use(
         (config) => {
-            // Nếu là FormData, không log toàn bộ data (sẽ rất dài)
+            // Nếu là FormData, xóa Content-Type để Axios tự động set boundary
             const isFormData = config.data instanceof FormData;
+            if (isFormData) {
+                delete config.headers['Content-Type'];
+            } else if (!config.headers['Content-Type']) {
+                // Nếu không phải FormData và chưa có Content-Type, set JSON
+                config.headers['Content-Type'] = 'application/json';
+            }
+            
+            // Nếu là FormData, không log toàn bộ data (sẽ rất dài)
             let dataPreview = config.data;
 
             if (isFormData) {

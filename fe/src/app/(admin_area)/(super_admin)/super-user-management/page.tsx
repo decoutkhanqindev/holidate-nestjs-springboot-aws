@@ -9,7 +9,7 @@ import type { HotelAdmin } from "@/types";
 import HotelAdminFormModal from "@/components/AdminSuper/ManageAdmin/HotelAdminFormModal";
 import { toast } from "react-toastify";
 
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 10;
 
 export default function SuperAdminsPage() {
     const [admins, setAdmins] = useState<HotelAdmin[]>([]);
@@ -43,13 +43,14 @@ export default function SuperAdminsPage() {
         setIsModalOpen(true);
     };
 
-    const handleDelete = async (id: number, name: string) => {
-        if (!confirm(`Bạn có chắc muốn xóa tài khoản admin "${name}"?`)) {
+    const handleDelete = async (admin: HotelAdmin) => {
+        if (!confirm(`Bạn có chắc muốn xóa tài khoản admin "${admin.username}"?`)) {
             return;
         }
 
         try {
-            await deleteHotelAdminAction(id.toString());
+            // Sử dụng userId (UUID string) thay vì id (number) để gọi API
+            await deleteHotelAdminAction(admin.userId);
             toast.success('Xóa admin khách sạn thành công!', {
                 position: "top-right",
                 autoClose: 2000,
@@ -100,7 +101,7 @@ export default function SuperAdminsPage() {
 
             // Đóng modal và refresh data
             setIsModalOpen(false);
-            
+
             // Reload data
             const response = await getHotelAdmins({ page: currentPage, limit: ITEMS_PER_PAGE });
             setAdmins(response.data);

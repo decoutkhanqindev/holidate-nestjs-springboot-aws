@@ -17,7 +17,7 @@ function StatusBadge({ status }: { status: 'ACTIVE' | 'INACTIVE' }) {
 interface HotelAdminsTableProps {
     admins: HotelAdmin[];
     onEdit: (admin: HotelAdmin) => void;
-    onDelete: (id: number, name: string) => void;
+    onDelete: (admin: HotelAdmin) => void;
 }
 
 export default function HotelAdminsTable({ admins, onEdit, onDelete }: HotelAdminsTableProps) {
@@ -48,7 +48,7 @@ export default function HotelAdminsTable({ admins, onEdit, onDelete }: HotelAdmi
                                         <button onClick={() => onEdit(admin)} className="btn btn-sm btn-outline-primary me-2" title="Chỉnh sửa">
                                             <FaPencilAlt />
                                         </button>
-                                        <button onClick={() => onDelete(admin.id, admin.username)} className="btn btn-sm btn-outline-danger" title="Xóa">
+                                        <button onClick={() => onDelete(admin)} className="btn btn-sm btn-outline-danger" title="Xóa">
                                             <FaTrash />
                                         </button>
                                     </td>

@@ -2,7 +2,7 @@
 
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import type { Hotel } from "@/types";
 import {
     getCountries, getProvinces, getCities, getDistricts, getWards, getStreets,
@@ -12,10 +12,13 @@ import {
 import { getPartners, createPartner, type Partner, type CreatePartnerRequest } from "@/lib/AdminAPI/partnerService";
 import { getPartnerRole } from "@/lib/AdminAPI/roleService";
 import { useAuth } from "@/components/Admin/AuthContext_Admin/AuthContextAdmin";
-import { PlusIcon, XMarkIcon, ClockIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { getAmenities, getAmenityCategories, type Amenity, type AmenityCategory } from "@/lib/AdminAPI/amenityService";
 import { getEntertainmentVenuesByCity, type EntertainmentVenueByCategory, type EntertainmentVenue } from "@/lib/AdminAPI/entertainmentVenueService";
 import { getAllCancellationPolicies, getAllReschedulePolicies, getAllIdentificationDocuments } from "@/lib/AdminAPI/policyService";
+import AmenitiesSection from "./AmenitiesSection";
+import PoliciesSection from "./PoliciesSection";
+import NearbyLocationsSection from "./NearbyLocationsSection";
 
 function SubmitButton({ isEditing }: { isEditing: boolean }) {
     const { pending } = useFormStatus();
@@ -93,8 +96,6 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
     // State cho amenities (chỉ dùng khi edit)
     const [amenities, setAmenities] = useState<Amenity[]>([]);
     const [selectedAmenityIds, setSelectedAmenityIds] = useState<Set<string>>(new Set());
-    const [searchAmenityQuery, setSearchAmenityQuery] = useState<string>('');
-    const [showAllMainAmenities, setShowAllMainAmenities] = useState<boolean>(false);
 
     // State cho policy (chỉ dùng khi edit)
     const [checkInTime, setCheckInTime] = useState<string>('14:00');
@@ -112,9 +113,15 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
     const [entertainmentVenuesByCategory, setEntertainmentVenuesByCategory] = useState<EntertainmentVenueByCategory[]>([]);
     const [selectedVenues, setSelectedVenues] = useState<Array<{ venueId: string; distance: number }>>([]);
     const [newVenues, setNewVenues] = useState<Array<{ name: string; distance: number; categoryId: string }>>([]);
-    const [newVenueName, setNewVenueName] = useState('');
-    const [newVenueDistance, setNewVenueDistance] = useState<number>(0);
-    const [newVenueCategoryId, setNewVenueCategoryId] = useState<string>('');
+    // State để lưu danh sách venue IDs cần xóa (khi user bấm nút X)
+    const [venuesToRemove, setVenuesToRemove] = useState<Set<string>>(new Set());
+    // State để lưu dữ liệu venues từ NearbyLocationsSection
+    const [venuesDataForSubmit, setVenuesDataForSubmit] = useState<{
+        venuesToUpdate: Array<{ venueId: string; distance: number }>;
+        venuesToAdd: Array<{ venueId: string; distance: number }>;
+        venuesToRemove: string[];
+        newVenues: Array<{ name: string; distance: number; categoryId: string }>;
+    } | null>(null);
 
 
     // Load countries and partners on mount
@@ -137,17 +144,32 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                     const amenitiesData = await getAmenities();
                     setAmenities(amenitiesData);
 
-                    // Nếu hotel đã có amenities, load chúng
+                    // Tạo Set các amenity IDs hợp lệ từ danh sách amenities hiện tại
+                    const validAmenityIdsSet = new Set(amenitiesData.map(a => a.id));
+
+                    // Nếu hotel đã có amenities, load chúng (chỉ lấy các IDs hợp lệ và tồn tại)
                     const hotelData = hotel as any;
                     if (hotelData?.amenities && Array.isArray(hotelData.amenities)) {
-                        const existingAmenityIds = new Set<string>(hotelData.amenities.map((a: any) => a.id || a.amenityId).filter(Boolean));
+                        const existingAmenityIds = new Set<string>(
+                            hotelData.amenities
+                                .map((a: any) => a.id || a.amenityId)
+                                .filter((id: any) => id && typeof id === 'string' && id.trim() !== '' && validAmenityIdsSet.has(id))
+                        );
                         setSelectedAmenityIds(existingAmenityIds);
+
+                        // Log warning nếu có amenity IDs không hợp lệ
+                        const allHotelAmenityIds = hotelData.amenities.map((a: any) => a.id || a.amenityId).filter(Boolean);
+                        const invalidIds = allHotelAmenityIds.filter((id: string) => !validAmenityIdsSet.has(id));
+                        if (invalidIds.length > 0) {
+                            // Một số amenity IDs từ hotel không tồn tại trong danh sách amenities hiện tại
+                        }
                     } else {
                         // Nếu không có, tự động chọn các amenities miễn phí
                         const freeAmenityIds = new Set(amenitiesData.filter(a => a.free).map(a => a.id));
                         setSelectedAmenityIds(freeAmenityIds);
                     }
                 } catch (error) {
+                    // Error loading amenities
                 }
 
                 // Load cancellation policies (có thể không tồn tại API)
@@ -288,11 +310,30 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
     // Lưu venue distance từ hotel data để dùng khi tích checkbox
     const [hotelVenueDistances, setHotelVenueDistances] = useState<Map<string, number>>(new Map());
 
+    // Reset state khi hotel thay đổi (quan trọng để tránh hiển thị venues của hotel cũ)
+    useEffect(() => {
+        if (!isEditing || !hotel?.id) {
+            // Reset state khi không edit hoặc không có hotel
+            setSelectedVenues([]);
+            setNewVenues([]);
+            setHotelVenueDistances(new Map());
+            setEntertainmentVenuesByCategory([]);
+            setVenuesToRemove(new Set());
+            setVenuesDataForSubmit(null);
+            return;
+        }
+    }, [hotel?.id, isEditing]);
+
     // Load entertainment venues khi city được chọn (chỉ khi edit)
     useEffect(() => {
-        if (!isEditing) return; // Chỉ load khi edit
+        if (!isEditing || !hotel?.id) return; // Chỉ load khi edit và có hotel ID
 
         const loadVenues = async () => {
+            // Reset state trước khi load để tránh hiển thị venues của hotel cũ
+            setSelectedVenues([]);
+            setNewVenues([]);
+            setHotelVenueDistances(new Map());
+
             if (selectedCityId) {
                 try {
                     const venuesData = await getEntertainmentVenuesByCity(selectedCityId);
@@ -310,7 +351,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                             if (categoryGroup?.entertainmentVenues && Array.isArray(categoryGroup.entertainmentVenues)) {
                                 categoryGroup.entertainmentVenues.forEach((venue: any) => {
                                     if (venue?.id && venue?.distance != null) {
-                                        const venueId = venue.id;
+                                        const venueId = String(venue.id); // Đảm bảo là string
                                         const distanceInMeters = venue.distance;
                                         // Lưu distance vào map (meters) để dùng sau
                                         distanceMap.set(venueId, distanceInMeters);
@@ -330,7 +371,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
 
                         // Convert meters → km cho form
                         const existingVenues = allVenues.map((v: any) => ({
-                            venueId: v.id || v.entertainmentVenueId,
+                            venueId: String(v.id || v.entertainmentVenueId), // Đảm bảo là string
                             // Convert meters → km (chia 1000) để hiển thị trong form
                             distance: v.distance ? (v.distance / 1000) : 1
                         })).filter((v: any) => v.venueId);
@@ -338,36 +379,22 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                     } else {
                         // Không có venues, reset map
                         setHotelVenueDistances(new Map());
+                        setSelectedVenues([]);
                     }
 
-                    // Tự động tìm category "Địa Điểm Lân Cận" để dùng cho venue mới
-                    if (venuesData && venuesData.length > 0) {
-                        const nearbyCategory = venuesData.find(cat =>
-                            cat?.name && (
-                                cat.name.toLowerCase().includes('lân cận') ||
-                                cat.name.toLowerCase().includes('địa điểm lân cận') ||
-                                cat.name.toLowerCase().includes('nearby')
-                            )
-                        );
-                        if (nearbyCategory && nearbyCategory.id) {
-                            setNewVenueCategoryId(nearbyCategory.id);
-                        } else {
-                            setNewVenueCategoryId(venuesData[0].id);
-                        }
-                    } else {
-                        setNewVenueCategoryId('a4d8d350-a850-11f0-a7b7-0a6aab4924ab');
-                    }
                 } catch (error) {
                     setEntertainmentVenuesByCategory([]);
-                    setNewVenueCategoryId('a4d8d350-a850-11f0-a7b7-0a6aab4924ab');
+                    setSelectedVenues([]);
+                    setHotelVenueDistances(new Map());
                 }
             } else {
                 setEntertainmentVenuesByCategory([]);
-                setNewVenueCategoryId('');
+                setSelectedVenues([]);
+                setHotelVenueDistances(new Map());
             }
         };
         loadVenues();
-    }, [selectedCityId, isEditing, hotel]);
+    }, [selectedCityId, isEditing, hotel?.id, hotel]);
 
     // Load policy data từ hotel nếu đang edit
     useEffect(() => {
@@ -385,8 +412,32 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                 setAllowsPayAtHotel(policy.allowsPayAtHotel);
             }
             if (policy.requiredIdentificationDocuments) {
-                const docIds = new Set<string>(policy.requiredIdentificationDocuments.map((doc: { id: string }) => doc.id));
-                setSelectedDocumentIds(docIds);
+                // Chỉ load các document IDs hợp lệ và tồn tại trong danh sách identification documents hiện tại
+                // Đảm bảo identificationDocuments đã được load trước
+                if (identificationDocuments.length > 0) {
+                    const validDocumentIdsSet = new Set(identificationDocuments.map(d => d.id));
+                    const docIds = new Set<string>(
+                        policy.requiredIdentificationDocuments
+                            .map((doc: { id: string }) => doc.id)
+                            .filter((id: any) => id && typeof id === 'string' && id.trim() !== '' && validDocumentIdsSet.has(id))
+                    );
+                    setSelectedDocumentIds(docIds);
+
+                    // Log warning nếu có document IDs không hợp lệ
+                    const allPolicyDocumentIds = policy.requiredIdentificationDocuments.map((doc: { id: string }) => doc.id).filter(Boolean);
+                    const invalidIds = allPolicyDocumentIds.filter((id: string) => !validDocumentIdsSet.has(id));
+                    if (invalidIds.length > 0) {
+                        // Một số identification document IDs từ hotel policy không tồn tại trong danh sách hiện tại
+                    }
+                } else {
+                    // Nếu chưa load được identification documents, chỉ lấy IDs và sẽ validate sau
+                    const docIds = new Set<string>(
+                        policy.requiredIdentificationDocuments
+                            .map((doc: { id: string }) => doc.id)
+                            .filter((id: any) => id && typeof id === 'string' && id.trim() !== '')
+                    );
+                    setSelectedDocumentIds(docIds);
+                }
             }
             if (policy.cancellationPolicy?.id) {
                 setCancellationPolicyId(policy.cancellationPolicy.id);
@@ -395,89 +446,9 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                 setReschedulePolicyId(policy.reschedulePolicy.id);
             }
         }
-    }, [hotel, isEditing]);
+    }, [hotel, isEditing, identificationDocuments]);
 
 
-    // Handler để cập nhật venues riêng (test)
-    const handleUpdateVenuesOnly = async () => {
-        if (!isEditing || !hotel) {
-            alert('Chỉ có thể cập nhật khi đang edit hotel');
-            return;
-        }
-
-        try {
-            const { updateHotelAction } = await import('@/lib/actions/hotelActions');
-            const { toast } = await import('react-toastify');
-
-            const formData = new FormData();
-
-            // Phân biệt venues cần ADD (mới), UPDATE (đã có trong hotel) và REMOVE (bị bỏ chọn)
-            const existingVenueIds = new Set(hotelVenueDistances.keys());
-            const selectedVenueIds = new Set(selectedVenues.map(v => v.venueId));
-            const venuesToUpdate: Array<{ venueId: string; distance: number }> = [];
-            const venuesToAdd: Array<{ venueId: string; distance: number }> = [];
-            const venuesToRemove: string[] = [];
-
-            // Tìm venues cần REMOVE (có trong hotel nhưng không còn trong selectedVenues)
-            existingVenueIds.forEach((venueId) => {
-                if (!selectedVenueIds.has(venueId)) {
-                    venuesToRemove.push(venueId);
-                }
-            });
-
-            selectedVenues.forEach((venue) => {
-                if (existingVenueIds.has(venue.venueId)) {
-                    venuesToUpdate.push(venue);
-                } else {
-                    venuesToAdd.push(venue);
-                }
-            });
-
-            venuesToRemove.forEach((venueId) => {
-                formData.append('entertainmentVenueIdsToRemove[]', venueId);
-            });
-
-            venuesToUpdate.forEach((venue, index) => {
-                const distanceInMeters = Math.round(venue.distance * 1000);
-                formData.append(`entertainmentVenuesWithDistanceToUpdate[${index}].entertainmentVenueId`, venue.venueId);
-                formData.append(`entertainmentVenuesWithDistanceToUpdate[${index}].distance`, distanceInMeters.toString());
-            });
-
-            venuesToAdd.forEach((venue, index) => {
-                const distanceInMeters = Math.round(venue.distance * 1000);
-                formData.append(`entertainmentVenuesWithDistanceToAdd[${index}].entertainmentVenueId`, venue.venueId);
-                formData.append(`entertainmentVenuesWithDistanceToAdd[${index}].distance`, distanceInMeters.toString());
-            });
-
-            newVenues.forEach((venue, index) => {
-                const distanceInMeters = Math.round(venue.distance * 1000);
-                formData.append(`entertainmentVenuesToAdd[${index}].name`, venue.name);
-                formData.append(`entertainmentVenuesToAdd[${index}].distance`, distanceInMeters.toString());
-                formData.append(`entertainmentVenuesToAdd[${index}].cityId`, selectedCityId);
-                formData.append(`entertainmentVenuesToAdd[${index}].categoryId`, venue.categoryId);
-            });
-
-            const result = await updateHotelAction(hotel.id, formData);
-
-            if (result?.error) {
-                throw new Error(result.error);
-            }
-
-            const removeMsg = venuesToRemove.length > 0 ? `, xóa ${venuesToRemove.length} địa điểm` : '';
-            toast.success(`✅ Đã cập nhật ${venuesToUpdate.length} địa điểm${removeMsg}, thêm ${venuesToAdd.length + newVenues.length} địa điểm mới!`, {
-                position: "top-right",
-                autoClose: 3000,
-            });
-
-            window.location.reload();
-        } catch (error: any) {
-            const { toast } = await import('react-toastify');
-            toast.error(error.message || 'Không thể cập nhật địa điểm. Vui lòng thử lại.', {
-                position: "top-right",
-                autoClose: 3000,
-            });
-        }
-    };
 
     // Handler để append nhiều ảnh vào FormData trước khi submit
     const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -492,59 +463,65 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
 
         // Chỉ append amenities, venues và policy khi đang EDIT
         if (isEditing) {
-            // Append amenities (amenityIdsToAdd)
-            selectedAmenityIds.forEach((amenityId) => {
+            // Append amenities (amenityIdsToAdd) - chỉ append các amenity IDs hợp lệ
+            const validAmenityIds = Array.from(selectedAmenityIds).filter(
+                (amenityId) => amenityId && typeof amenityId === 'string' && amenityId.trim() !== ''
+            );
+
+            // Kiểm tra xem các amenity IDs có tồn tại trong danh sách amenities hiện tại không
+            const existingAmenityIds = new Set(amenities.map(a => a.id));
+            const validAndExistingAmenityIds = validAmenityIds.filter(id => existingAmenityIds.has(id));
+
+            if (validAmenityIds.length !== validAndExistingAmenityIds.length) {
+                const invalidIds = validAmenityIds.filter(id => !existingAmenityIds.has(id));
+                // Một số amenity IDs không tồn tại trong danh sách amenities hiện tại
+            }
+
+            validAndExistingAmenityIds.forEach((amenityId) => {
                 formData.append('amenityIdsToAdd[]', amenityId);
             });
 
-            // Phân biệt venues cần ADD (mới), UPDATE (đã có trong hotel) và REMOVE (bị bỏ chọn)
-            // Venues đã có trong hotel (có trong hotelVenueDistances) → dùng entertainmentVenuesWithDistanceToUpdate
-            // Venues chưa có → dùng entertainmentVenuesWithDistanceToAdd
-            // Venues bị bỏ chọn (có trong hotel nhưng không còn trong selectedVenues) → dùng entertainmentVenueIdsToRemove
-
-            const existingVenueIds = new Set(hotelVenueDistances.keys()); // Venues đã có trong hotel
-            const selectedVenueIds = new Set(selectedVenues.map(v => v.venueId)); // Venues hiện đang được chọn
-            const venuesToUpdate: Array<{ venueId: string; distance: number }> = [];
-            const venuesToAdd: Array<{ venueId: string; distance: number }> = [];
-            const venuesToRemove: string[] = [];
-
-            existingVenueIds.forEach((venueId) => {
-                if (!selectedVenueIds.has(venueId)) {
-                    venuesToRemove.push(venueId);
+            // Xử lý venues từ NearbyLocationsSection (logic đã được di chuyển vào component con)
+            if (venuesDataForSubmit) {
+                // XỬ LÝ VENUES CẦN XÓA
+                if (venuesDataForSubmit.venuesToRemove.length > 0) {
+                    venuesDataForSubmit.venuesToRemove.forEach((venueId) => {
+                        const venueIdStr = String(venueId);
+                        formData.append('entertainmentVenueIdsToRemove', venueIdStr);
+                    });
                 }
-            });
 
-            selectedVenues.forEach((venue) => {
-                if (existingVenueIds.has(venue.venueId)) {
-                    venuesToUpdate.push(venue);
-                } else {
-                    venuesToAdd.push(venue);
+                // Backend mong đợi format: entertainmentVenuesWithDistanceToUpdate[0].entertainmentVenueId, entertainmentVenuesWithDistanceToUpdate[0].distance, ...
+                if (venuesDataForSubmit.venuesToUpdate.length > 0) {
+                    venuesDataForSubmit.venuesToUpdate.forEach((venue, index) => {
+                        const distanceInMeters = venue.distance * 1000;
+                        const distanceStr = distanceInMeters.toFixed(1);
+                        formData.append(`entertainmentVenuesWithDistanceToUpdate[${index}].entertainmentVenueId`, venue.venueId);
+                        formData.append(`entertainmentVenuesWithDistanceToUpdate[${index}].distance`, distanceStr);
+                    });
                 }
-            });
 
-            venuesToRemove.forEach((venueId) => {
-                formData.append('entertainmentVenueIdsToRemove[]', venueId);
-            });
+                // Backend mong đợi format: entertainmentVenuesWithDistanceToAdd[0].entertainmentVenueId, entertainmentVenuesWithDistanceToAdd[0].distance, ...
+                if (venuesDataForSubmit.venuesToAdd.length > 0) {
+                    venuesDataForSubmit.venuesToAdd.forEach((venue, index) => {
+                        const distanceInMeters = venue.distance * 1000;
+                        const distanceStr = distanceInMeters.toFixed(1);
+                        formData.append(`entertainmentVenuesWithDistanceToAdd[${index}].entertainmentVenueId`, venue.venueId);
+                        formData.append(`entertainmentVenuesWithDistanceToAdd[${index}].distance`, distanceStr);
+                    });
+                }
 
-            venuesToUpdate.forEach((venue, index) => {
-                formData.append(`entertainmentVenuesWithDistanceToUpdate[${index}].entertainmentVenueId`, venue.venueId);
-                const distanceInMeters = Math.round(venue.distance * 1000);
-                formData.append(`entertainmentVenuesWithDistanceToUpdate[${index}].distance`, distanceInMeters.toString());
-            });
-
-            venuesToAdd.forEach((venue, index) => {
-                formData.append(`entertainmentVenuesWithDistanceToAdd[${index}].entertainmentVenueId`, venue.venueId);
-                const distanceInMeters = Math.round(venue.distance * 1000);
-                formData.append(`entertainmentVenuesWithDistanceToAdd[${index}].distance`, distanceInMeters.toString());
-            });
-
-            newVenues.forEach((venue, index) => {
-                formData.append(`entertainmentVenuesToAdd[${index}].name`, venue.name);
-                const distanceInMeters = Math.round(venue.distance * 1000);
-                formData.append(`entertainmentVenuesToAdd[${index}].distance`, distanceInMeters.toString());
-                formData.append(`entertainmentVenuesToAdd[${index}].cityId`, selectedCityId);
-                formData.append(`entertainmentVenuesToAdd[${index}].categoryId`, venue.categoryId);
-            });
+                // Xử lý newVenues (venues mới được tạo)
+                if (venuesDataForSubmit.newVenues.length > 0) {
+                    venuesDataForSubmit.newVenues.forEach((venue, index) => {
+                        const distanceInMeters = venue.distance * 1000;
+                        formData.append(`entertainmentVenuesToAdd[${index}].name`, venue.name);
+                        formData.append(`entertainmentVenuesToAdd[${index}].distance`, distanceInMeters.toFixed(1));
+                        formData.append(`entertainmentVenuesToAdd[${index}].cityId`, selectedCityId);
+                        formData.append(`entertainmentVenuesToAdd[${index}].categoryId`, venue.categoryId);
+                    });
+                }
+            }
 
             // Append policy data
             if (checkInTime) {
@@ -555,8 +532,21 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
             }
             formData.append('policy.allowsPayAtHotel', allowsPayAtHotel.toString());
 
-            // Append required identification documents
-            selectedDocumentIds.forEach((docId) => {
+            // Append required identification documents - chỉ append các document IDs hợp lệ
+            const validDocumentIds = Array.from(selectedDocumentIds).filter(
+                (docId) => docId && typeof docId === 'string' && docId.trim() !== ''
+            );
+
+            // Kiểm tra xem các document IDs có tồn tại trong danh sách identification documents hiện tại không
+            const existingDocumentIds = new Set(identificationDocuments.map(d => d.id));
+            const validAndExistingDocumentIds = validDocumentIds.filter(id => existingDocumentIds.has(id));
+
+            if (validDocumentIds.length !== validAndExistingDocumentIds.length) {
+                const invalidIds = validDocumentIds.filter(id => !existingDocumentIds.has(id));
+                // Một số identification document IDs không tồn tại trong danh sách hiện tại
+            }
+
+            validAndExistingDocumentIds.forEach((docId) => {
                 formData.append('policy.requiredIdentificationDocumentIdsToAdd[]', docId);
             });
 
@@ -569,6 +559,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
             }
         }
 
+
         // Gọi formAction với FormData
         formAction(formData);
     };
@@ -576,7 +567,7 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
     return (
         <>
             <div className="bg-white rounded-xl shadow-sm">
-                <form onSubmit={handleFormSubmit} className="space-y-8">
+                <form onSubmit={handleFormSubmit} noValidate className="space-y-8">
                     {/* Basic Information Section */}
                     <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                         <div className="flex items-center gap-2 mb-6 pb-3 border-b border-gray-200">
@@ -1171,541 +1162,57 @@ export default function HotelForm({ hotel, formAction, isSuperAdmin = false }: H
                     {isEditing && (
                         <>
                             {/* Tiện ích (Amenities) */}
-                            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                                <div className="flex items-center gap-2 mb-6 pb-3 border-b border-gray-200">
-                                    <div className="w-1 h-6 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></div>
-                                    <h3 className="text-lg font-semibold text-gray-800">Tiện ích</h3>
-                                </div>
-                                <div className="space-y-4">
-                                    {/* Tiện ích chính */}
-                                    {(() => {
-                                        const freeAmenities = amenities.filter(a => a.free);
-                                        const selectedOtherAmenities = amenities.filter(a => !a.free && selectedAmenityIds.has(a.id));
-                                        const displayLimit = 10;
-                                        const amenitiesToShow = showAllMainAmenities
-                                            ? [...freeAmenities, ...selectedOtherAmenities]
-                                            : [...freeAmenities, ...selectedOtherAmenities].slice(0, displayLimit);
-                                        const hasMore = (freeAmenities.length + selectedOtherAmenities.length) > displayLimit;
-
-                                        if (freeAmenities.length > 0 || selectedOtherAmenities.length > 0) {
-                                            return (
-                                                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                                                    <h4 className="text-sm font-semibold text-green-800 mb-3 flex items-center gap-2">
-                                                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                        </svg>
-                                                        Tiện ích chính
-                                                    </h4>
-                                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                                                        {amenitiesToShow
-                                                            .filter(amenity => amenity?.id && amenity?.name)
-                                                            .map((amenity) => (
-                                                                <div
-                                                                    key={amenity.id}
-                                                                    className="flex items-center gap-2 p-2 bg-white rounded-md border border-green-300 shadow-sm"
-                                                                >
-                                                                    <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                                    </svg>
-                                                                    <span className="text-sm text-gray-700 font-medium">{amenity.name || 'Không có tên'}</span>
-                                                                </div>
-                                                            ))}
-                                                    </div>
-                                                    {hasMore && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setShowAllMainAmenities(!showAllMainAmenities)}
-                                                            className="mt-3 text-sm font-medium text-green-700 hover:text-green-800 flex items-center gap-1 transition-colors"
-                                                        >
-                                                            {showAllMainAmenities ? (
-                                                                <>
-                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                                                                    </svg>
-                                                                    Thu gọn
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    Xem thêm ({freeAmenities.length + selectedOtherAmenities.length - displayLimit} tiện ích)
-                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                                                    </svg>
-                                                                </>
-                                                            )}
-                                                        </button>
-                                                    )}
-                                                    <p className="text-xs text-green-700 mt-3">
-                                                        {freeAmenities.length > 0 && "Các tiện ích miễn phí phổ biến đã được tự động gán vào khách sạn"}
-                                                        {selectedOtherAmenities.length > 0 && freeAmenities.length > 0 && " • "}
-                                                        {selectedOtherAmenities.length > 0 && `${selectedOtherAmenities.length} tiện ích khác đã được thêm`}
-                                                    </p>
-                                                </div>
-                                            );
-                                        }
-                                        return null;
-                                    })()}
-
-                                    {/* Thêm tiện ích khác */}
-                                    <div className="space-y-3">
-                                        <h4 className="text-sm font-semibold text-gray-700">Thêm tiện ích khác (nếu có)</h4>
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                value={searchAmenityQuery}
-                                                onChange={(e) => setSearchAmenityQuery(e.target.value)}
-                                                placeholder="Tìm kiếm và chọn thêm tiện ích..."
-                                                className="block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
-                                            />
-                                            {searchAmenityQuery && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setSearchAmenityQuery('')}
-                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                                                >
-                                                    <XMarkIcon className="h-5 w-5" />
-                                                </button>
-                                            )}
-                                        </div>
-
-                                        {/* Danh sách amenities để chọn */}
-                                        {(() => {
-                                            const otherAmenities = amenities.filter(a => !a.free);
-                                            const filteredAmenities = searchAmenityQuery.trim()
-                                                ? otherAmenities.filter(a =>
-                                                    a.name.toLowerCase().includes(searchAmenityQuery.toLowerCase())
-                                                )
-                                                : otherAmenities;
-
-                                            if (filteredAmenities.length > 0) {
-                                                return (
-                                                    <div className="border border-gray-200 rounded-lg p-4 max-h-64 overflow-y-auto">
-                                                        <div className="space-y-2">
-                                                            {filteredAmenities
-                                                                .filter(amenity => amenity?.id && amenity?.name)
-                                                                .map((amenity) => (
-                                                                    <label
-                                                                        key={amenity.id}
-                                                                        className="flex items-center space-x-3 cursor-pointer p-2 rounded-md hover:bg-gray-50 border border-gray-200"
-                                                                    >
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            checked={selectedAmenityIds.has(amenity.id)}
-                                                                            onChange={(e) => {
-                                                                                const newSet = new Set(selectedAmenityIds);
-                                                                                if (e.target.checked) {
-                                                                                    newSet.add(amenity.id);
-                                                                                } else {
-                                                                                    newSet.delete(amenity.id);
-                                                                                }
-                                                                                setSelectedAmenityIds(newSet);
-                                                                            }}
-                                                                            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                                                        />
-                                                                        <span className="text-sm text-gray-700 flex-1">
-                                                                            {amenity.name || 'Không có tên'}
-                                                                        </span>
-                                                                        {amenity?.category?.name && (
-                                                                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                                                                {amenity.category.name}
-                                                                            </span>
-                                                                        )}
-                                                                    </label>
-                                                                ))}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            } else if (searchAmenityQuery.trim()) {
-                                                return (
-                                                    <div className="border border-gray-200 rounded-lg p-4 text-center text-sm text-gray-500">
-                                                        Không tìm thấy tiện ích nào phù hợp với "{searchAmenityQuery}"
-                                                    </div>
-                                                );
-                                            }
-                                            return null;
-                                        })()}
-                                    </div>
-                                </div>
-                            </div>
+                            <AmenitiesSection
+                                amenities={amenities}
+                                selectedAmenityIds={selectedAmenityIds}
+                                onSelectedAmenityIdsChange={setSelectedAmenityIds}
+                            />
 
                             {/* Địa điểm lân cận (Entertainment Venues) */}
-                            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                                <div className="flex items-center gap-2 mb-6 pb-3 border-b border-gray-200">
-                                    <div className="w-1 h-6 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></div>
-                                    <h3 className="text-lg font-semibold text-gray-800">Địa điểm lân cận</h3>
-                                </div>
-                                <div className="space-y-4">
-                                    {!selectedCityId ? (
-                                        <p className="text-sm text-gray-500">Vui lòng chọn thành phố để xem danh sách địa điểm lân cận</p>
-                                    ) : (
-                                        <>
-                                            {/* Danh sách venues có sẵn */}
-                                            {entertainmentVenuesByCategory.length > 0 && (
-                                                <div className="space-y-4">
-                                                    {entertainmentVenuesByCategory
-                                                        .filter(categoryGroup => categoryGroup?.id && categoryGroup?.name)
-                                                        .map((categoryGroup) => (
-                                                            <div key={categoryGroup.id || 'unknown'} className="border border-gray-200 rounded-lg p-4">
-                                                                <h4 className="text-sm font-medium text-gray-700 mb-3">{categoryGroup.name || 'Không có tên'}</h4>
-                                                                <div className="space-y-2">
-                                                                    {(categoryGroup.entertainmentVenues || []).map((venue) => {
-                                                                        if (!venue?.id || !venue?.name) return null;
-                                                                        const isSelected = selectedVenues.some(v => v.venueId === venue.id);
-                                                                        const selectedVenue = selectedVenues.find(v => v.venueId === venue.id);
-                                                                        return (
-                                                                            <div key={venue.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-50 border border-gray-200">
-                                                                                <input
-                                                                                    type="checkbox"
-                                                                                    checked={isSelected}
-                                                                                    onChange={(e) => {
-                                                                                        if (e.target.checked) {
-                                                                                            // Nếu venue đã có trong selectedVenues, không thêm lại
-                                                                                            const existingVenue = selectedVenues.find(v => v.venueId === venue.id);
-                                                                                            if (existingVenue) {
-                                                                                                // Đã có, không thêm lại
-                                                                                                return;
-                                                                                            }
-
-                                                                                            // Chưa có, kiểm tra xem có distance từ hotel data không
-                                                                                            let distanceToUse = 1; // Mặc định 1 km
-
-                                                                                            // Nếu có distance từ hotel data (đã lưu trước), dùng nó
-                                                                                            const savedDistanceInMeters = hotelVenueDistances.get(venue.id);
-                                                                                            if (savedDistanceInMeters != null) {
-                                                                                                // Convert meters → km
-                                                                                                distanceToUse = savedDistanceInMeters / 1000;
-                                                                                            } else if (venue.distance != null) {
-                                                                                                // Nếu venue từ API có distance (meters), convert sang km
-                                                                                                distanceToUse = venue.distance / 1000;
-                                                                                            }
-
-                                                                                            // Thêm venue với distance đã lấy được
-                                                                                            setSelectedVenues([...selectedVenues, { venueId: venue.id, distance: distanceToUse }]);
-                                                                                        } else {
-                                                                                            setSelectedVenues(selectedVenues.filter(v => v.venueId !== venue.id));
-                                                                                        }
-                                                                                    }}
-                                                                                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                                                                />
-                                                                                <span className="flex-1 text-sm text-gray-700">{venue.name || 'Không có tên'}</span>
-                                                                                {isSelected && (
-                                                                                    <input
-                                                                                        type="number"
-                                                                                        min="0.1"
-                                                                                        step="0.1"
-                                                                                        value={selectedVenue?.distance || 1}
-                                                                                        onChange={(e) => {
-                                                                                            const distance = parseFloat(e.target.value);
-                                                                                            // Chỉ update nếu distance hợp lệ (> 0)
-                                                                                            if (!isNaN(distance) && distance > 0) {
-                                                                                                setSelectedVenues(selectedVenues.map(v =>
-                                                                                                    v.venueId === venue.id ? { ...v, distance } : v
-                                                                                                ));
-                                                                                            }
-                                                                                        }}
-                                                                                        className="w-20 px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                                                        placeholder="Km"
-                                                                                    />
-                                                                                )}
-                                                                                {isSelected && (
-                                                                                    <span className="text-xs text-gray-500">km</span>
-                                                                                )}
-                                                                            </div>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                </div>
-                                            )}
-
-                                            {/* Form thêm venue mới */}
-                                            <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                                                <h4 className="text-sm font-medium text-gray-700 mb-3">Thêm địa điểm mới</h4>
-                                                <p className="text-xs text-gray-500 mb-3">
-                                                    Địa điểm mới sẽ được tự động thêm vào danh mục "Địa Điểm Lân Cận"
-                                                </p>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                    <div>
-                                                        <input
-                                                            type="text"
-                                                            value={newVenueName}
-                                                            onChange={(e) => setNewVenueName(e.target.value)}
-                                                            placeholder="Tên địa điểm"
-                                                            className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <input
-                                                            type="number"
-                                                            min="0.1"
-                                                            step="0.1"
-                                                            value={newVenueDistance > 0 ? newVenueDistance : ''}
-                                                            onChange={(e) => {
-                                                                const value = e.target.value;
-                                                                const numValue = value ? parseFloat(value) : 0;
-                                                                setNewVenueDistance(numValue);
-                                                            }}
-                                                            placeholder="Khoảng cách (km)"
-                                                            className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        let categoryIdToUse = newVenueCategoryId;
-                                                        if (!categoryIdToUse) {
-                                                            if (entertainmentVenuesByCategory.length > 0) {
-                                                                const nearbyCategory = entertainmentVenuesByCategory.find(cat =>
-                                                                    cat?.name && (
-                                                                        cat.name.toLowerCase().includes('lân cận') ||
-                                                                        cat.name.toLowerCase().includes('địa điểm lân cận') ||
-                                                                        cat.name.toLowerCase().includes('nearby')
-                                                                    )
-                                                                );
-                                                                categoryIdToUse = nearbyCategory?.id || entertainmentVenuesByCategory[0].id;
-                                                            }
-                                                        }
-                                                        if (!categoryIdToUse) {
-                                                            categoryIdToUse = 'a4d8d350-a850-11f0-a7b7-0a6aab4924ab';
-                                                        }
-
-                                                        const isValid = newVenueName.trim() &&
-                                                            newVenueDistance > 0 &&
-                                                            categoryIdToUse &&
-                                                            selectedCityId;
-
-                                                        if (isValid) {
-                                                            setNewVenues([...newVenues, {
-                                                                name: newVenueName.trim(),
-                                                                distance: newVenueDistance,
-                                                                categoryId: categoryIdToUse
-                                                            }]);
-                                                            setNewVenueName('');
-                                                            setNewVenueDistance(0);
-                                                        }
-                                                    }}
-                                                    disabled={!newVenueName.trim() ||
-                                                        !newVenueDistance ||
-                                                        newVenueDistance <= 0 ||
-                                                        !selectedCityId}
-                                                    className="mt-3 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-sm"
-                                                >
-                                                    <PlusIcon className="h-4 w-4 inline mr-1" />
-                                                    Thêm địa điểm
-                                                </button>
-                                            </div>
-
-                                            {/* Danh sách venues đã chọn */}
-                                            {(selectedVenues.length > 0 || newVenues.length > 0) && (
-                                                <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
-                                                    <div className="flex items-center justify-between mb-3">
-                                                        <h4 className="text-sm font-medium text-gray-700">
-                                                            Địa điểm đã chọn ({selectedVenues.length + newVenues.length})
-                                                        </h4>
-                                                        {isEditing && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={handleUpdateVenuesOnly}
-                                                                className="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-600 rounded-lg hover:from-green-700 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all shadow-sm"
-                                                            >
-                                                                🔄 Cập nhật địa điểm
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        {selectedVenues.map((venue, index) => {
-                                                            const venueInfo = entertainmentVenuesByCategory
-                                                                .flatMap(cat => cat?.entertainmentVenues || [])
-                                                                .find(v => v?.id === venue.venueId);
-                                                            return (
-                                                                <div key={`existing-${index}`} className="flex items-center justify-between p-2 bg-white rounded-md border border-gray-200">
-                                                                    <span className="text-sm text-gray-700">
-                                                                        {venueInfo?.name || 'Không xác định'}
-                                                                    </span>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span className="text-sm text-gray-600">{venue.distance} km</span>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => {
-                                                                                setSelectedVenues(selectedVenues.filter((_, i) => i !== index));
-                                                                            }}
-                                                                            className="text-red-600 hover:text-red-800"
-                                                                        >
-                                                                            <XMarkIcon className="h-4 w-4" />
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                        {newVenues.map((venue, index) => (
-                                                            <div key={`new-${index}`} className="flex items-center justify-between p-2 bg-white rounded-md border border-gray-200">
-                                                                <span className="text-sm text-gray-700">
-                                                                    {venue.name} <span className="text-xs text-blue-600">(Mới)</span>
-                                                                </span>
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="text-sm text-gray-600">{venue.distance} km</span>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => {
-                                                                            setNewVenues(newVenues.filter((_, i) => i !== index));
-                                                                        }}
-                                                                        className="text-red-600 hover:text-red-800"
-                                                                    >
-                                                                        <XMarkIcon className="h-4 w-4" />
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </>
-                                    )}
-                                </div>
-                            </div>
+                            <NearbyLocationsSection
+                                selectedCityId={selectedCityId}
+                                entertainmentVenuesByCategory={entertainmentVenuesByCategory}
+                                selectedVenues={selectedVenues}
+                                newVenues={newVenues}
+                                hotelVenueDistances={hotelVenueDistances}
+                                isEditing={isEditing}
+                                hotelId={hotel?.id}
+                                hotel={hotel}
+                                onSelectedVenuesChange={setSelectedVenues}
+                                onNewVenuesChange={setNewVenues}
+                                onVenueRemove={(venueId) => {
+                                    // Khi user xóa venue, thêm vào danh sách cần xóa
+                                    setVenuesToRemove(prev => new Set([...prev, venueId]));
+                                }}
+                                onVenuesDataReady={useCallback((data: {
+                                    venuesToUpdate: Array<{ venueId: string; distance: number }>;
+                                    venuesToAdd: Array<{ venueId: string; distance: number }>;
+                                    venuesToRemove: string[];
+                                    newVenues: Array<{ name: string; distance: number; categoryId: string }>;
+                                }) => {
+                                    // Lưu dữ liệu venues để dùng khi submit form
+                                    setVenuesDataForSubmit(data);
+                                }, [])}
+                            />
 
                             {/* Chính sách (Policy) */}
-                            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                                <div className="flex items-center gap-2 mb-6 pb-3 border-b border-gray-200">
-                                    <div className="w-1 h-6 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></div>
-                                    <h3 className="text-lg font-semibold text-gray-800">Chính sách</h3>
-                                </div>
-                                <div className="space-y-6">
-                                    {/* Check-in/Check-out Time */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label htmlFor="checkInTime" className="block text-sm font-medium text-gray-700 mb-2">
-                                                Giờ nhận phòng <span className="text-red-500">*</span>
-                                            </label>
-                                            <input
-                                                type="time"
-                                                id="checkInTime"
-                                                value={checkInTime}
-                                                onChange={(e) => setCheckInTime(e.target.value)}
-                                                required
-                                                className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label htmlFor="checkOutTime" className="block text-sm font-medium text-gray-700 mb-2">
-                                                Giờ trả phòng <span className="text-red-500">*</span>
-                                            </label>
-                                            <input
-                                                type="time"
-                                                id="checkOutTime"
-                                                value={checkOutTime}
-                                                onChange={(e) => setCheckOutTime(e.target.value)}
-                                                required
-                                                className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Allows Pay at Hotel */}
-                                    <div>
-                                        <label className="flex items-center gap-3 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={allowsPayAtHotel}
-                                                onChange={(e) => setAllowsPayAtHotel(e.target.checked)}
-                                                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 w-5 h-5"
-                                            />
-                                            <span className="text-sm font-medium text-gray-700">
-                                                Cho phép thanh toán tại khách sạn
-                                            </span>
-                                        </label>
-                                        <p className="text-xs text-gray-500 mt-1 ml-8">
-                                            Khách hàng có thể thanh toán trực tiếp tại khách sạn khi check-in
-                                        </p>
-                                    </div>
-
-                                    {/* Required Identification Documents */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Giấy tờ tùy thân yêu cầu
-                                        </label>
-                                        {identificationDocuments.length > 0 ? (
-                                            <div className="border border-gray-200 rounded-lg p-4 max-h-48 overflow-y-auto">
-                                                <div className="space-y-2">
-                                                    {identificationDocuments.map((doc) => (
-                                                        <label
-                                                            key={doc.id}
-                                                            className="flex items-center space-x-3 cursor-pointer p-2 rounded-md hover:bg-gray-50 border border-gray-200"
-                                                        >
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={selectedDocumentIds.has(doc.id)}
-                                                                onChange={(e) => {
-                                                                    const newSet = new Set(selectedDocumentIds);
-                                                                    if (e.target.checked) {
-                                                                        newSet.add(doc.id);
-                                                                    } else {
-                                                                        newSet.delete(doc.id);
-                                                                    }
-                                                                    setSelectedDocumentIds(newSet);
-                                                                }}
-                                                                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                                            />
-                                                            <span className="text-sm text-gray-700 flex-1">{doc.name}</span>
-                                                        </label>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <p className="text-sm text-gray-500">Đang tải danh sách giấy tờ...</p>
-                                        )}
-                                    </div>
-
-                                    {/* Cancellation Policy - Chọn từ danh sách */}
-                                    <div>
-                                        <label htmlFor="cancellationPolicy" className="block text-sm font-medium text-gray-700 mb-2">
-                                            Chính sách hủy phòng
-                                        </label>
-                                        {cancellationPolicies.length > 0 ? (
-                                            <select
-                                                id="cancellationPolicy"
-                                                value={cancellationPolicyId}
-                                                onChange={(e) => setCancellationPolicyId(e.target.value)}
-                                                className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
-                                            >
-                                                <option value="">-- Chọn chính sách hủy phòng --</option>
-                                                {cancellationPolicies.map((policy) => (
-                                                    <option key={policy.id} value={policy.id}>
-                                                        {policy.name} {policy.description && `- ${policy.description}`}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        ) : (
-                                            <p className="text-sm text-gray-500">Đang tải danh sách chính sách hủy phòng...</p>
-                                        )}
-                                    </div>
-
-                                    {/* Reschedule Policy - Chọn từ danh sách */}
-                                    <div>
-                                        <label htmlFor="reschedulePolicy" className="block text-sm font-medium text-gray-700 mb-2">
-                                            Chính sách đổi lịch
-                                        </label>
-                                        {reschedulePolicies.length > 0 ? (
-                                            <select
-                                                id="reschedulePolicy"
-                                                value={reschedulePolicyId}
-                                                onChange={(e) => setReschedulePolicyId(e.target.value)}
-                                                className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
-                                            >
-                                                <option value="">-- Chọn chính sách đổi lịch --</option>
-                                                {reschedulePolicies.map((policy) => (
-                                                    <option key={policy.id} value={policy.id}>
-                                                        {policy.name} {policy.description && `- ${policy.description}`}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        ) : (
-                                            <p className="text-sm text-gray-500">Đang tải danh sách chính sách đổi lịch...</p>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
+                            <PoliciesSection
+                                checkInTime={checkInTime}
+                                checkOutTime={checkOutTime}
+                                allowsPayAtHotel={allowsPayAtHotel}
+                                selectedDocumentIds={selectedDocumentIds}
+                                cancellationPolicyId={cancellationPolicyId}
+                                reschedulePolicyId={reschedulePolicyId}
+                                cancellationPolicies={cancellationPolicies}
+                                reschedulePolicies={reschedulePolicies}
+                                identificationDocuments={identificationDocuments}
+                                onCheckInTimeChange={setCheckInTime}
+                                onCheckOutTimeChange={setCheckOutTime}
+                                onAllowsPayAtHotelChange={setAllowsPayAtHotel}
+                                onSelectedDocumentIdsChange={setSelectedDocumentIds}
+                                onCancellationPolicyIdChange={setCancellationPolicyId}
+                                onReschedulePolicyIdChange={setReschedulePolicyId}
+                            />
                         </>
                     )}
 

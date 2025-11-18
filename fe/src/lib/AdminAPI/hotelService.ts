@@ -203,6 +203,12 @@ function mapHotelResponseToHotel(response: HotelResponse): Hotel {
         ownerId: ownerId, // Map partner.id hoặc partnerId sang ownerId
         ownerName: ownerName, // Lưu tên partner nếu có từ list response
         ownerEmail: ownerEmail, // Lưu email partner nếu có từ list response
+        // Map entertainmentVenues từ response (nếu có)
+        entertainmentVenues: (response as any).entertainmentVenues || undefined,
+        // Map amenities từ response (nếu có)
+        amenities: (response as any).amenities || undefined,
+        // Map policy từ response (nếu có)
+        policy: (response as any).policy || undefined,
     };
 }
 
@@ -892,7 +898,8 @@ export const updateHotelServer = async (id: string, formData: FormData): Promise
         }
 
         // Xử lý entertainment venues cần UPDATE (đã có trong hotel) với distance mới
-        // Parse từ format: entertainmentVenuesWithDistanceToUpdate[0].entertainmentVenueId, entertainmentVenuesWithDistanceToUpdate[0].distance
+        // Format: entertainmentVenuesWithDistanceToUpdate[0].entertainmentVenueId, entertainmentVenuesWithDistanceToUpdate[0].distance
+        // Copy TRỰC TIẾP từ formData gốc để đảm bảo format giống Postman
         const venueUpdateIndices = new Set<number>();
         formData.forEach((value, key) => {
             const match = key.match(/^entertainmentVenuesWithDistanceToUpdate\[(\d+)\]\.(entertainmentVenueId|distance)$/);
@@ -903,18 +910,22 @@ export const updateHotelServer = async (id: string, formData: FormData): Promise
         
         if (venueUpdateIndices.size > 0) {
             console.log(`[hotelService] Updating ${venueUpdateIndices.size} existing entertainment venues with new distance`);
-            venueUpdateIndices.forEach((index) => {
+            // Sắp xếp indices để đảm bảo thứ tự đúng
+            const sortedIndices = Array.from(venueUpdateIndices).sort((a, b) => a - b);
+            sortedIndices.forEach((index) => {
                 const venueId = formData.get(`entertainmentVenuesWithDistanceToUpdate[${index}].entertainmentVenueId`);
                 const distance = formData.get(`entertainmentVenuesWithDistanceToUpdate[${index}].distance`);
                 if (venueId && distance) {
-                    updateFormData.append(`entertainmentVenuesWithDistanceToUpdate[${index}].entertainmentVenueId`, venueId.toString());
-                    updateFormData.append(`entertainmentVenuesWithDistanceToUpdate[${index}].distance`, distance.toString());
+                    console.log(`[hotelService] UPDATE[${index}]: venueId=${venueId}, distance=${distance}`);
+                    // Append theo đúng thứ tự: venueId trước, distance sau (giống Postman)
+                    updateFormData.append(`entertainmentVenuesWithDistanceToUpdate[${index}].entertainmentVenueId`, venueId.toString().trim());
+                    updateFormData.append(`entertainmentVenuesWithDistanceToUpdate[${index}].distance`, distance.toString().trim());
                 }
             });
         }
 
         // Xử lý entertainment venues cần ADD (chưa có trong hotel) với distance
-        // Parse từ format: entertainmentVenuesWithDistanceToAdd[0].entertainmentVenueId, entertainmentVenuesWithDistanceToAdd[0].distance
+        // Format: entertainmentVenuesWithDistanceToAdd[0].entertainmentVenueId, entertainmentVenuesWithDistanceToAdd[0].distance
         const venueAddIndices = new Set<number>();
         formData.forEach((value, key) => {
             const match = key.match(/^entertainmentVenuesWithDistanceToAdd\[(\d+)\]\.(entertainmentVenueId|distance)$/);
@@ -925,12 +936,16 @@ export const updateHotelServer = async (id: string, formData: FormData): Promise
         
         if (venueAddIndices.size > 0) {
             console.log(`[hotelService] Adding ${venueAddIndices.size} new entertainment venues with distance`);
-            venueAddIndices.forEach((index) => {
+            // Sắp xếp indices để đảm bảo thứ tự đúng
+            const sortedIndices = Array.from(venueAddIndices).sort((a, b) => a - b);
+            sortedIndices.forEach((index) => {
                 const venueId = formData.get(`entertainmentVenuesWithDistanceToAdd[${index}].entertainmentVenueId`);
                 const distance = formData.get(`entertainmentVenuesWithDistanceToAdd[${index}].distance`);
                 if (venueId && distance) {
-                    updateFormData.append(`entertainmentVenuesWithDistanceToAdd[${index}].entertainmentVenueId`, venueId.toString());
-                    updateFormData.append(`entertainmentVenuesWithDistanceToAdd[${index}].distance`, distance.toString());
+                    console.log(`[hotelService] ADD[${index}]: venueId=${venueId}, distance=${distance}`);
+                    // Append theo đúng thứ tự: venueId trước, distance sau
+                    updateFormData.append(`entertainmentVenuesWithDistanceToAdd[${index}].entertainmentVenueId`, venueId.toString().trim());
+                    updateFormData.append(`entertainmentVenuesWithDistanceToAdd[${index}].distance`, distance.toString().trim());
                 }
             });
         }
@@ -962,12 +977,15 @@ export const updateHotelServer = async (id: string, formData: FormData): Promise
         }
 
         // Xử lý entertainment venues cần REMOVE (bị bỏ chọn)
-        const venueIdsToRemove = formData.getAll('entertainmentVenueIdsToRemove[]');
+        // Backend mong đợi: List<String> entertainmentVenueIdsToRemove (không có [])
+        // Spring Boot với multipart/form-data: nhiều entries cùng key để tạo List
+        const venueIdsToRemove = formData.getAll('entertainmentVenueIdsToRemove');
         if (venueIdsToRemove.length > 0) {
             console.log(`[hotelService] Removing ${venueIdsToRemove.length} entertainment venues`);
             venueIdsToRemove.forEach((venueId) => {
                 if (venueId && venueId.toString().trim() !== '') {
-                    updateFormData.append('entertainmentVenueIdsToRemove[]', venueId.toString().trim());
+                    // Backend mong đợi: List<String> entertainmentVenueIdsToRemove (không có [])
+                    updateFormData.append('entertainmentVenueIdsToRemove', venueId.toString().trim());
                 }
             });
         }
@@ -1017,6 +1035,17 @@ export const updateHotelServer = async (id: string, formData: FormData): Promise
                 }
             });
         }
+
+        // Debug: Log tất cả entries trong updateFormData trước khi gửi
+        console.log('[hotelService] === FINAL FormData trước khi gửi lên backend ===');
+        for (const [key, value] of updateFormData.entries()) {
+            if (value instanceof File) {
+                console.log(`${key}: [File] ${value.name} (${value.size} bytes)`);
+            } else {
+                console.log(`${key}: ${value}`);
+            }
+        }
+        console.log('[hotelService] ============================================');
 
         // KHÔNG set Content-Type header - axios sẽ tự động set với boundary cho FormData
         const response = await serverClient.put<ApiResponse<HotelResponse>>(
