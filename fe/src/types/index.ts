@@ -8,10 +8,34 @@ export interface Hotel {
     address: string;
     status: HotelStatus;
     ownerId?: string;
+    ownerName?: string; // Tên partner (từ list API hoặc detail API)
+    ownerEmail?: string; // Email partner (từ list API hoặc detail API)
     imageUrl?: string;
     stt?: number;
     description?: string;
-
+    entertainmentVenues?: Array<{
+        id: string;
+        name: string;
+        entertainmentVenues?: Array<{
+            id: string;
+            name: string;
+            distance: number; // in meters
+        }>;
+    }>;
+    amenities?: Array<{
+        id: string;
+        name: string;
+        amenities?: Array<{ id: string; name: string; free?: boolean }>;
+    }>;
+    policy?: {
+        id?: string;
+        checkInTime?: string;
+        checkOutTime?: string;
+        allowsPayAtHotel?: boolean;
+        requiredIdentificationDocuments?: Array<{ id: string; name: string }>;
+        cancellationPolicy?: { id: string; name: string; description?: string } | null;
+        reschedulePolicy?: { id: string; name: string; description?: string } | null;
+    };
 }
 // types/index.ts
 
@@ -84,7 +108,8 @@ export interface Booking {
 
 
 export interface HotelAdmin {
-    id: number;
+    id: number; // For display/compatibility (parsed from UUID, may be 0 if not a valid number)
+    userId: string; // UUID string from backend - use this for API calls
     username: string;
     email: string;
     managedHotel: {

@@ -36,7 +36,7 @@ export default function SuperHotelsPage() {
             setIsLoading(true);
             try {
                 // Nếu có selectedPartnerId, filter theo partner
-                // selectedPartnerId là string (number converted to string), cần convert về string nếu cần
+                // selectedPartnerId giờ đã là UUID string từ dropdown
                 const partnerIdToFilter = selectedPartnerId && selectedPartnerId.trim() !== '' 
                     ? selectedPartnerId.trim() 
                     : undefined;
@@ -48,7 +48,7 @@ export default function SuperHotelsPage() {
                     ITEMS_PER_PAGE,
                     undefined, // cityId
                     undefined, // provinceId
-                    partnerIdToFilter, // userId/partnerId
+                    partnerIdToFilter, // userId/partnerId - CẦN LÀ UUID STRING
                     'admin' // roleName
                 );
                 setHotels(response.hotels);

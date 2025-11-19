@@ -1,11 +1,10 @@
-// src/app/(admin)/hotels/[hotelId]/page.tsx
-import { getHotelById, getHotelDetailById, type HotelPolicyResponse } from '@/lib/AdminAPI/hotelService';
+// src/app/(super_admin)/super-hotels/[hotelId]/page.tsx
+import { getHotelByIdServer, getHotelDetailById, type HotelPolicyResponse } from '@/lib/AdminAPI/hotelService';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { PageHeader } from '@/components/Admin/ui/PageHeader';
-import { ClockIcon, DocumentTextIcon, XCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
-import HotelDetailHeader from './HotelDetailHeader';
+import { PencilIcon, ClockIcon, DocumentTextIcon, XCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 
 interface HotelDetailPageProps {
     params: Promise<{ hotelId: string }>;
@@ -22,32 +21,33 @@ const formatTime = (time: string) => {
     }
 };
 
-export default async function HotelDetailPage({ params }: HotelDetailPageProps) {
+export default async function SuperHotelDetailPage({ params }: HotelDetailPageProps) {
     // Await params trước khi sử dụng (Next.js 15+)
     const { hotelId } = await params;
-    const hotel = await getHotelById(hotelId);
-    const hotelDetail = await getHotelDetailById(hotelId);
-
-    if (!hotel) {
-        notFound();
-    }
-
-    // Lấy amenities từ hotelDetail
-    const amenities = hotelDetail?.amenities || [];
-    const flatAmenities = amenities.flatMap(cat => cat.amenities || []);
-
-    // Lấy policy từ hotelDetail
-    const policy = hotelDetail?.policy;
     
-    // Debug: Log để kiểm tra
-    console.log('[HotelDetailPage] Policy data:', policy);
-    console.log('[HotelDetailPage] HotelDetail:', hotelDetail);
+    try {
+        const hotel = await getHotelByIdServer(hotelId);
+        const hotelDetail = await getHotelDetailById(hotelId);
 
-    return (
-        <>
-            <PageHeader title={`Chi tiết: ${hotel.name}`}>
-                {/* Nút edit sẽ hiển thị trong client component dựa trên role */}
-                <HotelDetailHeader hotelId={hotel.id} />
+        if (!hotel) {
+            notFound();
+        }
+
+        // Lấy amenities từ hotelDetail
+        const amenities = hotelDetail?.amenities || [];
+        const flatAmenities = amenities.flatMap(cat => cat.amenities || []);
+
+        // Lấy policy từ hotelDetail
+        const policy = hotelDetail?.policy;
+        
+        // Debug: Log để kiểm tra
+        console.log('[SuperHotelDetailPage] Policy data:', policy);
+        console.log('[SuperHotelDetailPage] HotelDetail:', hotelDetail);
+
+        return (
+            <>
+                <PageHeader title={`Chi tiết: ${hotel.name}`}>
+                {/* Super-admin chỉ xem, không edit - quyền edit chỉ dành cho PARTNER */}
             </PageHeader>
 
             <div className="bg-white rounded-lg shadow-md mt-4 p-8">
@@ -128,7 +128,6 @@ export default async function HotelDetailPage({ params }: HotelDetailPageProps) 
                 </h3>
 
                 {policy ? (
-
                     <div className="space-y-6">
                         {/* Thời gian check-in/check-out */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -242,4 +241,12 @@ export default async function HotelDetailPage({ params }: HotelDetailPageProps) 
             </div>
         </>
     );
+    } catch (error: any) {
+        console.error('[SuperHotelDetailPage] Error loading hotel:', error);
+        if (error.response?.status === 404) {
+            notFound();
+        }
+        throw error;
+    }
 }
+

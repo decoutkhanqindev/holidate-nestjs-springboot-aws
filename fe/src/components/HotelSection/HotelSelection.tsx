@@ -273,8 +273,70 @@ import { locationService } from '@/service/locationService';
 const formatLocationNameForDisplay = (fullName: string) => fullName.replace(/^(Thành phố|Tỉnh|Thủ đô)\s/, '');
 const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN').format(price) + ' VND';
 const formatRating = (rating?: number) => rating && rating > 0 ? `${rating.toFixed(1)}/10` : 'Chưa có đánh giá';
-const getFullAddress = (hotel: HotelResponse) =>
-    [hotel.address, hotel.ward?.name, hotel.district?.name, hotel.city?.name].filter(Boolean).join(', ');
+const getFullAddress = (hotel: HotelResponse) => {
+    // Kiểm tra xem address có chứa thông tin location không (tránh lặp lại)
+    const addressParts: string[] = [];
+    const responseAddress = hotel.address || '';
+    
+    // Chỉ thêm address nếu nó không phải là giá trị mặc định và không chứa location info đã có
+    if (responseAddress && 
+        responseAddress.trim() !== '' && 
+        responseAddress !== 'Chưa có địa chỉ') {
+        
+        // Kiểm tra xem address có chứa ward, district, city name không
+        const wardName = hotel.ward?.name || '';
+        const districtName = hotel.district?.name || '';
+        const cityName = hotel.city?.name || '';
+        
+        // Nếu address không chứa các location names, thì thêm vào
+        const containsLocationInfo = 
+            (wardName && responseAddress.includes(wardName)) ||
+            (districtName && responseAddress.includes(districtName)) ||
+            (cityName && responseAddress.includes(cityName));
+        
+        if (!containsLocationInfo) {
+            // Address là địa chỉ cụ thể (số nhà, tên đường) chưa có location info
+            addressParts.push(responseAddress);
+        } else {
+            // Address đã chứa location info, nhưng có thể là địa chỉ đầy đủ
+            // Kiểm tra xem có phải là địa chỉ đầy đủ (chứa cả ward, district, city) không
+            const hasAllLocation = 
+                wardName && responseAddress.includes(wardName) &&
+                districtName && responseAddress.includes(districtName) &&
+                cityName && responseAddress.includes(cityName);
+            
+            if (hasAllLocation) {
+                // Address đã đầy đủ, không cần append thêm
+                return responseAddress;
+            } else {
+                // Address chỉ chứa một phần location, vẫn thêm vào nhưng sẽ append phần còn thiếu
+                addressParts.push(responseAddress);
+            }
+        }
+    }
+    
+    // Thêm các location fields nếu chưa có trong address
+    if (hotel.ward?.name) {
+        const alreadyHasWard = addressParts.some(part => part.includes(hotel.ward!.name!));
+        if (!alreadyHasWard) {
+            addressParts.push(hotel.ward.name);
+        }
+    }
+    if (hotel.district?.name) {
+        const alreadyHasDistrict = addressParts.some(part => part.includes(hotel.district!.name!));
+        if (!alreadyHasDistrict) {
+            addressParts.push(hotel.district.name);
+        }
+    }
+    if (hotel.city?.name) {
+        const alreadyHasCity = addressParts.some(part => part.includes(hotel.city!.name!));
+        if (!alreadyHasCity) {
+            addressParts.push(hotel.city.name);
+        }
+    }
+    
+    return addressParts.length > 0 ? addressParts.join(', ') : (responseAddress || 'Chưa có địa chỉ');
+};
 const getHotelImageUrl = (hotel: HotelResponse) => hotel.photos?.[0]?.photos?.[0]?.url || '/placeholder.svg';
 
 // --- Interface (Không đổi) ---

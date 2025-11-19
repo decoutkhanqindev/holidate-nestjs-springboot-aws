@@ -41,6 +41,7 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
     const [amenities, setAmenities] = useState<Amenity[]>([]);
     const [amenityCategories, setAmenityCategories] = useState<AmenityCategory[]>([]);
     const [bedTypeName, setBedTypeName] = useState<string>('');
+    const [availableBedTypes, setAvailableBedTypes] = useState<Array<{ id: string; name: string }>>([]);
 
     // Load bedTypeName khi room data thay đổi
     useEffect(() => {
@@ -48,6 +49,23 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
             setBedTypeName(room.bedType.name);
         }
     }, [room?.bedType?.name]);
+
+    // Load danh sách bedTypes có sẵn
+    useEffect(() => {
+        const loadBedTypes = async () => {
+            try {
+                const { getAvailableBedTypes } = await import('@/lib/AdminAPI/bedTypeService');
+                const bedTypes = await getAvailableBedTypes(hotelId);
+                setAvailableBedTypes(bedTypes);
+            } catch (error) {
+                console.error('[RoomForm] Error loading bedTypes:', error);
+            }
+        };
+        if (hotelId) {
+            loadBedTypes();
+        }
+    }, [hotelId]);
+
     const [isLoadingAmenities, setIsLoadingAmenities] = useState(false);
 
     // State cho selected amenities (dạng multi-select dropdown)
@@ -391,18 +409,29 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
                             <label htmlFor="bedTypeName" className="block text-sm font-medium text-gray-700">
                                 Loại giường *
                             </label>
-                            <input
-                                type="text"
-                                id="bedTypeName"
-                                name="bedTypeName"
-                                required
-                                value={bedTypeName}
-                                onChange={(e) => setBedTypeName(e.target.value)}
-                                placeholder="VD: Giường đôi, Giường King, 2 giường đơn, ..."
-                                className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                            />
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    id="bedTypeName"
+                                    name="bedTypeName"
+                                    required
+                                    value={bedTypeName}
+                                    onChange={(e) => setBedTypeName(e.target.value)}
+                                    placeholder="VD: Giường đôi, Giường King, 2 giường đơn, ..."
+                                    list="bedTypeOptions"
+                                    className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                />
+                                <datalist id="bedTypeOptions">
+                                    {availableBedTypes.map((bedType) => (
+                                        <option key={bedType.id} value={bedType.name} />
+                                    ))}
+                                </datalist>
+                            </div>
                             <p className="text-xs text-gray-500 mt-1">
-                                Nhập tên loại giường (VD: Giường đôi, Giường King, 2 giường đơn, ...)
+                                Nhập tên loại giường (VD: Giường đôi, Giường King, 2 giường đơn, ...). 
+                                {availableBedTypes.length > 0 && (
+                                    <span className="text-blue-600"> Có {availableBedTypes.length} loại giường có sẵn - bạn có thể chọn từ danh sách gợi ý hoặc nhập tên mới.</span>
+                                )}
                             </p>
                         </div>
 
