@@ -56,7 +56,8 @@ Logic so sánh được triển khai chủ yếu ở **Service Layer** dưới d
 1.  **Controller Layer (Tầng điều khiển):**
 
     - Tiếp nhận yêu cầu HTTP `GET`.
-    - **Validation:**
+    - **Xác thực và Ủy quyền (Authentication & Authorization):** Xác thực token của người dùng và kiểm tra role là `ADMIN`. Nếu không, trả về lỗi `403 Forbidden`.
+    - **Validation (Kiểm tra tính hợp lệ của tham số):**
       - Kiểm tra tính hợp lệ của tất cả các tham số.
       - Nếu `compareFrom` được cung cấp, thì `compareTo` cũng phải được cung cấp và ngược lại.
       - Đảm bảo `compareFrom <= compareTo`.

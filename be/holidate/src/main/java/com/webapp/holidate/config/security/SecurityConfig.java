@@ -222,6 +222,25 @@ public class SecurityConfig {
                                 // 4. booking endpoints - DELETE (only PARTNER and ADMIN, not USER)
                                 .requestMatchers(HttpMethod.DELETE, BookingEndpoints.BOOKINGS + CommonEndpoints.ID)
                                 .hasAnyAuthority(RoleType.PARTNER.getValue(), RoleType.ADMIN.getValue())
+                                // 5. partner report endpoints
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.PARTNER_REPORTS + ReportEndpoints.REVENUE)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.PARTNER_REPORTS + ReportEndpoints.BOOKINGS_SUMMARY)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.PARTNER_REPORTS + ReportEndpoints.OCCUPANCY)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.PARTNER_REPORTS + ReportEndpoints.ROOMS_PERFORMANCE)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.PARTNER_REPORTS + ReportEndpoints.CUSTOMERS_SUMMARY)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.PARTNER_REPORTS + ReportEndpoints.REVIEWS_SUMMARY)
+                                .hasAuthority(RoleType.PARTNER.getValue())
                                 // Note: Other booking endpoints are already defined in USER section above
 
                                 // III. admin role

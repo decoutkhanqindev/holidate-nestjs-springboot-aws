@@ -34,7 +34,8 @@ API này cung cấp cho đối tác một công cụ phân tích chi tiết, gi�
 1.  **Controller Layer (Tầng điều khiển):**
 
     - Tiếp nhận yêu cầu HTTP `GET`.
-    - Thực hiện **Xác thực & Ủy quyền** và **Validation** tham số. Đặc biệt, cần kiểm tra giá trị của `sortBy` và `sortOrder` phải nằm trong danh sách enum đã định nghĩa để tránh các giá trị không hợp lệ.
+    - **Xác thực và Ủy quyền (Authentication & Authorization):** Xác thực token của người dùng và kiểm tra role là `PARTNER`. Nếu không, trả về lỗi `403 Forbidden`.
+    - **Validation (Kiểm tra tính hợp lệ của tham số):** Kiểm tra định dạng và thứ tự của `from` và `to`. Đặc biệt, cần kiểm tra giá trị của `sortBy` và `sortOrder` phải nằm trong danh sách enum đã định nghĩa để tránh các giá trị không hợp lệ.
     - Nếu hợp lệ, gọi phương thức xử lý trong `Service Layer`.
 
 2.  **Service Layer (Tầng nghiệp vụ):**

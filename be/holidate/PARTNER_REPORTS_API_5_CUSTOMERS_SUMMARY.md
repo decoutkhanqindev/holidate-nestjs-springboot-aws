@@ -32,7 +32,8 @@ Dữ liệu từ API này là nền tảng để đối tác xây dựng các ch
 1.  **Controller Layer (Tầng điều khiển):**
 
     - Tiếp nhận yêu cầu HTTP `GET`.
-    - Thực hiện các bước **Xác thực & Ủy quyền** và **Validation** tham số một cách tiêu chuẩn.
+    - **Xác thực và Ủy quyền (Authentication & Authorization):** Xác thực token của người dùng và kiểm tra role là `PARTNER`. Nếu không, trả về lỗi `403 Forbidden`.
+    - **Validation (Kiểm tra tính hợp lệ của tham số):** Kiểm tra định dạng và thứ tự của `from` và `to`.
     - Nếu hợp lệ, gọi phương thức tương ứng trong `Service Layer`.
 
 2.  **Service Layer (Tầng nghiệp vụ):**

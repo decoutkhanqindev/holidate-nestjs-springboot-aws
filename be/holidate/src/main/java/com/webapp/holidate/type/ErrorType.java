@@ -51,6 +51,10 @@ public enum ErrorType {
   // date errors
   DATE_UTC_NOT_BLANK(400, "Date is required"),
   DATE_UTC_INVALID(400, "Date must be in UTC format"),
+  INVALID_DATE_RANGE(400, "From date must be less than or equal to to date"),
+  INVALID_GROUP_BY(400, "Group by must be one of: day, week, month"),
+  INVALID_SORT_BY(400, "Sort by must be one of: revenue, bookedRoomNights"),
+  INVALID_SORT_ORDER(400, "Sort order must be one of: asc, desc"),
 
   // role errors
   ROLE_NOT_FOUND(404, "Role not found"),

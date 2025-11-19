@@ -36,7 +36,8 @@ Kiến trúc truy cập dữ liệu của API này được thiết kế một c
 1.  **Controller Layer (Tầng điều khiển):**
 
     - Tiếp nhận yêu cầu HTTP `GET`.
-    - Thực hiện **Xác thực & Ủy quyền** (kiểm tra vai trò `ADMIN`) và **Validation** tham số (`from`, `to`).
+    - **Xác thực và Ủy quyền (Authentication & Authorization):** Xác thực token của người dùng và kiểm tra role là `ADMIN`. Nếu không, trả về lỗi `403 Forbidden`.
+    - **Validation (Kiểm tra tính hợp lệ của tham số):** Kiểm tra định dạng và thứ tự của `from` và `to`.
     - Gọi một phương thức duy nhất trong `Service Layer`, ví dụ `getUserSummary(from, to)`.
 
 2.  **Service Layer (Tầng nghiệp vụ):**

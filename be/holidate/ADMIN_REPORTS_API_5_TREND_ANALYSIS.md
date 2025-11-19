@@ -29,7 +29,7 @@ Nhóm API này không chỉ cung cấp dữ liệu mà còn cung cấp **thông 
   - `metric` (`string`, optional, enum: `revenue`, `bookings`, default: `bookings`): Chỉ số dùng để phân tích (doanh thu hoặc số lượng booking).
 - **Nguồn dữ liệu:** `SystemDailyReport`.
 - **Luồng xử lý Backend:**
-  1.  **Controller:** Xác thực, ủy quyền (ADMIN), và kiểm tra tính hợp lệ của tham số.
+  1.  **Controller:** **Xác thực và Ủy quyền (Authentication & Authorization):** Xác thực token của người dùng và kiểm tra role là `ADMIN`. Nếu không, trả về lỗi `403 Forbidden`. **Validation:** Kiểm tra tính hợp lệ của tham số.
   2.  **Service:** Gọi phương thức repository tương ứng.
   3.  **Repository:** Thực thi truy vấn tổng hợp theo tháng.
       ```sql

@@ -30,7 +30,8 @@ Logic so sánh được triển khai chủ yếu ở **Service Layer** dưới d
 1.  **Controller Layer (Tầng điều khiển):**
 
     - Tiếp nhận yêu cầu HTTP `GET`.
-    - **Validation:**
+    - **Xác thực và Ủy quyền (Authentication & Authorization):** Xác thực token của người dùng và kiểm tra role là `PARTNER`. Nếu không, trả về lỗi `403 Forbidden`.
+    - **Validation (Kiểm tra tính hợp lệ của tham số):**
       - Kiểm tra tính hợp lệ của tất cả các tham số, bao gồm cả `compareFrom` và `compareTo` (nếu có).
       - Đảm bảo `compareFrom <= compareTo`.
     - Gọi một phương thức duy nhất trong Service, ví dụ `getRevenueReport(requestDto)`. `requestDto` sẽ chứa tất cả các tham số, bao gồm cả thông tin về kỳ hiện tại và kỳ so sánh.

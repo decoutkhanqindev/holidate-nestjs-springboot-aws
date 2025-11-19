@@ -33,7 +33,7 @@ API này cung cấp cho đối tác một "bảng điều khiển" tổng quan v
 1.  **Controller Layer (Tầng điều khiển):**
 
     - Tiếp nhận yêu cầu HTTP `GET`.
-    - **Xác thực và Ủy quyền (Authentication & Authorization):** Thực hiện đầy đủ các bước kiểm tra token và quyền sở hữu `hotelId` như đã mô tả trong API Doanh thu.
+    - **Xác thực và Ủy quyền (Authentication & Authorization):** Xác thực token của người dùng và kiểm tra role là `PARTNER`. Nếu không, trả về lỗi `403 Forbidden`.
     - **Validation (Kiểm tra tính hợp lệ của tham số):**
       - Kiểm tra định dạng và thứ tự của `from` và `to`.
     - Nếu hợp lệ, gọi phương thức tương ứng trong `Service Layer`.

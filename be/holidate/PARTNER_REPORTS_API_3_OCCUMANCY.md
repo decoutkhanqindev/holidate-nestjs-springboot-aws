@@ -33,7 +33,8 @@ Việc hiểu rõ chỉ số này giúp đối tác đưa ra các quyết địn
 
 1.  **Controller Layer (Tầng điều khiển):**
     -   Tiếp nhận yêu cầu HTTP `GET`.
-    -   Thực thi đầy đủ các bước **Xác thực & Ủy quyền** và **Validation** tham số như các API trước để đảm bảo an ninh và tính toàn vẹn của dữ liệu đầu vào.
+    -   **Xác thực và Ủy quyền (Authentication & Authorization):** Xác thực token của người dùng và kiểm tra role là `PARTNER`. Nếu không, trả về lỗi `403 Forbidden`.
+    -   **Validation (Kiểm tra tính hợp lệ của tham số):** Kiểm tra định dạng và thứ tự của `from` và `to`.
     -   Nếu mọi thứ hợp lệ, gọi phương thức xử lý trong `Service Layer`.
 
 2.  **Service Layer (Tầng nghiệp vụ):**

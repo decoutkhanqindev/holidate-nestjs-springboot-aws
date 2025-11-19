@@ -35,9 +35,7 @@ API này là công cụ tài chính và kinh doanh cốt lõi, được thiết 
 1.  **Controller Layer (Tầng điều khiển):**
 
     - Tiếp nhận yêu cầu HTTP `GET`.
-    - **Xác thực và Ủy quyền:**
-      - Xác thực token của người dùng.
-      - Kiểm tra vai trò (role) của người dùng phải là `ADMIN`. Nếu không, trả về lỗi `403 Forbidden`.
+    - **Xác thực và Ủy quyền (Authentication & Authorization):** Xác thực token của người dùng và kiểm tra role là `ADMIN`. Nếu không, trả về lỗi `403 Forbidden`.
     - **Validation:**
       - Kiểm tra tính hợp lệ của `from`, `to`, `groupBy`, và `filterBy`.
     - Gọi phương thức tương ứng trong `Service Layer`.

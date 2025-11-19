@@ -38,7 +38,7 @@ Chắc chắn rồi. Chúng ta sẽ cùng nhau phân tích chi tiết **Phần 3
 1.  **Controller Layer (Tầng điều khiển):**
 
     - Tiếp nhận yêu cầu HTTP `GET`.
-    - **Xác thực & Ủy quyền:** Kiểm tra vai trò `ADMIN`.
+    - **Xác thực và Ủy quyền (Authentication & Authorization):** Xác thực token của người dùng và kiểm tra role là `ADMIN`. Nếu không, trả về lỗi `403 Forbidden`.
     - **Validation:** Kiểm tra tính hợp lệ của tất cả các tham số, bao gồm cả các tham số phân trang, sắp xếp và lọc.
     - Gọi phương thức trong `Service Layer`.
 

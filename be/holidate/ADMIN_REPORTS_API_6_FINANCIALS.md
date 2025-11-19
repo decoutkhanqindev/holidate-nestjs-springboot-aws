@@ -35,7 +35,7 @@ API này là nguồn dữ liệu duy nhất và chính xác (single source of tr
 1.  **Controller Layer (Tầng điều khiển):**
 
     - Tiếp nhận yêu cầu HTTP `GET`.
-    - **Xác thực & Ủy quyền:** Kiểm tra vai trò `ADMIN`. Cần cân nhắc thêm một tầng phân quyền chi tiết hơn, ví dụ `FINANCE_ADMIN`, nếu trong tương lai chỉ một nhóm nhỏ Admin được phép xem dữ liệu tài chính nhạy cảm này.
+    - **Xác thực và Ủy quyền (Authentication & Authorization):** Xác thực token của người dùng và kiểm tra role là `ADMIN`. Nếu không, trả về lỗi `403 Forbidden`.
     - **Validation:** Kiểm tra tính hợp lệ của các tham số.
     - Gọi phương thức trong `Service Layer`.
 
