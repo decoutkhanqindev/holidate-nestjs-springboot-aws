@@ -4,6 +4,7 @@ import com.webapp.holidate.component.security.CustomAccessDeniedHandler;
 import com.webapp.holidate.component.security.CustomAuthenticationEntryPoint;
 import com.webapp.holidate.component.security.CustomJwtDecoder;
 import com.webapp.holidate.component.security.filter.CustomCookieAuthenticationFilter;
+import com.webapp.holidate.component.security.filter.CustomJwtAuthenticationFilter;
 import com.webapp.holidate.component.security.oauth2.CustomOAuth2AuthenticationFailureHandler;
 import com.webapp.holidate.component.security.oauth2.CustomOAuth2AuthenticationSuccessHandler;
 import com.webapp.holidate.constants.AppProperties;
@@ -27,6 +28,7 @@ import org.springframework.security.config.annotation.web.configurers.CsrfConfig
 import org.springframework.security.config.annotation.web.configurers.FormLoginConfigurer;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -50,6 +52,7 @@ public class SecurityConfig {
         CustomAuthenticationEntryPoint authenticationEntryPoint;
         CustomAccessDeniedHandler accessDeniedHandler;
         CustomCookieAuthenticationFilter cookieAuthenticationFilter;
+        CustomJwtAuthenticationFilter jwtAuthenticationFilter;
 
         @NonFinal
         @Value(AppProperties.FRONTEND_URL)
@@ -372,6 +375,7 @@ public class SecurityConfig {
                                                 .accessDeniedHandler(accessDeniedHandler));
 
                 http.addFilterBefore(cookieAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                http.addFilterAfter(jwtAuthenticationFilter,BearerTokenAuthenticationFilter.class);
 
                 return http.build();
         }
