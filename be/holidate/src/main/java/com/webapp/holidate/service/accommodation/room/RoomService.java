@@ -211,12 +211,14 @@ public class RoomService {
       return pagedMapper.createEmptyPagedResponse(page, size);
     }
 
-    // Fetch photos and amenities separately to avoid collection fetch warning with pagination
+    // Fetch photos, amenities, and inventories separately to avoid collection fetch warning with pagination
     List<String> roomIds = roomPage.getContent().stream().map(Room::getId).toList();
     List<Room> roomsWithPhotosAndAmenities = roomRepository.findAllByIdsWithPhotosAndAmenities(roomIds);
+    List<Room> roomsWithInventories = roomRepository.findAllByIdsWithInventories(roomIds);
 
-    // Merge photos and amenities data
+    // Merge photos, amenities, and inventories data
     mergePhotosAndAmenitiesData(roomPage.getContent(), roomsWithPhotosAndAmenities);
+    mergeInventoriesData(roomPage.getContent(), roomsWithInventories);
 
     // Convert entities to response DTOs
     List<RoomResponse> roomResponses = roomPage.getContent().stream()
@@ -260,8 +262,26 @@ public class RoomService {
 
   @Transactional(readOnly = true)
   public RoomDetailsResponse getById(String id) {
-    Room room = roomRepository.findByIdWithDetails(id)
+    // Step 1: Fetch room with basic relationships (hotel with location, bedType, policies)
+    // This avoids cartesian product from joining multiple collections
+    Room room = roomRepository.findByIdWithBasicDetails(id)
       .orElseThrow(() -> new AppException(ErrorType.ROOM_NOT_FOUND));
+
+    // Step 2: Fetch collections separately to avoid cartesian product
+    // Photos and amenities
+    List<Room> roomsWithPhotosAndAmenities = roomRepository.findAllByIdsWithPhotosAndAmenities(List.of(id));
+    if (!roomsWithPhotosAndAmenities.isEmpty()) {
+      Room roomWithCollections = roomsWithPhotosAndAmenities.get(0);
+      room.setPhotos(roomWithCollections.getPhotos());
+      room.setAmenities(roomWithCollections.getAmenities());
+    }
+
+    // Step 3: Fetch inventories separately (needed for price and availability calculation)
+    Room roomWithInventories = roomRepository.findByIdWithInventories(id).orElse(null);
+    if (roomWithInventories != null) {
+      room.setInventories(roomWithInventories.getInventories());
+    }
+
     return roomMapper.toRoomDetailsResponse(room);
   }
 
@@ -275,6 +295,16 @@ public class RoomService {
           room.setPhotos(r.getPhotos());
           room.setAmenities(r.getAmenities());
         });
+    });
+  }
+
+  // Combine inventories data from separate query into main room list
+  private void mergeInventoriesData(List<Room> rooms, List<Room> roomsWithInventories) {
+    rooms.forEach(room -> {
+      roomsWithInventories.stream()
+        .filter(r -> r.getId().equals(room.getId()))
+        .findFirst()
+        .ifPresent(r -> room.setInventories(r.getInventories()));
     });
   }
 

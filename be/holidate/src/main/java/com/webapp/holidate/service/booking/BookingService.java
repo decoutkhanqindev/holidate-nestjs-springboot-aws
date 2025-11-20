@@ -491,7 +491,10 @@ public class BookingService {
 
   @Transactional(readOnly = true)
   public BookingResponse getById(String id) {
-    Booking booking = bookingRepository.findByIdWithAllRelations(id)
+    // Use optimized query - room inventories are not needed as pricesByDateRange
+    // is fetched separately via roomInventoryService.getPricesByDateRange()
+    // This avoids cartesian product when room has many inventories
+    Booking booking = bookingRepository.findByIdWithBasicRelations(id)
       .orElseThrow(() -> new AppException(ErrorType.BOOKING_NOT_FOUND));
 
     // For existing bookings, paymentUrl is null since payment is already processed
@@ -501,7 +504,7 @@ public class BookingService {
     BookingPriceDetailsResponse priceDetails = calculatePriceDetails(booking);
     response.setPriceDetails(priceDetails);
 
-    // Set pricesByDate for booking period
+    // Set pricesByDate for booking period (fetched separately to avoid cartesian product)
     if (response.getRoom() != null) {
       List<RoomInventoryPriceByDateResponse> pricesByDate = roomInventoryService.getPricesByDateRange(
         booking.getRoom().getId(),

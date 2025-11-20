@@ -44,10 +44,22 @@ public class ReviewQueries {
   public static final String FIND_BY_ID_WITH_DETAILS = FIND_ALL_WITH_DETAILS_BASE +
     "WHERE r.id = :id";
 
+  // Optimized query for getById - only fetch basic relationships, no collections
+  // Collections (photos) will be fetched separately to avoid cartesian product performance issue
+  public static final String FIND_BY_ID_WITH_BASIC_DETAILS = FIND_ALL_WITH_BASIC_DETAILS_BASE +
+    "WHERE r.id = :id";
+
   // Query to fetch reviews with photos for batch loading after pagination
   public static final String FIND_ALL_BY_IDS_WITH_PHOTOS = "SELECT DISTINCT r FROM Review r " +
     "LEFT JOIN FETCH r.photos rp " +
     "LEFT JOIN FETCH rp.photo p " +
     "LEFT JOIN FETCH p.category " +
     "WHERE r.id IN :reviewIds";
+
+  // Query to fetch review with photos separately for getById
+  public static final String FIND_BY_ID_WITH_PHOTOS = "SELECT DISTINCT r FROM Review r " +
+    "LEFT JOIN FETCH r.photos rp " +
+    "LEFT JOIN FETCH rp.photo p " +
+    "LEFT JOIN FETCH p.category " +
+    "WHERE r.id = :id";
 }

@@ -439,6 +439,69 @@ public class PartnerReportService {
   }
 
   /**
+   * Helper method to safely extract Long from Object (handles BigInteger, BigDecimal, etc.)
+   */
+  private Long extractLong(Object obj) {
+    if (obj == null) {
+      return 0L;
+    }
+    if (obj instanceof Number) {
+      return ((Number) obj).longValue();
+    }
+    try {
+      return Long.parseLong(obj.toString());
+    } catch (NumberFormatException e) {
+      return 0L;
+    }
+  }
+
+  /**
+   * Helper method to safely extract Double from Object (handles BigInteger, BigDecimal, etc.)
+   */
+  private Double extractDouble(Object obj) {
+    if (obj == null) {
+      return 0.0;
+    }
+    if (obj instanceof Number) {
+      return ((Number) obj).doubleValue();
+    }
+    try {
+      return Double.parseDouble(obj.toString());
+    } catch (NumberFormatException e) {
+      return 0.0;
+    }
+  }
+
+  /**
+   * Helper method to validate date range and authorize hotel access
+   */
+  private void validateAndAuthorize(String hotelId, LocalDate fromDate, LocalDate toDate) {
+    // Validate date range
+    if (fromDate.isAfter(toDate)) {
+      throw new AppException(ErrorType.INVALID_DATE_RANGE);
+    }
+
+    // Get authenticated user and validate hotel ownership
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication == null || !(authentication instanceof CustomAuthenticationToken)) {
+      throw new AppException(ErrorType.UNAUTHORIZED);
+    }
+
+    CustomAuthenticationToken authToken = (CustomAuthenticationToken) authentication;
+    String email = authToken.getName();
+    User partner = userRepository.findByEmail(email)
+        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
+
+    // Validate hotel exists and belongs to this partner
+    Hotel hotel = hotelRepository.findById(hotelId)
+        .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
+
+    if (!hotel.getPartner().getId().equals(partner.getId())) {
+      throw new AppException(ErrorType.ACCESS_DENIED);
+    }
+  }
+
+  /**
    * Get revenue report for a partner's hotel (core logic without validation).
    * This is a reusable method for comparison features.
    */
@@ -479,81 +542,64 @@ public class PartnerReportService {
 
   /**
    * Get revenue report for a partner's hotel.
-   * This method supports period comparison if compareFrom and compareTo are
-   * provided.
+   * 
+   * @param hotelId  The hotel ID
+   * @param fromDate Start date of the report period
+   * @param toDate   End date of the report period
+   * @param groupBy  Grouping unit: "day", "week", or "month"
+   * @return RevenueReportResponse
+   */
+  @Transactional(readOnly = true)
+  public RevenueReportResponse getRevenueReport(String hotelId, LocalDate fromDate, LocalDate toDate, String groupBy) {
+    validateAndAuthorize(hotelId, fromDate, toDate);
+    return getSinglePeriodRevenueReport(hotelId, fromDate, toDate, groupBy);
+  }
+
+  /**
+   * Get revenue report with period comparison for a partner's hotel.
    * 
    * @param hotelId     The hotel ID
    * @param fromDate    Start date of the report period
    * @param toDate      End date of the report period
    * @param groupBy     Grouping unit: "day", "week", or "month"
-   * @param compareFrom Optional: Start date of comparison period
-   * @param compareTo   Optional: End date of comparison period
-   * @return RevenueReportResponse or RevenueReportComparisonResponse
+   * @param compareFrom Start date of comparison period
+   * @param compareTo   End date of comparison period
+   * @return RevenueReportComparisonResponse
    */
   @Transactional(readOnly = true)
-  public Object getRevenueReport(String hotelId, LocalDate fromDate, LocalDate toDate, String groupBy,
-      LocalDate compareFrom, LocalDate compareTo) {
-    // Validate date range
-    if (fromDate.isAfter(toDate)) {
+  public RevenueReportComparisonResponse getRevenueReportWithComparison(String hotelId, LocalDate fromDate,
+      LocalDate toDate, String groupBy, LocalDate compareFrom, LocalDate compareTo) {
+    validateAndAuthorize(hotelId, fromDate, toDate);
+
+    // Validate comparison date range
+    if (compareFrom.isAfter(compareTo)) {
       throw new AppException(ErrorType.INVALID_DATE_RANGE);
-    }
-
-    // Validate comparison date range if provided
-    if (compareFrom != null && compareTo != null) {
-      if (compareFrom.isAfter(compareTo)) {
-        throw new AppException(ErrorType.INVALID_DATE_RANGE);
-      }
-    }
-
-    // Get authenticated user and validate hotel ownership
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (authentication == null || !(authentication instanceof CustomAuthenticationToken)) {
-      throw new AppException(ErrorType.UNAUTHORIZED);
-    }
-
-    CustomAuthenticationToken authToken = (CustomAuthenticationToken) authentication;
-    String email = authToken.getName();
-    User partner = userRepository.findByEmail(email)
-        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
-
-    // Validate hotel exists and belongs to this partner
-    Hotel hotel = hotelRepository.findById(hotelId)
-        .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
-
-    if (!hotel.getPartner().getId().equals(partner.getId())) {
-      throw new AppException(ErrorType.ACCESS_DENIED);
     }
 
     // Get current period data
     RevenueReportResponse currentPeriod = getSinglePeriodRevenueReport(hotelId, fromDate, toDate, groupBy);
 
-    // If comparison is requested (both compareFrom and compareTo provided)
-    if (compareFrom != null && compareTo != null) {
-      // Get previous period data
-      RevenueReportResponse previousPeriod = getSinglePeriodRevenueReport(hotelId, compareFrom, compareTo, groupBy);
+    // Get previous period data
+    RevenueReportResponse previousPeriod = getSinglePeriodRevenueReport(hotelId, compareFrom, compareTo, groupBy);
 
-      // Calculate comparison
-      double currentRevenue = currentPeriod.getSummary().getTotalRevenue();
-      double previousRevenue = previousPeriod.getSummary().getTotalRevenue();
-      double difference = currentRevenue - previousRevenue;
-      double percentageChange = calculatePercentageChange(currentRevenue, previousRevenue);
-      percentageChange = Math.round(percentageChange * 100.0) / 100.0;
+    // Calculate comparison
+    double currentRevenue = currentPeriod.getSummary().getTotalRevenue();
+    double previousRevenue = previousPeriod.getSummary().getTotalRevenue();
+    double difference = currentRevenue - previousRevenue;
+    double percentageChange = calculatePercentageChange(currentRevenue, previousRevenue);
+    percentageChange = Math.round(percentageChange * 100.0) / 100.0;
 
-      RevenueReportComparisonResponse.RevenueComparison comparison = RevenueReportComparisonResponse.RevenueComparison
-          .builder()
-          .totalRevenueDifference(difference)
-          .totalRevenuePercentageChange(percentageChange)
-          .build();
+    RevenueReportComparisonResponse.RevenueComparison comparison = RevenueReportComparisonResponse.RevenueComparison
+        .builder()
+        .totalRevenueDifference(difference)
+        .totalRevenuePercentageChange(percentageChange)
+        .build();
 
-      return RevenueReportComparisonResponse.builder()
-          .currentPeriod(currentPeriod)
-          .previousPeriod(previousPeriod)
-          .comparison(comparison)
-          .build();
-    }
-
-    // Return regular response without comparison
-    return currentPeriod;
+    return RevenueReportComparisonResponse.builder()
+        .currentPeriod(currentPeriod)
+        .previousPeriod(previousPeriod)
+        .comparison(comparison)
+        .build();
   }
 
   /**
@@ -622,13 +668,13 @@ public class PartnerReportService {
     Object[] result = hotelDailyReportRepository.getBookingSummary(hotelId, fromDate, toDate);
 
     // Parse results and handle null values
-    Long totalCreated = result != null && result[0] != null ? ((Number) result[0]).longValue() : 0L;
-    Long totalPending = result != null && result[1] != null ? ((Number) result[1]).longValue() : 0L;
-    Long totalConfirmed = result != null && result[2] != null ? ((Number) result[2]).longValue() : 0L;
-    Long totalCheckedIn = result != null && result[3] != null ? ((Number) result[3]).longValue() : 0L;
-    Long totalCompleted = result != null && result[4] != null ? ((Number) result[4]).longValue() : 0L;
-    Long totalCancelled = result != null && result[5] != null ? ((Number) result[5]).longValue() : 0L;
-    Long totalRescheduled = result != null && result[6] != null ? ((Number) result[6]).longValue() : 0L;
+    Long totalCreated = result != null && result.length > 0 ? extractLong(result[0]) : 0L;
+    Long totalPending = result != null && result.length > 1 ? extractLong(result[1]) : 0L;
+    Long totalConfirmed = result != null && result.length > 2 ? extractLong(result[2]) : 0L;
+    Long totalCheckedIn = result != null && result.length > 3 ? extractLong(result[3]) : 0L;
+    Long totalCompleted = result != null && result.length > 4 ? extractLong(result[4]) : 0L;
+    Long totalCancelled = result != null && result.length > 5 ? extractLong(result[5]) : 0L;
+    Long totalRescheduled = result != null && result.length > 6 ? extractLong(result[6]) : 0L;
 
     // Calculate cancellation rate (handle divide by zero)
     double cancellationRate = 0.0;
@@ -653,100 +699,82 @@ public class PartnerReportService {
 
   /**
    * Get booking summary for a partner's hotel.
-   * This method supports period comparison if compareFrom and compareTo are
-   * provided.
+   * 
+   * @param hotelId  The hotel ID
+   * @param fromDate Start date of the report period
+   * @param toDate   End date of the report period
+   * @return BookingsSummaryResponse
+   */
+  @Transactional(readOnly = true)
+  public BookingsSummaryResponse getBookingSummary(String hotelId, LocalDate fromDate, LocalDate toDate) {
+    validateAndAuthorize(hotelId, fromDate, toDate);
+    return getSinglePeriodBookingSummary(hotelId, fromDate, toDate);
+  }
+
+  /**
+   * Get booking summary with period comparison for a partner's hotel.
    * 
    * @param hotelId     The hotel ID
    * @param fromDate    Start date of the report period
    * @param toDate      End date of the report period
-   * @param compareFrom Optional: Start date of comparison period
-   * @param compareTo   Optional: End date of comparison period
-   * @return BookingsSummaryResponse or BookingsSummaryComparisonResponse
+   * @param compareFrom Start date of comparison period
+   * @param compareTo   End date of comparison period
+   * @return BookingsSummaryComparisonResponse
    */
   @Transactional(readOnly = true)
-  public Object getBookingSummary(String hotelId, LocalDate fromDate, LocalDate toDate,
-      LocalDate compareFrom, LocalDate compareTo) {
-    // Validate date range
-    if (fromDate.isAfter(toDate)) {
+  public BookingsSummaryComparisonResponse getBookingSummaryWithComparison(String hotelId, LocalDate fromDate,
+      LocalDate toDate, LocalDate compareFrom, LocalDate compareTo) {
+    validateAndAuthorize(hotelId, fromDate, toDate);
+
+    // Validate comparison date range
+    if (compareFrom.isAfter(compareTo)) {
       throw new AppException(ErrorType.INVALID_DATE_RANGE);
-    }
-
-    // Validate comparison date range if provided
-    if (compareFrom != null && compareTo != null) {
-      if (compareFrom.isAfter(compareTo)) {
-        throw new AppException(ErrorType.INVALID_DATE_RANGE);
-      }
-    }
-
-    // Get authenticated user and validate hotel ownership
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (authentication == null || !(authentication instanceof CustomAuthenticationToken)) {
-      throw new AppException(ErrorType.UNAUTHORIZED);
-    }
-
-    CustomAuthenticationToken authToken = (CustomAuthenticationToken) authentication;
-    String email = authToken.getName();
-    User partner = userRepository.findByEmail(email)
-        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
-
-    // Validate hotel exists and belongs to this partner
-    Hotel hotel = hotelRepository.findById(hotelId)
-        .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
-
-    if (!hotel.getPartner().getId().equals(partner.getId())) {
-      throw new AppException(ErrorType.ACCESS_DENIED);
     }
 
     // Get current period data
     BookingsSummaryResponse currentPeriod = getSinglePeriodBookingSummary(hotelId, fromDate, toDate);
 
-    // If comparison is requested (both compareFrom and compareTo provided)
-    if (compareFrom != null && compareTo != null) {
-      // Get previous period data
-      BookingsSummaryResponse previousPeriod = getSinglePeriodBookingSummary(hotelId, compareFrom, compareTo);
+    // Get previous period data
+    BookingsSummaryResponse previousPeriod = getSinglePeriodBookingSummary(hotelId, compareFrom, compareTo);
 
-      // Calculate comparison
-      long totalCreatedDiff = currentPeriod.getTotalCreated() - previousPeriod.getTotalCreated();
-      double totalCreatedPct = calculatePercentageChange(currentPeriod.getTotalCreated(),
-          previousPeriod.getTotalCreated());
-      totalCreatedPct = Math.round(totalCreatedPct * 100.0) / 100.0;
+    // Calculate comparison
+    long totalCreatedDiff = currentPeriod.getTotalCreated() - previousPeriod.getTotalCreated();
+    double totalCreatedPct = calculatePercentageChange(currentPeriod.getTotalCreated(),
+        previousPeriod.getTotalCreated());
+    totalCreatedPct = Math.round(totalCreatedPct * 100.0) / 100.0;
 
-      long totalCompletedDiff = currentPeriod.getTotalCompleted() - previousPeriod.getTotalCompleted();
-      double totalCompletedPct = calculatePercentageChange(currentPeriod.getTotalCompleted(),
-          previousPeriod.getTotalCompleted());
-      totalCompletedPct = Math.round(totalCompletedPct * 100.0) / 100.0;
+    long totalCompletedDiff = currentPeriod.getTotalCompleted() - previousPeriod.getTotalCompleted();
+    double totalCompletedPct = calculatePercentageChange(currentPeriod.getTotalCompleted(),
+        previousPeriod.getTotalCompleted());
+    totalCompletedPct = Math.round(totalCompletedPct * 100.0) / 100.0;
 
-      long totalCancelledDiff = currentPeriod.getTotalCancelled() - previousPeriod.getTotalCancelled();
-      double totalCancelledPct = calculatePercentageChange(currentPeriod.getTotalCancelled(),
-          previousPeriod.getTotalCancelled());
-      totalCancelledPct = Math.round(totalCancelledPct * 100.0) / 100.0;
+    long totalCancelledDiff = currentPeriod.getTotalCancelled() - previousPeriod.getTotalCancelled();
+    double totalCancelledPct = calculatePercentageChange(currentPeriod.getTotalCancelled(),
+        previousPeriod.getTotalCancelled());
+    totalCancelledPct = Math.round(totalCancelledPct * 100.0) / 100.0;
 
-      double cancellationRateDiff = currentPeriod.getCancellationRate() - previousPeriod.getCancellationRate();
-      double cancellationRatePct = calculatePercentageChange(currentPeriod.getCancellationRate(),
-          previousPeriod.getCancellationRate());
-      cancellationRatePct = Math.round(cancellationRatePct * 100.0) / 100.0;
+    double cancellationRateDiff = currentPeriod.getCancellationRate() - previousPeriod.getCancellationRate();
+    double cancellationRatePct = calculatePercentageChange(currentPeriod.getCancellationRate(),
+        previousPeriod.getCancellationRate());
+    cancellationRatePct = Math.round(cancellationRatePct * 100.0) / 100.0;
 
-      BookingsSummaryComparisonResponse.BookingsComparison comparison = BookingsSummaryComparisonResponse.BookingsComparison
-          .builder()
-          .totalCreatedDifference(totalCreatedDiff)
-          .totalCreatedPercentageChange(totalCreatedPct)
-          .totalCompletedDifference(totalCompletedDiff)
-          .totalCompletedPercentageChange(totalCompletedPct)
-          .totalCancelledDifference(totalCancelledDiff)
-          .totalCancelledPercentageChange(totalCancelledPct)
-          .cancellationRateDifference(cancellationRateDiff)
-          .cancellationRatePercentageChange(cancellationRatePct)
-          .build();
+    BookingsSummaryComparisonResponse.BookingsComparison comparison = BookingsSummaryComparisonResponse.BookingsComparison
+        .builder()
+        .totalCreatedDifference(totalCreatedDiff)
+        .totalCreatedPercentageChange(totalCreatedPct)
+        .totalCompletedDifference(totalCompletedDiff)
+        .totalCompletedPercentageChange(totalCompletedPct)
+        .totalCancelledDifference(totalCancelledDiff)
+        .totalCancelledPercentageChange(totalCancelledPct)
+        .cancellationRateDifference(cancellationRateDiff)
+        .cancellationRatePercentageChange(cancellationRatePct)
+        .build();
 
-      return BookingsSummaryComparisonResponse.builder()
-          .currentPeriod(currentPeriod)
-          .previousPeriod(previousPeriod)
-          .comparison(comparison)
-          .build();
-    }
-
-    // Return regular response without comparison
-    return currentPeriod;
+    return BookingsSummaryComparisonResponse.builder()
+        .currentPeriod(currentPeriod)
+        .previousPeriod(previousPeriod)
+        .comparison(comparison)
+        .build();
   }
 
   /**
@@ -811,88 +839,70 @@ public class PartnerReportService {
 
   /**
    * Get occupancy report for a partner's hotel.
-   * This method supports period comparison if compareFrom and compareTo are
-   * provided.
+   * 
+   * @param hotelId  The hotel ID
+   * @param fromDate Start date of the report period
+   * @param toDate   End date of the report period
+   * @return OccupancyReportResponse
+   */
+  @Transactional(readOnly = true)
+  public OccupancyReportResponse getOccupancyReport(String hotelId, LocalDate fromDate, LocalDate toDate) {
+    validateAndAuthorize(hotelId, fromDate, toDate);
+    return getSinglePeriodOccupancyReport(hotelId, fromDate, toDate);
+  }
+
+  /**
+   * Get occupancy report with period comparison for a partner's hotel.
    * 
    * @param hotelId     The hotel ID
    * @param fromDate    Start date of the report period
    * @param toDate      End date of the report period
-   * @param compareFrom Optional: Start date of comparison period
-   * @param compareTo   Optional: End date of comparison period
-   * @return OccupancyReportResponse or OccupancyReportComparisonResponse
+   * @param compareFrom Start date of comparison period
+   * @param compareTo   End date of comparison period
+   * @return OccupancyReportComparisonResponse
    */
   @Transactional(readOnly = true)
-  public Object getOccupancyReport(String hotelId, LocalDate fromDate, LocalDate toDate,
-      LocalDate compareFrom, LocalDate compareTo) {
-    // Validate date range
-    if (fromDate.isAfter(toDate)) {
+  public OccupancyReportComparisonResponse getOccupancyReportWithComparison(String hotelId, LocalDate fromDate,
+      LocalDate toDate, LocalDate compareFrom, LocalDate compareTo) {
+    validateAndAuthorize(hotelId, fromDate, toDate);
+
+    // Validate comparison date range
+    if (compareFrom.isAfter(compareTo)) {
       throw new AppException(ErrorType.INVALID_DATE_RANGE);
-    }
-
-    // Validate comparison date range if provided
-    if (compareFrom != null && compareTo != null) {
-      if (compareFrom.isAfter(compareTo)) {
-        throw new AppException(ErrorType.INVALID_DATE_RANGE);
-      }
-    }
-
-    // Get authenticated user and validate hotel ownership
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (authentication == null || !(authentication instanceof CustomAuthenticationToken)) {
-      throw new AppException(ErrorType.UNAUTHORIZED);
-    }
-
-    CustomAuthenticationToken authToken = (CustomAuthenticationToken) authentication;
-    String email = authToken.getName();
-    User partner = userRepository.findByEmail(email)
-        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
-
-    // Validate hotel exists and belongs to this partner
-    Hotel hotel = hotelRepository.findById(hotelId)
-        .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
-
-    if (!hotel.getPartner().getId().equals(partner.getId())) {
-      throw new AppException(ErrorType.ACCESS_DENIED);
     }
 
     // Get current period data
     OccupancyReportResponse currentPeriod = getSinglePeriodOccupancyReport(hotelId, fromDate, toDate);
 
-    // If comparison is requested (both compareFrom and compareTo provided)
-    if (compareFrom != null && compareTo != null) {
-      // Get previous period data
-      OccupancyReportResponse previousPeriod = getSinglePeriodOccupancyReport(hotelId, compareFrom, compareTo);
+    // Get previous period data
+    OccupancyReportResponse previousPeriod = getSinglePeriodOccupancyReport(hotelId, compareFrom, compareTo);
 
-      // Calculate comparison
-      double averageRateDiff = currentPeriod.getSummary().getAverageRate()
-          - previousPeriod.getSummary().getAverageRate();
-      double averageRatePct = calculatePercentageChange(currentPeriod.getSummary().getAverageRate(),
-          previousPeriod.getSummary().getAverageRate());
-      averageRatePct = Math.round(averageRatePct * 100.0) / 100.0;
+    // Calculate comparison
+    double averageRateDiff = currentPeriod.getSummary().getAverageRate()
+        - previousPeriod.getSummary().getAverageRate();
+    double averageRatePct = calculatePercentageChange(currentPeriod.getSummary().getAverageRate(),
+        previousPeriod.getSummary().getAverageRate());
+    averageRatePct = Math.round(averageRatePct * 100.0) / 100.0;
 
-      long totalOccupiedDiff = currentPeriod.getSummary().getTotalOccupied()
-          - previousPeriod.getSummary().getTotalOccupied();
-      double totalOccupiedPct = calculatePercentageChange(currentPeriod.getSummary().getTotalOccupied(),
-          previousPeriod.getSummary().getTotalOccupied());
-      totalOccupiedPct = Math.round(totalOccupiedPct * 100.0) / 100.0;
+    long totalOccupiedDiff = currentPeriod.getSummary().getTotalOccupied()
+        - previousPeriod.getSummary().getTotalOccupied();
+    double totalOccupiedPct = calculatePercentageChange(currentPeriod.getSummary().getTotalOccupied(),
+        previousPeriod.getSummary().getTotalOccupied());
+    totalOccupiedPct = Math.round(totalOccupiedPct * 100.0) / 100.0;
 
-      OccupancyReportComparisonResponse.OccupancyComparison comparison = OccupancyReportComparisonResponse.OccupancyComparison
-          .builder()
-          .averageRateDifference(averageRateDiff)
-          .averageRatePercentageChange(averageRatePct)
-          .totalOccupiedDifference(totalOccupiedDiff)
-          .totalOccupiedPercentageChange(totalOccupiedPct)
-          .build();
+    OccupancyReportComparisonResponse.OccupancyComparison comparison = OccupancyReportComparisonResponse.OccupancyComparison
+        .builder()
+        .averageRateDifference(averageRateDiff)
+        .averageRatePercentageChange(averageRatePct)
+        .totalOccupiedDifference(totalOccupiedDiff)
+        .totalOccupiedPercentageChange(totalOccupiedPct)
+        .build();
 
-      return OccupancyReportComparisonResponse.builder()
-          .currentPeriod(currentPeriod)
-          .previousPeriod(previousPeriod)
-          .comparison(comparison)
-          .build();
-    }
-
-    // Return regular response without comparison
-    return currentPeriod;
+    return OccupancyReportComparisonResponse.builder()
+        .currentPeriod(currentPeriod)
+        .previousPeriod(previousPeriod)
+        .comparison(comparison)
+        .build();
   }
 
   /**
@@ -963,8 +973,24 @@ public class PartnerReportService {
 
   /**
    * Get room performance report for a partner's hotel.
-   * This method supports period comparison if compareFrom and compareTo are
-   * provided.
+   * 
+   * @param hotelId   The hotel ID
+   * @param fromDate  Start date of the report period
+   * @param toDate    End date of the report period
+   * @param sortBy    Sort criteria: "revenue" or "bookedRoomNights" (default:
+   *                  "revenue")
+   * @param sortOrder Sort order: "asc" or "desc" (default: "desc")
+   * @return RoomPerformanceResponse
+   */
+  @Transactional(readOnly = true)
+  public RoomPerformanceResponse getRoomPerformance(String hotelId, LocalDate fromDate, LocalDate toDate,
+      String sortBy, String sortOrder) {
+    validateAndAuthorize(hotelId, fromDate, toDate);
+    return getSinglePeriodRoomPerformance(hotelId, fromDate, toDate, sortBy, sortOrder);
+  }
+
+  /**
+   * Get room performance report with period comparison for a partner's hotel.
    * 
    * @param hotelId     The hotel ID
    * @param fromDate    Start date of the report period
@@ -972,124 +998,94 @@ public class PartnerReportService {
    * @param sortBy      Sort criteria: "revenue" or "bookedRoomNights" (default:
    *                    "revenue")
    * @param sortOrder   Sort order: "asc" or "desc" (default: "desc")
-   * @param compareFrom Optional: Start date of comparison period
-   * @param compareTo   Optional: End date of comparison period
-   * @return RoomPerformanceResponse or RoomPerformanceComparisonResponse
+   * @param compareFrom Start date of comparison period
+   * @param compareTo   End date of comparison period
+   * @return RoomPerformanceComparisonResponse
    */
   @Transactional(readOnly = true)
-  public Object getRoomPerformance(String hotelId, LocalDate fromDate, LocalDate toDate,
-      String sortBy, String sortOrder, LocalDate compareFrom, LocalDate compareTo) {
-    // Validate date range
-    if (fromDate.isAfter(toDate)) {
+  public RoomPerformanceComparisonResponse getRoomPerformanceWithComparison(String hotelId, LocalDate fromDate,
+      LocalDate toDate, String sortBy, String sortOrder, LocalDate compareFrom, LocalDate compareTo) {
+    validateAndAuthorize(hotelId, fromDate, toDate);
+
+    // Validate comparison date range
+    if (compareFrom.isAfter(compareTo)) {
       throw new AppException(ErrorType.INVALID_DATE_RANGE);
-    }
-
-    // Validate comparison date range if provided
-    if (compareFrom != null && compareTo != null) {
-      if (compareFrom.isAfter(compareTo)) {
-        throw new AppException(ErrorType.INVALID_DATE_RANGE);
-      }
-    }
-
-    // Get authenticated user and validate hotel ownership
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (authentication == null || !(authentication instanceof CustomAuthenticationToken)) {
-      throw new AppException(ErrorType.UNAUTHORIZED);
-    }
-
-    CustomAuthenticationToken authToken = (CustomAuthenticationToken) authentication;
-    String email = authToken.getName();
-    User partner = userRepository.findByEmail(email)
-        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
-
-    // Validate hotel exists and belongs to this partner
-    Hotel hotel = hotelRepository.findById(hotelId)
-        .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
-
-    if (!hotel.getPartner().getId().equals(partner.getId())) {
-      throw new AppException(ErrorType.ACCESS_DENIED);
     }
 
     // Get current period data
     RoomPerformanceResponse currentPeriod = getSinglePeriodRoomPerformance(hotelId, fromDate, toDate, sortBy,
         sortOrder);
 
-    // If comparison is requested (both compareFrom and compareTo provided)
-    if (compareFrom != null && compareTo != null) {
-      // Get previous period data
-      RoomPerformanceResponse previousPeriod = getSinglePeriodRoomPerformance(hotelId, compareFrom, compareTo, sortBy,
-          sortOrder);
+    // Get previous period data
+    RoomPerformanceResponse previousPeriod = getSinglePeriodRoomPerformance(hotelId, compareFrom, compareTo, sortBy,
+        sortOrder);
 
-      // Merge two lists by roomId
-      Map<String, RoomPerformanceResponse.RoomPerformanceItem> currentMap = currentPeriod.getData().stream()
-          .collect(Collectors.toMap(RoomPerformanceResponse.RoomPerformanceItem::getRoomId, item -> item));
+    // Merge two lists by roomId
+    Map<String, RoomPerformanceResponse.RoomPerformanceItem> currentMap = currentPeriod.getData().stream()
+        .collect(Collectors.toMap(RoomPerformanceResponse.RoomPerformanceItem::getRoomId, item -> item));
 
-      Map<String, RoomPerformanceResponse.RoomPerformanceItem> previousMap = previousPeriod.getData().stream()
-          .collect(Collectors.toMap(RoomPerformanceResponse.RoomPerformanceItem::getRoomId, item -> item));
+    Map<String, RoomPerformanceResponse.RoomPerformanceItem> previousMap = previousPeriod.getData().stream()
+        .collect(Collectors.toMap(RoomPerformanceResponse.RoomPerformanceItem::getRoomId, item -> item));
 
-      // Get all unique roomIds
-      Set<String> allRoomIds = new HashSet<>(currentMap.keySet());
-      allRoomIds.addAll(previousMap.keySet());
+    // Get all unique roomIds
+    Set<String> allRoomIds = new HashSet<>(currentMap.keySet());
+    allRoomIds.addAll(previousMap.keySet());
 
-      // Build comparison items
-      List<RoomPerformanceComparisonResponse.RoomPerformanceComparisonItem> comparisonItems = new ArrayList<>();
-      for (String roomId : allRoomIds) {
-        RoomPerformanceResponse.RoomPerformanceItem current = currentMap.getOrDefault(roomId,
-            RoomPerformanceResponse.RoomPerformanceItem.builder()
-                .roomId(roomId)
-                .roomName("")
-                .roomView("")
-                .totalRevenue(0.0)
-                .totalBookedNights(0L)
-                .build());
+    // Build comparison items
+    List<RoomPerformanceComparisonResponse.RoomPerformanceComparisonItem> comparisonItems = new ArrayList<>();
+    for (String roomId : allRoomIds) {
+      RoomPerformanceResponse.RoomPerformanceItem current = currentMap.getOrDefault(roomId,
+          RoomPerformanceResponse.RoomPerformanceItem.builder()
+              .roomId(roomId)
+              .roomName("")
+              .roomView("")
+              .totalRevenue(0.0)
+              .totalBookedNights(0L)
+              .build());
 
-        RoomPerformanceResponse.RoomPerformanceItem previous = previousMap.getOrDefault(roomId,
-            RoomPerformanceResponse.RoomPerformanceItem.builder()
-                .roomId(roomId)
-                .roomName("")
-                .roomView("")
-                .totalRevenue(0.0)
-                .totalBookedNights(0L)
-                .build());
+      RoomPerformanceResponse.RoomPerformanceItem previous = previousMap.getOrDefault(roomId,
+          RoomPerformanceResponse.RoomPerformanceItem.builder()
+              .roomId(roomId)
+              .roomName("")
+              .roomView("")
+              .totalRevenue(0.0)
+              .totalBookedNights(0L)
+              .build());
 
-        // Use current period's room info (name, view)
-        String roomName = current.getRoomName() != null && !current.getRoomName().isEmpty() ? current.getRoomName()
-            : previous.getRoomName();
-        String roomView = current.getRoomView() != null && !current.getRoomView().isEmpty() ? current.getRoomView()
-            : previous.getRoomView();
+      // Use current period's room info (name, view)
+      String roomName = current.getRoomName() != null && !current.getRoomName().isEmpty() ? current.getRoomName()
+          : previous.getRoomName();
+      String roomView = current.getRoomView() != null && !current.getRoomView().isEmpty() ? current.getRoomView()
+          : previous.getRoomView();
 
-        // Calculate comparison
-        double revenueDiff = current.getTotalRevenue() - previous.getTotalRevenue();
-        double revenuePct = calculatePercentageChange(current.getTotalRevenue(), previous.getTotalRevenue());
-        revenuePct = Math.round(revenuePct * 100.0) / 100.0;
+      // Calculate comparison
+      double revenueDiff = current.getTotalRevenue() - previous.getTotalRevenue();
+      double revenuePct = calculatePercentageChange(current.getTotalRevenue(), previous.getTotalRevenue());
+      revenuePct = Math.round(revenuePct * 100.0) / 100.0;
 
-        long bookedNightsDiff = current.getTotalBookedNights() - previous.getTotalBookedNights();
-        double bookedNightsPct = calculatePercentageChange(current.getTotalBookedNights(),
-            previous.getTotalBookedNights());
-        bookedNightsPct = Math.round(bookedNightsPct * 100.0) / 100.0;
+      long bookedNightsDiff = current.getTotalBookedNights() - previous.getTotalBookedNights();
+      double bookedNightsPct = calculatePercentageChange(current.getTotalBookedNights(),
+          previous.getTotalBookedNights());
+      bookedNightsPct = Math.round(bookedNightsPct * 100.0) / 100.0;
 
-        comparisonItems.add(RoomPerformanceComparisonResponse.RoomPerformanceComparisonItem.builder()
-            .roomId(roomId)
-            .roomName(roomName)
-            .roomView(roomView)
-            .currentTotalRevenue(current.getTotalRevenue())
-            .currentTotalBookedNights(current.getTotalBookedNights())
-            .previousTotalRevenue(previous.getTotalRevenue())
-            .previousTotalBookedNights(previous.getTotalBookedNights())
-            .totalRevenueDifference(revenueDiff)
-            .totalRevenuePercentageChange(revenuePct)
-            .totalBookedNightsDifference(bookedNightsDiff)
-            .totalBookedNightsPercentageChange(bookedNightsPct)
-            .build());
-      }
-
-      return RoomPerformanceComparisonResponse.builder()
-          .data(comparisonItems)
-          .build();
+      comparisonItems.add(RoomPerformanceComparisonResponse.RoomPerformanceComparisonItem.builder()
+          .roomId(roomId)
+          .roomName(roomName)
+          .roomView(roomView)
+          .currentTotalRevenue(current.getTotalRevenue())
+          .currentTotalBookedNights(current.getTotalBookedNights())
+          .previousTotalRevenue(previous.getTotalRevenue())
+          .previousTotalBookedNights(previous.getTotalBookedNights())
+          .totalRevenueDifference(revenueDiff)
+          .totalRevenuePercentageChange(revenuePct)
+          .totalBookedNightsDifference(bookedNightsDiff)
+          .totalBookedNightsPercentageChange(bookedNightsPct)
+          .build());
     }
 
-    // Return regular response without comparison
-    return currentPeriod;
+    return RoomPerformanceComparisonResponse.builder()
+        .data(comparisonItems)
+        .build();
   }
 
   /**
@@ -1102,8 +1098,8 @@ public class PartnerReportService {
     Object[] result = hotelDailyReportRepository.getCustomerSummary(hotelId, fromDate, toDate);
 
     // Parse results and handle null values
-    long totalNewCustomerBookings = result[0] != null ? ((Number) result[0]).longValue() : 0L;
-    long totalReturningCustomerBookings = result[1] != null ? ((Number) result[1]).longValue() : 0L;
+    long totalNewCustomerBookings = result != null && result.length > 0 ? extractLong(result[0]) : 0L;
+    long totalReturningCustomerBookings = result != null && result.length > 1 ? extractLong(result[1]) : 0L;
 
     // Calculate total completed bookings in period
     long totalCompletedBookingsInPeriod = totalNewCustomerBookings + totalReturningCustomerBookings;
@@ -1131,94 +1127,76 @@ public class PartnerReportService {
 
   /**
    * Get customer summary report for a partner's hotel.
-   * This method supports period comparison if compareFrom and compareTo are
-   * provided.
+   * 
+   * @param hotelId  The hotel ID
+   * @param fromDate Start date of the report period
+   * @param toDate   End date of the report period
+   * @return CustomerSummaryResponse
+   */
+  @Transactional(readOnly = true)
+  public CustomerSummaryResponse getCustomerSummary(String hotelId, LocalDate fromDate, LocalDate toDate) {
+    validateAndAuthorize(hotelId, fromDate, toDate);
+    return getSinglePeriodCustomerSummary(hotelId, fromDate, toDate);
+  }
+
+  /**
+   * Get customer summary report with period comparison for a partner's hotel.
    * 
    * @param hotelId     The hotel ID
    * @param fromDate    Start date of the report period
    * @param toDate      End date of the report period
-   * @param compareFrom Optional: Start date of comparison period
-   * @param compareTo   Optional: End date of comparison period
-   * @return CustomerSummaryResponse or CustomerSummaryComparisonResponse
+   * @param compareFrom Start date of comparison period
+   * @param compareTo   End date of comparison period
+   * @return CustomerSummaryComparisonResponse
    */
   @Transactional(readOnly = true)
-  public Object getCustomerSummary(String hotelId, LocalDate fromDate, LocalDate toDate,
-      LocalDate compareFrom, LocalDate compareTo) {
-    // Validate date range
-    if (fromDate.isAfter(toDate)) {
+  public CustomerSummaryComparisonResponse getCustomerSummaryWithComparison(String hotelId, LocalDate fromDate,
+      LocalDate toDate, LocalDate compareFrom, LocalDate compareTo) {
+    validateAndAuthorize(hotelId, fromDate, toDate);
+
+    // Validate comparison date range
+    if (compareFrom.isAfter(compareTo)) {
       throw new AppException(ErrorType.INVALID_DATE_RANGE);
-    }
-
-    // Validate comparison date range if provided
-    if (compareFrom != null && compareTo != null) {
-      if (compareFrom.isAfter(compareTo)) {
-        throw new AppException(ErrorType.INVALID_DATE_RANGE);
-      }
-    }
-
-    // Get authenticated user and validate hotel ownership
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (authentication == null || !(authentication instanceof CustomAuthenticationToken)) {
-      throw new AppException(ErrorType.UNAUTHORIZED);
-    }
-
-    CustomAuthenticationToken authToken = (CustomAuthenticationToken) authentication;
-    String email = authToken.getName();
-    User partner = userRepository.findByEmail(email)
-        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
-
-    // Validate hotel exists and belongs to this partner
-    Hotel hotel = hotelRepository.findById(hotelId)
-        .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
-
-    if (!hotel.getPartner().getId().equals(partner.getId())) {
-      throw new AppException(ErrorType.ACCESS_DENIED);
     }
 
     // Get current period data
     CustomerSummaryResponse currentPeriod = getSinglePeriodCustomerSummary(hotelId, fromDate, toDate);
 
-    // If comparison is requested (both compareFrom and compareTo provided)
-    if (compareFrom != null && compareTo != null) {
-      // Get previous period data
-      CustomerSummaryResponse previousPeriod = getSinglePeriodCustomerSummary(hotelId, compareFrom, compareTo);
+    // Get previous period data
+    CustomerSummaryResponse previousPeriod = getSinglePeriodCustomerSummary(hotelId, compareFrom, compareTo);
 
-      // Calculate comparison
-      long newCustomerDiff = currentPeriod.getTotalNewCustomerBookings() - previousPeriod.getTotalNewCustomerBookings();
-      double newCustomerPct = calculatePercentageChange(currentPeriod.getTotalNewCustomerBookings(),
-          previousPeriod.getTotalNewCustomerBookings());
-      newCustomerPct = Math.round(newCustomerPct * 100.0) / 100.0;
+    // Calculate comparison
+    long newCustomerDiff = currentPeriod.getTotalNewCustomerBookings() - previousPeriod.getTotalNewCustomerBookings();
+    double newCustomerPct = calculatePercentageChange(currentPeriod.getTotalNewCustomerBookings(),
+        previousPeriod.getTotalNewCustomerBookings());
+    newCustomerPct = Math.round(newCustomerPct * 100.0) / 100.0;
 
-      long returningCustomerDiff = currentPeriod.getTotalReturningCustomerBookings()
-          - previousPeriod.getTotalReturningCustomerBookings();
-      double returningCustomerPct = calculatePercentageChange(currentPeriod.getTotalReturningCustomerBookings(),
-          previousPeriod.getTotalReturningCustomerBookings());
-      returningCustomerPct = Math.round(returningCustomerPct * 100.0) / 100.0;
+    long returningCustomerDiff = currentPeriod.getTotalReturningCustomerBookings()
+        - previousPeriod.getTotalReturningCustomerBookings();
+    double returningCustomerPct = calculatePercentageChange(currentPeriod.getTotalReturningCustomerBookings(),
+        previousPeriod.getTotalReturningCustomerBookings());
+    returningCustomerPct = Math.round(returningCustomerPct * 100.0) / 100.0;
 
-      long completedDiff = currentPeriod.getTotalCompletedBookings() - previousPeriod.getTotalCompletedBookings();
-      double completedPct = calculatePercentageChange(currentPeriod.getTotalCompletedBookings(),
-          previousPeriod.getTotalCompletedBookings());
-      completedPct = Math.round(completedPct * 100.0) / 100.0;
+    long completedDiff = currentPeriod.getTotalCompletedBookings() - previousPeriod.getTotalCompletedBookings();
+    double completedPct = calculatePercentageChange(currentPeriod.getTotalCompletedBookings(),
+        previousPeriod.getTotalCompletedBookings());
+    completedPct = Math.round(completedPct * 100.0) / 100.0;
 
-      CustomerSummaryComparisonResponse.CustomerComparison comparison = CustomerSummaryComparisonResponse.CustomerComparison
-          .builder()
-          .totalNewCustomerBookingsDifference(newCustomerDiff)
-          .totalNewCustomerBookingsPercentageChange(newCustomerPct)
-          .totalReturningCustomerBookingsDifference(returningCustomerDiff)
-          .totalReturningCustomerBookingsPercentageChange(returningCustomerPct)
-          .totalCompletedBookingsDifference(completedDiff)
-          .totalCompletedBookingsPercentageChange(completedPct)
-          .build();
+    CustomerSummaryComparisonResponse.CustomerComparison comparison = CustomerSummaryComparisonResponse.CustomerComparison
+        .builder()
+        .totalNewCustomerBookingsDifference(newCustomerDiff)
+        .totalNewCustomerBookingsPercentageChange(newCustomerPct)
+        .totalReturningCustomerBookingsDifference(returningCustomerDiff)
+        .totalReturningCustomerBookingsPercentageChange(returningCustomerPct)
+        .totalCompletedBookingsDifference(completedDiff)
+        .totalCompletedBookingsPercentageChange(completedPct)
+        .build();
 
-      return CustomerSummaryComparisonResponse.builder()
-          .currentPeriod(currentPeriod)
-          .previousPeriod(previousPeriod)
-          .comparison(comparison)
-          .build();
-    }
-
-    // Return regular response without comparison
-    return currentPeriod;
+    return CustomerSummaryComparisonResponse.builder()
+        .currentPeriod(currentPeriod)
+        .previousPeriod(previousPeriod)
+        .comparison(comparison)
+        .build();
   }
 
   /**
@@ -1229,8 +1207,12 @@ public class PartnerReportService {
   private ReviewSummaryResponse getSinglePeriodReviewSummary(String hotelId, LocalDate fromDate, LocalDate toDate) {
     // Step 1: Get aggregated review stats from HotelDailyReport
     Object[] aggregatedStats = hotelDailyReportRepository.getAggregatedReviewStats(hotelId, fromDate, toDate);
-    double totalWeightedScoreSum = aggregatedStats[0] != null ? ((Number) aggregatedStats[0]).doubleValue() : 0.0;
-    long totalReviewCount = aggregatedStats[1] != null ? ((Number) aggregatedStats[1]).longValue() : 0L;
+    double totalWeightedScoreSum = aggregatedStats != null && aggregatedStats.length > 0
+        ? extractDouble(aggregatedStats[0])
+        : 0.0;
+    long totalReviewCount = aggregatedStats != null && aggregatedStats.length > 1
+        ? extractLong(aggregatedStats[1])
+        : 0L;
 
     // Step 2: Calculate weighted average score (handle divide by zero)
     double averageScore = 0.0;
@@ -1247,7 +1229,7 @@ public class PartnerReportService {
     Map<String, Long> distributionMap = new HashMap<>();
     for (Object[] row : scoreDistributionResults) {
       String scoreBucket = (String) row[0];
-      Long reviewCount = row[1] != null ? ((Number) row[1]).longValue() : 0L;
+      Long reviewCount = row.length > 1 ? extractLong(row[1]) : 0L;
       distributionMap.put(scoreBucket, reviewCount);
     }
 
@@ -1273,85 +1255,67 @@ public class PartnerReportService {
 
   /**
    * Get review summary report for a partner's hotel.
-   * This method supports period comparison if compareFrom and compareTo are
-   * provided.
+   * 
+   * @param hotelId  The hotel ID
+   * @param fromDate Start date of the report period
+   * @param toDate   End date of the report period
+   * @return ReviewSummaryResponse
+   */
+  @Transactional(readOnly = true)
+  public ReviewSummaryResponse getReviewSummary(String hotelId, LocalDate fromDate, LocalDate toDate) {
+    validateAndAuthorize(hotelId, fromDate, toDate);
+    return getSinglePeriodReviewSummary(hotelId, fromDate, toDate);
+  }
+
+  /**
+   * Get review summary report with period comparison for a partner's hotel.
    * 
    * @param hotelId     The hotel ID
    * @param fromDate    Start date of the report period
    * @param toDate      End date of the report period
-   * @param compareFrom Optional: Start date of comparison period
-   * @param compareTo   Optional: End date of comparison period
-   * @return ReviewSummaryResponse or ReviewSummaryComparisonResponse
+   * @param compareFrom Start date of comparison period
+   * @param compareTo   End date of comparison period
+   * @return ReviewSummaryComparisonResponse
    */
   @Transactional(readOnly = true)
-  public Object getReviewSummary(String hotelId, LocalDate fromDate, LocalDate toDate,
-      LocalDate compareFrom, LocalDate compareTo) {
-    // Validate date range
-    if (fromDate.isAfter(toDate)) {
+  public ReviewSummaryComparisonResponse getReviewSummaryWithComparison(String hotelId, LocalDate fromDate,
+      LocalDate toDate, LocalDate compareFrom, LocalDate compareTo) {
+    validateAndAuthorize(hotelId, fromDate, toDate);
+
+    // Validate comparison date range
+    if (compareFrom.isAfter(compareTo)) {
       throw new AppException(ErrorType.INVALID_DATE_RANGE);
-    }
-
-    // Validate comparison date range if provided
-    if (compareFrom != null && compareTo != null) {
-      if (compareFrom.isAfter(compareTo)) {
-        throw new AppException(ErrorType.INVALID_DATE_RANGE);
-      }
-    }
-
-    // Get authenticated user and validate hotel ownership
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (authentication == null || !(authentication instanceof CustomAuthenticationToken)) {
-      throw new AppException(ErrorType.UNAUTHORIZED);
-    }
-
-    CustomAuthenticationToken authToken = (CustomAuthenticationToken) authentication;
-    String email = authToken.getName();
-    User partner = userRepository.findByEmail(email)
-        .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
-
-    // Validate hotel exists and belongs to this partner
-    Hotel hotel = hotelRepository.findById(hotelId)
-        .orElseThrow(() -> new AppException(ErrorType.HOTEL_NOT_FOUND));
-
-    if (!hotel.getPartner().getId().equals(partner.getId())) {
-      throw new AppException(ErrorType.ACCESS_DENIED);
     }
 
     // Get current period data
     ReviewSummaryResponse currentPeriod = getSinglePeriodReviewSummary(hotelId, fromDate, toDate);
 
-    // If comparison is requested (both compareFrom and compareTo provided)
-    if (compareFrom != null && compareTo != null) {
-      // Get previous period data
-      ReviewSummaryResponse previousPeriod = getSinglePeriodReviewSummary(hotelId, compareFrom, compareTo);
+    // Get previous period data
+    ReviewSummaryResponse previousPeriod = getSinglePeriodReviewSummary(hotelId, compareFrom, compareTo);
 
-      // Calculate comparison
-      long totalReviewsDiff = currentPeriod.getTotalReviews() - previousPeriod.getTotalReviews();
-      double totalReviewsPct = calculatePercentageChange(currentPeriod.getTotalReviews(),
-          previousPeriod.getTotalReviews());
-      totalReviewsPct = Math.round(totalReviewsPct * 100.0) / 100.0;
+    // Calculate comparison
+    long totalReviewsDiff = currentPeriod.getTotalReviews() - previousPeriod.getTotalReviews();
+    double totalReviewsPct = calculatePercentageChange(currentPeriod.getTotalReviews(),
+        previousPeriod.getTotalReviews());
+    totalReviewsPct = Math.round(totalReviewsPct * 100.0) / 100.0;
 
-      double averageScoreDiff = currentPeriod.getAverageScore() - previousPeriod.getAverageScore();
-      double averageScorePct = calculatePercentageChange(currentPeriod.getAverageScore(),
-          previousPeriod.getAverageScore());
-      averageScorePct = Math.round(averageScorePct * 100.0) / 100.0;
+    double averageScoreDiff = currentPeriod.getAverageScore() - previousPeriod.getAverageScore();
+    double averageScorePct = calculatePercentageChange(currentPeriod.getAverageScore(),
+        previousPeriod.getAverageScore());
+    averageScorePct = Math.round(averageScorePct * 100.0) / 100.0;
 
-      ReviewSummaryComparisonResponse.ReviewComparison comparison = ReviewSummaryComparisonResponse.ReviewComparison
-          .builder()
-          .totalReviewsDifference(totalReviewsDiff)
-          .totalReviewsPercentageChange(totalReviewsPct)
-          .averageScoreDifference(averageScoreDiff)
-          .averageScorePercentageChange(averageScorePct)
-          .build();
+    ReviewSummaryComparisonResponse.ReviewComparison comparison = ReviewSummaryComparisonResponse.ReviewComparison
+        .builder()
+        .totalReviewsDifference(totalReviewsDiff)
+        .totalReviewsPercentageChange(totalReviewsPct)
+        .averageScoreDifference(averageScoreDiff)
+        .averageScorePercentageChange(averageScorePct)
+        .build();
 
-      return ReviewSummaryComparisonResponse.builder()
-          .currentPeriod(currentPeriod)
-          .previousPeriod(previousPeriod)
-          .comparison(comparison)
-          .build();
-    }
-
-    // Return regular response without comparison
-    return currentPeriod;
+    return ReviewSummaryComparisonResponse.builder()
+        .currentPeriod(currentPeriod)
+        .previousPeriod(previousPeriod)
+        .comparison(comparison)
+        .build();
   }
 }

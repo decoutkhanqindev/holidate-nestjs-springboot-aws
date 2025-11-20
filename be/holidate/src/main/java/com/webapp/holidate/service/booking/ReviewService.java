@@ -229,8 +229,17 @@ public class ReviewService {
 
   @Transactional(readOnly = true)
   public ReviewDetailsResponse getById(String id) {
-    Review review = reviewRepository.findByIdWithDetails(id)
+    // Step 1: Fetch review with basic relationships (user, hotel, booking)
+    // This avoids cartesian product from joining photos collection
+    Review review = reviewRepository.findByIdWithBasicDetails(id)
       .orElseThrow(() -> new AppException(ErrorType.REVIEW_NOT_FOUND));
+
+    // Step 2: Fetch photos separately to avoid cartesian product
+    Review reviewWithPhotos = reviewRepository.findByIdWithPhotos(id).orElse(null);
+    if (reviewWithPhotos != null) {
+      review.setPhotos(reviewWithPhotos.getPhotos());
+    }
+
     return reviewMapper.toReviewDetailsResponse(review);
   }
 

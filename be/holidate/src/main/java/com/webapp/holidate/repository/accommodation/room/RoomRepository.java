@@ -33,8 +33,22 @@ public interface RoomRepository extends JpaRepository<Room, String> {
   @Query(RoomQueries.FIND_BY_ID_WITH_DETAILS)
   Optional<Room> findByIdWithDetails(String id);
 
+  // Optimized query for getById - only fetch basic relationships, no collections
+  // Collections (photos, amenities, inventories) will be fetched separately
+  // to avoid cartesian product performance issue
+  @Query(RoomQueries.FIND_BY_ID_WITH_BASIC_DETAILS)
+  Optional<Room> findByIdWithBasicDetails(String id);
+
   @Query(RoomQueries.FIND_ALL_BY_IDS_WITH_PHOTOS_AND_AMENITIES)
   List<Room> findAllByIdsWithPhotosAndAmenities(List<String> roomIds);
+
+  // Query to fetch room with inventories separately for batch loading
+  @Query(RoomQueries.FIND_BY_ID_WITH_INVENTORIES)
+  Optional<Room> findByIdWithInventories(String id);
+
+  // Query to fetch rooms with inventories for batch loading after pagination
+  @Query(RoomQueries.FIND_ALL_BY_IDS_WITH_INVENTORIES)
+  List<Room> findAllByIdsWithInventories(List<String> roomIds);
 
   @Query(RoomQueries.FIND_AVAILABLE_ROOM_CANDIDATES)
   List<RoomCandidate> findAvailableRoomCandidates(

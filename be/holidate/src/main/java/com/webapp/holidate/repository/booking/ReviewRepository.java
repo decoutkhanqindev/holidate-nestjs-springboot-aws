@@ -26,8 +26,17 @@ public interface ReviewRepository extends JpaRepository<Review, String> {
   @Query(ReviewQueries.FIND_BY_ID_WITH_DETAILS)
   Optional<Review> findByIdWithDetails(String id);
 
+  // Optimized query for getById - only fetch basic relationships, no collections
+  // Collections (photos) will be fetched separately to avoid cartesian product performance issue
+  @Query(ReviewQueries.FIND_BY_ID_WITH_BASIC_DETAILS)
+  Optional<Review> findByIdWithBasicDetails(String id);
+
   @Query(ReviewQueries.FIND_ALL_BY_IDS_WITH_PHOTOS)
   List<Review> findAllByIdsWithPhotos(List<String> reviewIds);
+
+  // Query to fetch review with photos separately for getById
+  @Query(ReviewQueries.FIND_BY_ID_WITH_PHOTOS)
+  Optional<Review> findByIdWithPhotos(String id);
 
   // Get score distribution
   @Query(value = ReportQueries.GET_SCORE_DISTRIBUTION, nativeQuery = true)

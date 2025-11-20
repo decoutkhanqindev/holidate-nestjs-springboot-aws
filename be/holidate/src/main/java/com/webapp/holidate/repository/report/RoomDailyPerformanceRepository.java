@@ -28,4 +28,25 @@ public interface RoomDailyPerformanceRepository extends JpaRepository<RoomDailyP
       double revenue,
       int bookedRoomNights,
       LocalDateTime updatedAt);
+
+  // Get popular room types by view
+  @Query(value = ReportQueries.GET_POPULAR_ROOM_TYPES_BY_VIEW, nativeQuery = true)
+  List<Object[]> getPopularRoomTypesByView(
+      LocalDate fromDate,
+      LocalDate toDate,
+      int limit);
+
+  // Get popular room types by bed type
+  @Query(value = ReportQueries.GET_POPULAR_ROOM_TYPES_BY_BED_TYPE, nativeQuery = true)
+  List<Object[]> getPopularRoomTypesByBedType(
+      LocalDate fromDate,
+      LocalDate toDate,
+      int limit);
+
+  // Get popular room types by occupancy
+  @Query(value = ReportQueries.GET_POPULAR_ROOM_TYPES_BY_OCCUPANCY, nativeQuery = true)
+  List<Object[]> getPopularRoomTypesByOccupancy(
+      LocalDate fromDate,
+      LocalDate toDate,
+      int limit);
 }

@@ -23,7 +23,8 @@ Base URL: `http://localhost:8080`
 17. [Documents](#documents)
 18. [Special Days](#special-days)
 19. [Partner Reports](#partner-reports)
-20. [Status Types Reference](#status-types-reference)
+20. [Admin Reports](#admin-reports)
+21. [Status Types Reference](#status-types-reference)
 
 ---
 
@@ -2012,13 +2013,277 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 All partner report endpoints support period comparison. When `compare-from` and `compare-to` parameters are provided, the response will include comparison data showing differences and percentage changes between the current period and the comparison period.
 
+---
+
+## Admin Reports
+
+All admin report endpoints support period comparison. When `compare-from` and `compare-to` parameters are provided, the response will include comparison data showing differences and percentage changes between the current period and the comparison period.
+
+**Role Required**: ADMIN
+
+### 1. Revenue Report
+
+**GET** `/admin/reports/revenue`
+
+- **Role Required**: ADMIN
+- **Query Parameters**:
+  - `from`: date (required, ISO format: YYYY-MM-DD)
+  - `to`: date (required, ISO format: YYYY-MM-DD)
+  - `group-by`: string (optional, enum: `day`, `week`, `month`, default: `day`)
+  - `filter-by`: string (optional, enum: `hotel`, `city`, `province`)
+  - `page`: integer (optional, default: 0)
+  - `size`: integer (optional, default: 10)
+  - `compare-from`: date (optional, ISO format: YYYY-MM-DD)
+  - `compare-to`: date (optional, ISO format: YYYY-MM-DD)
+- **Response** (without comparison):
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "data": [
+      {
+        "period": "date",
+        "revenue": "number"
+      }
+    ],
+    "summary": {
+      "totalRevenue": "number"
+    },
+    "breakdown": [
+      {
+        "id": "string",
+        "name": "string",
+        "revenue": "number"
+      }
+    ]
+  }
+}
+```
+
+- **Response** (with comparison): Similar structure with `currentPeriod`, `previousPeriod`, and `comparison` objects.
+
+### 2. Hotel Performance Report
+
+**GET** `/admin/reports/hotel-performance`
+
+- **Role Required**: ADMIN
+- **Query Parameters**:
+  - `from`: date (required, ISO format: YYYY-MM-DD)
+  - `to`: date (required, ISO format: YYYY-MM-DD)
+  - `sort-by`: string (optional, enum: `revenue`, `occupancy`, `bookings`, `cancellationRate`, default: `revenue`)
+  - `sort-dir`: string (optional, enum: `asc`, `desc`, default: `desc`)
+  - `city-id`: string (optional, UUID format)
+  - `province-id`: string (optional, UUID format)
+  - `page`: integer (optional, default: 0)
+  - `size`: integer (optional, default: 20)
+  - `compare-from`: date (optional, ISO format: YYYY-MM-DD)
+  - `compare-to`: date (optional, ISO format: YYYY-MM-DD)
+- **Response** (without comparison):
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "data": [
+      {
+        "hotelId": "string",
+        "hotelName": "string",
+        "totalRevenue": "number",
+        "totalCompletedBookings": "integer",
+        "totalCreatedBookings": "integer",
+        "totalCancelledBookings": "integer",
+        "averageOccupancyRate": "number",
+        "cancellationRate": "number"
+      }
+    ],
+    "page": "integer",
+    "size": "integer",
+    "totalItems": "long",
+    "totalPages": "integer",
+    "first": boolean,
+    "last": boolean,
+    "hasNext": boolean,
+    "hasPrevious": boolean
+  }
+}
+```
+
+- **Response** (with comparison): Includes `currentPeriod`, `previousPeriod`, and `comparison` array with detailed comparison metrics including rank changes for each hotel.
+
+### 3. Users Summary Report
+
+**GET** `/admin/reports/users/summary`
+
+- **Role Required**: ADMIN
+- **Query Parameters**:
+  - `from`: date (required, ISO format: YYYY-MM-DD)
+  - `to`: date (required, ISO format: YYYY-MM-DD)
+  - `compare-from`: date (optional, ISO format: YYYY-MM-DD)
+  - `compare-to`: date (optional, ISO format: YYYY-MM-DD)
+- **Response** (without comparison):
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "growth": {
+      "newCustomers": "integer",
+      "newPartners": "integer"
+    },
+    "platformTotals": {
+      "totalCustomers": "integer",
+      "totalPartners": "integer"
+    }
+  }
+}
+```
+
+- **Response** (with comparison): Similar structure with `currentPeriod`, `previousPeriod`, and `comparison` objects containing differences and percentage changes.
+
+### 4. Seasonality Report
+
+**GET** `/admin/reports/trends/seasonality`
+
+- **Role Required**: ADMIN
+- **Query Parameters**:
+  - `from`: date (required, ISO format: YYYY-MM-DD)
+  - `to`: date (required, ISO format: YYYY-MM-DD)
+  - `metric`: string (optional, enum: `revenue`, `bookings`, default: `bookings`)
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "data": [
+      {
+        "month": "date",
+        "totalRevenue": "number",
+        "totalBookings": "integer"
+      }
+    ]
+  }
+}
+```
+
+### 5. Popular Locations Report
+
+**GET** `/admin/reports/trends/popular-locations`
+
+- **Role Required**: ADMIN
+- **Query Parameters**:
+  - `from`: date (required, ISO format: YYYY-MM-DD)
+  - `to`: date (required, ISO format: YYYY-MM-DD)
+  - `level`: string (optional, enum: `city`, `province`, default: `city`)
+  - `metric`: string (optional, enum: `revenue`, `bookings`, default: `revenue`)
+  - `limit`: integer (optional, default: 10, max: 100)
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "data": [
+      {
+        "locationId": "string",
+        "locationName": "string",
+        "totalRevenue": "number",
+        "totalBookings": "integer"
+      }
+    ]
+  }
+}
+```
+
+### 6. Popular Room Types Report
+
+**GET** `/admin/reports/trends/popular-room-types`
+
+- **Role Required**: ADMIN
+- **Query Parameters**:
+  - `from`: date (required, ISO format: YYYY-MM-DD)
+  - `to`: date (required, ISO format: YYYY-MM-DD)
+  - `group-by`: string (optional, enum: `view`, `bedType`, `occupancy`, default: `occupancy`)
+  - `limit`: integer (optional, default: 10, max: 100)
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "data": [
+      {
+        "roomCategory": "string",
+        "totalBookedNights": "integer"
+      }
+    ]
+  }
+}
+```
+
+### 7. Financials Report
+
+**GET** `/admin/reports/financials`
+
+- **Role Required**: ADMIN
+- **Query Parameters**:
+  - `from`: date (required, ISO format: YYYY-MM-DD)
+  - `to`: date (required, ISO format: YYYY-MM-DD)
+  - `group-by`: string (optional, enum: `day`, `week`, `month`, default: `day`)
+  - `compare-from`: date (optional, ISO format: YYYY-MM-DD)
+  - `compare-to`: date (optional, ISO format: YYYY-MM-DD)
+- **Response** (without comparison):
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "data": [
+      {
+        "period": "date",
+        "grossRevenue": "number",
+        "netRevenue": "number",
+        "partnerPayout": "number",
+        "grossMargin": "number"
+      }
+    ],
+    "summary": {
+      "totalGrossRevenue": "number",
+      "totalNetRevenue": "number",
+      "totalPartnerPayout": "number",
+      "averageGrossMargin": "number"
+    }
+  }
+}
+```
+
+- **Response** (with comparison): Similar structure with `currentPeriod`, `previousPeriod`, and `comparison` objects containing differences and percentage changes for all financial metrics.
+
+### Notes on Admin Reports
+
+- **Period Comparison**: Revenue, Hotel Performance, Users Summary, and Financials reports support optional period comparison. When both `compare-from` and `compare-to` are provided, the response includes comparison data. If only one is provided, it is ignored and the endpoint returns normal response.
+- **Data Source**: Reports use pre-aggregated data from `SystemDailyReport`, `HotelDailyReport`, and `RoomDailyPerformance` tables for optimal performance. Data is typically up-to-date until the end of the previous day.
+- **Date Range Validation**: `from` must be less than or equal to `to`. Similarly, `compare-from` must be less than or equal to `compare-to` when provided.
+- **Pagination**: Hotel Performance report supports pagination. Other reports may return all data or use in-memory pagination for breakdown items.
+- **Empty Data**: If no data exists for the requested period, endpoints return `200 OK` with zero values or empty arrays, not `404 Not Found`.
+- **Currency Rounding**: All financial values are rounded to 2 decimal places.
+- **Rank Change**: Hotel Performance comparison includes rank change tracking, showing how hotel rankings changed between periods.
+
 ### 1. Revenue Report
 
 **GET** `/partner/reports/revenue`
 
 - **Role Required**: PARTNER
 - **Query Parameters**:
-  - `hotelId`: string (required, UUID format)
+  - `hotel-id`: string (required, UUID format)
   - `from`: date (required, ISO format: YYYY-MM-DD)
   - `to`: date (required, ISO format: YYYY-MM-DD)
   - `group-by`: string (optional, enum: `day`, `week`, `month`, default: `day`)
@@ -2077,7 +2342,7 @@ All partner report endpoints support period comparison. When `compare-from` and 
 
 - **Role Required**: PARTNER
 - **Query Parameters**:
-  - `hotelId`: string (required, UUID format)
+  - `hotel-id`: string (required, UUID format)
   - `from`: date (required, ISO format: YYYY-MM-DD)
   - `to`: date (required, ISO format: YYYY-MM-DD)
   - `compare-from`: date (optional, ISO format: YYYY-MM-DD)
@@ -2109,7 +2374,7 @@ All partner report endpoints support period comparison. When `compare-from` and 
 
 - **Role Required**: PARTNER
 - **Query Parameters**:
-  - `hotelId`: string (required, UUID format)
+  - `hotel-id`: string (required, UUID format)
   - `from`: date (required, ISO format: YYYY-MM-DD)
   - `to`: date (required, ISO format: YYYY-MM-DD)
   - `compare-from`: date (optional, ISO format: YYYY-MM-DD)
@@ -2144,7 +2409,7 @@ All partner report endpoints support period comparison. When `compare-from` and 
 
 - **Role Required**: PARTNER
 - **Query Parameters**:
-  - `hotelId`: string (required, UUID format)
+  - `hotel-id`: string (required, UUID format)
   - `from`: date (required, ISO format: YYYY-MM-DD)
   - `to`: date (required, ISO format: YYYY-MM-DD)
   - `sort-by`: string (optional, enum: `revenue`, `bookedRoomNights`, default: `revenue`)
@@ -2179,7 +2444,7 @@ All partner report endpoints support period comparison. When `compare-from` and 
 
 - **Role Required**: PARTNER
 - **Query Parameters**:
-  - `hotelId`: string (required, UUID format)
+  - `hotel-id`: string (required, UUID format)
   - `from`: date (required, ISO format: YYYY-MM-DD)
   - `to`: date (required, ISO format: YYYY-MM-DD)
   - `compare-from`: date (optional, ISO format: YYYY-MM-DD)
@@ -2208,7 +2473,7 @@ All partner report endpoints support period comparison. When `compare-from` and 
 
 - **Role Required**: PARTNER
 - **Query Parameters**:
-  - `hotelId`: string (required, UUID format)
+  - `hotel-id`: string (required, UUID format)
   - `from`: date (required, ISO format: YYYY-MM-DD)
   - `to`: date (required, ISO format: YYYY-MM-DD)
   - `compare-from`: date (optional, ISO format: YYYY-MM-DD)

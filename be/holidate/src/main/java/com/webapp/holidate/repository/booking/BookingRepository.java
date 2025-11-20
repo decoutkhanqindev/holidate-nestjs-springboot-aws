@@ -28,6 +28,11 @@ public interface BookingRepository extends JpaRepository<Booking, String> {
   @Query(BookingQueries.FIND_BY_ID_WITH_ALL_RELATIONS)
   Optional<Booking> findByIdWithAllRelations(String id);
 
+  // Optimized query for getById - only fetch basic relationships, no collections
+  // Room inventories are not needed as pricesByDateRange is fetched separately via service
+  @Query(BookingQueries.FIND_BY_ID_WITH_BASIC_RELATIONS)
+  Optional<Booking> findByIdWithBasicRelations(String id);
+
   // Find booking by ID with room relation loaded
   @Query(BookingQueries.FIND_BY_ID_WITH_ROOM)
   Optional<Booking> findByIdWithRoom(String id);

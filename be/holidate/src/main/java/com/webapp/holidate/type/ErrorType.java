@@ -53,7 +53,11 @@ public enum ErrorType {
   DATE_UTC_INVALID(400, "Date must be in UTC format"),
   INVALID_DATE_RANGE(400, "From date must be less than or equal to to date"),
   INVALID_GROUP_BY(400, "Group by must be one of: day, week, month"),
-  INVALID_SORT_BY(400, "Sort by must be one of: revenue, bookedRoomNights"),
+  INVALID_GROUP_BY_ROOM_TYPE(400, "Group by must be one of: view, bedType, occupancy"),
+  INVALID_FILTER_BY(400, "Filter by must be one of: hotel, city, province"),
+  INVALID_METRIC(400, "Metric must be one of: revenue, bookings"),
+  INVALID_LEVEL(400, "Level must be one of: city, province"),
+  INVALID_SORT_BY(400, "Sort by must be one of: revenue, occupancy, bookings, cancellationRate"),
   INVALID_SORT_ORDER(400, "Sort order must be one of: asc, desc"),
 
   // role errors

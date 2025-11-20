@@ -351,6 +351,28 @@ public class SecurityConfig {
                                 // Note: GET policy endpoints are already defined in PARTNER section above
                                 // 9. document endpoints (admin can also view identification documents)
                                 // Note: GET document endpoints are already defined in PARTNER section above
+                                // 10. admin report endpoints
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.ADMIN_REPORTS + ReportEndpoints.REVENUE)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.ADMIN_REPORTS + ReportEndpoints.HOTEL_PERFORMANCE)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.ADMIN_REPORTS + ReportEndpoints.USERS_SUMMARY)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.ADMIN_REPORTS + ReportEndpoints.TRENDS + ReportEndpoints.SEASONALITY)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.ADMIN_REPORTS + ReportEndpoints.TRENDS + ReportEndpoints.POPULAR_LOCATIONS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.ADMIN_REPORTS + ReportEndpoints.TRENDS + ReportEndpoints.POPULAR_ROOM_TYPES)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.ADMIN_REPORTS + ReportEndpoints.FINANCIALS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
 
                                 // C. any other endpoints
                                 .anyRequest().authenticated());

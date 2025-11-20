@@ -5,12 +5,6 @@ import com.webapp.holidate.constants.api.param.HotelParams;
 import com.webapp.holidate.constants.api.param.ReportParams;
 import com.webapp.holidate.constants.api.param.SortingParams;
 import com.webapp.holidate.dto.response.ApiResponse;
-import com.webapp.holidate.dto.response.report.partner.BookingsSummaryResponse;
-import com.webapp.holidate.dto.response.report.partner.CustomerSummaryResponse;
-import com.webapp.holidate.dto.response.report.partner.OccupancyReportResponse;
-import com.webapp.holidate.dto.response.report.partner.RevenueReportResponse;
-import com.webapp.holidate.dto.response.report.partner.ReviewSummaryResponse;
-import com.webapp.holidate.dto.response.report.partner.RoomPerformanceResponse;
 import com.webapp.holidate.service.report.PartnerReportService;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
@@ -29,47 +23,59 @@ public class PartnerReportController {
   PartnerReportService partnerReportService;
 
   @GetMapping(ReportEndpoints.REVENUE)
-  public ApiResponse<Object> getRevenueReport(
+  public ApiResponse<?> getRevenueReport(
       @RequestParam(name = HotelParams.HOTEL_ID) @NotBlank String hotelId,
       @RequestParam(name = ReportParams.FROM) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
       @RequestParam(name = ReportParams.TO) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
       @RequestParam(name = ReportParams.GROUP_BY, required = false, defaultValue = "day") String groupBy,
       @RequestParam(name = ReportParams.COMPARE_FROM, required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate compareFrom,
       @RequestParam(name = ReportParams.COMPARE_TO, required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate compareTo) {
-    Object response = partnerReportService.getRevenueReport(hotelId, from, to, groupBy, compareFrom, compareTo);
-    return ApiResponse.<Object>builder()
-        .data(response)
+    if (compareFrom != null && compareTo != null) {
+      return ApiResponse.builder()
+          .data(partnerReportService.getRevenueReportWithComparison(hotelId, from, to, groupBy, compareFrom, compareTo))
+          .build();
+    }
+    return ApiResponse.builder()
+        .data(partnerReportService.getRevenueReport(hotelId, from, to, groupBy))
         .build();
   }
 
   @GetMapping(ReportEndpoints.BOOKINGS_SUMMARY)
-  public ApiResponse<Object> getBookingSummary(
+  public ApiResponse<?> getBookingSummary(
       @RequestParam(name = HotelParams.HOTEL_ID) @NotBlank String hotelId,
       @RequestParam(name = ReportParams.FROM) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
       @RequestParam(name = ReportParams.TO) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
       @RequestParam(name = ReportParams.COMPARE_FROM, required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate compareFrom,
       @RequestParam(name = ReportParams.COMPARE_TO, required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate compareTo) {
-    Object response = partnerReportService.getBookingSummary(hotelId, from, to, compareFrom, compareTo);
-    return ApiResponse.<Object>builder()
-        .data(response)
+    if (compareFrom != null && compareTo != null) {
+      return ApiResponse.builder()
+          .data(partnerReportService.getBookingSummaryWithComparison(hotelId, from, to, compareFrom, compareTo))
+          .build();
+    }
+    return ApiResponse.builder()
+        .data(partnerReportService.getBookingSummary(hotelId, from, to))
         .build();
   }
 
   @GetMapping(ReportEndpoints.OCCUPANCY)
-  public ApiResponse<Object> getOccupancyReport(
+  public ApiResponse<?> getOccupancyReport(
       @RequestParam(name = HotelParams.HOTEL_ID) @NotBlank String hotelId,
       @RequestParam(name = ReportParams.FROM) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
       @RequestParam(name = ReportParams.TO) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
       @RequestParam(name = ReportParams.COMPARE_FROM, required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate compareFrom,
       @RequestParam(name = ReportParams.COMPARE_TO, required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate compareTo) {
-    Object response = partnerReportService.getOccupancyReport(hotelId, from, to, compareFrom, compareTo);
-    return ApiResponse.<Object>builder()
-        .data(response)
+    if (compareFrom != null && compareTo != null) {
+      return ApiResponse.builder()
+          .data(partnerReportService.getOccupancyReportWithComparison(hotelId, from, to, compareFrom, compareTo))
+          .build();
+    }
+    return ApiResponse.builder()
+        .data(partnerReportService.getOccupancyReport(hotelId, from, to))
         .build();
   }
 
   @GetMapping(ReportEndpoints.ROOMS_PERFORMANCE)
-  public ApiResponse<Object> getRoomPerformance(
+  public ApiResponse<?> getRoomPerformance(
       @RequestParam(name = HotelParams.HOTEL_ID) @NotBlank String hotelId,
       @RequestParam(name = ReportParams.FROM) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
       @RequestParam(name = ReportParams.TO) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
@@ -77,36 +83,48 @@ public class PartnerReportController {
       @RequestParam(name = SortingParams.SORT_DIR, required = false, defaultValue = SortingParams.SORT_DIR_DESC) String sortOrder,
       @RequestParam(name = ReportParams.COMPARE_FROM, required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate compareFrom,
       @RequestParam(name = ReportParams.COMPARE_TO, required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate compareTo) {
-    Object response = partnerReportService.getRoomPerformance(hotelId, from, to, sortBy, sortOrder, compareFrom,
-        compareTo);
-    return ApiResponse.<Object>builder()
-        .data(response)
+    if (compareFrom != null && compareTo != null) {
+      return ApiResponse.builder()
+          .data(partnerReportService.getRoomPerformanceWithComparison(hotelId, from, to, sortBy, sortOrder, compareFrom,
+              compareTo))
+          .build();
+    }
+    return ApiResponse.builder()
+        .data(partnerReportService.getRoomPerformance(hotelId, from, to, sortBy, sortOrder))
         .build();
   }
 
   @GetMapping(ReportEndpoints.CUSTOMERS_SUMMARY)
-  public ApiResponse<Object> getCustomerSummary(
+  public ApiResponse<?> getCustomerSummary(
       @RequestParam(name = HotelParams.HOTEL_ID) @NotBlank String hotelId,
       @RequestParam(name = ReportParams.FROM) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
       @RequestParam(name = ReportParams.TO) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
       @RequestParam(name = ReportParams.COMPARE_FROM, required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate compareFrom,
       @RequestParam(name = ReportParams.COMPARE_TO, required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate compareTo) {
-    Object response = partnerReportService.getCustomerSummary(hotelId, from, to, compareFrom, compareTo);
-    return ApiResponse.<Object>builder()
-        .data(response)
+    if (compareFrom != null && compareTo != null) {
+      return ApiResponse.builder()
+          .data(partnerReportService.getCustomerSummaryWithComparison(hotelId, from, to, compareFrom, compareTo))
+          .build();
+    }
+    return ApiResponse.builder()
+        .data(partnerReportService.getCustomerSummary(hotelId, from, to))
         .build();
   }
 
   @GetMapping(ReportEndpoints.REVIEWS_SUMMARY)
-  public ApiResponse<Object> getReviewSummary(
+  public ApiResponse<?> getReviewSummary(
       @RequestParam(name = HotelParams.HOTEL_ID) @NotBlank String hotelId,
       @RequestParam(name = ReportParams.FROM) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
       @RequestParam(name = ReportParams.TO) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
       @RequestParam(name = ReportParams.COMPARE_FROM, required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate compareFrom,
       @RequestParam(name = ReportParams.COMPARE_TO, required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate compareTo) {
-    Object response = partnerReportService.getReviewSummary(hotelId, from, to, compareFrom, compareTo);
-    return ApiResponse.<Object>builder()
-        .data(response)
+    if (compareFrom != null && compareTo != null) {
+      return ApiResponse.builder()
+          .data(partnerReportService.getReviewSummaryWithComparison(hotelId, from, to, compareFrom, compareTo))
+          .build();
+    }
+    return ApiResponse.builder()
+        .data(partnerReportService.getReviewSummary(hotelId, from, to))
         .build();
   }
 }
