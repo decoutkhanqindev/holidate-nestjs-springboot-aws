@@ -28,7 +28,34 @@ export default function ClientLoginPage() {
         }
     };
 
+    /**
+     * ============================================
+     * HÀM LOGIN BẰNG GOOGLE OAUTH
+     * ============================================
+     * Hàm này xử lý đăng nhập bằng Google OAuth2.
+     * 
+     * Flow:
+     * 1. Redirect user đến backend OAuth2 endpoint: /oauth2/authorization/google
+     * 2. Backend xử lý OAuth flow với Google
+     * 3. Backend (CustomOAuth2AuthenticationSuccessHandler) tạo JWT token và lưu vào cookie (JSESSIONID)
+     * 4. Backend redirect về frontend (thường là trang chủ)
+     * 5. Frontend (AuthContext.tsx) tự động phát hiện cookie và gọi getMyProfile() để lấy token
+     * 6. Token được lưu vào localStorage từ cookie
+     * 7. apiClient.tsx tự động thêm Authorization header từ localStorage cho các request sau
+     * 
+     * Lưu ý: Sau khi redirect về, AuthContext sẽ tự động kiểm tra cookie và sync token vào localStorage
+     */
     const handleGoogleLogin = () => {
+        // QUAN TRỌNG: Set flag để đánh dấu đang login bằng OAuth
+        // Flag này sẽ được AuthContext sử dụng để force check cookie và sync token
+        sessionStorage.setItem('oauthLoginInProgress', 'true');
+        
+        // QUAN TRỌNG: Xóa các flag có thể block OAuth check sau khi redirect về
+        // Đảm bảo AuthContext có thể tự động kiểm tra cookie và lưu token vào localStorage
+        sessionStorage.removeItem('skipOAuthCheck');
+        sessionStorage.removeItem('justLoggedOut');
+        sessionStorage.removeItem('lastLogoutTime');
+        
         // Redirect đến OAuth2 endpoint của backend
         window.location.href = 'http://localhost:8080/oauth2/authorization/google';
     };

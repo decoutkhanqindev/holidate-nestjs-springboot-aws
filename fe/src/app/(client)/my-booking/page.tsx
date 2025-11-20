@@ -6,6 +6,7 @@ import { Suspense, useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { bookingService, BookingResponse, PagedResponse } from '@/service/bookingService';
+import { hotelService, HotelPolicy } from '@/service/hotelService';
 // Không cần import CreateReviewForm và reviewService nữa vì sẽ xử lý ở trang detail
 import styles from './MyBookings.module.css';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -92,6 +93,36 @@ function RescheduleModal({ booking, onClose, onRescheduleSuccess }: { booking: B
     );
 }
 
+// Hàm helper để kiểm tra xem khách sạn có cho phép đổi lịch không
+// Dựa vào reschedulePolicy.name hoặc description
+const isRescheduleAllowed = (policy: HotelPolicy | null | undefined): boolean => {
+    if (!policy || !policy.reschedulePolicy) {
+        // Nếu không có policy, mặc định cho phép (để backend xử lý)
+        return true;
+    }
+
+    const reschedulePolicy = policy.reschedulePolicy;
+    const policyName = reschedulePolicy.name?.toLowerCase() || '';
+    const policyDescription = reschedulePolicy.description?.toLowerCase() || '';
+
+    // Kiểm tra nếu policy name hoặc description chứa từ khóa "không được đổi", "không cho phép đổi", v.v.
+    const blockedKeywords = [
+        'không được đổi',
+        'không cho phép đổi',
+        'không được thay đổi',
+        'không cho phép thay đổi',
+        'không đổi',
+        'không thay đổi'
+    ];
+
+    // Nếu policy name hoặc description chứa từ khóa chặn, thì không cho phép đổi
+    const isBlocked = blockedKeywords.some(keyword =>
+        policyName.includes(keyword) || policyDescription.includes(keyword)
+    );
+
+    return !isBlocked;
+};
+
 function MyBookingsComponent() {
     const { user, isLoggedIn, isLoading: isAuthLoading } = useAuth();
     const router = useRouter();
@@ -104,6 +135,9 @@ function MyBookingsComponent() {
 
     const [expandedBookingId, setExpandedBookingId] = useState<string | null>(null);
 
+    // Cache để lưu hotel policies (tránh fetch nhiều lần cho cùng một hotel)
+    const [hotelPoliciesCache, setHotelPoliciesCache] = useState<Record<string, HotelPolicy | null>>({});
+
     const fetchBookings = useCallback(async () => {
         if (!user?.id) return;
         setIsLoading(true);
@@ -113,14 +147,53 @@ function MyBookingsComponent() {
                 'user-id': user.id, 'page': 0, 'size': 20, 'sort-by': 'created-at', 'sort-dir': 'desc',
             });
             setBookingsData(data);
-
-            // Không cần fetch reviews ở đây nữa vì sẽ chuyển đến trang detail để đánh giá
         } catch (err: any) {
             setError(err.message);
         } finally {
             setIsLoading(false);
         }
     }, [user?.id]);
+
+    // Fetch hotel policies sau khi bookings đã được load
+    useEffect(() => {
+        if (!bookingsData || !bookingsData.content.length) return;
+
+        const fetchHotelPolicies = async () => {
+            const hotelIds = [...new Set(bookingsData.content.map(booking => booking.hotel.id))];
+
+            // Chỉ fetch cho các hotel chưa có trong cache
+            setHotelPoliciesCache(currentCache => {
+                const hotelsToFetch = hotelIds.filter(hotelId => !currentCache[hotelId]);
+
+                if (hotelsToFetch.length > 0) {
+                    // Fetch policies cho các hotel chưa có trong cache
+                    const policyPromises = hotelsToFetch.map(async (hotelId) => {
+                        try {
+                            const hotel = await hotelService.getHotelById(hotelId);
+                            return { hotelId, policy: hotel.policy || null };
+                        } catch (error) {
+                            console.error(`[MyBookings] Lỗi khi fetch policy cho hotel ${hotelId}:`, error);
+                            return { hotelId, policy: null };
+                        }
+                    });
+
+                    Promise.all(policyPromises).then(policyResults => {
+                        setHotelPoliciesCache(prevCache => {
+                            const newCache: Record<string, HotelPolicy | null> = { ...prevCache };
+                            policyResults.forEach(({ hotelId, policy }) => {
+                                newCache[hotelId] = policy;
+                            });
+                            return newCache;
+                        });
+                    });
+                }
+
+                return currentCache; // Return current cache immediately
+            });
+        };
+
+        fetchHotelPolicies();
+    }, [bookingsData]);
 
     useEffect(() => {
         if (!isAuthLoading) {
@@ -245,7 +318,10 @@ function MyBookingsComponent() {
                             <button onClick={() => router.push(`/payment/success?bookingId=${booking.id}`)} className={styles.actionButton}>Xem chi tiết</button>
                             {(booking.status.toLowerCase() === 'confirmed' || booking.status.toLowerCase() === 'rescheduled') &&
                                 <>
-                                    <button onClick={() => handleOpenRescheduleModal(booking)} className={`${styles.actionButton} ${styles.reschedule}`}>Đổi lịch</button>
+                                    {/* Chỉ hiển thị nút "Đổi lịch" nếu khách sạn cho phép đổi lịch */}
+                                    {isRescheduleAllowed(hotelPoliciesCache[booking.hotel.id]) && (
+                                        <button onClick={() => handleOpenRescheduleModal(booking)} className={`${styles.actionButton} ${styles.reschedule}`}>Đổi lịch</button>
+                                    )}
                                     <button onClick={() => handleCancelBooking(booking.id)} className={`${styles.actionButton} ${styles.cancel}`}>Hủy phòng</button>
                                 </>
                             }

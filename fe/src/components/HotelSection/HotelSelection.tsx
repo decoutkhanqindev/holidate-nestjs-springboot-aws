@@ -547,7 +547,7 @@ export default function HotelSelection() {
                                                 {hotel.rawPricePerNight > hotel.currentPricePerNight && (<span className="badge bg-success position-absolute top-0 end-0 m-2">-{Math.round((1 - hotel.currentPricePerNight / hotel.rawPricePerNight) * 100)}%</span>)}
                                             </div>
                                             <div className="card-body d-flex flex-column">
-                                                <h5 className="card-title fw-bold text-truncate">{hotel.name}</h5>
+                                                <h5 className="card-title fw-bold line-clamp-2 break-words" style={{ minHeight: '3rem' }}>{hotel.name}</h5>
                                                 <p className="card-text text-primary small fw-bold">⭐ {formatRating(hotel.averageScore)}</p>
                                                 <p className="card-text text-muted small " title={getFullAddress(hotel)}>📍 {getFullAddress(hotel)}</p>
                                                 <div className="mt-auto pt-2">
