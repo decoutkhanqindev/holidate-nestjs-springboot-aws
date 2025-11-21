@@ -1,6 +1,7 @@
 // service/reviewService.ts
 import apiClient, { ApiResponse } from './apiClient';
 import type { Review } from '@/types';
+import { getPhotoCategories } from '@/lib/AdminAPI/photoCategoryService';
 
 // Interface từ API response
 interface ReviewResponse {
@@ -140,15 +141,34 @@ export async function getReviews(params: GetReviewsParams = {}): Promise<Paginat
     try {
         const queryParams: Record<string, string | number> = {};
         
-        if (params.hotelId) queryParams.hotelId = params.hotelId;
-        if (params.userId) queryParams.userId = params.userId;
-        if (params.bookingId) queryParams.bookingId = params.bookingId;
+        // Đảm bảo hotelId không được null, undefined, hoặc empty string
+        // Nếu hotelId không hợp lệ, không thêm vào query (backend sẽ trả về tất cả reviews - không mong muốn)
+        if (params.hotelId && params.hotelId.trim() !== '') {
+            queryParams.hotelId = params.hotelId.trim();
+        } else if (params.hotelId === '') {
+            // Nếu hotelId là empty string, log warning và không fetch
+            console.warn('[reviewService] hotelId is empty string, this will return all reviews. Skipping fetch.');
+            return {
+                data: [],
+                totalPages: 0,
+                currentPage: 0,
+                totalItems: 0,
+                hasNext: false,
+                hasPrevious: false,
+            };
+        }
+        
+        if (params.userId && params.userId.trim() !== '') queryParams.userId = params.userId.trim();
+        if (params.bookingId && params.bookingId.trim() !== '') queryParams.bookingId = params.bookingId.trim();
         if (params.minScore !== undefined) queryParams.minScore = params.minScore;
         if (params.maxScore !== undefined) queryParams.maxScore = params.maxScore;
         if (params.page !== undefined) queryParams.page = params.page;
         if (params.size !== undefined) queryParams.size = params.size;
         if (params.sortBy) queryParams.sortBy = params.sortBy;
         if (params.sortDir) queryParams.sortDir = params.sortDir;
+
+        // Log query params để debug
+        console.log('[reviewService] Fetching reviews with params:', queryParams);
 
         const response = await apiClient.get<ApiResponse<PaginatedReviewResponse>>('/reviews', {
             params: queryParams
@@ -218,10 +238,47 @@ export async function createReview(payload: CreateReviewPayload): Promise<Review
             formData.append('comment', payload.comment);
         }
         
+        // Xử lý photos với đúng format: photos[0].categoryId và photos[0].files[0], photos[0].files[1], etc.
         if (payload.photos && payload.photos.length > 0) {
-            payload.photos.forEach((photo) => {
-                formData.append('photos', photo);
+            // Fetch photo categories để lấy categoryId
+            let photoCategoryId: string | null = null;
+            try {
+                const categories = await getPhotoCategories();
+                
+                // Tìm category "Review" hoặc "Đánh giá"
+                const reviewCategory = categories.find(cat => 
+                    cat.name.toLowerCase().includes('review') || 
+                    cat.name.toLowerCase().includes('đánh giá')
+                );
+                
+                if (reviewCategory) {
+                    photoCategoryId = reviewCategory.id;
+                    console.log(`[reviewService] Found photo category "Review": ${photoCategoryId}`);
+                } else if (categories.length > 0) {
+                    // Nếu không tìm thấy, dùng category đầu tiên
+                    photoCategoryId = categories[0].id;
+                    console.log(`[reviewService] Using first photo category: ${photoCategoryId}`);
+                } else {
+                    console.warn('[reviewService] No photo categories found - backend may reject with validation error');
+                }
+            } catch (err) {
+                console.error('[reviewService] Error fetching photo categories:', err);
+                console.warn('[reviewService] Will proceed without photoCategoryId - backend may reject with validation error');
+            }
+            
+            // Gửi photos với đúng format: photos[0].files[0], photos[0].files[1], etc.
+            payload.photos.forEach((photo, index) => {
+                formData.append(`photos[0].files[${index}]`, photo);
             });
+            
+            // Thêm categoryId (bắt buộc theo backend validation)
+            if (photoCategoryId) {
+                formData.append('photos[0].categoryId', photoCategoryId);
+                console.log(`[reviewService] Using photo category ID: ${photoCategoryId}`);
+            } else {
+                console.error('[reviewService] WARNING: No photoCategoryId - backend will reject with validation error');
+                throw new Error('Không thể tìm thấy danh mục ảnh. Vui lòng thử lại sau.');
+            }
         }
 
         const response = await apiClient.post<ApiResponse<ReviewResponse>>('/reviews', formData, {
