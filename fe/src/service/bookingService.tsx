@@ -52,11 +52,52 @@ class BookingService {
 
     async createBooking(payload: CreateBookingPayload): Promise<CreateBookingResponse> {
         try {
+            // Log để debug
+            console.log('[BookingService] Gửi request tạo booking:', {
+                ...payload,
+                contactPhone: payload.contactPhone ? '***' : 'MISSING'
+            });
+
             const response = await this.api.post<ApiResponse<CreateBookingResponse>>('/bookings', payload);
-            if (response.data?.data?.paymentUrl) { return response.data.data; }
+
+            if (response.data?.data?.paymentUrl) {
+                return response.data.data;
+            }
             throw new Error("Phản hồi không hợp lệ.");
         } catch (error: any) {
-            throw new Error(error.response?.data?.message || 'Không thể tạo yêu cầu đặt phòng.');
+            // Log chi tiết lỗi để debug
+            console.error('[BookingService] Lỗi khi tạo booking:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status,
+                payload: {
+                    ...payload,
+                    contactPhone: payload.contactPhone ? '***' : 'MISSING'
+                }
+            });
+
+            // Map error message từ backend sang message dễ hiểu hơn
+            let errorMessage = error.response?.data?.message
+                || error.response?.data?.error
+                || error.message
+                || 'Không thể tạo yêu cầu đặt phòng.';
+
+            // Map các error key từ backend sang message tiếng Việt
+            const errorMessageMap: { [key: string]: string } = {
+                'CONTACT_PHONE_NOT_BLANK': 'Vui lòng nhập số điện thoại liên lạc.',
+                'CONTACT_PHONE_INVALID': 'Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại Việt Nam .',
+                'CONTACT_FULL_NAME_NOT_BLANK': 'Vui lòng nhập họ và tên liên lạc.',
+                'CONTACT_EMAIL_NOT_BLANK': 'Vui lòng nhập email liên lạc.',
+                'CONTACT_EMAIL_INVALID': 'Email không hợp lệ.',
+                'Contact phone is required': 'Vui lòng nhập số điện thoại liên lạc.',
+            };
+
+            // Kiểm tra xem error message có trong map không
+            if (errorMessageMap[errorMessage]) {
+                errorMessage = errorMessageMap[errorMessage];
+            }
+
+            throw new Error(errorMessage);
         }
     }
 
@@ -67,7 +108,30 @@ class BookingService {
             if (response.data && response.data.data) { return response.data.data; }
             throw new Error("Cấu trúc phản hồi không hợp lệ.");
         } catch (error: any) {
-            throw new Error(error.response?.data?.message || 'Không thể xem trước giá phòng.');
+            // Map error message từ backend sang message dễ hiểu hơn
+            let errorMessage = error.response?.data?.message
+                || error.response?.data?.error
+                || error.message
+                || 'Không thể xem trước giá phòng.';
+
+            // Map các error key từ backend sang message tiếng Việt rõ ràng hơn
+            const errorMessageMap: { [key: string]: string } = {
+                'ROOM_NOT_AVAILABLE': 'Phòng không khả dụng cho các ngày đã chọn. Vui lòng thử chọn ngày khác hoặc liên hệ khách sạn để được hỗ trợ.',
+                'Room is not available for the selected dates': 'Phòng không khả dụng cho các ngày đã chọn. Vui lòng thử chọn ngày khác hoặc liên hệ khách sạn để được hỗ trợ.',
+                'INSUFFICIENT_ROOM_QUANTITY': 'Số lượng phòng không đủ cho các ngày đã chọn. Vui lòng chọn số lượng phòng ít hơn hoặc chọn ngày khác.',
+                'CHECK_IN_DATE_INVALID': 'Ngày nhận phòng không hợp lệ. Vui lòng chọn ngày từ hôm nay trở đi.',
+                'CHECK_OUT_DATE_INVALID': 'Ngày trả phòng không hợp lệ. Ngày trả phòng phải sau ngày nhận phòng.',
+            };
+
+            // Kiểm tra xem error message có trong map không
+            if (errorMessageMap[errorMessage]) {
+                errorMessage = errorMessageMap[errorMessage];
+            } else if (errorMessage.includes('not available') || errorMessage.includes('NOT_AVAILABLE')) {
+                // Nếu message chứa "not available" nhưng không có trong map
+                errorMessage = 'Phòng không khả dụng cho các ngày đã chọn. Vui lòng thử chọn ngày khác hoặc liên hệ khách sạn để được hỗ trợ.';
+            }
+
+            throw new Error(errorMessage);
         }
     }
 

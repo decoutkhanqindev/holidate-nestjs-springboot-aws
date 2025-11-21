@@ -32,16 +32,35 @@ apiClient.interceptors.request.use(
             console.log("[apiClient] - URL:", config.url);
             console.log("[apiClient] - withCredentials:", config.withCredentials);
             const token = localStorage.getItem('accessToken');
+            const isOAuthLogin = typeof window !== 'undefined' && sessionStorage.getItem('oauthLoginInProgress') === 'true';
             console.log("[apiClient] - Token trong localStorage:", token ? "CÓ" : "KHÔNG CÓ");
+            console.log("[apiClient] - Đang OAuth login:", isOAuthLogin ? "CÓ" : "KHÔNG");
             console.log("[apiClient] - Lưu ý: /auth/me có thể dùng cookie (OAuth), không cần Authorization header");
+            if (isOAuthLogin) {
+                console.log("[apiClient] ⚠️ ĐANG OAUTH LOGIN - KHÔNG gửi Authorization header, chỉ dùng cookie");
+            }
         }
         
         // Với các endpoint /auth/*, không gắn Authorization header
         // Vì:
         // - /auth/login, /auth/register: không cần token
         // - /auth/me: có thể dùng cookie (OAuth) hoặc Authorization header
+        //   NHƯNG: Nếu đang OAuth login, CHỈ dùng cookie, không gửi Authorization header
         // - /auth/logout: cần token trong body, không cần Authorization header
         if (config.url?.startsWith('/auth/')) {
+            // Kiểm tra xem có đang OAuth login không
+            const isOAuthLogin = typeof window !== 'undefined' && sessionStorage.getItem('oauthLoginInProgress') === 'true';
+            
+            // Với /auth/me, nếu đang OAuth login, KHÔNG gửi Authorization header (chỉ dùng cookie)
+            if (config.url.includes('/auth/me') && isOAuthLogin) {
+                console.log("[apiClient] 🔵 /auth/me: Đang OAuth login, KHÔNG gửi Authorization header (chỉ dùng cookie)");
+                // Xóa Authorization header nếu có
+                if (config.headers['Authorization']) {
+                    delete config.headers['Authorization'];
+                }
+                return config;
+            }
+            
             // Vẫn có thể gắn token nếu có (cho trường hợp email login)
             const token = localStorage.getItem('accessToken');
             if (token && !config.url.includes('/login') && !config.url.includes('/register')) {

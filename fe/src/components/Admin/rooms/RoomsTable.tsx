@@ -3,10 +3,10 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useTransition, useEffect, useState, useCallback } from 'react';
-import { EyeIcon, PencilIcon, TrashIcon, ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, PencilIcon, TrashIcon, ChevronLeftIcon, ChevronRightIcon, XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
 import type { Room } from '@/types';
 import { deleteRoomAction } from '@/lib/actions/roomActions';
-import { getTodayInventoriesForRooms, type RoomInventory } from '@/lib/AdminAPI/roomInventoryService';
+import { getTodayInventoriesForRooms, createRoomInventory, type RoomInventory } from '@/lib/AdminAPI/roomInventoryService';
 
 interface RoomsTableProps {
     rooms: Room[];
@@ -111,6 +111,36 @@ function StatusDropdown({
             const { updateRoom } = await import('@/lib/AdminAPI/roomService');
             await updateRoom(roomId, { status: statusMap[newStatus] || newStatus.toLowerCase() });
 
+            // QUAN TRỌNG: Nếu set status = ACTIVE (AVAILABLE), tự động tạo room inventory cho 90 ngày tới
+            // Điều này đảm bảo room có thể được đặt phòng ngay sau khi kích hoạt
+            if (newStatus === 'AVAILABLE') {
+                try {
+                    const { createRoomInventory } = await import('@/lib/AdminAPI/roomInventoryService');
+                    console.log(`[StatusDropdown] Tự động tạo inventory cho room ${roomId} khi set status = ACTIVE`);
+                    
+                    // Tạo inventory cho 90 ngày (đủ để user đặt phòng)
+                    await createRoomInventory({
+                        roomId: roomId,
+                        days: 90
+                    });
+                    
+                    console.log(`[StatusDropdown] ✅ Đã tạo inventory thành công cho room ${roomId}`);
+                } catch (inventoryError: any) {
+                    // Nếu inventory đã tồn tại (409 conflict), đó là OK - không cần tạo lại
+                    if (inventoryError.response?.status === 409 || inventoryError.message?.includes('already exists')) {
+                        console.log(`[StatusDropdown] Inventory đã tồn tại cho room ${roomId} - OK`);
+                    } else {
+                        // Nếu là lỗi khác, log nhưng không block việc update status
+                        console.warn(`[StatusDropdown] ⚠️ Không thể tự động tạo inventory cho room ${roomId}:`, inventoryError.message);
+                        const { toast } = await import('react-toastify');
+                        toast.warning('Đã cập nhật trạng thái, nhưng không thể tạo inventory. Vui lòng tạo inventory thủ công để phòng có thể được đặt.', {
+                            position: "top-right",
+                            autoClose: 4000,
+                        });
+                    }
+                }
+            }
+
             setStatus(newStatus);
 
             // Hiển thị toast notification
@@ -179,6 +209,9 @@ export default function RoomsTable({ rooms, hotelId, currentPage, totalPages, to
     const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
     const [selectedRoomAmenities, setSelectedRoomAmenities] = useState<Array<{ id: string; name: string }>>([]);
     const [selectedRoomName, setSelectedRoomName] = useState('');
+
+    // State cho create inventory
+    const [creatingInventoryForRoomId, setCreatingInventoryForRoomId] = useState<string | null>(null);
 
     // Fetch inventories cho tất cả rooms khi rooms thay đổi
     useEffect(() => {
@@ -295,6 +328,58 @@ export default function RoomsTable({ rooms, hotelId, currentPage, totalPages, to
         setSelectedRoomAmenities(room.amenities || []);
         setSelectedRoomName(room.name);
         setShowAmenitiesModal(true);
+    };
+
+    // Handle tạo inventory cho room
+    const handleCreateInventory = async (roomId: string, roomName: string) => {
+        if (!confirm(`Bạn có chắc chắn muốn tạo inventory cho phòng "${roomName}"? Inventory sẽ được tạo cho 90 ngày tới (từ hôm nay).`)) {
+            return;
+        }
+
+        setCreatingInventoryForRoomId(roomId);
+        try {
+            await createRoomInventory({
+                roomId: roomId,
+                days: 90 // Tạo inventory cho 90 ngày tới
+            });
+
+            const { toast } = await import('react-toastify');
+            toast.success('Đã tạo inventory thành công cho 90 ngày!', {
+                position: "top-right",
+                autoClose: 3000,
+            });
+
+            // Refresh inventories và rooms
+            if (onRefresh) {
+                onRefresh();
+            } else {
+                window.location.reload();
+            }
+        } catch (error: any) {
+            console.error('[RoomsTable] Error creating inventory:', error);
+            const { toast } = await import('react-toastify');
+            
+            let errorMessage = 'Không thể tạo inventory.';
+            if (error.message?.includes('already exists') || error.response?.status === 409) {
+                errorMessage = 'Inventory đã tồn tại cho một số ngày. Hệ thống sẽ tạo thêm inventory cho các ngày còn thiếu.';
+                // Vẫn hiển thị warning nhưng không phải lỗi
+                toast.warning(errorMessage, {
+                    position: "top-right",
+                    autoClose: 3000,
+                });
+                // Refresh để cập nhật inventory
+                if (onRefresh) {
+                    onRefresh();
+                }
+            } else {
+                toast.error(errorMessage + ' ' + (error.message || ''), {
+                    position: "top-right",
+                    autoClose: 4000,
+                });
+            }
+        } finally {
+            setCreatingInventoryForRoomId(null);
+        }
     };
 
     // Tính STT dựa trên currentPage (1-based)
@@ -494,6 +579,21 @@ export default function RoomsTable({ rooms, hotelId, currentPage, totalPages, to
                                             >
                                                 <PencilIcon className="h-5 w-5" />
                                             </Link>
+                                            <button
+                                                onClick={() => handleCreateInventory(room.id, room.name)}
+                                                disabled={isPending || creatingInventoryForRoomId === room.id}
+                                                className="p-2 bg-gray-100 text-purple-600 hover:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed disabled:hover:bg-gray-100 rounded-md transition-colors"
+                                                title="Tạo inventory cho 90 ngày tới"
+                                            >
+                                                {creatingInventoryForRoomId === room.id ? (
+                                                    <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                ) : (
+                                                    <PlusIcon className="h-5 w-5" />
+                                                )}
+                                            </button>
                                             <button
                                                 onClick={() => handleDelete(room.id, room.name)}
                                                 disabled={isPending}

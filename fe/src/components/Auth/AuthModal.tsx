@@ -285,9 +285,31 @@ export default function AuthModal() {
             <>
                 <div className="text-center mb-4"><div className="p-3 bg-light rounded-3 d-inline-block"><span style={{ fontSize: '40px' }}>🎟️</span></div><h4 className="fw-bold mt-3">Chúng tôi có một ưu đãi vô cùng hấp dẫn!</h4></div>
                 <div className="d-flex justify-content-center gap-3 mb-3">
+                    {/* 
+                        ============================================
+                        HÀM LOGIN BẰNG GOOGLE OAUTH
+                        ============================================
+                        Hàm này xử lý đăng nhập bằng Google OAuth2:
+                        1. Khi user click vào button Google, redirect đến backend OAuth2 endpoint
+                        2. Backend xử lý OAuth flow và lưu token vào cookie (JSESSIONID)
+                        3. Backend redirect về frontend với token trong cookie
+                        4. Frontend (AuthContext.tsx) sẽ tự động kiểm tra cookie và lưu token vào localStorage
+                        5. Sau đó apiClient sẽ tự động thêm Authorization header từ localStorage
+                        
+                        Flow chi tiết:
+                        - Click button → redirect đến: http://localhost:8080/oauth2/authorization/google
+                        - Backend (CustomOAuth2AuthenticationSuccessHandler) tạo token và lưu vào cookie
+                        - Redirect về frontend URL (thường là trang chủ hoặc URL đã lưu trong oauthReturnUrl)
+                        - AuthContext.tsx → useEffect → initializeAuth() → getMyProfile() → lưu token vào localStorage
+                        - apiClient.tsx → interceptor → tự động thêm Authorization header từ localStorage
+                    */}
                     <a 
                         href={`${API_BASE_URL}/oauth2/authorization/google`} 
                         onClick={() => {
+                            // QUAN TRỌNG: Set flag để đánh dấu đang login bằng OAuth
+                            // Flag này sẽ được AuthContext sử dụng để force check cookie và sync token
+                            sessionStorage.setItem('oauthLoginInProgress', 'true');
+                            
                             // Lưu URL hiện tại (bao gồm query params) để redirect về sau OAuth
                             const currentPath = window.location.pathname;
                             const currentSearch = window.location.search;
@@ -296,6 +318,10 @@ export default function AuthModal() {
                             if (currentPath.startsWith('/booking')) {
                                 sessionStorage.setItem('oauthReturnUrl', returnUrl);
                             }
+                            // QUAN TRỌNG: Xóa các flag có thể block OAuth check sau khi redirect về
+                            sessionStorage.removeItem('skipOAuthCheck');
+                            sessionStorage.removeItem('justLoggedOut');
+                            sessionStorage.removeItem('lastLogoutTime');
                         }}
                         className="btn btn-google rounded-pill px-4 py-2 d-flex align-items-center flex-grow-1 justify-content-center text-decoration-none"
                     >

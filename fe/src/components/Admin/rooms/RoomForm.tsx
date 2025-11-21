@@ -42,6 +42,7 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
     const [amenityCategories, setAmenityCategories] = useState<AmenityCategory[]>([]);
     const [bedTypeName, setBedTypeName] = useState<string>('');
     const [availableBedTypes, setAvailableBedTypes] = useState<Array<{ id: string; name: string }>>([]);
+    const [isLoadingBedTypes, setIsLoadingBedTypes] = useState(false);
 
     // Load bedTypeName khi room data thay đổi
     useEffect(() => {
@@ -50,21 +51,22 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
         }
     }, [room?.bedType?.name]);
 
-    // Load danh sách bedTypes có sẵn
+    // Load danh sách bedTypes có sẵn từ API để hiển thị trong datalist
     useEffect(() => {
         const loadBedTypes = async () => {
+            setIsLoadingBedTypes(true);
             try {
                 const { getAvailableBedTypes } = await import('@/lib/AdminAPI/bedTypeService');
-                const bedTypes = await getAvailableBedTypes(hotelId);
+                const bedTypes = await getAvailableBedTypes();
                 setAvailableBedTypes(bedTypes);
             } catch (error) {
                 console.error('[RoomForm] Error loading bedTypes:', error);
+            } finally {
+                setIsLoadingBedTypes(false);
             }
         };
-        if (hotelId) {
-            loadBedTypes();
-        }
-    }, [hotelId]);
+        loadBedTypes();
+    }, []);
 
     const [isLoadingAmenities, setIsLoadingAmenities] = useState(false);
 
@@ -421,17 +423,21 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
                                     list="bedTypeOptions"
                                     className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                 />
-                                <datalist id="bedTypeOptions">
-                                    {availableBedTypes.map((bedType) => (
-                                        <option key={bedType.id} value={bedType.name} />
-                                    ))}
-                                </datalist>
+                                {availableBedTypes.length > 0 && (
+                                    <datalist id="bedTypeOptions">
+                                        {availableBedTypes.map((bedType) => (
+                                            <option key={bedType.id} value={bedType.name} />
+                                        ))}
+                                    </datalist>
+                                )}
                             </div>
                             <p className="text-xs text-gray-500 mt-1">
-                                Nhập tên loại giường (VD: Giường đôi, Giường King, 2 giường đơn, ...). 
-                                {availableBedTypes.length > 0 && (
-                                    <span className="text-blue-600"> Có {availableBedTypes.length} loại giường có sẵn - bạn có thể chọn từ danh sách gợi ý hoặc nhập tên mới.</span>
-                                )}
+                                Nhập tên loại giường (VD: Giường đôi, Giường King, 2 giường đơn, ...).
+                                {isLoadingBedTypes ? (
+                                    <span className="text-gray-500"> Đang tải danh sách...</span>
+                                ) : availableBedTypes.length > 0 ? (
+                                    <span className="text-blue-600"> Click vào ô input để xem {availableBedTypes.length} loại giường có sẵn - bạn có thể chọn từ danh sách gợi ý hoặc nhập tên mới.</span>
+                                ) : null}
                             </p>
                         </div>
 
