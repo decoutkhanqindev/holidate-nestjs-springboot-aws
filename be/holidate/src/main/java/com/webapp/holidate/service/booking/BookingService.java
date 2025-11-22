@@ -315,6 +315,9 @@ public class BookingService {
     }
 
     // Convert entities to response DTOs with price details
+    // NOTE: This currently has N+1 query issue for room inventory prices
+    // Each booking fetches prices separately via roomInventoryService.getPricesByDateRange()
+    // TODO: Consider batch fetching all room inventories or using caching for better performance
     List<BookingResponse> bookingResponses = bookingPage.getContent().stream()
       .map(booking -> {
         BookingResponse response = bookingMapper.toBookingResponse(booking, null);
@@ -322,6 +325,7 @@ public class BookingService {
         response.setPriceDetails(priceDetails);
 
         // Set pricesByDate for booking period
+        // PERFORMANCE NOTE: This makes individual queries per booking
         if (response.getRoom() != null) {
           List<RoomInventoryPriceByDateResponse> pricesByDate = roomInventoryService.getPricesByDateRange(
             booking.getRoom().getId(),

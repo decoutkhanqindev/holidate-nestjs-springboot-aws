@@ -21,11 +21,9 @@ public class PartnerReportScheduler {
 
   /**
    * Generate daily reports for partners (hotels) for the previous day (T-1).
-   * 
-   * NOTE: Currently set to 13:40 for testing purposes.
-   * Production schedule: Runs daily at 2:00 AM as specified in the documentation.
+   * Runs daily at 2:00 AM as specified in the documentation.
    */
-  @Scheduled(cron = "0 40 13 * * *") // TEST: runs daily at 13:40 (1:40 PM). Production: "0 0 2 * * *" (2:00 AM)
+  @Scheduled(cron = "0 0 2 * * *")
   public void generateDailyReports() {
     try {
       // Calculate report date (yesterday, T-1)

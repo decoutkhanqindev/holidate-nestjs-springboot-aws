@@ -212,12 +212,15 @@ public class RoomService {
     }
 
     // Fetch photos, amenities, and inventories separately to avoid collection fetch warning with pagination
+    // OPTIMIZED: Split photos and amenities queries to avoid cartesian product
     List<String> roomIds = roomPage.getContent().stream().map(Room::getId).toList();
-    List<Room> roomsWithPhotosAndAmenities = roomRepository.findAllByIdsWithPhotosAndAmenities(roomIds);
+    List<Room> roomsWithPhotos = roomRepository.findAllByIdsWithPhotos(roomIds);
+    List<Room> roomsWithAmenities = roomRepository.findAllByIdsWithAmenities(roomIds);
     List<Room> roomsWithInventories = roomRepository.findAllByIdsWithInventories(roomIds);
 
     // Merge photos, amenities, and inventories data
-    mergePhotosAndAmenitiesData(roomPage.getContent(), roomsWithPhotosAndAmenities);
+    mergePhotosData(roomPage.getContent(), roomsWithPhotos);
+    mergeAmenitiesData(roomPage.getContent(), roomsWithAmenities);
     mergeInventoriesData(roomPage.getContent(), roomsWithInventories);
 
     // Convert entities to response DTOs
@@ -268,12 +271,15 @@ public class RoomService {
       .orElseThrow(() -> new AppException(ErrorType.ROOM_NOT_FOUND));
 
     // Step 2: Fetch collections separately to avoid cartesian product
-    // Photos and amenities
-    List<Room> roomsWithPhotosAndAmenities = roomRepository.findAllByIdsWithPhotosAndAmenities(List.of(id));
-    if (!roomsWithPhotosAndAmenities.isEmpty()) {
-      Room roomWithCollections = roomsWithPhotosAndAmenities.get(0);
-      room.setPhotos(roomWithCollections.getPhotos());
-      room.setAmenities(roomWithCollections.getAmenities());
+    // OPTIMIZED: Split photos and amenities into separate queries
+    List<Room> roomsWithPhotos = roomRepository.findAllByIdsWithPhotos(List.of(id));
+    if (!roomsWithPhotos.isEmpty()) {
+      room.setPhotos(roomsWithPhotos.get(0).getPhotos());
+    }
+
+    List<Room> roomsWithAmenities = roomRepository.findAllByIdsWithAmenities(List.of(id));
+    if (!roomsWithAmenities.isEmpty()) {
+      room.setAmenities(roomsWithAmenities.get(0).getAmenities());
     }
 
     // Step 3: Fetch inventories separately (needed for price and availability calculation)
@@ -285,16 +291,22 @@ public class RoomService {
     return roomMapper.toRoomDetailsResponse(room);
   }
 
-  // Combine photos and amenities data from separate query into main room list
-  private void mergePhotosAndAmenitiesData(List<Room> rooms, List<Room> roomsWithPhotosAndAmenities) {
+  // OPTIMIZED: Separate merge methods for photos and amenities to avoid cartesian product
+  private void mergePhotosData(List<Room> rooms, List<Room> roomsWithPhotos) {
     rooms.forEach(room -> {
-      roomsWithPhotosAndAmenities.stream()
+      roomsWithPhotos.stream()
         .filter(r -> r.getId().equals(room.getId()))
         .findFirst()
-        .ifPresent(r -> {
-          room.setPhotos(r.getPhotos());
-          room.setAmenities(r.getAmenities());
-        });
+        .ifPresent(r -> room.setPhotos(r.getPhotos()));
+    });
+  }
+
+  private void mergeAmenitiesData(List<Room> rooms, List<Room> roomsWithAmenities) {
+    rooms.forEach(room -> {
+      roomsWithAmenities.stream()
+        .filter(r -> r.getId().equals(room.getId()))
+        .findFirst()
+        .ifPresent(r -> room.setAmenities(r.getAmenities()));
     });
   }
 

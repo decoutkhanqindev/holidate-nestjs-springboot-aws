@@ -21,12 +21,10 @@ public class AdminReportScheduler {
 
   /**
    * Generate system daily reports for the previous day (T-1).
-   * 
-   * NOTE: Currently set to 13:45 for testing purposes.
-   * Production schedule: Runs daily at 2:30 AM, 30 minutes after the partner report job (2:00 AM)
+   * Runs daily at 2:30 AM, 30 minutes after the partner report job (2:00 AM)
    * to ensure partner reports are completed first.
    */
-  @Scheduled(cron = "0 45 13 * * *") // TEST: runs daily at 13:45 (1:45 PM). Production: "0 30 2 * * *" (2:30 AM)
+  @Scheduled(cron = "0 30 2 * * *")
   public void generateSystemDailyReports() {
     try {
       // Calculate report date (yesterday, T-1)

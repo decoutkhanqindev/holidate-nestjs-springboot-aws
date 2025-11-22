@@ -87,6 +87,19 @@ public class RoomQueries {
             "LEFT JOIN FETCH a.category " +
             "WHERE r.id IN :roomIds";
 
+    // OPTIMIZED: Split photos and amenities into separate queries to avoid cartesian product
+    public static final String FIND_ALL_BY_IDS_WITH_PHOTOS = "SELECT DISTINCT r FROM Room r " +
+            "LEFT JOIN FETCH r.photos rph " +
+            "LEFT JOIN FETCH rph.photo p " +
+            "LEFT JOIN FETCH p.category " +
+            "WHERE r.id IN :roomIds";
+
+    public static final String FIND_ALL_BY_IDS_WITH_AMENITIES = "SELECT DISTINCT r FROM Room r " +
+            "LEFT JOIN FETCH r.amenities ra " +
+            "LEFT JOIN FETCH ra.amenity a " +
+            "LEFT JOIN FETCH a.category " +
+            "WHERE r.id IN :roomIds";
+
     // Base query for getById optimization - includes hotel with basic location info
     // but no collections
     // This avoids cartesian product performance issue when room has many

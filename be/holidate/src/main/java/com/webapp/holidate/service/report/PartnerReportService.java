@@ -1378,7 +1378,24 @@ public class PartnerReportService implements ApplicationContextAware {
             "message", "No booking data found in the system");
       }
 
-      log.info("Found date range: {} to {}", minDate, maxDate);
+      // Limit maxDate to today - reports should only be generated for past dates
+      LocalDate today = LocalDate.now();
+      if (maxDate.isAfter(today)) {
+        log.info("Limiting maxDate from {} to {} (today) - reports should only be generated for past dates", maxDate, today);
+        maxDate = today;
+      }
+      
+      // Ensure minDate is not in the future
+      if (minDate.isAfter(today)) {
+        log.warn("minDate {} is in the future, no reports to generate", minDate);
+        return Map.of(
+            "totalDates", 0,
+            "successCount", 0,
+            "failureCount", 0,
+            "message", "No past dates found in the system");
+      }
+
+      log.info("Found date range: {} to {} (limited to today)", minDate, maxDate);
 
       int successCount = 0;
       int failureCount = 0;
