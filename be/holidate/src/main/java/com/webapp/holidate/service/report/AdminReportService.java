@@ -1,12 +1,30 @@
 package com.webapp.holidate.service.report;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.webapp.holidate.constants.db.query.report.ReportQueries;
 import com.webapp.holidate.dto.response.report.admin.AdminRevenueReportComparisonResponse;
 import com.webapp.holidate.dto.response.report.admin.AdminRevenueReportResponse;
-import com.webapp.holidate.dto.response.report.admin.HotelPerformanceReportResponse;
 import com.webapp.holidate.dto.response.report.admin.FinancialsReportComparisonResponse;
 import com.webapp.holidate.dto.response.report.admin.FinancialsReportResponse;
 import com.webapp.holidate.dto.response.report.admin.HotelPerformanceComparisonResponse;
+import com.webapp.holidate.dto.response.report.admin.HotelPerformanceReportResponse;
 import com.webapp.holidate.dto.response.report.admin.PopularLocationsReportResponse;
 import com.webapp.holidate.dto.response.report.admin.PopularRoomTypesReportResponse;
 import com.webapp.holidate.dto.response.report.admin.SeasonalityReportResponse;
@@ -22,27 +40,18 @@ import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.type.ErrorType;
 import com.webapp.holidate.type.booking.BookingStatusType;
 import com.webapp.holidate.type.user.RoleType;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
-public class AdminReportService {
+public class AdminReportService implements ApplicationContextAware {
 
   HotelDailyReportRepository hotelDailyReportRepository;
   SystemDailyReportRepository systemDailyReportRepository;
@@ -50,6 +59,20 @@ public class AdminReportService {
   UserRepository userRepository;
   HotelRepository hotelRepository;
   EntityManager entityManager;
+  
+  // ApplicationContext to get self bean (Spring proxy) for transaction management
+  // Cannot be final because it's set via ApplicationContextAware
+  @lombok.experimental.NonFinal
+  ApplicationContext applicationContext;
+  
+  @Override
+  public void setApplicationContext(@org.springframework.lang.NonNull ApplicationContext applicationContext) throws BeansException {
+    this.applicationContext = applicationContext;
+  }
+  
+  private AdminReportService getSelf() {
+    return applicationContext.getBean(AdminReportService.class);
+  }
 
   /**
    * Generate system daily report for the specified date.
@@ -57,7 +80,7 @@ public class AdminReportService {
    * 
    * @param reportDate The date to generate reports for (typically yesterday)
    */
-  @Transactional
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void generateSystemDailyReport(LocalDate reportDate) {
     log.info("Starting system daily report generation for date: {}", reportDate);
 
@@ -1544,5 +1567,163 @@ public class AdminReportService {
         .previousPeriod(previousPeriod)
         .comparison(comparison)
         .build();
+  }
+
+  /**
+   * Generate system daily reports for all dates in the system.
+   * This method finds the date range from Booking and User tables and processes all dates.
+   * Note: This should be run after PartnerReportService.generateAllDailyReports() to ensure
+   * HotelDailyReport data is available.
+   * 
+   * @return Map containing summary of the operation (totalDates, successCount, failureCount)
+   */
+  public Map<String, Object> generateAllSystemDailyReports() {
+    log.info("Starting bulk system daily report generation for all dates");
+
+    try {
+      // Find date range from Booking table
+      Query bookingDateRangeQuery = entityManager.createNativeQuery(ReportQueries.FIND_BOOKING_DATE_RANGE);
+      Object[] bookingDateRangeResult = (Object[]) bookingDateRangeQuery.getSingleResult();
+
+      // Find date range from User table
+      Query userDateRangeQuery = entityManager.createNativeQuery(ReportQueries.FIND_USER_DATE_RANGE);
+      Object[] userDateRangeResult = (Object[]) userDateRangeQuery.getSingleResult();
+
+      LocalDate minDate = null;
+      LocalDate maxDate = null;
+
+      // Determine overall min and max date from both sources
+      // Parse date result - could be Date, String, or LocalDate
+      if (bookingDateRangeResult != null && bookingDateRangeResult[0] != null && bookingDateRangeResult[1] != null) {
+        try {
+          LocalDate bookingMin;
+          LocalDate bookingMax;
+          
+          if (bookingDateRangeResult[0] instanceof java.sql.Date) {
+            bookingMin = ((java.sql.Date) bookingDateRangeResult[0]).toLocalDate();
+          } else if (bookingDateRangeResult[0] instanceof java.sql.Timestamp) {
+            bookingMin = ((java.sql.Timestamp) bookingDateRangeResult[0]).toLocalDateTime().toLocalDate();
+          } else if (bookingDateRangeResult[0] instanceof String) {
+            bookingMin = LocalDate.parse((String) bookingDateRangeResult[0]);
+          } else if (bookingDateRangeResult[0] instanceof java.time.LocalDate) {
+            bookingMin = (LocalDate) bookingDateRangeResult[0];
+          } else {
+            throw new IllegalArgumentException("Unexpected date type: " + bookingDateRangeResult[0].getClass().getName());
+          }
+
+          if (bookingDateRangeResult[1] instanceof java.sql.Date) {
+            bookingMax = ((java.sql.Date) bookingDateRangeResult[1]).toLocalDate();
+          } else if (bookingDateRangeResult[1] instanceof java.sql.Timestamp) {
+            bookingMax = ((java.sql.Timestamp) bookingDateRangeResult[1]).toLocalDateTime().toLocalDate();
+          } else if (bookingDateRangeResult[1] instanceof String) {
+            bookingMax = LocalDate.parse((String) bookingDateRangeResult[1]);
+          } else if (bookingDateRangeResult[1] instanceof java.time.LocalDate) {
+            bookingMax = (LocalDate) bookingDateRangeResult[1];
+          } else {
+            throw new IllegalArgumentException("Unexpected date type: " + bookingDateRangeResult[1].getClass().getName());
+          }
+          
+          minDate = bookingMin;
+          maxDate = bookingMax;
+        } catch (Exception e) {
+          log.error("Error parsing booking date range result: {}", e.getMessage(), e);
+          throw new AppException(ErrorType.UNKNOWN_ERROR);
+        }
+      }
+
+      if (userDateRangeResult != null && userDateRangeResult[0] != null && userDateRangeResult[1] != null) {
+        try {
+          LocalDate userMin;
+          LocalDate userMax;
+          
+          if (userDateRangeResult[0] instanceof java.sql.Date) {
+            userMin = ((java.sql.Date) userDateRangeResult[0]).toLocalDate();
+          } else if (userDateRangeResult[0] instanceof java.sql.Timestamp) {
+            userMin = ((java.sql.Timestamp) userDateRangeResult[0]).toLocalDateTime().toLocalDate();
+          } else if (userDateRangeResult[0] instanceof String) {
+            userMin = LocalDate.parse((String) userDateRangeResult[0]);
+          } else if (userDateRangeResult[0] instanceof java.time.LocalDate) {
+            userMin = (LocalDate) userDateRangeResult[0];
+          } else {
+            throw new IllegalArgumentException("Unexpected date type: " + userDateRangeResult[0].getClass().getName());
+          }
+
+          if (userDateRangeResult[1] instanceof java.sql.Date) {
+            userMax = ((java.sql.Date) userDateRangeResult[1]).toLocalDate();
+          } else if (userDateRangeResult[1] instanceof java.sql.Timestamp) {
+            userMax = ((java.sql.Timestamp) userDateRangeResult[1]).toLocalDateTime().toLocalDate();
+          } else if (userDateRangeResult[1] instanceof String) {
+            userMax = LocalDate.parse((String) userDateRangeResult[1]);
+          } else if (userDateRangeResult[1] instanceof java.time.LocalDate) {
+            userMax = (LocalDate) userDateRangeResult[1];
+          } else {
+            throw new IllegalArgumentException("Unexpected date type: " + userDateRangeResult[1].getClass().getName());
+          }
+          
+          if (minDate == null || userMin.isBefore(minDate)) {
+            minDate = userMin;
+          }
+          if (maxDate == null || userMax.isAfter(maxDate)) {
+            maxDate = userMax;
+          }
+        } catch (Exception e) {
+          log.error("Error parsing user date range result: {}", e.getMessage(), e);
+          throw new AppException(ErrorType.UNKNOWN_ERROR);
+        }
+      }
+
+      if (minDate == null || maxDate == null) {
+        log.warn("No data found in Booking or User tables");
+        return Map.of(
+            "totalDates", 0,
+            "successCount", 0,
+            "failureCount", 0,
+            "message", "No data found in Booking or User tables");
+      }
+
+      log.info("Found date range: {} to {}", minDate, maxDate);
+
+      int successCount = 0;
+      int failureCount = 0;
+      List<String> errors = new ArrayList<>();
+
+      // Process each date from minDate to maxDate
+      // Use getSelf() to call through Spring proxy, ensuring transaction propagation works
+      LocalDate currentDate = minDate;
+      while (!currentDate.isAfter(maxDate)) {
+        try {
+          log.info("Processing date: {}", currentDate);
+          getSelf().generateSystemDailyReport(currentDate);
+          successCount++;
+        } catch (Exception e) {
+          failureCount++;
+          String errorMsg = String.format("Error processing date %s: %s", currentDate, e.getMessage());
+          log.error(errorMsg, e);
+          errors.add(errorMsg);
+        }
+        currentDate = currentDate.plusDays(1);
+      }
+
+      int totalDates = (int) java.time.temporal.ChronoUnit.DAYS.between(minDate, maxDate) + 1;
+
+      log.info("Completed bulk system daily report generation. Total: {}, Success: {}, Failed: {}",
+          totalDates, successCount, failureCount);
+
+      Map<String, Object> result = new HashMap<>();
+      result.put("totalDates", totalDates);
+      result.put("successCount", successCount);
+      result.put("failureCount", failureCount);
+      result.put("minDate", minDate);
+      result.put("maxDate", maxDate);
+      if (!errors.isEmpty()) {
+        result.put("errors", errors.subList(0, Math.min(10, errors.size()))); // Limit to first 10 errors
+      }
+
+      return result;
+
+    } catch (Exception e) {
+      log.error("Error in bulk system daily report generation: {}", e.getMessage(), e);
+      throw e;
+    }
   }
 }

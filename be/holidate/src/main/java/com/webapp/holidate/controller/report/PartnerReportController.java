@@ -127,4 +127,18 @@ public class PartnerReportController {
         .data(partnerReportService.getReviewSummary(hotelId, from, to))
         .build();
   }
+
+  /**
+   * Generate daily reports for all dates in the system.
+   * This endpoint processes all historical data similar to the background job,
+   * but for all dates instead of just yesterday.
+   * 
+   * @return Summary of the operation including total dates processed, success and failure counts
+   */
+  @PostMapping(ReportEndpoints.GENERATE_ALL)
+  public ApiResponse<?> generateAllDailyReports() {
+    return ApiResponse.builder()
+        .data(partnerReportService.generateAllDailyReports())
+        .build();
+  }
 }

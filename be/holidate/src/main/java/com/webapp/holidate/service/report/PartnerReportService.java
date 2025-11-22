@@ -1,5 +1,25 @@
 package com.webapp.holidate.service.report;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.webapp.holidate.component.security.filter.CustomAuthenticationToken;
 import com.webapp.holidate.constants.db.query.report.ReportQueries;
 import com.webapp.holidate.dto.response.report.partner.BookingsSummaryComparisonResponse;
@@ -26,33 +46,19 @@ import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.type.ErrorType;
 import com.webapp.holidate.type.accommodation.AccommodationStatusType;
 import com.webapp.holidate.type.booking.BookingStatusType;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
-public class PartnerReportService {
+public class PartnerReportService implements ApplicationContextAware {
 
   HotelDailyReportRepository hotelDailyReportRepository;
   RoomDailyPerformanceRepository roomDailyPerformanceRepository;
@@ -60,6 +66,20 @@ public class PartnerReportService {
   EntityManager entityManager;
   UserRepository userRepository;
   HotelRepository hotelRepository;
+  
+  // ApplicationContext to get self bean (Spring proxy) for transaction management
+  // Cannot be final because it's set via ApplicationContextAware
+  @lombok.experimental.NonFinal
+  ApplicationContext applicationContext;
+  
+  @Override
+  public void setApplicationContext(@org.springframework.lang.NonNull ApplicationContext applicationContext) throws BeansException {
+    this.applicationContext = applicationContext;
+  }
+  
+  private PartnerReportService getSelf() {
+    return applicationContext.getBean(PartnerReportService.class);
+  }
 
   /**
    * Generate daily reports for partners (hotels) for the specified date.
@@ -67,7 +87,7 @@ public class PartnerReportService {
    * 
    * @param reportDate The date to generate reports for (typically yesterday)
    */
-  @Transactional
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void generateDailyReports(LocalDate reportDate) {
     log.info("Starting partner daily report generation for date: {}", reportDate);
 
@@ -159,17 +179,6 @@ public class PartnerReportService {
         // Created bookings
         if (createdAt != null && createdAt.toLocalDate().equals(reportDate)) {
           metrics.createdBookings++;
-
-          // Status-specific counts
-          if (BookingStatusType.PENDING_PAYMENT.getValue().equals(status)) {
-            metrics.pendingPaymentBookings++;
-          } else if (BookingStatusType.CONFIRMED.getValue().equals(status)) {
-            metrics.confirmedBookings++;
-          } else if (BookingStatusType.CHECKED_IN.getValue().equals(status)) {
-            metrics.checkedInBookings++;
-          } else if (BookingStatusType.RESCHEDULED.getValue().equals(status)) {
-            metrics.rescheduledBookings++;
-          }
         }
 
         // Completed bookings
@@ -359,12 +368,8 @@ public class PartnerReportService {
           reportDate,
           metrics.totalRevenue,
           metrics.createdBookings,
-          metrics.pendingPaymentBookings,
-          metrics.confirmedBookings,
-          metrics.checkedInBookings,
           metrics.completedBookings,
           metrics.cancelledBookings,
-          metrics.rescheduledBookings,
           metrics.occupiedRoomNights,
           metrics.totalRoomNights,
           metrics.newCustomerBookings,
@@ -400,12 +405,8 @@ public class PartnerReportService {
   private static class HotelMetrics {
     double totalRevenue = 0.0;
     int createdBookings = 0;
-    int pendingPaymentBookings = 0;
-    int confirmedBookings = 0;
-    int checkedInBookings = 0;
     int completedBookings = 0;
     int cancelledBookings = 0;
-    int rescheduledBookings = 0;
     int occupiedRoomNights = 0;
     int totalRoomNights = 0;
     int newCustomerBookings = 0;
@@ -669,12 +670,8 @@ public class PartnerReportService {
 
     // Parse results and handle null values
     Long totalCreated = result != null && result.length > 0 ? extractLong(result[0]) : 0L;
-    Long totalPending = result != null && result.length > 1 ? extractLong(result[1]) : 0L;
-    Long totalConfirmed = result != null && result.length > 2 ? extractLong(result[2]) : 0L;
-    Long totalCheckedIn = result != null && result.length > 3 ? extractLong(result[3]) : 0L;
-    Long totalCompleted = result != null && result.length > 4 ? extractLong(result[4]) : 0L;
-    Long totalCancelled = result != null && result.length > 5 ? extractLong(result[5]) : 0L;
-    Long totalRescheduled = result != null && result.length > 6 ? extractLong(result[6]) : 0L;
+    Long totalCompleted = result != null && result.length > 1 ? extractLong(result[1]) : 0L;
+    Long totalCancelled = result != null && result.length > 2 ? extractLong(result[2]) : 0L;
 
     // Calculate cancellation rate (handle divide by zero)
     double cancellationRate = 0.0;
@@ -687,12 +684,8 @@ public class PartnerReportService {
     // Build response
     return BookingsSummaryResponse.builder()
         .totalCreated(totalCreated)
-        .totalPending(totalPending)
-        .totalConfirmed(totalConfirmed)
-        .totalCheckedIn(totalCheckedIn)
         .totalCompleted(totalCompleted)
         .totalCancelled(totalCancelled)
-        .totalRescheduled(totalRescheduled)
         .cancellationRate(cancellationRate)
         .build();
   }
@@ -1317,5 +1310,117 @@ public class PartnerReportService {
         .previousPeriod(previousPeriod)
         .comparison(comparison)
         .build();
+  }
+
+  /**
+   * Generate daily reports for all dates in the system.
+   * This method finds the date range from Booking table and processes all dates.
+   * 
+   * @return Map containing summary of the operation (totalDates, successCount, failureCount)
+   */
+  public Map<String, Object> generateAllDailyReports() {
+    log.info("Starting bulk partner daily report generation for all dates");
+
+    try {
+      // Find date range from Booking table
+      Query dateRangeQuery = entityManager.createNativeQuery(ReportQueries.FIND_BOOKING_DATE_RANGE);
+      Object[] dateRangeResult = (Object[]) dateRangeQuery.getSingleResult();
+
+      if (dateRangeResult == null || dateRangeResult[0] == null || dateRangeResult[1] == null) {
+        log.warn("No booking data found in the system");
+        return Map.of(
+            "totalDates", 0,
+            "successCount", 0,
+            "failureCount", 0,
+            "message", "No booking data found in the system");
+      }
+
+      // Parse date result - could be Date, String, or LocalDate
+      LocalDate minDate;
+      LocalDate maxDate;
+      
+      try {
+        if (dateRangeResult[0] instanceof java.sql.Date) {
+          minDate = ((java.sql.Date) dateRangeResult[0]).toLocalDate();
+        } else if (dateRangeResult[0] instanceof java.sql.Timestamp) {
+          minDate = ((java.sql.Timestamp) dateRangeResult[0]).toLocalDateTime().toLocalDate();
+        } else if (dateRangeResult[0] instanceof String) {
+          minDate = LocalDate.parse((String) dateRangeResult[0]);
+        } else if (dateRangeResult[0] instanceof java.time.LocalDate) {
+          minDate = (LocalDate) dateRangeResult[0];
+        } else {
+          throw new IllegalArgumentException("Unexpected date type: " + dateRangeResult[0].getClass().getName());
+        }
+
+        if (dateRangeResult[1] instanceof java.sql.Date) {
+          maxDate = ((java.sql.Date) dateRangeResult[1]).toLocalDate();
+        } else if (dateRangeResult[1] instanceof java.sql.Timestamp) {
+          maxDate = ((java.sql.Timestamp) dateRangeResult[1]).toLocalDateTime().toLocalDate();
+        } else if (dateRangeResult[1] instanceof String) {
+          maxDate = LocalDate.parse((String) dateRangeResult[1]);
+        } else if (dateRangeResult[1] instanceof java.time.LocalDate) {
+          maxDate = (LocalDate) dateRangeResult[1];
+        } else {
+          throw new IllegalArgumentException("Unexpected date type: " + dateRangeResult[1].getClass().getName());
+        }
+      } catch (Exception e) {
+        log.error("Error parsing date range result: {}", e.getMessage(), e);
+        throw new AppException(ErrorType.UNKNOWN_ERROR);
+      }
+
+      // Check if we got default values (meaning no real data)
+      if (minDate.equals(LocalDate.of(9999, 12, 31)) || maxDate.equals(LocalDate.of(1900, 1, 1))) {
+        log.warn("No booking data found in the system (got default dates)");
+        return Map.of(
+            "totalDates", 0,
+            "successCount", 0,
+            "failureCount", 0,
+            "message", "No booking data found in the system");
+      }
+
+      log.info("Found date range: {} to {}", minDate, maxDate);
+
+      int successCount = 0;
+      int failureCount = 0;
+      List<String> errors = new ArrayList<>();
+
+      // Process each date from minDate to maxDate
+      LocalDate currentDate = minDate;
+      while (!currentDate.isAfter(maxDate)) {
+        try {
+          log.info("Processing date: {}", currentDate);
+          // Use getSelf() to call through Spring proxy, ensuring transaction propagation works
+          getSelf().generateDailyReports(currentDate);
+          successCount++;
+        } catch (Exception e) {
+          failureCount++;
+          String errorMsg = String.format("Error processing date %s: %s", currentDate, e.getMessage());
+          log.error(errorMsg, e);
+          errors.add(errorMsg);
+        }
+        currentDate = currentDate.plusDays(1);
+      }
+
+      int totalDates = (int) java.time.temporal.ChronoUnit.DAYS.between(minDate, maxDate) + 1;
+
+      log.info("Completed bulk partner daily report generation. Total: {}, Success: {}, Failed: {}",
+          totalDates, successCount, failureCount);
+
+      Map<String, Object> result = new HashMap<>();
+      result.put("totalDates", totalDates);
+      result.put("successCount", successCount);
+      result.put("failureCount", failureCount);
+      result.put("minDate", minDate);
+      result.put("maxDate", maxDate);
+      if (!errors.isEmpty()) {
+        result.put("errors", errors.subList(0, Math.min(10, errors.size()))); // Limit to first 10 errors
+      }
+
+      return result;
+
+    } catch (Exception e) {
+      log.error("Error in bulk partner daily report generation: {}", e.getMessage(), e);
+      throw e;
+    }
   }
 }

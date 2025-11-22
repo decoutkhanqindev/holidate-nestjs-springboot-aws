@@ -1,13 +1,27 @@
 package com.webapp.holidate.entity.report;
 
+import java.time.LocalDateTime;
+
 import com.webapp.holidate.constants.db.DbFieldNames;
 import com.webapp.holidate.constants.db.DbTableNames;
 import com.webapp.holidate.entity.accommodation.Hotel;
-import jakarta.persistence.*;
-import lombok.*;
-import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDateTime;
+import jakarta.persistence.Column;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MapsId;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.FieldDefaults;
 
 @Entity
 @Table(name = DbTableNames.HOTEL_DAILY_REPORTS)
@@ -38,27 +52,11 @@ public class HotelDailyReport {
 
   @Column(nullable = false)
   @Builder.Default
-  int pendingPaymentBookings = 0;
-
-  @Column(nullable = false)
-  @Builder.Default
-  int confirmedBookings = 0;
-
-  @Column(nullable = false)
-  @Builder.Default
-  int checkedInBookings = 0;
-
-  @Column(nullable = false)
-  @Builder.Default
   int completedBookings = 0;
 
   @Column(nullable = false)
   @Builder.Default
   int cancelledBookings = 0;
-
-  @Column(nullable = false)
-  @Builder.Default
-  int rescheduledBookings = 0;
 
   @Column(nullable = false)
   @Builder.Default

@@ -373,6 +373,13 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET,
                                                 ReportEndpoints.ADMIN_REPORTS + ReportEndpoints.FINANCIALS)
                                 .hasAuthority(RoleType.ADMIN.getValue())
+                                // 11. generate all report endpoints (admin only)
+                                .requestMatchers(HttpMethod.POST,
+                                                ReportEndpoints.PARTNER_REPORTS + ReportEndpoints.GENERATE_ALL)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.POST,
+                                                ReportEndpoints.ADMIN_REPORTS + ReportEndpoints.GENERATE_ALL)
+                                .hasAuthority(RoleType.ADMIN.getValue())
 
                                 // C. any other endpoints
                                 .anyRequest().authenticated());

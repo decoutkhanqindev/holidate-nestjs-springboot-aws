@@ -21,4 +21,5 @@ public class ReportEndpoints {
   public static final String POPULAR_LOCATIONS = "/popular-locations";
   public static final String POPULAR_ROOM_TYPES = "/popular-room-types";
   public static final String FINANCIALS = "/financials";
+  public static final String GENERATE_ALL = "/generate-all";
 }

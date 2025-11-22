@@ -2267,6 +2267,39 @@ All admin report endpoints support period comparison. When `compare-from` and `c
 
 - **Response** (with comparison): Similar structure with `currentPeriod`, `previousPeriod`, and `comparison` objects containing differences and percentage changes for all financial metrics.
 
+### 8. Generate All System Daily Reports
+
+**POST** `/admin/reports/generate-all`
+
+- **Role Required**: ADMIN
+- **Description**: Manually triggers the system daily report generation process for all historical data in the system. This endpoint processes all dates from the earliest booking/user creation date to the latest, similar to the background job but for the entire system instead of just one day.
+- **Request Body**: None
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "totalDates": "integer",
+    "successCount": "integer",
+    "failureCount": "integer",
+    "minDate": "date (ISO format: YYYY-MM-DD)",
+    "maxDate": "date (ISO format: YYYY-MM-DD)",
+    "errors": [
+      "string (error messages, max 10 errors)"
+    ]
+  }
+}
+```
+
+- **Notes**:
+  - This endpoint processes all dates from the earliest to the latest date found in the Booking and User tables
+  - Each date is processed in a separate transaction. If one date fails, others continue processing
+  - The response includes a summary of total dates processed, success/failure counts, and up to 10 error messages
+  - This operation may take a long time depending on the amount of historical data
+  - Should be run after `POST /partner/reports/generate-all` to ensure HotelDailyReport data is available
+
 ### Notes on Admin Reports
 
 - **Period Comparison**: Revenue, Hotel Performance, Users Summary, and Financials reports support optional period comparison. When both `compare-from` and `compare-to` are provided, the response includes comparison data. If only one is provided, it is ignored and the endpoint returns normal response.
@@ -2276,6 +2309,39 @@ All admin report endpoints support period comparison. When `compare-from` and `c
 - **Empty Data**: If no data exists for the requested period, endpoints return `200 OK` with zero values or empty arrays, not `404 Not Found`.
 - **Currency Rounding**: All financial values are rounded to 2 decimal places.
 - **Rank Change**: Hotel Performance comparison includes rank change tracking, showing how hotel rankings changed between periods.
+
+### 8. Generate All System Daily Reports
+
+**POST** `/admin/reports/generate-all`
+
+- **Role Required**: ADMIN
+- **Description**: Manually triggers the system daily report generation process for all historical data in the system. This endpoint processes all dates from the earliest booking/user creation date to the latest, similar to the background job but for the entire system instead of just one day.
+- **Request Body**: None
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "totalDates": "integer",
+    "successCount": "integer",
+    "failureCount": "integer",
+    "minDate": "date (ISO format: YYYY-MM-DD)",
+    "maxDate": "date (ISO format: YYYY-MM-DD)",
+    "errors": [
+      "string (error messages, max 10 errors)"
+    ]
+  }
+}
+```
+
+- **Notes**:
+  - This endpoint processes all dates from the earliest to the latest date found in the Booking and User tables
+  - Each date is processed in a separate transaction. If one date fails, others continue processing
+  - The response includes a summary of total dates processed, success/failure counts, and up to 10 error messages
+  - This operation may take a long time depending on the amount of historical data
+  - Should be run after `POST /partner/reports/generate-all` to ensure HotelDailyReport data is available
 
 ### 1. Revenue Report
 
@@ -2498,6 +2564,40 @@ All admin report endpoints support period comparison. When `compare-from` and `c
 ```
 
 - **Response** (with comparison): Similar structure with `currentPeriod`, `previousPeriod`, and `comparison` objects containing differences and percentage changes for `totalReviews` and `averageScore`.
+
+### 7. Generate All Daily Reports
+
+**POST** `/partner/reports/generate-all`
+
+- **Role Required**: ADMIN
+- **Description**: Manually triggers the daily report generation process for all historical data in the system. This endpoint processes all dates from the earliest booking date to the latest, similar to the background job but for the entire system instead of just one day.
+- **Request Body**: None
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "totalDates": "integer",
+    "successCount": "integer",
+    "failureCount": "integer",
+    "minDate": "date (ISO format: YYYY-MM-DD)",
+    "maxDate": "date (ISO format: YYYY-MM-DD)",
+    "errors": [
+      "string (error messages, max 10 errors)"
+    ]
+  }
+}
+```
+
+- **Notes**:
+  - This endpoint processes all dates from the earliest to the latest date found in the Booking table
+  - Each date is processed in a separate transaction. If one date fails, others continue processing
+  - The response includes a summary of total dates processed, success/failure counts, and up to 10 error messages
+  - This operation may take a long time depending on the amount of historical data
+  - Generates `HotelDailyReport` and `RoomDailyPerformance` data for all dates
+  - Should be run before `POST /admin/reports/generate-all` to ensure hotel data is available for system reports
 
 ### Notes on Partner Reports
 

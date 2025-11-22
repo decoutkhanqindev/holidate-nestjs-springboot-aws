@@ -63,12 +63,8 @@ API này cung cấp cho đối tác một "bảng điều khiển" tổng quan v
       ```sql
       SELECT
           SUM(createdBookings) AS totalCreated,
-          SUM(pendingPaymentBookings) AS totalPending,
-          SUM(confirmedBookings) AS totalConfirmed,
-          SUM(checkedInBookings) AS totalCheckedIn,
           SUM(completedBookings) AS totalCompleted,
-          SUM(cancelledBookings) AS totalCancelled,
-          SUM(rescheduledBookings) AS totalRescheduled
+          SUM(cancelledBookings) AS totalCancelled
       FROM
           HotelDailyReport
       WHERE
@@ -80,7 +76,7 @@ API này cung cấp cho đối tác một "bảng điều khiển" tổng quan v
 
 - **Logic Thời gian Khác biệt:** Một điểm nghiệp vụ cực kỳ quan trọng cần làm rõ là sự khác biệt trong cách tính của các chỉ số.
 
-  - `pendingPaymentBookings`, `confirmedBookings`, `checkedInBookings`, `rescheduledBookings`: Được tính dựa trên **ngày tạo (`createdAt`)** của booking. Nó trả lời câu hỏi "Trong ngày D, có bao nhiêu booking được tạo ra với trạng thái X?".
+  - `createdBookings`: Được tính dựa trên **ngày tạo (`createdAt`)** của booking. Nó trả lời câu hỏi "Trong ngày D, có bao nhiêu booking được tạo ra?".
   - `completedBookings`: Được tính dựa trên **ngày trả phòng (`checkOutDate`)**. Nó trả lời câu hỏi "Trong ngày D, có bao nhiêu khách đã hoàn thành việc lưu trú?".
   - `cancelledBookings`: Được tính dựa trên **ngày cập nhật (`updatedAt`)** sang trạng thái `CANCELLED`.
   - API phải trả về các con số này một cách minh bạch. Người dùng (đối tác) cần hiểu rằng đây là một "bản chụp" (snapshot) các hoạt động diễn ra trong kỳ, chứ không phải là vòng đời của một tập hợp booking cụ thể.

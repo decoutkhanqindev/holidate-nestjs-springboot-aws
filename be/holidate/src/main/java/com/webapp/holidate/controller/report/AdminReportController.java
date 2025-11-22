@@ -159,4 +159,20 @@ public class AdminReportController {
         .data(adminReportService.getFinancialsReport(from, to, groupBy))
         .build();
   }
+
+  /**
+   * Generate system daily reports for all dates in the system.
+   * This endpoint processes all historical data similar to the background job,
+   * but for all dates instead of just yesterday.
+   * Note: Should be run after PartnerReportService.generateAllDailyReports() to ensure
+   * HotelDailyReport data is available.
+   * 
+   * @return Summary of the operation including total dates processed, success and failure counts
+   */
+  @PostMapping(ReportEndpoints.GENERATE_ALL)
+  public ApiResponse<?> generateAllSystemDailyReports() {
+    return ApiResponse.builder()
+        .data(adminReportService.generateAllSystemDailyReports())
+        .build();
+  }
 }

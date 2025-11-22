@@ -1,15 +1,16 @@
 package com.webapp.holidate.repository.report;
 
-import com.webapp.holidate.constants.db.query.report.ReportQueries;
-import com.webapp.holidate.entity.report.HotelDailyReport;
-import com.webapp.holidate.entity.report.HotelDailyReportId;
+import java.time.LocalDate;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
-import java.util.List;
+import com.webapp.holidate.constants.db.query.report.ReportQueries;
+import com.webapp.holidate.entity.report.HotelDailyReport;
+import com.webapp.holidate.entity.report.HotelDailyReportId;
 
 @Repository
 public interface HotelDailyReportRepository extends JpaRepository<HotelDailyReport, HotelDailyReportId> {
@@ -25,12 +26,8 @@ public interface HotelDailyReportRepository extends JpaRepository<HotelDailyRepo
                         LocalDate reportDate,
                         double totalRevenue,
                         int createdBookings,
-                        int pendingPaymentBookings,
-                        int confirmedBookings,
-                        int checkedInBookings,
                         int completedBookings,
                         int cancelledBookings,
-                        int rescheduledBookings,
                         int occupiedRoomNights,
                         int totalRoomNights,
                         int newCustomerBookings,

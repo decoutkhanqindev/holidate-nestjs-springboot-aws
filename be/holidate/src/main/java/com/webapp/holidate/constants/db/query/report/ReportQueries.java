@@ -4,6 +4,27 @@ import com.webapp.holidate.constants.db.DbTableNames;
 
 public class ReportQueries {
 
+    // Query to find min and max dates from Booking table for report generation
+    // Finds the earliest and latest dates from createdAt, checkOutDate, and updatedAt
+    public static final String FIND_BOOKING_DATE_RANGE = "SELECT " +
+            "  LEAST(" +
+            "    COALESCE(MIN(DATE(created_at)), '9999-12-31'), " +
+            "    COALESCE(MIN(check_out_date), '9999-12-31'), " +
+            "    COALESCE(MIN(DATE(updated_at)), '9999-12-31')" +
+            "  ) as minDate, " +
+            "  GREATEST(" +
+            "    COALESCE(MAX(DATE(created_at)), '1900-01-01'), " +
+            "    COALESCE(MAX(check_out_date), '1900-01-01'), " +
+            "    COALESCE(MAX(DATE(updated_at)), '1900-01-01')" +
+            "  ) as maxDate " +
+            "FROM " + DbTableNames.BOOKINGS;
+
+    // Query to find min and max dates from User table for report generation
+    public static final String FIND_USER_DATE_RANGE = "SELECT " +
+            "  MIN(DATE(u.created_at)) as minDate, " +
+            "  MAX(DATE(u.created_at)) as maxDate " +
+            "FROM " + DbTableNames.USERS + " u";
+
     // Query to get all bookings related to report date D
     // This is the intermediate dataset mentioned in Step 1
     // Note: Using date range comparisons for LocalDateTime fields (createdAt,
@@ -109,23 +130,17 @@ public class ReportQueries {
 
     // Native query for bulk upsert using MySQL ON DUPLICATE KEY UPDATE
     public static final String UPSERT_HOTEL_DAILY_REPORT = "INSERT INTO " + DbTableNames.HOTEL_DAILY_REPORTS + " " +
-            "(hotel_id, report_date, total_revenue, created_bookings, pending_payment_bookings, " +
-            "confirmed_bookings, checked_in_bookings, completed_bookings, cancelled_bookings, " +
-            "rescheduled_bookings, occupied_room_nights, total_room_nights, new_customer_bookings, " +
+            "(hotel_id, report_date, total_revenue, created_bookings, completed_bookings, cancelled_bookings, " +
+            "occupied_room_nights, total_room_nights, new_customer_bookings, " +
             "returning_customer_bookings, average_review_score, review_count, updated_at) " +
-            "VALUES (:hotelId, :reportDate, :totalRevenue, :createdBookings, :pendingPaymentBookings, " +
-            ":confirmedBookings, :checkedInBookings, :completedBookings, :cancelledBookings, " +
-            ":rescheduledBookings, :occupiedRoomNights, :totalRoomNights, :newCustomerBookings, " +
+            "VALUES (:hotelId, :reportDate, :totalRevenue, :createdBookings, :completedBookings, :cancelledBookings, " +
+            ":occupiedRoomNights, :totalRoomNights, :newCustomerBookings, " +
             ":returningCustomerBookings, :averageReviewScore, :reviewCount, :updatedAt) " +
             "ON DUPLICATE KEY UPDATE " +
             "total_revenue = VALUES(total_revenue), " +
             "created_bookings = VALUES(created_bookings), " +
-            "pending_payment_bookings = VALUES(pending_payment_bookings), " +
-            "confirmed_bookings = VALUES(confirmed_bookings), " +
-            "checked_in_bookings = VALUES(checked_in_bookings), " +
             "completed_bookings = VALUES(completed_bookings), " +
             "cancelled_bookings = VALUES(cancelled_bookings), " +
-            "rescheduled_bookings = VALUES(rescheduled_bookings), " +
             "occupied_room_nights = VALUES(occupied_room_nights), " +
             "total_room_nights = VALUES(total_room_nights), " +
             "new_customer_bookings = VALUES(new_customer_bookings), " +
@@ -245,12 +260,8 @@ public class ReportQueries {
     // Query to get booking summary for a hotel in date range
     public static final String GET_BOOKING_SUMMARY = "SELECT " +
             "  COALESCE(SUM(hdr.created_bookings), 0) as totalCreated, " +
-            "  COALESCE(SUM(hdr.pending_payment_bookings), 0) as totalPending, " +
-            "  COALESCE(SUM(hdr.confirmed_bookings), 0) as totalConfirmed, " +
-            "  COALESCE(SUM(hdr.checked_in_bookings), 0) as totalCheckedIn, " +
             "  COALESCE(SUM(hdr.completed_bookings), 0) as totalCompleted, " +
-            "  COALESCE(SUM(hdr.cancelled_bookings), 0) as totalCancelled, " +
-            "  COALESCE(SUM(hdr.rescheduled_bookings), 0) as totalRescheduled " +
+            "  COALESCE(SUM(hdr.cancelled_bookings), 0) as totalCancelled " +
             "FROM " + DbTableNames.HOTEL_DAILY_REPORTS + " hdr " +
             "WHERE hdr.hotel_id = :hotelId " +
             "AND hdr.report_date >= :fromDate " +
