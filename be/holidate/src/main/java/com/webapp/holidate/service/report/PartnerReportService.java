@@ -665,8 +665,22 @@ public class PartnerReportService implements ApplicationContextAware {
    * This is a reusable method for comparison features.
    */
   private BookingsSummaryResponse getSinglePeriodBookingSummary(String hotelId, LocalDate fromDate, LocalDate toDate) {
-    // Get booking summary from repository
-    Object[] result = hotelDailyReportRepository.getBookingSummary(hotelId, fromDate, toDate);
+    // Use EntityManager to execute query directly (fixes issue with Object[] return type)
+    Query query = entityManager.createNativeQuery(ReportQueries.GET_BOOKING_SUMMARY);
+    query.setParameter("hotelId", hotelId);
+    query.setParameter("fromDate", fromDate);
+    query.setParameter("toDate", toDate);
+    
+    Object[] result = null;
+    try {
+      @SuppressWarnings("unchecked")
+      List<Object[]> results = query.getResultList();
+      if (results != null && !results.isEmpty()) {
+        result = results.get(0);
+      }
+    } catch (Exception e) {
+      log.error("Error executing booking summary query: {}", e.getMessage(), e);
+    }
 
     // Parse results and handle null values
     Long totalCreated = result != null && result.length > 0 ? extractLong(result[0]) : 0L;
@@ -907,7 +921,7 @@ public class PartnerReportService implements ApplicationContextAware {
       String sortBy, String sortOrder) {
     // Validate and normalize sortBy parameter
     String normalizedSortBy = (sortBy == null || sortBy.isEmpty()) ? "revenue" : sortBy.toLowerCase();
-    if (!normalizedSortBy.equals("revenue") && !normalizedSortBy.equals("bookedRoomNights")) {
+    if (!normalizedSortBy.equals("revenue") && !normalizedSortBy.equals("bookedroomnights")) {
       throw new AppException(ErrorType.INVALID_SORT_BY);
     }
 
@@ -921,8 +935,11 @@ public class PartnerReportService implements ApplicationContextAware {
     String orderByColumn;
     if (normalizedSortBy.equals("revenue")) {
       orderByColumn = "SUM(rdp.revenue)";
-    } else {
+    } else if (normalizedSortBy.equals("bookedroomnights")) {
       orderByColumn = "SUM(rdp.booked_room_nights)";
+    } else {
+      // Should not reach here due to validation above, but add default for safety
+      orderByColumn = "SUM(rdp.revenue)";
     }
 
     String orderByClause = orderByColumn + " " + normalizedSortOrder.toUpperCase();
@@ -1087,8 +1104,18 @@ public class PartnerReportService implements ApplicationContextAware {
    * This is a reusable method for comparison features.
    */
   private CustomerSummaryResponse getSinglePeriodCustomerSummary(String hotelId, LocalDate fromDate, LocalDate toDate) {
-    // Get customer summary from repository
-    Object[] result = hotelDailyReportRepository.getCustomerSummary(hotelId, fromDate, toDate);
+    // Use EntityManager directly for native query to ensure correct result mapping
+    Query query = entityManager.createNativeQuery(ReportQueries.GET_CUSTOMER_SUMMARY);
+    query.setParameter("hotelId", hotelId);
+    query.setParameter("fromDate", fromDate);
+    query.setParameter("toDate", toDate);
+
+    @SuppressWarnings("unchecked")
+    List<Object[]> results = query.getResultList();
+    Object[] result = null;
+    if (!results.isEmpty()) {
+      result = results.get(0);
+    }
 
     // Parse results and handle null values
     long totalNewCustomerBookings = result != null && result.length > 0 ? extractLong(result[0]) : 0L;

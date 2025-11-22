@@ -939,7 +939,18 @@ public class AdminReportService implements ApplicationContextAware {
   private UsersSummaryReportResponse getSinglePeriodUsersSummary(
       LocalDate fromDate, LocalDate toDate) {
     // Step 1: Get growth data from SystemDailyReport
-    Object[] growthResult = systemDailyReportRepository.getNewUsersGrowth(fromDate, toDate);
+    // Use EntityManager directly for native query to ensure correct result mapping
+    Query query = entityManager.createNativeQuery(ReportQueries.GET_NEW_USERS_GROWTH);
+    query.setParameter("fromDate", fromDate);
+    query.setParameter("toDate", toDate);
+
+    @SuppressWarnings("unchecked")
+    List<Object[]> results = query.getResultList();
+    Object[] growthResult = null;
+    if (!results.isEmpty()) {
+      growthResult = results.get(0);
+    }
+
     Long newCustomers = growthResult != null && growthResult.length > 0
         ? extractLong(growthResult[0])
         : 0L;
