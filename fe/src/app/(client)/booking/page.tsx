@@ -123,6 +123,12 @@ function BookingComponent() {
             } else if (!codeToApply) {
                 // Chỉ reset giá nếu không phải lỗi mã giảm giá
                 setPriceDetails(null);
+                // Log error để debug
+                console.error('[BookingPage] Lỗi khi fetch price preview:', {
+                    message: error.message,
+                    status: error.response?.status,
+                    data: error.response?.data
+                });
                 setGeneralError(error.message || "Không thể tính toán giá.");
             } else {
                 // Nếu là lỗi mã giảm giá, giữ nguyên giá hiện tại và chỉ hiển thị lỗi
@@ -169,7 +175,54 @@ function BookingComponent() {
         }
     };
 
-    const validateForm = () => { /* ... validation logic ... */ return true; };
+    const validateForm = () => {
+        const errors: { fullName: string; email: string; phone: string } = {
+            fullName: '',
+            email: '',
+            phone: ''
+        };
+        let isValid = true;
+
+        // Validate fullName
+        if (!customerInfo.fullName || customerInfo.fullName.trim() === '') {
+            errors.fullName = 'Vui lòng nhập họ và tên.';
+            isValid = false;
+        } else if (customerInfo.fullName.trim().length < 2) {
+            errors.fullName = 'Họ và tên phải có ít nhất 2 ký tự.';
+            isValid = false;
+        }
+
+        // Validate email
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!customerInfo.email || customerInfo.email.trim() === '') {
+            errors.email = 'Vui lòng nhập email.';
+            isValid = false;
+        } else if (!emailPattern.test(customerInfo.email)) {
+            errors.email = 'Email không hợp lệ.';
+            isValid = false;
+        }
+
+        // Validate phone - pattern: bắt đầu bằng +84 hoặc 0, theo sau là 9-10 chữ số
+        const phonePattern = /^(\+84|0)[0-9]{9,10}$/;
+        // Loại bỏ khoảng trắng và dấu gạch ngang để validate
+        const phoneCleaned = customerInfo.phone.replace(/[\s-]/g, '');
+
+        if (!customerInfo.phone || phoneCleaned === '') {
+            errors.phone = 'Vui lòng nhập số điện thoại.';
+            isValid = false;
+        } else if (!phonePattern.test(phoneCleaned)) {
+            errors.phone = 'Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại Việt Nam.';
+            isValid = false;
+        }
+
+        setFormErrors(errors);
+
+        if (!isValid) {
+            setGeneralError('Vui lòng kiểm tra lại thông tin đã nhập.');
+        }
+
+        return isValid;
+    };
 
     const handleSubmitBooking = () => {
         if (isAuthLoading) return;
@@ -200,10 +253,19 @@ function BookingComponent() {
             return;
         }
 
+        // Validate form trước khi submit
+        if (!validateForm()) {
+            setGeneralError('Vui lòng kiểm tra lại thông tin đã nhập.');
+            return;
+        }
+
         setIsSubmitting(true);
         setGeneralError('');
 
         try {
+            // Làm sạch số điện thoại (loại bỏ khoảng trắng và dấu gạch ngang)
+            const phoneCleaned = customerInfo.phone.replace(/[\s-]/g, '');
+
             const bookingPayload = {
                 userId: user.id, // ID này được lấy từ AuthContext (đã sửa)
                 roomId: roomDetails.id.toString(),
@@ -213,12 +275,15 @@ function BookingComponent() {
                 numberOfRooms: 1,
                 numberOfAdults: roomDetails.maxAdults,
                 numberOfChildren: roomDetails.maxChildren || 0,
-                contactFullName: customerInfo.fullName,
-                contactEmail: customerInfo.email,
-                contactPhone: customerInfo.phone,
+                contactFullName: customerInfo.fullName.trim(),
+                contactEmail: customerInfo.email.trim(),
+                contactPhone: phoneCleaned, // Gửi số điện thoại đã được làm sạch
                 // Gửi mã giảm giá đã được áp dụng thành công
                 ...(priceDetails?.appliedDiscount?.code && { discountCode: priceDetails.appliedDiscount.code })
             };
+
+            // Log payload để debug
+            console.log('[Booking] Payload gửi đi:', { ...bookingPayload, contactPhone: '***' });
 
             const response = await bookingService.createBooking(bookingPayload);
 
@@ -318,12 +383,23 @@ function BookingComponent() {
                                         {formErrors.email && <p className={styles.errorText}>{formErrors.email}</p>}
                                     </div>
                                     <div className={styles.formGroup}>
-                                        <label htmlFor="phone">Số điện thoại</label>
+                                        <label htmlFor="phone">Số điện thoại <span style={{ color: 'red' }}>*</span></label>
                                         <div className={styles.phoneInput}>
-                                            <select><option>+84</option></select>
-                                            <input type="tel" id="phone" value={customerInfo.phone} onChange={handleInputChange} placeholder="Số điện thoại liên lạc" />
+                                            <select disabled style={{ opacity: 0.7 }}><option>+84</option></select>
+                                            <input
+                                                type="tel"
+                                                id="phone"
+                                                value={customerInfo.phone}
+                                                onChange={handleInputChange}
+                                                placeholder="0123456789 hoặc +84123456789"
+                                                required
+                                                pattern="^(\+84|0)[0-9]{9,10}$"
+                                            />
                                         </div>
                                         {formErrors.phone && <p className={styles.errorText}>{formErrors.phone}</p>}
+                                        {/* <p style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                                            Ví dụ: 0123456789 hoặc +84123456789
+                                        </p> */}
                                     </div>
                                 </div>
                             </div>
@@ -383,17 +459,17 @@ function BookingComponent() {
                         {isPriceLoading ? (
                             <div style={{ textAlign: 'center', padding: '20px' }}>Đang tính toán giá...</div>
                         ) : !isLoggedIn ? (
-                            <div style={{ 
-                                textAlign: 'center', 
-                                padding: '20px', 
+                            <div style={{
+                                textAlign: 'center',
+                                padding: '20px',
                                 backgroundColor: '#fff3cd',
                                 border: '1px solid #ffc107',
                                 borderRadius: '4px',
                                 color: '#856404'
                             }}>
                                 <p style={{ margin: '0 0 10px 0', fontWeight: 'bold' }}>Vui lòng đăng nhập để xem giá phòng</p>
-                                <button 
-                                    onClick={openModal} 
+                                <button
+                                    onClick={openModal}
                                     className={styles.loginLink}
                                     style={{
                                         background: '#1565c0',

@@ -136,47 +136,26 @@ export const findBedTypeIdByName = async (bedTypeName: string, hotelId?: string)
 };
 
 /**
- * Lấy danh sách bedTypes có sẵn trong hệ thống (từ các rooms)
+ * Lấy danh sách bedTypes có sẵn trong hệ thống (query từ tất cả rooms)
  * Dùng để hiển thị cho user chọn
+ * Note: Backend không có endpoint riêng để lấy tất cả bed types, nên phải query từ rooms
  */
 export const getAvailableBedTypes = async (hotelId?: string): Promise<BedType[]> => {
     try {
+        console.log('[bedTypeService] Fetching all bed types from rooms...');
         const bedTypesMap = new Map<string, BedType>(); // Map id -> BedType để tránh duplicate
 
-        // Bước 1: Lấy từ hotel hiện tại trước
-        if (hotelId) {
-            try {
-                const { getRoomsByHotelId, getRoomById } = await import('./roomService');
-                const roomsResult = await getRoomsByHotelId(hotelId, 0, 100);
-
-                for (const room of roomsResult.rooms.slice(0, 20)) {
-                    try {
-                        const roomDetails = await getRoomById(room.id);
-                        if (roomDetails?.bedType) {
-                            bedTypesMap.set(roomDetails.bedType.id, {
-                                id: roomDetails.bedType.id,
-                                name: roomDetails.bedType.name
-                            });
-                        }
-                    } catch (error) {
-                        continue;
-                    }
-                }
-            } catch (error) {
-                console.warn(`[bedTypeService] Could not query rooms from hotel ${hotelId}`);
-            }
-        }
-
-        // Bước 2: Lấy từ các hotels khác
+        // Query từ nhiều hotels để lấy được tất cả bed types có sẵn
         const { getHotels } = await import('./hotelService');
-        const hotelsResult = await getHotels(0, 20);
+        const hotelsResult = await getHotels(0, 50); // Lấy 50 hotels đầu để đảm bảo có đủ bed types
 
         const { getRoomsByHotelId, getRoomById } = await import('./roomService');
 
-        for (const hotel of hotelsResult.hotels.slice(0, 10)) {
+        // Query từ tất cả hotels để lấy bed types
+        for (const hotel of hotelsResult.hotels) {
             try {
-                const roomsResult = await getRoomsByHotelId(hotel.id, 0, 10);
-                for (const room of roomsResult.rooms.slice(0, 5)) {
+                const roomsResult = await getRoomsByHotelId(hotel.id, 0, 50); // Lấy nhiều rooms hơn
+                for (const room of roomsResult.rooms) {
                     try {
                         const roomDetails = await getRoomById(room.id);
                         if (roomDetails?.bedType) {
@@ -194,12 +173,17 @@ export const getAvailableBedTypes = async (hotelId?: string): Promise<BedType[]>
             }
         }
 
+        // Nếu đã có đủ bed types (>= 15 loại như data bạn cung cấp), có thể dừng lại sớm
+        if (bedTypesMap.size >= 15) {
+            console.log(`[bedTypeService] Found ${bedTypesMap.size} bed types (stopping early)`);
+        }
+
         // Sắp xếp theo tên
         const bedTypes = Array.from(bedTypesMap.values()).sort((a, b) => 
             a.name.localeCompare(b.name, 'vi')
         );
 
-        console.log(`[bedTypeService] Found ${bedTypes.length} available bedTypes`);
+        console.log(`[bedTypeService] Found ${bedTypes.length} available bed types from all rooms`);
         return bedTypes;
     } catch (error: any) {
         console.error("[bedTypeService] Error getting available bedTypes:", error);
