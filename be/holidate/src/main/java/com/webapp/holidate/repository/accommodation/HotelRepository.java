@@ -1,7 +1,9 @@
 package com.webapp.holidate.repository.accommodation;
 
-import com.webapp.holidate.constants.db.query.accommodation.HotelQueries;
-import com.webapp.holidate.entity.accommodation.Hotel;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,9 +12,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.lang.Nullable;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import com.webapp.holidate.constants.db.query.DashboardQueries;
+import com.webapp.holidate.constants.db.query.accommodation.HotelQueries;
+import com.webapp.holidate.entity.accommodation.Hotel;
 
 public interface HotelRepository extends JpaRepository<Hotel, String>, JpaSpecificationExecutor<Hotel> {
   boolean existsByName(String name);
@@ -104,4 +106,12 @@ public interface HotelRepository extends JpaRepository<Hotel, String>, JpaSpecif
   // This query calculates prices/availability at DB level to avoid loading all inventories into memory
   @Query(value = HotelQueries.FIND_HOTEL_PRICES_AND_AVAILABILITY_NATIVE, nativeQuery = true)
   List<Map<String, Object>> findHotelPricesAndAvailability(@Param("hotelIds") List<String> hotelIds);
+  
+  // ============ ADMIN DASHBOARD QUERIES ============
+  
+  /**
+   * Count total active hotels in the system
+   */
+  @Query(DashboardQueries.COUNT_TOTAL_ACTIVE_HOTELS)
+  long countTotalActiveHotels(String activeStatus);
 }

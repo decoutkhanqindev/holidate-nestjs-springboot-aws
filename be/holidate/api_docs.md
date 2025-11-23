@@ -24,7 +24,9 @@ Base URL: `http://localhost:8080`
 18. [Special Days](#special-days)
 19. [Partner Reports](#partner-reports)
 20. [Admin Reports](#admin-reports)
-21. [Status Types Reference](#status-types-reference)
+21. [Partner Dashboard](#partner-dashboard)
+22. [Admin Dashboard](#admin-dashboard)
+23. [Status Types Reference](#status-types-reference)
 
 ---
 
@@ -2606,6 +2608,127 @@ All admin report endpoints support period comparison. When `compare-from` and `c
 - **Date Range Validation**: `from` must be less than or equal to `to`. Similarly, `compare-from` must be less than or equal to `compare-to` when provided.
 - **Authorization**: Partners can only access reports for hotels they own. The system validates hotel ownership automatically.
 - **Empty Data**: If no data exists for the requested period, endpoints return `200 OK` with zero values or empty arrays, not `404 Not Found`.
+
+---
+
+## Partner Dashboard
+
+### 1. Get Partner Dashboard Summary
+
+**GET** `/partner/dashboard/summary`
+
+- **Role Required**: PARTNER
+- **Query Parameters**:
+  - `hotel-id`: string (required, UUID format) - ID of the hotel to get dashboard data for
+  - `forecast-days`: integer (optional, default: 7, min: 1, max: 30) - Number of days to forecast occupancy
+- **Description**: Provides near real-time operational dashboard data for a partner's hotel, including today's activity, live booking/room statuses, and occupancy forecast.
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "todaysActivity": {
+      "checkInsToday": "integer",
+      "checkOutsToday": "integer",
+      "inHouseGuests": "integer"
+    },
+    "bookingStatusCounts": [
+      {
+        "status": "string (e.g., confirmed, checked_in, etc.)",
+        "count": "integer"
+      }
+    ],
+    "roomStatusCounts": [
+      {
+        "status": "string (e.g., available, booked, maintenance)",
+        "count": "integer"
+      }
+    ],
+    "occupancyForecast": [
+      {
+        "date": "date (ISO format: YYYY-MM-DD)",
+        "roomsBooked": "integer",
+        "occupancyPercentage": "number"
+      }
+    ],
+    "totalRoomCapacity": "integer"
+  }
+}
+```
+
+- **Notes**:
+  - This endpoint queries live data from Booking and Room tables for real-time accuracy
+  - Check-ins are bookings with `checkInDate = today` and status `confirmed`
+  - Check-outs are bookings with `checkOutDate = today` and status `checked_in`
+  - In-house guests are bookings with status `checked_in`
+  - Occupancy forecast includes only active booking statuses: `confirmed`, `checked_in`
+  - Room status counts include all room statuses in the system
+  - Occupancy percentage is calculated as: (roomsBooked / totalRoomCapacity) × 100
+  - Uses parallel execution for optimal performance
+
+---
+
+## Admin Dashboard
+
+### 1. Get Admin Dashboard Summary
+
+**GET** `/admin/dashboard/summary`
+
+- **Role Required**: ADMIN
+- **Query Parameters**: None (returns predefined data for fixed time periods)
+- **Description**: Provides a system health snapshot including real-time financials, booking activity, ecosystem growth, and top performing hotels. Uses a hybrid data architecture combining real-time transactional data (for "today" metrics) with pre-aggregated daily reports (for historical trends).
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "realtimeFinancials": {
+      "todayRevenue": "number",
+      "mtdRevenue": "number"
+    },
+    "aggregatedFinancials": {
+      "mtdGrossRevenue": "number",
+      "mtdNetRevenue": "number"
+    },
+    "bookingActivity": {
+      "bookingsCreatedToday": "integer"
+    },
+    "ecosystemGrowth": {
+      "newUsersToday": "integer",
+      "newPartnersToday": "integer",
+      "totalActiveHotels": "integer"
+    },
+    "topPerformingHotels": [
+      {
+        "hotelId": "string",
+        "hotelName": "string",
+        "totalRevenue": "number",
+        "totalBookings": "integer"
+      }
+    ]
+  }
+}
+```
+
+- **Notes**:
+  - **Hybrid Data Architecture**:
+    - Real-time data: `todayRevenue` (completed bookings checked out today), `bookingsCreatedToday`, `newUsersToday`, `newPartnersToday`
+    - Aggregated data: `mtdGrossRevenue`, `mtdNetRevenue` (from SystemDailyReport), `topPerformingHotels` (from HotelDailyReport for last 7 days)
+  - **Fixed Time Periods**:
+    - Today: Current date (real-time queries on transactional tables)
+    - Month-to-date (MTD): From 1st day of current month to yesterday (aggregated from daily reports)
+    - Last 7 days: For top hotels ranking (aggregated from HotelDailyReport)
+  - **Performance Optimization**: Uses parallel execution with `CompletableFuture` for all data fetches
+  - **Top Hotels**: Limited to top 5 hotels by revenue in the last 7 days
+  - **Total Active Hotels**: Count of hotels with status `active`
+  - **Revenue Calculation**: 
+    - Real-time: Sum of `finalPrice` from Booking table where status = `completed` and checkOutDate = today
+    - Aggregated: Sum from daily report tables for historical data
+  - MTD data excludes today to avoid inconsistency between real-time and aggregated sources
 
 ---
 

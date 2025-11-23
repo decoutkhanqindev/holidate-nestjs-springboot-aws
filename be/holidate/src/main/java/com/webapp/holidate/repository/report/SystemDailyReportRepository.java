@@ -1,5 +1,6 @@
 package com.webapp.holidate.repository.report;
 
+import com.webapp.holidate.constants.db.query.DashboardQueries;
 import com.webapp.holidate.constants.db.query.report.ReportQueries;
 import com.webapp.holidate.entity.report.SystemDailyReport;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -71,4 +72,13 @@ public interface SystemDailyReportRepository extends JpaRepository<SystemDailyRe
   // Get total financials for summary
   @Query(value = ReportQueries.GET_FINANCIALS_TOTAL, nativeQuery = true)
   Object[] getFinancialsTotal(LocalDate fromDate, LocalDate toDate);
+  
+  // ============ ADMIN DASHBOARD QUERIES ============
+  
+  /**
+   * Get aggregated financials for month-to-date
+   * Returns Object[] with: [0] = grossRevenue (Double), [1] = netRevenue (Double)
+   */
+  @Query(DashboardQueries.GET_AGGREGATED_FINANCIALS_MTD)
+  Object[] getAggregatedFinancialsMTD(LocalDate monthStart);
 }

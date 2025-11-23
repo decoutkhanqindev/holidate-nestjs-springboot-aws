@@ -1,6 +1,7 @@
 package com.webapp.holidate.repository.accommodation.room;
 
 import com.webapp.holidate.component.room.RoomCandidate;
+import com.webapp.holidate.constants.db.query.DashboardQueries;
 import com.webapp.holidate.constants.db.query.accommodation.room.RoomQueries;
 import com.webapp.holidate.entity.accommodation.room.Room;
 import io.micrometer.common.lang.Nullable;
@@ -65,4 +66,19 @@ public interface RoomRepository extends JpaRepository<Room, String> {
     long numberOfNights);
 
   long countByHotelId(String hotelId);
+  
+  // ============ DASHBOARD QUERIES ============
+  
+  /**
+   * Get room counts grouped by status
+   * Returns List of Object[] where [0] = status (String), [1] = count (Long)
+   */
+  @Query(DashboardQueries.GET_ROOM_STATUS_COUNTS)
+  List<Object[]> getRoomStatusCounts(String hotelId);
+  
+  /**
+   * Get total room capacity for a hotel (only active rooms)
+   */
+  @Query(DashboardQueries.GET_TOTAL_ROOM_CAPACITY)
+  long getTotalRoomCapacity(String hotelId, String activeStatus);
 }

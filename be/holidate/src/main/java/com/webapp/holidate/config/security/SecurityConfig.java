@@ -244,6 +244,10 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET,
                                                 ReportEndpoints.PARTNER_REPORTS + ReportEndpoints.REVIEWS_SUMMARY)
                                 .hasAuthority(RoleType.PARTNER.getValue())
+                                // 6. partner dashboard endpoints
+                                .requestMatchers(HttpMethod.GET,
+                                                DashboardEndpoints.PARTNER_DASHBOARD + DashboardEndpoints.SUMMARY)
+                                .hasAuthority(RoleType.PARTNER.getValue())
                                 // Note: Other booking endpoints are already defined in USER section above
 
                                 // III. admin role
@@ -379,6 +383,10 @@ public class SecurityConfig {
                                 .hasAuthority(RoleType.ADMIN.getValue())
                                 .requestMatchers(HttpMethod.POST,
                                                 ReportEndpoints.ADMIN_REPORTS + ReportEndpoints.GENERATE_ALL)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                // 12. admin dashboard endpoints
+                                .requestMatchers(HttpMethod.GET,
+                                                DashboardEndpoints.ADMIN_DASHBOARD + DashboardEndpoints.SUMMARY)
                                 .hasAuthority(RoleType.ADMIN.getValue())
 
                                 // C. any other endpoints

@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import com.webapp.holidate.constants.db.query.DashboardQueries;
 import com.webapp.holidate.constants.db.query.report.ReportQueries;
 import com.webapp.holidate.entity.report.HotelDailyReport;
 import com.webapp.holidate.entity.report.HotelDailyReportId;
@@ -133,4 +134,14 @@ public interface HotelDailyReportRepository extends JpaRepository<HotelDailyRepo
                         LocalDate fromDate,
                         LocalDate toDate,
                         int limit);
+        
+        // ============ ADMIN DASHBOARD QUERIES ============
+        
+        /**
+         * Get top performing hotels in the last N days
+         * Returns List of Object[] with: [0] = hotelId (String), [1] = hotelName (String), 
+         *                                 [2] = totalRevenue (Double), [3] = totalBookings (Long)
+         */
+        @Query(value = DashboardQueries.GET_TOP_PERFORMING_HOTELS, nativeQuery = true)
+        List<Object[]> getTopPerformingHotels(LocalDate fromDate, LocalDate toDate, int limit);
 }

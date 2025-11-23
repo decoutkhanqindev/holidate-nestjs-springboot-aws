@@ -1,5 +1,6 @@
 package com.webapp.holidate.repository.booking;
 
+import com.webapp.holidate.constants.db.query.DashboardQueries;
 import com.webapp.holidate.constants.db.query.booking.BookingQueries;
 import com.webapp.holidate.entity.booking.Booking;
 import org.springframework.data.domain.Page;
@@ -62,4 +63,53 @@ public interface BookingRepository extends JpaRepository<Booking, String> {
   long countByUserId(String userId);
 
   long countByAppliedDiscountId(String discountId);
+  
+  // ============ DASHBOARD QUERIES ============
+  
+  /**
+   * Count bookings with check-in today for a specific hotel
+   */
+  @Query(DashboardQueries.COUNT_CHECK_INS_TODAY)
+  long countCheckInsToday(String hotelId, String confirmedStatus);
+  
+  /**
+   * Count bookings with check-out today for a specific hotel
+   */
+  @Query(DashboardQueries.COUNT_CHECK_OUTS_TODAY)
+  long countCheckOutsToday(String hotelId, String checkedInStatus);
+  
+  /**
+   * Count in-house guests (currently staying) for a specific hotel
+   */
+  @Query(DashboardQueries.COUNT_IN_HOUSE_GUESTS)
+  long countInHouseGuests(String hotelId, String checkedInStatus);
+  
+  /**
+   * Get booking counts grouped by status
+   * Returns List of Object[] where [0] = status (String), [1] = count (Long)
+   */
+  @Query(DashboardQueries.GET_BOOKING_STATUS_COUNTS)
+  List<Object[]> getBookingStatusCounts(String hotelId, List<String> activeStatuses);
+  
+  /**
+   * Get occupancy forecast for the next N days
+   * Returns List of Object[] where [0] = date (Date), [1] = roomsBooked (Long)
+   */
+  @Query(value = DashboardQueries.GET_OCCUPANCY_FORECAST, nativeQuery = true)
+  List<Object[]> getOccupancyForecast(String hotelId, int forecastDays, List<String> activeBookingStatuses);
+  
+  // ============ ADMIN DASHBOARD QUERIES ============
+  
+  /**
+   * Get realtime financials for today
+   * Sum of final prices from COMPLETED bookings that checked out today
+   */
+  @Query(DashboardQueries.GET_REALTIME_FINANCIALS_TODAY)
+  Double getRealtimeFinancialsToday(String completedStatus);
+  
+  /**
+   * Count bookings created today
+   */
+  @Query(DashboardQueries.COUNT_BOOKINGS_CREATED_TODAY)
+  long countBookingsCreatedToday();
 }
