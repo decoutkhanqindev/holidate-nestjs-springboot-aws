@@ -1,10 +1,71 @@
 # ĐẶC TẢ CÁC ENTITY TRONG HỆ THỐNG HOLIDATE
 
+## BẢNG THAM CHIẾU NHANH: ENTITY → TABLE NAME
+
+| STT | Entity Class | Table Name | Loại |
+|-----|-------------|------------|------|
+| 1 | User | `users` | Entity |
+| 2 | Role | `roles` | Entity |
+| 3 | UserAuthInfo | `user_auth_info` | Entity |
+| 4 | InvalidToken | `invalid_tokens` | Entity |
+| 5 | Hotel | `hotels` | Entity |
+| 6 | Room | `rooms` | Entity |
+| 7 | RoomInventory | `room_inventories` | Entity |
+| 8 | RoomInventoryId | _(Embeddable)_ | Composite Key |
+| 9 | BedType | `bed_types` | Entity |
+| 10 | Booking | `bookings` | Entity |
+| 11 | Payment | `payments` | Entity |
+| 12 | Review | `reviews` | Entity |
+| 13 | Country | `countries` | Entity |
+| 14 | Province | `provinces` | Entity |
+| 15 | City | `cities` | Entity |
+| 16 | District | `districts` | Entity |
+| 17 | Ward | `wards` | Entity |
+| 18 | Street | `streets` | Entity |
+| 19 | EntertainmentVenue | `entertainment_venues` | Entity |
+| 20 | EntertainmentVenueCategory | `entertainment_venue_categories` | Entity |
+| 21 | HotelEntertainmentVenue | `hotel_entertainment_venues` | Join Table |
+| 22 | Photo | `photos` | Entity |
+| 23 | PhotoCategory | `photo_categories` | Entity |
+| 24 | HotelPhoto | `hotel_photos` | Join Table |
+| 25 | RoomPhoto | `room_photos` | Join Table |
+| 26 | ReviewPhoto | `review_photos` | Join Table |
+| 27 | Amenity | `amenities` | Entity |
+| 28 | AmenityCategory | `amenity_categories` | Entity |
+| 29 | HotelAmenity | `hotel_amenities` | Join Table |
+| 30 | RoomAmenity | `room_amenities` | Join Table |
+| 31 | Discount | `discounts` | Entity |
+| 32 | HotelDiscount | `hotel_discounts` | Join Table |
+| 33 | SpecialDayDiscount | `special_day_discounts` | Join Table |
+| 34 | SpecialDay | `special_days` | Entity |
+| 35 | HotelPolicy | `hotel_policies` | Entity |
+| 36 | CancellationPolicy | `cancellation_policies` | Entity |
+| 37 | CancellationRule | `cancellation_rules` | Entity |
+| 38 | ReschedulePolicy | `reschedule_policies` | Entity |
+| 39 | RescheduleRule | `reschedule_rules` | Entity |
+| 40 | IdentificationDocument | `identification_documents` | Entity |
+| 41 | HotelPolicyIdentificationDocument | `hotel_policy_identification_documents` | Join Table |
+| 42 | HotelDailyReport | `hotel_daily_reports` | Entity |
+| 43 | HotelDailyReportId | _(Embeddable)_ | Composite Key |
+| 44 | SystemDailyReport | `system_daily_reports` | Entity |
+| 45 | RoomDailyPerformance | `room_daily_performances` | Entity |
+| 46 | RoomDailyPerformanceId | _(Embeddable)_ | Composite Key |
+
+**Ghi chú:**
+- **Entity:** Bảng dữ liệu chính trong database
+- **Join Table:** Bảng trung gian cho quan hệ many-to-many
+- **Embeddable:** Class được nhúng vào entity khác, không có bảng riêng
+- **Composite Key:** Class định nghĩa khóa chính tổng hợp
+
+---
+
 ## 1. ENTITY NGƯỜI DÙNG (USER)
 
 ### 1.1. User
 
 **Mô tả:** Entity đại diện cho người dùng trong hệ thống (khách hàng, đối tác, admin)
+
+**Tên bảng:** `users`
 
 **Các trường chính:**
 
@@ -31,6 +92,8 @@
 
 **Mô tả:** Vai trò của người dùng trong hệ thống (Admin, Partner, Customer, ...)
 
+**Tên bảng:** `roles`
+
 **Các trường chính:**
 
 - **id:** `UUID` (Primary Key)
@@ -45,6 +108,8 @@
 ### 1.3. UserAuthInfo
 
 **Mô tả:** Thông tin xác thực và bảo mật của user
+
+**Tên bảng:** `user_auth_info`
 
 **Các trường chính:**
 
@@ -67,6 +132,8 @@
 
 **Mô tả:** Lưu trữ các token đã bị vô hiệu hóa (logout, blacklist)
 
+**Tên bảng:** `invalid_tokens`
+
 **Các trường chính:**
 
 - **id:** `String` (Primary Key) - ID của token (thường là jti - JWT ID)
@@ -81,6 +148,8 @@
 ### 2.1. Hotel
 
 **Mô tả:** Entity đại diện cho khách sạn/nơi lưu trú
+
+**Tên bảng:** `hotels`
 
 **Các trường chính:**
 
@@ -116,6 +185,8 @@
 ### 2.2. Room
 
 **Mô tả:** Entity đại diện cho phòng trong khách sạn
+
+**Tên bảng:** `rooms`
 
 **Các trường chính:**
 
@@ -153,6 +224,8 @@
 
 **Mô tả:** Quản lý tồn kho và giá phòng theo từng ngày
 
+**Tên bảng:** `room_inventories`
+
 **Các trường chính:**
 
 - **id:** `RoomInventoryId` (Composite Primary Key)
@@ -175,6 +248,8 @@
 
 **Mô tả:** Composite key cho RoomInventory (Embeddable)
 
+**Tên bảng:** _(Không có bảng riêng, đây là Embeddable class)_
+
 **Các trường:**
 
 - **roomId:** `String` (not null)
@@ -183,6 +258,8 @@
 ### 2.5. BedType
 
 **Mô tả:** Loại giường (Single, Double, Queen, King, ...)
+
+**Tên bảng:** `bed_types`
 
 **Các trường chính:**
 
@@ -200,6 +277,8 @@
 ### 3.1. Booking
 
 **Mô tả:** Entity đại diện cho đơn đặt phòng
+
+**Tên bảng:** `bookings`
 
 **Các trường chính:**
 
@@ -240,6 +319,8 @@
 
 **Mô tả:** Entity đại diện cho giao dịch thanh toán
 
+**Tên bảng:** `payments`
+
 **Các trường chính:**
 
 - **id:** `UUID` (Primary Key)
@@ -261,6 +342,8 @@
 ### 3.3. Review
 
 **Mô tả:** Entity đại diện cho đánh giá của khách hàng về khách sạn
+
+**Tên bảng:** `reviews`
 
 **Các trường chính:**
 
@@ -285,6 +368,8 @@
 
 **Mô tả:** Quốc gia
 
+**Tên bảng:** `countries`
+
 **Các trường chính:**
 
 - **id:** `UUID` (Primary Key)
@@ -299,6 +384,8 @@
 ### 4.2. Province
 
 **Mô tả:** Tỉnh/Thành phố
+
+**Tên bảng:** `provinces`
 
 **Các trường chính:**
 
@@ -315,6 +402,8 @@
 ### 4.3. City
 
 **Mô tả:** Thành phố/Quận
+
+**Tên bảng:** `cities`
 
 **Các trường chính:**
 
@@ -333,6 +422,8 @@
 
 **Mô tả:** Quận/Huyện
 
+**Tên bảng:** `districts`
+
 **Các trường chính:**
 
 - **id:** `UUID` (Primary Key)
@@ -348,6 +439,8 @@
 ### 4.5. Ward
 
 **Mô tả:** Phường/Xã
+
+**Tên bảng:** `wards`
 
 **Các trường chính:**
 
@@ -365,6 +458,8 @@
 
 **Mô tả:** Đường/Phố
 
+**Tên bảng:** `streets`
+
 **Các trường chính:**
 
 - **id:** `UUID` (Primary Key)
@@ -379,6 +474,8 @@
 ### 4.7. EntertainmentVenue
 
 **Mô tả:** Địa điểm giải trí gần khách sạn (nhà hàng, bảo tàng, công viên, ...)
+
+**Tên bảng:** `entertainment_venues`
 
 **Các trường chính:**
 
@@ -395,6 +492,8 @@
 
 **Mô tả:** Danh mục địa điểm giải trí (Restaurant, Museum, Park, Shopping Mall, ...)
 
+**Tên bảng:** `entertainment_venue_categories`
+
 **Các trường chính:**
 
 - **id:** `UUID` (Primary Key)
@@ -407,6 +506,8 @@
 ### 4.9. HotelEntertainmentVenue
 
 **Mô tả:** Bảng liên kết giữa khách sạn và địa điểm giải trí (many-to-many)
+
+**Tên bảng:** `hotel_entertainment_venues`
 
 **Các trường chính:**
 
@@ -426,6 +527,8 @@
 
 **Mô tả:** Entity cơ bản lưu trữ thông tin ảnh
 
+**Tên bảng:** `photos`
+
 **Các trường chính:**
 
 - **id:** `UUID` (Primary Key)
@@ -438,6 +541,8 @@
 ### 5.2. PhotoCategory
 
 **Mô tả:** Danh mục ảnh (Hotel, Room, Review, ...)
+
+**Tên bảng:** `photo_categories`
 
 **Các trường chính:**
 
@@ -452,6 +557,8 @@
 
 **Mô tả:** Bảng liên kết giữa Hotel và Photo (many-to-many)
 
+**Tên bảng:** `hotel_photos`
+
 **Các trường chính:**
 
 - **id:** `UUID` (Primary Key)
@@ -465,6 +572,8 @@
 
 **Mô tả:** Bảng liên kết giữa Room và Photo (many-to-many)
 
+**Tên bảng:** `room_photos`
+
 **Các trường chính:**
 
 - **id:** `UUID` (Primary Key)
@@ -477,6 +586,8 @@
 ### 5.5. ReviewPhoto
 
 **Mô tả:** Bảng liên kết giữa Review và Photo (many-to-many)
+
+**Tên bảng:** `review_photos`
 
 **Các trường chính:**
 
@@ -495,6 +606,8 @@
 
 **Mô tả:** Tiện ích cơ bản (WiFi, Pool, Gym, Parking, ...)
 
+**Tên bảng:** `amenities`
+
 **Các trường chính:**
 
 - **id:** `UUID` (Primary Key)
@@ -509,6 +622,8 @@
 
 **Mô tả:** Danh mục tiện ích (General, Room, Service, ...)
 
+**Tên bảng:** `amenity_categories`
+
 **Các trường chính:**
 
 - **id:** `UUID` (Primary Key)
@@ -522,6 +637,8 @@
 
 **Mô tả:** Bảng liên kết giữa Hotel và Amenity (many-to-many)
 
+**Tên bảng:** `hotel_amenities`
+
 **Các trường chính:**
 
 - **id:** `UUID` (Primary Key)
@@ -534,6 +651,8 @@
 ### 6.4. RoomAmenity
 
 **Mô tả:** Bảng liên kết giữa Room và Amenity (many-to-many)
+
+**Tên bảng:** `room_amenities`
 
 **Các trường chính:**
 
@@ -551,6 +670,8 @@
 ### 7.1. Discount
 
 **Mô tả:** Mã giảm giá/chương trình khuyến mãi
+
+**Tên bảng:** `discounts`
 
 **Các trường chính:**
 
@@ -578,6 +699,8 @@
 
 **Mô tả:** Bảng liên kết giữa Hotel và Discount (many-to-many)
 
+**Tên bảng:** `hotel_discounts`
+
 **Các trường chính:**
 
 - **id:** `UUID` (Primary Key)
@@ -590,6 +713,8 @@
 ### 7.3. SpecialDayDiscount
 
 **Mô tả:** Bảng liên kết giữa SpecialDay và Discount (many-to-many)
+
+**Tên bảng:** `special_day_discounts`
 
 **Các trường chính:**
 
@@ -607,6 +732,8 @@
 ### 8.1. SpecialDay
 
 **Mô tả:** Ngày đặc biệt (lễ, tết, sự kiện) có thể áp dụng giảm giá
+
+**Tên bảng:** `special_days`
 
 **Các trường chính:**
 
@@ -626,6 +753,8 @@
 
 **Mô tả:** Chính sách tổng quát của khách sạn
 
+**Tên bảng:** `hotel_policies`
+
 **Các trường chính:**
 
 - **id:** `String` (Primary Key, sử dụng hotel_id)
@@ -644,6 +773,8 @@
 
 **Mô tả:** Chính sách hủy đặt phòng (Linh hoạt, Nghiêm ngặt, Không hoàn hủy, ...)
 
+**Tên bảng:** `cancellation_policies`
+
 **Các trường chính:**
 
 - **id:** `UUID` (Primary Key)
@@ -659,6 +790,8 @@
 ### 9.3. CancellationRule
 
 **Mô tả:** Quy tắc cụ thể trong chính sách hủy
+
+**Tên bảng:** `cancellation_rules`
 
 **Các trường chính:**
 
@@ -680,6 +813,8 @@
 
 **Mô tả:** Chính sách đổi lịch đặt phòng
 
+**Tên bảng:** `reschedule_policies`
+
 **Các trường chính:**
 
 - **id:** `UUID` (Primary Key)
@@ -695,6 +830,8 @@
 ### 9.5. RescheduleRule
 
 **Mô tả:** Quy tắc cụ thể trong chính sách đổi lịch
+
+**Tên bảng:** `reschedule_rules`
 
 **Các trường chính:**
 
@@ -714,6 +851,8 @@
 
 **Mô tả:** Loại tài liệu định danh (CMND, CCCD, Passport, ...)
 
+**Tên bảng:** `identification_documents`
+
 **Các trường chính:**
 
 - **id:** `UUID` (Primary Key)
@@ -726,6 +865,8 @@
 ### 10.2. HotelPolicyIdentificationDocument
 
 **Mô tả:** Bảng liên kết giữa HotelPolicy và IdentificationDocument (many-to-many)
+
+**Tên bảng:** `hotel_policy_identification_documents`
 
 **Các trường chính:**
 
@@ -743,6 +884,8 @@
 ### 11.1. HotelDailyReport
 
 **Mô tả:** Entity lưu trữ bản tóm tắt các chỉ số hoạt động kinh doanh của một khách sạn theo từng ngày
+
+**Tên bảng:** `hotel_daily_reports`
 
 **Các trường chính:**
 
@@ -773,6 +916,8 @@
 
 **Mô tả:** Composite key cho HotelDailyReport (Embeddable)
 
+**Tên bảng:** _(Không có bảng riêng, đây là Embeddable class)_
+
 **Các trường:**
 
 - **hotelId:** `String` (not null)
@@ -781,6 +926,8 @@
 ### 11.3. SystemDailyReport
 
 **Mô tả:** Entity tổng hợp các chỉ số hiệu suất kinh doanh của toàn hệ thống theo từng ngày
+
+**Tên bảng:** `system_daily_reports`
 
 **Các trường chính:**
 
@@ -802,6 +949,8 @@
 
 **Mô tả:** Entity phân tích hiệu suất của từng loại phòng cụ thể theo ngày
 
+**Tên bảng:** `room_daily_performances`
+
 **Các trường chính:**
 
 - **id:** `RoomDailyPerformanceId` (Composite Primary Key)
@@ -819,6 +968,8 @@
 ### 11.5. RoomDailyPerformanceId
 
 **Mô tả:** Composite key cho RoomDailyPerformance (Embeddable)
+
+**Tên bảng:** _(Không có bảng riêng, đây là Embeddable class)_
 
 **Các trường:**
 
