@@ -72,14 +72,14 @@
 - **id:** `UUID` (Primary Key)
 - **email:** `String` (unique, not null) - Email đăng nhập
 - **password:** `String` (not null) - Mật khẩu đã mã hóa
-- **fullName:** `String` (not null) - Họ và tên
-- **phoneNumber:** `String` (unique, length=11, nullable) - Số điện thoại
+- **full_name:** `String` (not null) - Họ và tên
+- **phone_number:** `String` (unique, length=11, nullable) - Số điện thoại
 - **address:** `String` (nullable) - Địa chỉ chi tiết
 - **gender:** `String` (nullable) - Giới tính
-- **dateOfBirth:** `LocalDateTime` (nullable) - Ngày sinh
-- **avatarUrl:** `String` (nullable) - URL ảnh đại diện
-- **createdAt:** `LocalDateTime` (not null, default = now) - Thời gian tạo
-- **updatedAt:** `LocalDateTime` (nullable) - Thời gian cập nhật
+- **date_of_birth:** `LocalDateTime` (nullable) - Ngày sinh
+- **avatar_url:** `String` (nullable) - URL ảnh đại diện
+- **created_at:** `LocalDateTime` (not null, default = now) - Thời gian tạo
+- **updated_at:** `LocalDateTime` (nullable) - Thời gian cập nhật
 
 **Quan hệ:**
 
@@ -114,14 +114,14 @@
 **Các trường chính:**
 
 - **id:** `UUID` (Primary Key)
-- **authProvider:** `String` (not null) - Nhà cung cấp xác thực
+- **auth_provider:** `String` (not null) - Nhà cung cấp xác thực
   - → Enum Type: `AuthProviderType` (LOCAL="local", GOOGLE="google")
-- **authProviderId:** `String` (nullable) - ID từ nhà cung cấp bên thứ 3
+- **auth_provider_id:** `String` (nullable) - ID từ nhà cung cấp bên thứ 3
 - **otp:** `String` (nullable) - Mã OTP hiện tại
-- **otpAttempts:** `int` (not null) - Số lần thử OTP
-- **otpExpirationTime:** `LocalDateTime` (nullable) - Thời gian hết hạn OTP
-- **otpBlockedUntil:** `LocalDateTime` (nullable) - Thời gian bị khóa đến khi nào
-- **refreshToken:** `String` (nullable, TEXT) - Refresh token để làm mới access token
+- **otp_attempts:** `int` (not null) - Số lần thử OTP
+- **otp_expiration_time:** `LocalDateTime` (nullable) - Thời gian hết hạn OTP
+- **otp_blocked_until:** `LocalDateTime` (nullable) - Thời gian bị khóa đến khi nào
+- **refresh_token:** `String` (nullable, TEXT) - Refresh token để làm mới access token
 - **active:** `boolean` (not null) - Trạng thái kích hoạt tài khoản
 
 **Quan hệ:**
@@ -159,16 +159,16 @@
 - **address:** `String` (not null) - Địa chỉ
 - **latitude:** `double` (nullable) - Vĩ độ
 - **longitude:** `double` (nullable) - Kinh độ
-- **starRating:** `int` (nullable, default=0) - Hạng sao (1-5)
-- **commissionRate:** `double` (not null, default=15.0) - Tỷ lệ hoa hồng (phần trăm) mà Holidate thu trên mỗi booking thành công
+- **star_rating:** `int` (nullable, default=0) - Hạng sao (1-5)
+- **commission_rate:** `double` (not null, default=15.0) - Tỷ lệ hoa hồng (phần trăm) mà Holidate thu trên mỗi booking thành công
 - **status:** `String` (not null) - Trạng thái khách sạn
   - → Enum Type: `AccommodationStatusType`
     - ACTIVE="active" - Khách sạn đang hoạt động và có thể đặt phòng
     - INACTIVE="inactive" - Khách sạn không hoạt động (không nhận đặt phòng mới)
     - MAINTENANCE="maintenance" - Khách sạn đang bảo trì
     - CLOSED="closed" - Khách sạn đã đóng cửa
-- **createdAt:** `LocalDateTime` (not null, default = now)
-- **updatedAt:** `LocalDateTime` (nullable)
+- **created_at:** `LocalDateTime` (not null, default = now)
+- **updated_at:** `LocalDateTime` (nullable)
 
 **Quan hệ:**
 
@@ -194,12 +194,12 @@
 - **name:** `String` (not null) - Tên phòng
 - **view:** `String` (not null) - Hướng nhìn (sea view, city view, ...)
 - **area:** `double` (not null) - Diện tích (m²)
-- **maxAdults:** `int` (not null) - Số người lớn tối đa
-- **maxChildren:** `int` (not null) - Số trẻ em tối đa
-- **basePricePerNight:** `double` (not null) - Giá cơ bản mỗi đêm
-- **smokingAllowed:** `boolean` (not null) - Cho phép hút thuốc
-- **wifiAvailable:** `boolean` (not null) - Có WiFi
-- **breakfastIncluded:** `boolean` (not null) - Bao gồm bữa sáng
+- **max_adults:** `int` (not null) - Số người lớn tối đa
+- **max_children:** `int` (not null) - Số trẻ em tối đa
+- **base_price_per_night:** `double` (not null) - Giá cơ bản mỗi đêm
+- **smoking_allowed:** `boolean` (not null) - Cho phép hút thuốc
+- **wifi_available:** `boolean` (not null) - Có WiFi
+- **breakfast_included:** `boolean` (not null) - Bao gồm bữa sáng
 - **quantity:** `int` (not null) - Số lượng phòng
 - **status:** `String` (not null) - Trạng thái phòng
   - → Enum Type: `AccommodationStatusType` (cùng enum với Hotel)
@@ -207,8 +207,8 @@
     - INACTIVE="inactive" - Phòng không hoạt động
     - MAINTENANCE="maintenance" - Phòng đang bảo trì
     - CLOSED="closed" - Phòng đã đóng
-- **createdAt:** `LocalDateTime` (not null, default = now)
-- **updatedAt:** `LocalDateTime` (nullable)
+- **created_at:** `LocalDateTime` (not null, default = now)
+- **updated_at:** `LocalDateTime` (nullable)
 
 **Quan hệ:**
 
@@ -229,10 +229,10 @@
 **Các trường chính:**
 
 - **id:** `RoomInventoryId` (Composite Primary Key)
-  - roomId: `String` (not null)
+  - room_id: `String` (not null)
   - date: `LocalDate` (not null)
 - **price:** `double` (not null) - Giá phòng cho ngày cụ thể
-- **availableRooms:** `int` (not null) - Số phòng còn trống
+- **available_rooms:** `int` (not null) - Số phòng còn trống
 - **status:** `String` (not null) - Trạng thái tồn kho phòng
   - → Enum Type: `RoomInventoryStatusType`
     - AVAILABLE="available" - Phòng còn trống
@@ -252,7 +252,7 @@
 
 **Các trường:**
 
-- **roomId:** `String` (not null)
+- **room_id:** `String` (not null)
 - **date:** `LocalDate` (not null)
 
 ### 2.5. BedType
@@ -283,18 +283,18 @@
 **Các trường chính:**
 
 - **id:** `UUID` (Primary Key)
-- **checkInDate:** `LocalDate` (not null) - Ngày nhận phòng
-- **checkOutDate:** `LocalDate` (not null) - Ngày trả phòng
-- **numberOfNights:** `int` (not null) - Số đêm
-- **numberOfRooms:** `int` (not null) - Số phòng đặt
-- **numberOfAdults:** `int` (not null) - Số người lớn
-- **numberOfChildren:** `int` (not null, default=0) - Số trẻ em
-- **originalPrice:** `double` (not null) - Giá gốc
-- **discountAmount:** `double` (nullable) - Số tiền giảm giá
-- **finalPrice:** `double` (not null) - Giá cuối cùng sau giảm giá
-- **contactFullName:** `String` (not null) - Tên người liên hệ
-- **contactEmail:** `String` (not null) - Email liên hệ
-- **contactPhone:** `String` (not null) - Số điện thoại liên hệ
+- **check_in_date:** `LocalDate` (not null) - Ngày nhận phòng
+- **check_out_date:** `LocalDate` (not null) - Ngày trả phòng
+- **number_of_nights:** `int` (not null) - Số đêm
+- **number_of_rooms:** `int` (not null) - Số phòng đặt
+- **number_of_adults:** `int` (not null) - Số người lớn
+- **number_of_children:** `int` (not null, default=0) - Số trẻ em
+- **original_price:** `double` (not null) - Giá gốc
+- **discount_amount:** `double` (nullable) - Số tiền giảm giá
+- **final_price:** `double` (not null) - Giá cuối cùng sau giảm giá
+- **contact_full_name:** `String` (not null) - Tên người liên hệ
+- **contact_email:** `String` (not null) - Email liên hệ
+- **contact_phone:** `String` (not null) - Số điện thoại liên hệ
 - **status:** `String` (not null) - Trạng thái đặt phòng
   - → Enum Type: `BookingStatusType`
     - PENDING_PAYMENT="pending_payment" - Đang chờ thanh toán
@@ -303,8 +303,8 @@
     - CANCELLED="cancelled" - Đã hủy
     - COMPLETED="completed" - Đã hoàn thành (khách đã trả phòng)
     - RESCHEDULED="rescheduled" - Đã đổi lịch
-- **createdAt:** `LocalDateTime` (not null, default = now)
-- **updatedAt:** `LocalDateTime` (nullable)
+- **created_at:** `LocalDateTime` (not null, default = now)
+- **updated_at:** `LocalDateTime` (nullable)
 
 **Quan hệ:**
 
@@ -325,15 +325,15 @@
 
 - **id:** `UUID` (Primary Key)
 - **amount:** `double` (not null) - Số tiền thanh toán
-- **paymentMethod:** `String` (not null) - Phương thức thanh toán (vnpay, ...)
+- **payment_method:** `String` (not null) - Phương thức thanh toán (vnpay, ...)
 - **status:** `String` (not null) - Trạng thái thanh toán
   - → Enum Type: `PaymentStatusType`
     - PENDING="pending" - Đang chờ thanh toán
     - SUCCESS="success" - Thanh toán thành công
     - FAILED="failed" - Thanh toán thất bại
-- **transactionId:** `String` (unique, nullable) - ID giao dịch từ cổng thanh toán
-- **createdAt:** `LocalDateTime` (not null, default = now)
-- **completedAt:** `LocalDateTime` (nullable) - Thời gian hoàn thành
+- **transaction_id:** `String` (unique, nullable) - ID giao dịch từ cổng thanh toán
+- **created_at:** `LocalDateTime` (not null, default = now)
+- **completed_at:** `LocalDateTime` (nullable) - Thời gian hoàn thành
 
 **Quan hệ:**
 
@@ -350,8 +350,8 @@
 - **id:** `UUID` (Primary Key)
 - **score:** `int` (not null) - Điểm đánh giá (1-10)
 - **comment:** `String` (nullable, TEXT) - Bình luận chi tiết
-- **createdAt:** `LocalDateTime` (not null, default = now)
-- **updatedAt:** `LocalDateTime` (nullable)
+- **created_at:** `LocalDateTime` (not null, default = now)
+- **updated_at:** `LocalDateTime` (nullable)
 
 **Quan hệ:**
 
@@ -679,15 +679,15 @@
 - **code:** `String` (unique, not null) - Mã giảm giá
 - **description:** `String` (not null, TEXT) - Mô tả
 - **percentage:** `double` (not null) - Phần trăm giảm giá (ví dụ: 10.0 = 10%)
-- **usageLimit:** `int` (not null) - Giới hạn số lần sử dụng
-- **timesUsed:** `int` (not null, default=0) - Số lần đã sử dụng
-- **minBookingPrice:** `int` (not null) - Giá đặt phòng tối thiểu để áp dụng
-- **minBookingCount:** `int` (not null) - Số đêm tối thiểu để áp dụng
-- **validFrom:** `LocalDate` (not null) - Ngày bắt đầu hiệu lực
-- **validTo:** `LocalDate` (not null) - Ngày kết thúc hiệu lực
+- **usage_limit:** `int` (not null) - Giới hạn số lần sử dụng
+- **times_used:** `int` (not null, default=0) - Số lần đã sử dụng
+- **min_booking_price:** `int` (not null) - Giá đặt phòng tối thiểu để áp dụng
+- **min_booking_count:** `int` (not null) - Số đêm tối thiểu để áp dụng
+- **valid_from:** `LocalDate` (not null) - Ngày bắt đầu hiệu lực
+- **valid_to:** `LocalDate` (not null) - Ngày kết thúc hiệu lực
 - **active:** `boolean` (not null, default=true) - Trạng thái kích hoạt
-- **createdAt:** `LocalDateTime` (not null, default = now)
-- **updatedAt:** `LocalDateTime` (nullable)
+- **created_at:** `LocalDateTime` (not null, default = now)
+- **updated_at:** `LocalDateTime` (nullable)
 
 **Quan hệ:**
 
@@ -758,9 +758,9 @@
 **Các trường chính:**
 
 - **id:** `String` (Primary Key, sử dụng hotel_id)
-- **checkInTime:** `LocalTime` (not null) - Giờ nhận phòng
-- **checkOutTime:** `LocalTime` (not null) - Giờ trả phòng
-- **allowsPayAtHotel:** `boolean` (not null, default=false) - Cho phép thanh toán tại khách sạn
+- **check_in_time:** `LocalTime` (not null) - Giờ nhận phòng
+- **check_out_time:** `LocalTime` (not null) - Giờ trả phòng
+- **allows_pay_at_hotel:** `boolean` (not null, default=false) - Cho phép thanh toán tại khách sạn
 
 **Quan hệ:**
 
@@ -796,8 +796,8 @@
 **Các trường chính:**
 
 - **id:** `UUID` (Primary Key)
-- **daysBeforeCheckIn:** `int` (not null) - Số ngày trước ngày nhận phòng
-- **penaltyPercentage:** `int` (not null) - Phần trăm phạt (0-100)
+- **days_before_check_in:** `int` (not null) - Số ngày trước ngày nhận phòng
+- **penalty_percentage:** `int` (not null) - Phần trăm phạt (0-100)
 
 **Quan hệ:**
 
@@ -805,9 +805,9 @@
 
 **Ví dụ:**
 
-- daysBeforeCheckIn = 7, penaltyPercentage = 0: Hủy trước 7 ngày → miễn phí
-- daysBeforeCheckIn = 3, penaltyPercentage = 50: Hủy 3-7 ngày trước → phạt 50%
-- daysBeforeCheckIn = 0, penaltyPercentage = 100: Hủy trong 3 ngày → không hoàn tiền
+- days_before_check_in = 7, penalty_percentage = 0: Hủy trước 7 ngày → miễn phí
+- days_before_check_in = 3, penalty_percentage = 50: Hủy 3-7 ngày trước → phạt 50%
+- days_before_check_in = 0, penalty_percentage = 100: Hủy trong 3 ngày → không hoàn tiền
 
 ### 9.4. ReschedulePolicy
 
@@ -836,8 +836,8 @@
 **Các trường chính:**
 
 - **id:** `UUID` (Primary Key)
-- **daysBeforeCheckin:** `int` (nullable) - Số ngày trước ngày check-in
-- **feePercentage:** `int` (not null) - Phần trăm phí đổi lịch (0-100)
+- **days_before_checkin:** `int` (nullable) - Số ngày trước ngày check-in
+- **fee_percentage:** `int` (not null) - Phần trăm phí đổi lịch (0-100)
 
 **Quan hệ:**
 
@@ -890,23 +890,23 @@
 **Các trường chính:**
 
 - **id:** `HotelDailyReportId` (Composite Primary Key)
-  - hotelId: `String` (not null)
-  - reportDate: `LocalDate` (not null)
-- **totalRevenue:** `double` (not null, default=0) - Tổng doanh thu thực nhận trong ngày
-- **createdBookings:** `int` (not null, default=0) - Tổng số booking mới được tạo trong ngày
-- **pendingPaymentBookings:** `int` (not null, default=0) - Số booking có trạng thái PENDING_PAYMENT
-- **confirmedBookings:** `int` (not null, default=0) - Số booking có trạng thái CONFIRMED
-- **checkedInBookings:** `int` (not null, default=0) - Số booking có trạng thái CHECKED_IN
-- **completedBookings:** `int` (not null, default=0) - Số booking được hoàn thành trong ngày
-- **cancelledBookings:** `int` (not null, default=0) - Số booking bị hủy trong ngày
-- **rescheduledBookings:** `int` (not null, default=0) - Số booking có trạng thái RESCHEDULED
-- **occupiedRoomNights:** `int` (not null, default=0) - Tổng số "phòng-đêm" đã được bán
-- **totalRoomNights:** `int` (not null, default=0) - Tổng số "phòng-đêm" có sẵn để bán
-- **newCustomerBookings:** `int` (not null, default=0) - Số booking từ khách hàng mới
-- **returningCustomerBookings:** `int` (not null, default=0) - Số booking từ khách hàng quay lại
-- **averageReviewScore:** `Double` (nullable) - Điểm đánh giá trung bình trong ngày
-- **reviewCount:** `int` (not null, default=0) - Số lượng Review mới được tạo
-- **updatedAt:** `LocalDateTime` (not null) - Thời điểm cập nhật lần cuối
+  - hotel_id: `String` (not null)
+  - report_date: `LocalDate` (not null)
+- **total_revenue:** `double` (not null, default=0) - Tổng doanh thu thực nhận trong ngày
+- **created_bookings:** `int` (not null, default=0) - Tổng số booking mới được tạo trong ngày
+- **pending_payment_bookings:** `int` (not null, default=0) - Số booking có trạng thái PENDING_PAYMENT
+- **confirmed_bookings:** `int` (not null, default=0) - Số booking có trạng thái CONFIRMED
+- **checked_in_bookings:** `int` (not null, default=0) - Số booking có trạng thái CHECKED_IN
+- **completed_bookings:** `int` (not null, default=0) - Số booking được hoàn thành trong ngày
+- **cancelled_bookings:** `int` (not null, default=0) - Số booking bị hủy trong ngày
+- **rescheduled_bookings:** `int` (not null, default=0) - Số booking có trạng thái RESCHEDULED
+- **occupied_room_nights:** `int` (not null, default=0) - Tổng số "phòng-đêm" đã được bán
+- **total_room_nights:** `int` (not null, default=0) - Tổng số "phòng-đêm" có sẵn để bán
+- **new_customer_bookings:** `int` (not null, default=0) - Số booking từ khách hàng mới
+- **returning_customer_bookings:** `int` (not null, default=0) - Số booking từ khách hàng quay lại
+- **average_review_score:** `Double` (nullable) - Điểm đánh giá trung bình trong ngày
+- **review_count:** `int` (not null, default=0) - Số lượng Review mới được tạo
+- **updated_at:** `LocalDateTime` (not null) - Thời điểm cập nhật lần cuối
 
 **Quan hệ:**
 
@@ -920,8 +920,8 @@
 
 **Các trường:**
 
-- **hotelId:** `String` (not null)
-- **reportDate:** `LocalDate` (not null)
+- **hotel_id:** `String` (not null)
+- **report_date:** `LocalDate` (not null)
 
 ### 11.3. SystemDailyReport
 
@@ -931,17 +931,17 @@
 
 **Các trường chính:**
 
-- **reportDate:** `LocalDate` (Primary Key) - Ngày báo cáo
-- **grossRevenue:** `double` (not null, default=0) - Doanh thu gộp (GMV)
-- **netRevenue:** `double` (not null, default=0) - Doanh thu ròng (lợi nhuận Holidate)
-- **totalBookingsCreated:** `int` (not null, default=0) - Tổng số booking được tạo trên toàn hệ thống
-- **totalBookingsCompleted:** `int` (not null, default=0) - Tổng số booking được hoàn thành
-- **totalBookingsCancelled:** `int` (not null, default=0) - Tổng số booking bị hủy
-- **newCustomersRegistered:** `int` (not null, default=0) - Số lượng tài khoản CUSTOMER mới
-- **newPartnersRegistered:** `int` (not null, default=0) - Số lượng tài khoản PARTNER mới
-- **systemAverageReviewScore:** `Double` (nullable) - Điểm đánh giá trung bình có trọng số
-- **totalReviews:** `int` (not null, default=0) - Tổng số lượng đánh giá mới
-- **updatedAt:** `LocalDateTime` (not null) - Thời điểm cập nhật lần cuối
+- **report_date:** `LocalDate` (Primary Key) - Ngày báo cáo
+- **gross_revenue:** `double` (not null, default=0) - Doanh thu gộp (GMV)
+- **net_revenue:** `double` (not null, default=0) - Doanh thu ròng (lợi nhuận Holidate)
+- **total_bookings_created:** `int` (not null, default=0) - Tổng số booking được tạo trên toàn hệ thống
+- **total_bookings_completed:** `int` (not null, default=0) - Tổng số booking được hoàn thành
+- **total_bookings_cancelled:** `int` (not null, default=0) - Tổng số booking bị hủy
+- **new_customers_registered:** `int` (not null, default=0) - Số lượng tài khoản CUSTOMER mới
+- **new_partners_registered:** `int` (not null, default=0) - Số lượng tài khoản PARTNER mới
+- **system_average_review_score:** `Double` (nullable) - Điểm đánh giá trung bình có trọng số
+- **total_reviews:** `int` (not null, default=0) - Tổng số lượng đánh giá mới
+- **updated_at:** `LocalDateTime` (not null) - Thời điểm cập nhật lần cuối
 
 **Quan hệ:** Không có quan hệ với entity khác (tổng hợp từ các nguồn khác)
 
@@ -954,11 +954,11 @@
 **Các trường chính:**
 
 - **id:** `RoomDailyPerformanceId` (Composite Primary Key)
-  - roomId: `String` (not null)
-  - reportDate: `LocalDate` (not null)
+  - room_id: `String` (not null)
+  - report_date: `LocalDate` (not null)
 - **revenue:** `double` (not null, default=0) - Doanh thu mà loại phòng này mang lại
-- **bookedRoomNights:** `int` (not null, default=0) - Tổng số "phòng-đêm" đã được bán
-- **updatedAt:** `LocalDateTime` (not null) - Thời điểm cập nhật lần cuối
+- **booked_room_nights:** `int` (not null, default=0) - Tổng số "phòng-đêm" đã được bán
+- **updated_at:** `LocalDateTime` (not null) - Thời điểm cập nhật lần cuối
 
 **Quan hệ:**
 
@@ -973,8 +973,8 @@
 
 **Các trường:**
 
-- **roomId:** `String` (not null)
-- **reportDate:** `LocalDate` (not null)
+- **room_id:** `String` (not null)
+- **report_date:** `LocalDate` (not null)
 
 ---
 
