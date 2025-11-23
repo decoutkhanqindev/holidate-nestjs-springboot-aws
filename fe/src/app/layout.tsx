@@ -20,7 +20,6 @@ export default function RootLayout({
   return (
     <html lang="vi">
       <body className={inter.className}>
-        {/* Chỉ còn lại children và các script toàn cục */}
         {children}
         <BootstrapClient />
       </body>

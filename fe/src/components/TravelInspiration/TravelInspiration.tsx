@@ -100,7 +100,7 @@ export default function TravelInspiration() {
                     ))}
                 </div>
 
-                <div className={styles.viewMoreContainer}>
+                {/* <div className={styles.viewMoreContainer}>
                     <button className={styles.viewMoreBtn}>
                         <span>Xem thêm</span>
                         <svg
@@ -120,7 +120,7 @@ export default function TravelInspiration() {
                             />
                         </svg>
                     </button>
-                </div>
+                </div> */}
             </div>
         </section>
     );
