@@ -1,15 +1,17 @@
 package com.webapp.holidate.exception;
 
-import com.webapp.holidate.dto.response.ApiResponse;
-import com.webapp.holidate.type.ErrorType;
-import com.webapp.holidate.utils.ResponseUtil;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Objects;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import java.util.Objects;
+import com.webapp.holidate.dto.response.ApiResponse;
+import com.webapp.holidate.type.ErrorType;
+import com.webapp.holidate.utils.ResponseUtil;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ControllerAdvice

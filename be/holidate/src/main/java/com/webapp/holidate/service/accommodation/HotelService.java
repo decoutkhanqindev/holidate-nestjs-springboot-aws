@@ -72,6 +72,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -278,17 +279,16 @@ public class HotelService {
       return pagedMapper.createEmptyPagedResponse(page, size);
     }
 
-    // Get hotel IDs and fetch room data and photos separately (to avoid N+1 queries
-    // and collection fetch warning)
+    // Get hotel IDs and fetch data separately (to avoid N+1 queries and collection fetch warning)
     List<String> hotelIds = hotelPage.getContent().stream().map(Hotel::getId).toList();
-    List<Hotel> hotelsWithRooms = hotelRepository.findAllByIdsWithRoomsAndInventories(hotelIds);
+    
+    // Fetch photos separately
     List<Hotel> hotelsWithPhotos = hotelRepository.findAllByIdsWithPhotos(hotelIds);
-
-    // Merge room data and photos to hotels
-    mergeRoomData(hotelPage.getContent(), hotelsWithRooms);
     mergePhotoData(hotelPage.getContent(), hotelsWithPhotos);
 
     // Convert entities to response DTOs
+    // NOTE: This triggers @AfterMapping which loads rooms+inventories and calculates prices
+    // PERFORMANCE BOTTLENECK: Each hotel processes 365+ inventories per room
     List<HotelResponse> hotelResponses = hotelPage.getContent().stream()
         .map(hotelMapper::toHotelResponse)
         .toList();
@@ -356,17 +356,13 @@ public class HotelService {
       return pagedMapper.createEmptyPagedResponse(page, size);
     }
 
-    // Step 2: Get hotel IDs and fetch room data and photos separately (to avoid N+1
-    // queries and collection fetch warning)
+    // Step 2: Get hotel IDs and fetch data separately (to avoid N+1 queries)
     List<String> hotelIds = hotelPage.getContent().stream().map(Hotel::getId).toList();
-    List<Hotel> hotelsWithRooms = hotelRepository.findAllByIdsWithRoomsAndInventories(hotelIds);
+    
     List<Hotel> hotelsWithPhotos = hotelRepository.findAllByIdsWithPhotos(hotelIds);
-
-    // Step 3: Merge room data and photos while preserving pagination order
-    mergeRoomData(hotelPage.getContent(), hotelsWithRooms);
     mergePhotoData(hotelPage.getContent(), hotelsWithPhotos);
 
-    // Step 4: Convert to response DTOs
+    // Step 3: Convert to response DTOs
     List<HotelResponse> hotelResponses = hotelPage.getContent().stream()
         .map(hotelMapper::toHotelResponse)
         .toList();
@@ -404,7 +400,18 @@ public class HotelService {
 
     // Step 2: Get detailed hotel info including rooms
     List<Hotel> candidateHotels = hotelRepository.findAllByIds(filteredHotelIds);
-    List<Hotel> hotelsWithRooms = hotelRepository.findAllByIdsWithRoomsAndInventories(filteredHotelIds);
+    
+    // OPTIMIZED: Split rooms and inventories queries to avoid cartesian product
+    List<Hotel> hotelsWithRooms = hotelRepository.findAllByIdsWithRooms(filteredHotelIds);
+    
+    // Get all room IDs and fetch inventories separately
+    List<String> roomIds = hotelsWithRooms.stream()
+        .flatMap(h -> h.getRooms().stream())
+        .map(room -> room.getId())
+        .toList();
+    List<Room> roomsWithInventories = roomRepository.findAllByIdsWithInventories(roomIds);
+    mergeRoomInventoriesData(hotelsWithRooms, roomsWithInventories);
+    
     mergeRoomData(candidateHotels, hotelsWithRooms);
 
     // Step 3: Apply complex filtering
@@ -472,6 +479,19 @@ public class HotelService {
           .filter(h -> h.getId().equals(hotel.getId()))
           .findFirst()
           .ifPresent(h -> hotel.setPhotos(h.getPhotos()));
+    });
+  }
+
+  // OPTIMIZED: Merge room inventories data from separate query to avoid cartesian product
+  // This combines inventories fetched separately with rooms already loaded in hotels
+  private void mergeRoomInventoriesData(List<Hotel> hotelsWithRooms, List<Room> roomsWithInventories) {
+    hotelsWithRooms.forEach(hotel -> {
+      hotel.getRooms().forEach(room -> {
+        roomsWithInventories.stream()
+            .filter(r -> r.getId().equals(room.getId()))
+            .findFirst()
+            .ifPresent(r -> room.setInventories(r.getInventories()));
+      });
     });
   }
 
@@ -735,12 +755,16 @@ public class HotelService {
       hotel.setPhotos(hotelsWithPhotos.get(0).getPhotos());
     }
 
-    // Entertainment venues and amenities (fetch together to reduce queries)
-    Hotel hotelWithVenuesAndAmenities = hotelRepository.findByIdWithEntertainmentVenuesAndAmenities(id)
-        .orElse(null);
-    if (hotelWithVenuesAndAmenities != null) {
-      hotel.setEntertainmentVenues(hotelWithVenuesAndAmenities.getEntertainmentVenues());
-      hotel.setAmenities(hotelWithVenuesAndAmenities.getAmenities());
+    // Step 3: Fetch entertainment venues separately (OPTIMIZED: split to avoid cartesian product)
+    Hotel hotelWithVenues = hotelRepository.findByIdWithEntertainmentVenues(id).orElse(null);
+    if (hotelWithVenues != null) {
+      hotel.setEntertainmentVenues(hotelWithVenues.getEntertainmentVenues());
+    }
+
+    // Step 4: Fetch amenities separately (OPTIMIZED: split to avoid cartesian product)
+    Hotel hotelWithAmenities = hotelRepository.findByIdWithAmenities(id).orElse(null);
+    if (hotelWithAmenities != null) {
+      hotel.setAmenities(hotelWithAmenities.getAmenities());
     }
 
     return hotelMapper.toHotelDetailsResponse(hotel);
@@ -758,11 +782,15 @@ public class HotelService {
       hotel.setPhotos(hotelsWithPhotos.get(0).getPhotos());
     }
 
-    Hotel hotelWithVenuesAndAmenities = hotelRepository.findByIdWithEntertainmentVenuesAndAmenities(id)
-        .orElse(null);
-    if (hotelWithVenuesAndAmenities != null) {
-      hotel.setEntertainmentVenues(hotelWithVenuesAndAmenities.getEntertainmentVenues());
-      hotel.setAmenities(hotelWithVenuesAndAmenities.getAmenities());
+    // OPTIMIZED: Fetch entertainment venues and amenities separately to avoid cartesian product
+    Hotel hotelWithVenues = hotelRepository.findByIdWithEntertainmentVenues(id).orElse(null);
+    if (hotelWithVenues != null) {
+      hotel.setEntertainmentVenues(hotelWithVenues.getEntertainmentVenues());
+    }
+
+    Hotel hotelWithAmenities = hotelRepository.findByIdWithAmenities(id).orElse(null);
+    if (hotelWithAmenities != null) {
+      hotel.setAmenities(hotelWithAmenities.getAmenities());
     }
 
     updateInfo(hotel, request);

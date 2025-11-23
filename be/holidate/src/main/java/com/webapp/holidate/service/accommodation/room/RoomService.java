@@ -211,12 +211,17 @@ public class RoomService {
       return pagedMapper.createEmptyPagedResponse(page, size);
     }
 
-    // Fetch photos and amenities separately to avoid collection fetch warning with pagination
+    // Fetch photos, amenities, and inventories separately to avoid collection fetch warning with pagination
+    // OPTIMIZED: Split photos and amenities queries to avoid cartesian product
     List<String> roomIds = roomPage.getContent().stream().map(Room::getId).toList();
-    List<Room> roomsWithPhotosAndAmenities = roomRepository.findAllByIdsWithPhotosAndAmenities(roomIds);
+    List<Room> roomsWithPhotos = roomRepository.findAllByIdsWithPhotos(roomIds);
+    List<Room> roomsWithAmenities = roomRepository.findAllByIdsWithAmenities(roomIds);
+    List<Room> roomsWithInventories = roomRepository.findAllByIdsWithInventories(roomIds);
 
-    // Merge photos and amenities data
-    mergePhotosAndAmenitiesData(roomPage.getContent(), roomsWithPhotosAndAmenities);
+    // Merge photos, amenities, and inventories data
+    mergePhotosData(roomPage.getContent(), roomsWithPhotos);
+    mergeAmenitiesData(roomPage.getContent(), roomsWithAmenities);
+    mergeInventoriesData(roomPage.getContent(), roomsWithInventories);
 
     // Convert entities to response DTOs
     List<RoomResponse> roomResponses = roomPage.getContent().stream()
@@ -260,21 +265,58 @@ public class RoomService {
 
   @Transactional(readOnly = true)
   public RoomDetailsResponse getById(String id) {
-    Room room = roomRepository.findByIdWithDetails(id)
+    // Step 1: Fetch room with basic relationships (hotel with location, bedType, policies)
+    // This avoids cartesian product from joining multiple collections
+    Room room = roomRepository.findByIdWithBasicDetails(id)
       .orElseThrow(() -> new AppException(ErrorType.ROOM_NOT_FOUND));
+
+    // Step 2: Fetch collections separately to avoid cartesian product
+    // OPTIMIZED: Split photos and amenities into separate queries
+    List<Room> roomsWithPhotos = roomRepository.findAllByIdsWithPhotos(List.of(id));
+    if (!roomsWithPhotos.isEmpty()) {
+      room.setPhotos(roomsWithPhotos.get(0).getPhotos());
+    }
+
+    List<Room> roomsWithAmenities = roomRepository.findAllByIdsWithAmenities(List.of(id));
+    if (!roomsWithAmenities.isEmpty()) {
+      room.setAmenities(roomsWithAmenities.get(0).getAmenities());
+    }
+
+    // Step 3: Fetch inventories separately (needed for price and availability calculation)
+    Room roomWithInventories = roomRepository.findByIdWithInventories(id).orElse(null);
+    if (roomWithInventories != null) {
+      room.setInventories(roomWithInventories.getInventories());
+    }
+
     return roomMapper.toRoomDetailsResponse(room);
   }
 
-  // Combine photos and amenities data from separate query into main room list
-  private void mergePhotosAndAmenitiesData(List<Room> rooms, List<Room> roomsWithPhotosAndAmenities) {
+  // OPTIMIZED: Separate merge methods for photos and amenities to avoid cartesian product
+  private void mergePhotosData(List<Room> rooms, List<Room> roomsWithPhotos) {
     rooms.forEach(room -> {
-      roomsWithPhotosAndAmenities.stream()
+      roomsWithPhotos.stream()
         .filter(r -> r.getId().equals(room.getId()))
         .findFirst()
-        .ifPresent(r -> {
-          room.setPhotos(r.getPhotos());
-          room.setAmenities(r.getAmenities());
-        });
+        .ifPresent(r -> room.setPhotos(r.getPhotos()));
+    });
+  }
+
+  private void mergeAmenitiesData(List<Room> rooms, List<Room> roomsWithAmenities) {
+    rooms.forEach(room -> {
+      roomsWithAmenities.stream()
+        .filter(r -> r.getId().equals(room.getId()))
+        .findFirst()
+        .ifPresent(r -> room.setAmenities(r.getAmenities()));
+    });
+  }
+
+  // Combine inventories data from separate query into main room list
+  private void mergeInventoriesData(List<Room> rooms, List<Room> roomsWithInventories) {
+    rooms.forEach(room -> {
+      roomsWithInventories.stream()
+        .filter(r -> r.getId().equals(room.getId()))
+        .findFirst()
+        .ifPresent(r -> room.setInventories(r.getInventories()));
     });
   }
 

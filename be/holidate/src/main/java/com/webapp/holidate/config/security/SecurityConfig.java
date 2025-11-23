@@ -4,6 +4,7 @@ import com.webapp.holidate.component.security.CustomAccessDeniedHandler;
 import com.webapp.holidate.component.security.CustomAuthenticationEntryPoint;
 import com.webapp.holidate.component.security.CustomJwtDecoder;
 import com.webapp.holidate.component.security.filter.CustomCookieAuthenticationFilter;
+import com.webapp.holidate.component.security.filter.CustomJwtAuthenticationFilter;
 import com.webapp.holidate.component.security.oauth2.CustomOAuth2AuthenticationFailureHandler;
 import com.webapp.holidate.component.security.oauth2.CustomOAuth2AuthenticationSuccessHandler;
 import com.webapp.holidate.constants.AppProperties;
@@ -27,6 +28,7 @@ import org.springframework.security.config.annotation.web.configurers.CsrfConfig
 import org.springframework.security.config.annotation.web.configurers.FormLoginConfigurer;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -50,6 +52,7 @@ public class SecurityConfig {
         CustomAuthenticationEntryPoint authenticationEntryPoint;
         CustomAccessDeniedHandler accessDeniedHandler;
         CustomCookieAuthenticationFilter cookieAuthenticationFilter;
+        CustomJwtAuthenticationFilter jwtAuthenticationFilter;
 
         @NonFinal
         @Value(AppProperties.FRONTEND_URL)
@@ -222,6 +225,29 @@ public class SecurityConfig {
                                 // 4. booking endpoints - DELETE (only PARTNER and ADMIN, not USER)
                                 .requestMatchers(HttpMethod.DELETE, BookingEndpoints.BOOKINGS + CommonEndpoints.ID)
                                 .hasAnyAuthority(RoleType.PARTNER.getValue(), RoleType.ADMIN.getValue())
+                                // 5. partner report endpoints
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.PARTNER_REPORTS + ReportEndpoints.REVENUE)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.PARTNER_REPORTS + ReportEndpoints.BOOKINGS_SUMMARY)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.PARTNER_REPORTS + ReportEndpoints.OCCUPANCY)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.PARTNER_REPORTS + ReportEndpoints.ROOMS_PERFORMANCE)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.PARTNER_REPORTS + ReportEndpoints.CUSTOMERS_SUMMARY)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.PARTNER_REPORTS + ReportEndpoints.REVIEWS_SUMMARY)
+                                .hasAuthority(RoleType.PARTNER.getValue())
+                                // 6. partner dashboard endpoints
+                                .requestMatchers(HttpMethod.GET,
+                                                DashboardEndpoints.PARTNER_DASHBOARD + DashboardEndpoints.SUMMARY)
+                                .hasAuthority(RoleType.PARTNER.getValue())
                                 // Note: Other booking endpoints are already defined in USER section above
 
                                 // III. admin role
@@ -329,6 +355,39 @@ public class SecurityConfig {
                                 // Note: GET policy endpoints are already defined in PARTNER section above
                                 // 9. document endpoints (admin can also view identification documents)
                                 // Note: GET document endpoints are already defined in PARTNER section above
+                                // 10. admin report endpoints
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.ADMIN_REPORTS + ReportEndpoints.REVENUE)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.ADMIN_REPORTS + ReportEndpoints.HOTEL_PERFORMANCE)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.ADMIN_REPORTS + ReportEndpoints.USERS_SUMMARY)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.ADMIN_REPORTS + ReportEndpoints.TRENDS + ReportEndpoints.SEASONALITY)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.ADMIN_REPORTS + ReportEndpoints.TRENDS + ReportEndpoints.POPULAR_LOCATIONS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.ADMIN_REPORTS + ReportEndpoints.TRENDS + ReportEndpoints.POPULAR_ROOM_TYPES)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.GET,
+                                                ReportEndpoints.ADMIN_REPORTS + ReportEndpoints.FINANCIALS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                // 11. generate all report endpoints (admin only)
+                                .requestMatchers(HttpMethod.POST,
+                                                ReportEndpoints.PARTNER_REPORTS + ReportEndpoints.GENERATE_ALL)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                .requestMatchers(HttpMethod.POST,
+                                                ReportEndpoints.ADMIN_REPORTS + ReportEndpoints.GENERATE_ALL)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                // 12. admin dashboard endpoints
+                                .requestMatchers(HttpMethod.GET,
+                                                DashboardEndpoints.ADMIN_DASHBOARD + DashboardEndpoints.SUMMARY)
+                                .hasAuthority(RoleType.ADMIN.getValue())
 
                                 // C. any other endpoints
                                 .anyRequest().authenticated());
@@ -353,6 +412,7 @@ public class SecurityConfig {
                                                 .accessDeniedHandler(accessDeniedHandler));
 
                 http.addFilterBefore(cookieAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                http.addFilterAfter(jwtAuthenticationFilter,BearerTokenAuthenticationFilter.class);
 
                 return http.build();
         }

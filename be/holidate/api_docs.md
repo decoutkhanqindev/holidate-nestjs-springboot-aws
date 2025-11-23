@@ -22,7 +22,11 @@ Base URL: `http://localhost:8080`
 16. [Policies](#policies)
 17. [Documents](#documents)
 18. [Special Days](#special-days)
-19. [Status Types Reference](#status-types-reference)
+19. [Partner Reports](#partner-reports)
+20. [Admin Reports](#admin-reports)
+21. [Partner Dashboard](#partner-dashboard)
+22. [Admin Dashboard](#admin-dashboard)
+23. [Status Types Reference](#status-types-reference)
 
 ---
 
@@ -2004,6 +2008,727 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 - **Path Parameters**:
   - `id`: string (UUID format)
 - **Response**: Same as Create Special Day response
+
+---
+
+## Partner Reports
+
+All partner report endpoints support period comparison. When `compare-from` and `compare-to` parameters are provided, the response will include comparison data showing differences and percentage changes between the current period and the comparison period.
+
+---
+
+## Admin Reports
+
+All admin report endpoints support period comparison. When `compare-from` and `compare-to` parameters are provided, the response will include comparison data showing differences and percentage changes between the current period and the comparison period.
+
+**Role Required**: ADMIN
+
+### 1. Revenue Report
+
+**GET** `/admin/reports/revenue`
+
+- **Role Required**: ADMIN
+- **Query Parameters**:
+  - `from`: date (required, ISO format: YYYY-MM-DD)
+  - `to`: date (required, ISO format: YYYY-MM-DD)
+  - `group-by`: string (optional, enum: `day`, `week`, `month`, default: `day`)
+  - `filter-by`: string (optional, enum: `hotel`, `city`, `province`)
+  - `page`: integer (optional, default: 0)
+  - `size`: integer (optional, default: 10)
+  - `compare-from`: date (optional, ISO format: YYYY-MM-DD)
+  - `compare-to`: date (optional, ISO format: YYYY-MM-DD)
+- **Response** (without comparison):
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "data": [
+      {
+        "period": "date",
+        "revenue": "number"
+      }
+    ],
+    "summary": {
+      "totalRevenue": "number"
+    },
+    "breakdown": [
+      {
+        "id": "string",
+        "name": "string",
+        "revenue": "number"
+      }
+    ]
+  }
+}
+```
+
+- **Response** (with comparison): Similar structure with `currentPeriod`, `previousPeriod`, and `comparison` objects.
+
+### 2. Hotel Performance Report
+
+**GET** `/admin/reports/hotel-performance`
+
+- **Role Required**: ADMIN
+- **Query Parameters**:
+  - `from`: date (required, ISO format: YYYY-MM-DD)
+  - `to`: date (required, ISO format: YYYY-MM-DD)
+  - `sort-by`: string (optional, enum: `revenue`, `occupancy`, `bookings`, `cancellationRate`, default: `revenue`)
+  - `sort-dir`: string (optional, enum: `asc`, `desc`, default: `desc`)
+  - `city-id`: string (optional, UUID format)
+  - `province-id`: string (optional, UUID format)
+  - `page`: integer (optional, default: 0)
+  - `size`: integer (optional, default: 20)
+  - `compare-from`: date (optional, ISO format: YYYY-MM-DD)
+  - `compare-to`: date (optional, ISO format: YYYY-MM-DD)
+- **Response** (without comparison):
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "data": [
+      {
+        "hotelId": "string",
+        "hotelName": "string",
+        "totalRevenue": "number",
+        "totalCompletedBookings": "integer",
+        "totalCreatedBookings": "integer",
+        "totalCancelledBookings": "integer",
+        "averageOccupancyRate": "number",
+        "cancellationRate": "number"
+      }
+    ],
+    "page": "integer",
+    "size": "integer",
+    "totalItems": "long",
+    "totalPages": "integer",
+    "first": boolean,
+    "last": boolean,
+    "hasNext": boolean,
+    "hasPrevious": boolean
+  }
+}
+```
+
+- **Response** (with comparison): Includes `currentPeriod`, `previousPeriod`, and `comparison` array with detailed comparison metrics including rank changes for each hotel.
+
+### 3. Users Summary Report
+
+**GET** `/admin/reports/users/summary`
+
+- **Role Required**: ADMIN
+- **Query Parameters**:
+  - `from`: date (required, ISO format: YYYY-MM-DD)
+  - `to`: date (required, ISO format: YYYY-MM-DD)
+  - `compare-from`: date (optional, ISO format: YYYY-MM-DD)
+  - `compare-to`: date (optional, ISO format: YYYY-MM-DD)
+- **Response** (without comparison):
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "growth": {
+      "newCustomers": "integer",
+      "newPartners": "integer"
+    },
+    "platformTotals": {
+      "totalCustomers": "integer",
+      "totalPartners": "integer"
+    }
+  }
+}
+```
+
+- **Response** (with comparison): Similar structure with `currentPeriod`, `previousPeriod`, and `comparison` objects containing differences and percentage changes.
+
+### 4. Seasonality Report
+
+**GET** `/admin/reports/trends/seasonality`
+
+- **Role Required**: ADMIN
+- **Query Parameters**:
+  - `from`: date (required, ISO format: YYYY-MM-DD)
+  - `to`: date (required, ISO format: YYYY-MM-DD)
+  - `metric`: string (optional, enum: `revenue`, `bookings`, default: `bookings`)
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "data": [
+      {
+        "month": "date",
+        "totalRevenue": "number",
+        "totalBookings": "integer"
+      }
+    ]
+  }
+}
+```
+
+### 5. Popular Locations Report
+
+**GET** `/admin/reports/trends/popular-locations`
+
+- **Role Required**: ADMIN
+- **Query Parameters**:
+  - `from`: date (required, ISO format: YYYY-MM-DD)
+  - `to`: date (required, ISO format: YYYY-MM-DD)
+  - `level`: string (optional, enum: `city`, `province`, default: `city`)
+  - `metric`: string (optional, enum: `revenue`, `bookings`, default: `revenue`)
+  - `limit`: integer (optional, default: 10, max: 100)
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "data": [
+      {
+        "locationId": "string",
+        "locationName": "string",
+        "totalRevenue": "number",
+        "totalBookings": "integer"
+      }
+    ]
+  }
+}
+```
+
+### 6. Popular Room Types Report
+
+**GET** `/admin/reports/trends/popular-room-types`
+
+- **Role Required**: ADMIN
+- **Query Parameters**:
+  - `from`: date (required, ISO format: YYYY-MM-DD)
+  - `to`: date (required, ISO format: YYYY-MM-DD)
+  - `group-by`: string (optional, enum: `view`, `bedType`, `occupancy`, default: `occupancy`)
+  - `limit`: integer (optional, default: 10, max: 100)
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "data": [
+      {
+        "roomCategory": "string",
+        "totalBookedNights": "integer"
+      }
+    ]
+  }
+}
+```
+
+### 7. Financials Report
+
+**GET** `/admin/reports/financials`
+
+- **Role Required**: ADMIN
+- **Query Parameters**:
+  - `from`: date (required, ISO format: YYYY-MM-DD)
+  - `to`: date (required, ISO format: YYYY-MM-DD)
+  - `group-by`: string (optional, enum: `day`, `week`, `month`, default: `day`)
+  - `compare-from`: date (optional, ISO format: YYYY-MM-DD)
+  - `compare-to`: date (optional, ISO format: YYYY-MM-DD)
+- **Response** (without comparison):
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "data": [
+      {
+        "period": "date",
+        "grossRevenue": "number",
+        "netRevenue": "number",
+        "partnerPayout": "number",
+        "grossMargin": "number"
+      }
+    ],
+    "summary": {
+      "totalGrossRevenue": "number",
+      "totalNetRevenue": "number",
+      "totalPartnerPayout": "number",
+      "averageGrossMargin": "number"
+    }
+  }
+}
+```
+
+- **Response** (with comparison): Similar structure with `currentPeriod`, `previousPeriod`, and `comparison` objects containing differences and percentage changes for all financial metrics.
+
+### 8. Generate All System Daily Reports
+
+**POST** `/admin/reports/generate-all`
+
+- **Role Required**: ADMIN
+- **Description**: Manually triggers the system daily report generation process for all historical data in the system. This endpoint processes all dates from the earliest booking/user creation date to the latest, similar to the background job but for the entire system instead of just one day.
+- **Request Body**: None
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "totalDates": "integer",
+    "successCount": "integer",
+    "failureCount": "integer",
+    "minDate": "date (ISO format: YYYY-MM-DD)",
+    "maxDate": "date (ISO format: YYYY-MM-DD)",
+    "errors": [
+      "string (error messages, max 10 errors)"
+    ]
+  }
+}
+```
+
+- **Notes**:
+  - This endpoint processes all dates from the earliest to the latest date found in the Booking and User tables
+  - Each date is processed in a separate transaction. If one date fails, others continue processing
+  - The response includes a summary of total dates processed, success/failure counts, and up to 10 error messages
+  - This operation may take a long time depending on the amount of historical data
+  - Should be run after `POST /partner/reports/generate-all` to ensure HotelDailyReport data is available
+
+### Notes on Admin Reports
+
+- **Period Comparison**: Revenue, Hotel Performance, Users Summary, and Financials reports support optional period comparison. When both `compare-from` and `compare-to` are provided, the response includes comparison data. If only one is provided, it is ignored and the endpoint returns normal response.
+- **Data Source**: Reports use pre-aggregated data from `SystemDailyReport`, `HotelDailyReport`, and `RoomDailyPerformance` tables for optimal performance. Data is typically up-to-date until the end of the previous day.
+- **Date Range Validation**: `from` must be less than or equal to `to`. Similarly, `compare-from` must be less than or equal to `compare-to` when provided.
+- **Pagination**: Hotel Performance report supports pagination. Other reports may return all data or use in-memory pagination for breakdown items.
+- **Empty Data**: If no data exists for the requested period, endpoints return `200 OK` with zero values or empty arrays, not `404 Not Found`.
+- **Currency Rounding**: All financial values are rounded to 2 decimal places.
+- **Rank Change**: Hotel Performance comparison includes rank change tracking, showing how hotel rankings changed between periods.
+
+### 8. Generate All System Daily Reports
+
+**POST** `/admin/reports/generate-all`
+
+- **Role Required**: ADMIN
+- **Description**: Manually triggers the system daily report generation process for all historical data in the system. This endpoint processes all dates from the earliest booking/user creation date to the latest, similar to the background job but for the entire system instead of just one day.
+- **Request Body**: None
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "totalDates": "integer",
+    "successCount": "integer",
+    "failureCount": "integer",
+    "minDate": "date (ISO format: YYYY-MM-DD)",
+    "maxDate": "date (ISO format: YYYY-MM-DD)",
+    "errors": [
+      "string (error messages, max 10 errors)"
+    ]
+  }
+}
+```
+
+- **Notes**:
+  - This endpoint processes all dates from the earliest to the latest date found in the Booking and User tables
+  - Each date is processed in a separate transaction. If one date fails, others continue processing
+  - The response includes a summary of total dates processed, success/failure counts, and up to 10 error messages
+  - This operation may take a long time depending on the amount of historical data
+  - Should be run after `POST /partner/reports/generate-all` to ensure HotelDailyReport data is available
+
+### 1. Revenue Report
+
+**GET** `/partner/reports/revenue`
+
+- **Role Required**: PARTNER
+- **Query Parameters**:
+  - `hotel-id`: string (required, UUID format)
+  - `from`: date (required, ISO format: YYYY-MM-DD)
+  - `to`: date (required, ISO format: YYYY-MM-DD)
+  - `group-by`: string (optional, enum: `day`, `week`, `month`, default: `day`)
+  - `compare-from`: date (optional, ISO format: YYYY-MM-DD)
+  - `compare-to`: date (optional, ISO format: YYYY-MM-DD)
+- **Response** (without comparison):
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "data": [
+      {
+        "period": "date",
+        "revenue": "number"
+      }
+    ],
+    "summary": {
+      "totalRevenue": "number"
+    }
+  }
+}
+```
+
+- **Response** (with comparison):
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "currentPeriod": {
+      "data": [...],
+      "summary": {
+        "totalRevenue": "number"
+      }
+    },
+    "previousPeriod": {
+      "data": [...],
+      "summary": {
+        "totalRevenue": "number"
+      }
+    },
+    "comparison": {
+      "totalRevenueDifference": "number",
+      "totalRevenuePercentageChange": "number"
+    }
+  }
+}
+```
+
+### 2. Bookings Summary
+
+**GET** `/partner/reports/bookings/summary`
+
+- **Role Required**: PARTNER
+- **Query Parameters**:
+  - `hotel-id`: string (required, UUID format)
+  - `from`: date (required, ISO format: YYYY-MM-DD)
+  - `to`: date (required, ISO format: YYYY-MM-DD)
+  - `compare-from`: date (optional, ISO format: YYYY-MM-DD)
+  - `compare-to`: date (optional, ISO format: YYYY-MM-DD)
+- **Response** (without comparison):
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "totalCreated": "integer",
+    "totalPending": "integer",
+    "totalConfirmed": "integer",
+    "totalCheckedIn": "integer",
+    "totalCompleted": "integer",
+    "totalCancelled": "integer",
+    "totalRescheduled": "integer",
+    "cancellationRate": "number"
+  }
+}
+```
+
+- **Response** (with comparison): Similar structure with `currentPeriod`, `previousPeriod`, and `comparison` objects containing differences and percentage changes for each metric.
+
+### 3. Occupancy Report
+
+**GET** `/partner/reports/occupancy`
+
+- **Role Required**: PARTNER
+- **Query Parameters**:
+  - `hotel-id`: string (required, UUID format)
+  - `from`: date (required, ISO format: YYYY-MM-DD)
+  - `to`: date (required, ISO format: YYYY-MM-DD)
+  - `compare-from`: date (optional, ISO format: YYYY-MM-DD)
+  - `compare-to`: date (optional, ISO format: YYYY-MM-DD)
+- **Response** (without comparison):
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "data": [
+      {
+        "date": "date",
+        "occupancyRate": "number"
+      }
+    ],
+    "summary": {
+      "averageRate": "number",
+      "totalOccupied": "integer",
+      "totalAvailable": "integer"
+    }
+  }
+}
+```
+
+- **Response** (with comparison): Similar structure with `currentPeriod`, `previousPeriod`, and `comparison` objects.
+
+### 4. Room Performance
+
+**GET** `/partner/reports/rooms/performance`
+
+- **Role Required**: PARTNER
+- **Query Parameters**:
+  - `hotel-id`: string (required, UUID format)
+  - `from`: date (required, ISO format: YYYY-MM-DD)
+  - `to`: date (required, ISO format: YYYY-MM-DD)
+  - `sort-by`: string (optional, enum: `revenue`, `bookedRoomNights`, default: `revenue`)
+  - `sort-dir`: string (optional, enum: `asc`, `desc`, default: `desc`)
+  - `compare-from`: date (optional, ISO format: YYYY-MM-DD)
+  - `compare-to`: date (optional, ISO format: YYYY-MM-DD)
+- **Response** (without comparison):
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "data": [
+      {
+        "roomId": "string",
+        "roomName": "string",
+        "roomView": "string",
+        "totalRevenue": "number",
+        "totalBookedNights": "integer"
+      }
+    ]
+  }
+}
+```
+
+- **Response** (with comparison): Each room item in the merged list includes current period data, previous period data, and comparison metrics (differences and percentage changes).
+
+### 5. Customer Summary
+
+**GET** `/partner/reports/customers/summary`
+
+- **Role Required**: PARTNER
+- **Query Parameters**:
+  - `hotel-id`: string (required, UUID format)
+  - `from`: date (required, ISO format: YYYY-MM-DD)
+  - `to`: date (required, ISO format: YYYY-MM-DD)
+  - `compare-from`: date (optional, ISO format: YYYY-MM-DD)
+  - `compare-to`: date (optional, ISO format: YYYY-MM-DD)
+- **Response** (without comparison):
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "totalNewCustomerBookings": "integer",
+    "totalReturningCustomerBookings": "integer",
+    "totalCompletedBookings": "integer",
+    "newCustomerPercentage": "number",
+    "returningCustomerPercentage": "number"
+  }
+}
+```
+
+- **Response** (with comparison): Similar structure with `currentPeriod`, `previousPeriod`, and `comparison` objects.
+
+### 6. Reviews Summary
+
+**GET** `/partner/reports/reviews/summary`
+
+- **Role Required**: PARTNER
+- **Query Parameters**:
+  - `hotel-id`: string (required, UUID format)
+  - `from`: date (required, ISO format: YYYY-MM-DD)
+  - `to`: date (required, ISO format: YYYY-MM-DD)
+  - `compare-from`: date (optional, ISO format: YYYY-MM-DD)
+  - `compare-to`: date (optional, ISO format: YYYY-MM-DD)
+- **Response** (without comparison):
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "totalReviews": "integer",
+    "averageScore": "number",
+    "scoreDistribution": [
+      {
+        "scoreBucket": "string (9-10, 7-8, 5-6, 3-4, 1-2)",
+        "reviewCount": "integer"
+      }
+    ]
+  }
+}
+```
+
+- **Response** (with comparison): Similar structure with `currentPeriod`, `previousPeriod`, and `comparison` objects containing differences and percentage changes for `totalReviews` and `averageScore`.
+
+### 7. Generate All Daily Reports
+
+**POST** `/partner/reports/generate-all`
+
+- **Role Required**: ADMIN
+- **Description**: Manually triggers the daily report generation process for all historical data in the system. This endpoint processes all dates from the earliest booking date to the latest, similar to the background job but for the entire system instead of just one day.
+- **Request Body**: None
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "totalDates": "integer",
+    "successCount": "integer",
+    "failureCount": "integer",
+    "minDate": "date (ISO format: YYYY-MM-DD)",
+    "maxDate": "date (ISO format: YYYY-MM-DD)",
+    "errors": [
+      "string (error messages, max 10 errors)"
+    ]
+  }
+}
+```
+
+- **Notes**:
+  - This endpoint processes all dates from the earliest to the latest date found in the Booking table
+  - Each date is processed in a separate transaction. If one date fails, others continue processing
+  - The response includes a summary of total dates processed, success/failure counts, and up to 10 error messages
+  - This operation may take a long time depending on the amount of historical data
+  - Generates `HotelDailyReport` and `RoomDailyPerformance` data for all dates
+  - Should be run before `POST /admin/reports/generate-all` to ensure hotel data is available for system reports
+
+### Notes on Partner Reports
+
+- **Period Comparison**: All report endpoints support optional period comparison. When both `compare-from` and `compare-to` are provided, the response includes comparison data. If only one is provided, it is ignored and the endpoint returns normal response.
+- **Data Source**: Reports use pre-aggregated data from `HotelDailyReport` and `RoomDailyPerformance` tables for optimal performance. Data is typically up-to-date until the end of the previous day.
+- **Date Range Validation**: `from` must be less than or equal to `to`. Similarly, `compare-from` must be less than or equal to `compare-to` when provided.
+- **Authorization**: Partners can only access reports for hotels they own. The system validates hotel ownership automatically.
+- **Empty Data**: If no data exists for the requested period, endpoints return `200 OK` with zero values or empty arrays, not `404 Not Found`.
+
+---
+
+## Partner Dashboard
+
+### 1. Get Partner Dashboard Summary
+
+**GET** `/partner/dashboard/summary`
+
+- **Role Required**: PARTNER
+- **Query Parameters**:
+  - `hotel-id`: string (required, UUID format) - ID of the hotel to get dashboard data for
+  - `forecast-days`: integer (optional, default: 7, min: 1, max: 30) - Number of days to forecast occupancy
+- **Description**: Provides near real-time operational dashboard data for a partner's hotel, including today's activity, live booking/room statuses, and occupancy forecast.
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "todaysActivity": {
+      "checkInsToday": "integer",
+      "checkOutsToday": "integer",
+      "inHouseGuests": "integer"
+    },
+    "bookingStatusCounts": [
+      {
+        "status": "string (e.g., confirmed, checked_in, etc.)",
+        "count": "integer"
+      }
+    ],
+    "roomStatusCounts": [
+      {
+        "status": "string (e.g., available, booked, maintenance)",
+        "count": "integer"
+      }
+    ],
+    "occupancyForecast": [
+      {
+        "date": "date (ISO format: YYYY-MM-DD)",
+        "roomsBooked": "integer",
+        "occupancyPercentage": "number"
+      }
+    ],
+    "totalRoomCapacity": "integer"
+  }
+}
+```
+
+- **Notes**:
+  - This endpoint queries live data from Booking and Room tables for real-time accuracy
+  - Check-ins are bookings with `checkInDate = today` and status `confirmed`
+  - Check-outs are bookings with `checkOutDate = today` and status `checked_in`
+  - In-house guests are bookings with status `checked_in`
+  - Occupancy forecast includes only active booking statuses: `confirmed`, `checked_in`
+  - Room status counts include all room statuses in the system
+  - Occupancy percentage is calculated as: (roomsBooked / totalRoomCapacity) × 100
+  - Uses parallel execution for optimal performance
+
+---
+
+## Admin Dashboard
+
+### 1. Get Admin Dashboard Summary
+
+**GET** `/admin/dashboard/summary`
+
+- **Role Required**: ADMIN
+- **Query Parameters**: None (returns predefined data for fixed time periods)
+- **Description**: Provides a system health snapshot including real-time financials, booking activity, ecosystem growth, and top performing hotels. Uses a hybrid data architecture combining real-time transactional data (for "today" metrics) with pre-aggregated daily reports (for historical trends).
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "realtimeFinancials": {
+      "todayRevenue": "number",
+      "mtdRevenue": "number"
+    },
+    "aggregatedFinancials": {
+      "mtdGrossRevenue": "number",
+      "mtdNetRevenue": "number"
+    },
+    "bookingActivity": {
+      "bookingsCreatedToday": "integer"
+    },
+    "ecosystemGrowth": {
+      "newUsersToday": "integer",
+      "newPartnersToday": "integer",
+      "totalActiveHotels": "integer"
+    },
+    "topPerformingHotels": [
+      {
+        "hotelId": "string",
+        "hotelName": "string",
+        "totalRevenue": "number",
+        "totalBookings": "integer"
+      }
+    ]
+  }
+}
+```
+
+- **Notes**:
+  - **Hybrid Data Architecture**:
+    - Real-time data: `todayRevenue` (completed bookings checked out today), `bookingsCreatedToday`, `newUsersToday`, `newPartnersToday`
+    - Aggregated data: `mtdGrossRevenue`, `mtdNetRevenue` (from SystemDailyReport), `topPerformingHotels` (from HotelDailyReport for last 7 days)
+  - **Fixed Time Periods**:
+    - Today: Current date (real-time queries on transactional tables)
+    - Month-to-date (MTD): From 1st day of current month to yesterday (aggregated from daily reports)
+    - Last 7 days: For top hotels ranking (aggregated from HotelDailyReport)
+  - **Performance Optimization**: Uses parallel execution with `CompletableFuture` for all data fetches
+  - **Top Hotels**: Limited to top 5 hotels by revenue in the last 7 days
+  - **Total Active Hotels**: Count of hotels with status `active`
+  - **Revenue Calculation**: 
+    - Real-time: Sum of `finalPrice` from Booking table where status = `completed` and checkOutDate = today
+    - Aggregated: Sum from daily report tables for historical data
+  - MTD data excludes today to avoid inconsistency between real-time and aggregated sources
 
 ---
 

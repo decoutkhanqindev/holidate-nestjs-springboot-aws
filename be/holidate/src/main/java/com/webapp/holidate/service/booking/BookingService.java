@@ -40,6 +40,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,6 +57,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
@@ -313,6 +315,9 @@ public class BookingService {
     }
 
     // Convert entities to response DTOs with price details
+    // NOTE: This currently has N+1 query issue for room inventory prices
+    // Each booking fetches prices separately via roomInventoryService.getPricesByDateRange()
+    // TODO: Consider batch fetching all room inventories or using caching for better performance
     List<BookingResponse> bookingResponses = bookingPage.getContent().stream()
       .map(booking -> {
         BookingResponse response = bookingMapper.toBookingResponse(booking, null);
@@ -320,6 +325,7 @@ public class BookingService {
         response.setPriceDetails(priceDetails);
 
         // Set pricesByDate for booking period
+        // PERFORMANCE NOTE: This makes individual queries per booking
         if (response.getRoom() != null) {
           List<RoomInventoryPriceByDateResponse> pricesByDate = roomInventoryService.getPricesByDateRange(
             booking.getRoom().getId(),
@@ -489,7 +495,10 @@ public class BookingService {
 
   @Transactional(readOnly = true)
   public BookingResponse getById(String id) {
-    Booking booking = bookingRepository.findByIdWithAllRelations(id)
+    // Use optimized query - room inventories are not needed as pricesByDateRange
+    // is fetched separately via roomInventoryService.getPricesByDateRange()
+    // This avoids cartesian product when room has many inventories
+    Booking booking = bookingRepository.findByIdWithBasicRelations(id)
       .orElseThrow(() -> new AppException(ErrorType.BOOKING_NOT_FOUND));
 
     // For existing bookings, paymentUrl is null since payment is already processed
@@ -499,7 +508,7 @@ public class BookingService {
     BookingPriceDetailsResponse priceDetails = calculatePriceDetails(booking);
     response.setPriceDetails(priceDetails);
 
-    // Set pricesByDate for booking period
+    // Set pricesByDate for booking period (fetched separately to avoid cartesian product)
     if (response.getRoom() != null) {
       List<RoomInventoryPriceByDateResponse> pricesByDate = roomInventoryService.getPricesByDateRange(
         booking.getRoom().getId(),
@@ -893,11 +902,16 @@ public class BookingService {
 
   @Transactional
   public void cancelExpiredBookings() {
+    log.info("Starting cancellation of expired bookings");
+    LocalDateTime startTime = LocalDateTime.now();
     LocalDateTime expiredTime = LocalDateTime.now().minusMinutes(15);
 
     List<Booking> expiredBookings = bookingRepository.findByStatusAndCreatedAtBefore(
       BookingStatusType.PENDING_PAYMENT.getValue(), expiredTime);
 
+    log.info("Found {} expired bookings to cancel", expiredBookings.size());
+
+    int cancelledCount = 0;
     for (Booking booking : expiredBookings) {
       // Update booking status to cancelled
       booking.setStatus(BookingStatusType.CANCELLED.getValue());
@@ -912,11 +926,18 @@ public class BookingService {
 
       // Save updated booking
       bookingRepository.save(booking);
+      cancelledCount++;
     }
+
+    LocalDateTime endTime = LocalDateTime.now();
+    log.info("Successfully cancelled {} expired bookings in {} ms",
+        cancelledCount, java.time.Duration.between(startTime, endTime).toMillis());
   }
 
   @Transactional
   public void cancelNoShowBookings() {
+    log.info("Starting cancellation of no-show bookings");
+    LocalDateTime startTime = LocalDateTime.now();
     // Get yesterday's date (checkInDate should be yesterday)
     LocalDate yesterday = LocalDate.now().minusDays(1);
 
@@ -927,6 +948,9 @@ public class BookingService {
       BookingStatusType.CONFIRMED.getValue(),
       BookingStatusType.RESCHEDULED.getValue());
 
+    log.info("Found {} no-show bookings to cancel for check-in date: {}", noShowBookings.size(), yesterday);
+
+    int cancelledCount = 0;
     for (Booking booking : noShowBookings) {
       // Update booking status to cancelled (no-show, no refund)
       booking.setStatus(BookingStatusType.CANCELLED.getValue());
@@ -943,7 +967,12 @@ public class BookingService {
 
       // Save updated booking
       bookingRepository.save(booking);
+      cancelledCount++;
     }
+
+    LocalDateTime endTime = LocalDateTime.now();
+    log.info("Successfully cancelled {} no-show bookings in {} ms",
+        cancelledCount, java.time.Duration.between(startTime, endTime).toMillis());
   }
 
   private BookingPriceDetailsResponse calculatePriceDetails(Booking booking) {

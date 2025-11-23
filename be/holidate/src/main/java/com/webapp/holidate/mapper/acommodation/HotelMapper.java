@@ -69,6 +69,18 @@ public interface HotelMapper {
     responseBuilder.availableRooms(availableRooms);
   }
 
+  /**
+   * OPTIMIZED: Map hotel to response WITHOUT calculating prices (for GET ALL optimization)
+   * Prices will be set from database aggregation queries instead
+   * This avoids loading thousands of room inventories into memory
+   */
+  @Mapping(target = "rawPricePerNight", ignore = true)
+  @Mapping(target = "currentPricePerNight", ignore = true)
+  @Mapping(target = "availableRooms", ignore = true)
+  @Mapping(source = "photos", target = "photos", qualifiedByName = "hotelPhotosToCategories")
+  @org.mapstruct.Named("withoutPrices")
+  HotelResponse toHotelResponseWithoutPrices(Hotel hotel);
+
   @Mapping(source = "entertainmentVenues", target = "entertainmentVenues", qualifiedByName = "hotelEntertainmentVenuesToCategories")
   @Mapping(source = "photos", target = "photos", qualifiedByName = "hotelPhotosToCategories")
   @Mapping(source = "amenities", target = "amenities", qualifiedByName = "hotelAmenitiesToCategories")

@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -49,14 +50,22 @@ public class DynamicPricingService {
 
   @Transactional
   public void applyDynamicPricing() {
+    log.info("Starting dynamic pricing update");
+    LocalDateTime startTime = LocalDateTime.now();
     LocalDate startDate = LocalDate.now();
     int days = DateTimeUtil.millisToDays(dynamicPricingLookAheadMillis);
     LocalDate endDate = startDate.plusDays(days);
 
+    log.info("Applying dynamic pricing for date range: {} to {} ({} days)", startDate, endDate, days);
+
     List<Room> rooms = roomRepository.findAll();
+    log.info("Processing {} rooms for dynamic pricing", rooms.size());
+
     Map<LocalDate, SpecialDay> specialDayMap = specialDayRepository.findAllByDateBetween(startDate, endDate)
       .stream()
       .collect(Collectors.toMap(SpecialDay::getDate, specialDay -> specialDay));
+
+    log.info("Found {} special days in the date range", specialDayMap.size());
 
     List<RoomInventory> inventoriesToUpdate = new ArrayList<>();
 
@@ -105,6 +114,13 @@ public class DynamicPricingService {
     if (hasInventoriesToUpdate) {
       log.info("Saving {} updated inventories", inventoriesToUpdate.size());
       inventoryRepository.saveAll(inventoriesToUpdate);
+      log.info("Successfully saved {} updated inventories", inventoriesToUpdate.size());
+    } else {
+      log.info("No inventory prices to update");
     }
+
+    LocalDateTime endTime = LocalDateTime.now();
+    log.info("Completed dynamic pricing update in {} ms",
+        java.time.Duration.between(startTime, endTime).toMillis());
   }
 }
