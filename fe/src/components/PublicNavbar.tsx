@@ -100,10 +100,10 @@ export default function PublicNavbar() {
                                     )}
                                     <span>{user.fullName}</span>
                                     <span className="text-muted">|</span>
-                                    <span>💰 {user.score ?? 0} Điểm</span>
+                                    {/* <span>💰 {user.score ?? 0} Điểm</span> */}
                                 </button>
                                 <ul className="dropdown-menu dropdown-menu-end">
-                                    <li><a className="dropdown-item" href="#">Bạn là thành viên Bronze</a></li>
+                                    {/* <li><a className="dropdown-item" href="#">Bạn là thành viên Bronze</a></li> */}
                                     <li><hr className="dropdown-divider" /></li>
                                     <li><Link className="dropdown-item" href="/account/settings">Chỉnh sửa hồ sơ</Link></li>
                                     <li><Link className="dropdown-item" href="/my-booking">Đặt chỗ của tôi</Link></li>
