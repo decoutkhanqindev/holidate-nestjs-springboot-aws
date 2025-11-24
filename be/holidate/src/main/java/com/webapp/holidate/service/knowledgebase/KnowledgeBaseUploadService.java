@@ -163,17 +163,18 @@ public class KnowledgeBaseUploadService {
         }
         
         // Hotel classification
-        ctx.put("star_rating", dto.getStarRating() != null ? dto.getStarRating() : 0);
+        ctx.put("star_rating", dto.getStarRating() != null ? dto.getStarRating().intValue() : 0);
         
         // Business metadata
         ctx.put("hotel_id", dto.getHotelId());
+        ctx.put("partner_id", ""); // Not available in DTO, set empty
         ctx.put("status", dto.getStatus() != null ? dto.getStatus() : "unknown");
         
         // Performance stats
-        ctx.put("total_rooms", dto.getTotalRooms() != null ? dto.getTotalRooms() : 0);
-        ctx.put("available_room_types", dto.getAvailableRoomTypes() != null ? dto.getAvailableRoomTypes() : 0);
-        ctx.put("review_score", dto.getReviewScore() != null ? dto.getReviewScore() : 0.0);
-        ctx.put("review_count", dto.getReviewCount() != null ? dto.getReviewCount() : 0);
+        ctx.put("total_rooms", dto.getTotalRooms() != null ? dto.getTotalRooms().intValue() : 0);
+        ctx.put("available_room_types", dto.getAvailableRoomTypes() != null ? dto.getAvailableRoomTypes().intValue() : 0);
+        ctx.put("review_score", dto.getReviewScore() != null ? dto.getReviewScore().doubleValue() : 0.0);
+        ctx.put("review_count", dto.getReviewCount() != null ? dto.getReviewCount().longValue() : 0L);
         
         // Nearby venues
         List<NearbyVenueDto> venues = dto.getNearbyVenues();
@@ -181,9 +182,11 @@ public class KnowledgeBaseUploadService {
             List<Map<String, Object>> venuesList = venues.stream()
                 .map(venue -> {
                     Map<String, Object> venueMap = new HashMap<>();
-                    venueMap.put("name", venue.getName());
+                    venueMap.put("name", venue.getName() != null ? venue.getName() : "N/A");
                     venueMap.put("distance", formatDistance(venue.getDistance()));
-                    venueMap.put("category", venue.getCategoryName());
+                    venueMap.put("category", venue.getCategoryName() != null ? venue.getCategoryName() : "unknown");
+                    // Description field not available in DTO, set empty or null
+                    venueMap.put("description", "");
                     return venueMap;
                 })
                 .collect(Collectors.toList());
@@ -195,9 +198,16 @@ public class KnowledgeBaseUploadService {
         // Policies
         ctx.put("check_in_time", dto.getCheckInTime() != null ? dto.getCheckInTime().toString() : "14:00");
         ctx.put("check_out_time", dto.getCheckOutTime() != null ? dto.getCheckOutTime().toString() : "12:00");
+        ctx.put("early_check_in_available", true); // Default value, can be enhanced later
+        ctx.put("late_check_out_available", true); // Default value, can be enhanced later
         ctx.put("allows_pay_at_hotel", dto.getAllowsPayAtHotel() != null ? dto.getAllowsPayAtHotel() : false);
         ctx.put("cancellation_policy", dto.getCancellationPolicyName() != null ? dto.getCancellationPolicyName() : "Chính sách tiêu chuẩn");
         ctx.put("reschedule_policy", dto.getReschedulePolicyName() != null ? dto.getReschedulePolicyName() : "Chính sách tiêu chuẩn");
+        ctx.put("smoking_policy", "Khu vực hút thuốc riêng"); // Default value, can be enhanced later
+        
+        // SEO Keywords (generate from hotel name, location, amenities)
+        List<String> keywords = generateKeywords(dto);
+        ctx.put("keywords", keywords);
         
         // Required documents
         ctx.put("required_documents", dto.getRequiredDocuments() != null ? dto.getRequiredDocuments() : List.of());
@@ -214,15 +224,15 @@ public class KnowledgeBaseUploadService {
             List<Map<String, Object>> roomsList = rooms.stream()
                 .map(room -> {
                     Map<String, Object> roomMap = new HashMap<>();
-                    roomMap.put("name", room.getName());
-                    roomMap.put("area", room.getArea() != null ? room.getArea() : 0);
+                    roomMap.put("name", room.getName() != null ? room.getName() : "N/A");
+                    roomMap.put("area", room.getArea() != null ? room.getArea().doubleValue() : 0.0);
                     roomMap.put("view", room.getView() != null ? room.getView() : "N/A");
                     roomMap.put("bed_type", room.getBedType() != null ? room.getBedType() : "N/A");
-                    roomMap.put("max_adults", room.getMaxAdults() != null ? room.getMaxAdults() : 0);
-                    roomMap.put("max_children", room.getMaxChildren() != null ? room.getMaxChildren() : 0);
-                    roomMap.put("smoking_allowed", room.getSmokingAllowed() != null ? room.getSmokingAllowed() : false);
-                    roomMap.put("wifi_available", room.getWifiAvailable() != null ? room.getWifiAvailable() : false);
-                    roomMap.put("breakfast_included", room.getBreakfastIncluded() != null ? room.getBreakfastIncluded() : false);
+                    roomMap.put("max_adults", room.getMaxAdults() != null ? room.getMaxAdults().intValue() : 0);
+                    roomMap.put("max_children", room.getMaxChildren() != null ? room.getMaxChildren().intValue() : 0);
+                    roomMap.put("smoking_allowed", Boolean.TRUE.equals(room.getSmokingAllowed()));
+                    roomMap.put("wifi_available", Boolean.TRUE.equals(room.getWifiAvailable()));
+                    roomMap.put("breakfast_included", Boolean.TRUE.equals(room.getBreakfastIncluded()));
                     return roomMap;
                 })
                 .collect(Collectors.toList());
@@ -253,6 +263,58 @@ public class KnowledgeBaseUploadService {
         } else {
             return String.format("%.1fkm", distanceInMeters / 1000);
         }
+    }
+
+    /**
+     * Generate SEO keywords from hotel information
+     * 
+     * @param dto Hotel DTO
+     * @return List of keywords
+     */
+    private List<String> generateKeywords(HotelKnowledgeBaseDto dto) {
+        List<String> keywords = new java.util.ArrayList<>();
+        
+        // Add hotel name variations
+        if (dto.getName() != null) {
+            keywords.add(dto.getName().toLowerCase());
+        }
+        
+        // Add location-based keywords
+        if (dto.getLocation() != null) {
+            if (dto.getLocation().getCityName() != null) {
+                keywords.add("khách sạn " + dto.getLocation().getCityName().toLowerCase());
+            }
+            if (dto.getLocation().getDistrictName() != null) {
+                keywords.add(dto.getLocation().getDistrictName().toLowerCase());
+            }
+        }
+        
+        // Add star rating keyword
+        if (dto.getStarRating() != null && dto.getStarRating() >= 5) {
+            keywords.add("khách sạn " + dto.getStarRating() + " sao");
+        }
+        
+        // Add amenity-based keywords
+        if (dto.getAmenityEnglishTags() != null) {
+            if (dto.getAmenityEnglishTags().contains("beachfront")) {
+                keywords.add("resort biển");
+            }
+            if (dto.getAmenityEnglishTags().contains("spa")) {
+                keywords.add("resort spa");
+            }
+        }
+        
+        // Add vibe-based keywords
+        if (dto.getVibeTagsInferred() != null) {
+            if (dto.getVibeTagsInferred().contains("family_friendly")) {
+                keywords.add("nghỉ dưỡng gia đình");
+            }
+            if (dto.getVibeTagsInferred().contains("romantic")) {
+                keywords.add("honeymoon");
+            }
+        }
+        
+        return keywords.isEmpty() ? List.of("khách sạn", "nghỉ dưỡng") : keywords;
     }
 }
 
