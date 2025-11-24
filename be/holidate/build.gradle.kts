@@ -67,14 +67,10 @@ dependencies {
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
   implementation(kotlin("stdlib-jdk8"))
 
-  // AWS S3 - Cloud Storage
+  // AWS S3 - Cloud Storage & Knowledge Base Integration
   implementation("software.amazon.awssdk:s3:2.33.7")
 
-  // Google Drive API Client & Auth - Knowledge Base Integration
-  implementation("com.google.apis:google-api-services-drive:v3-rev20230822-2.0.0")
-  implementation("com.google.auth:google-auth-library-oauth2-http:1.19.0")
-
-  // Mustache Template Engine - Markdown File Rendering
+  // Mustache Template Engine - Markdown File Rendering  
   implementation("com.github.spullara.mustache.java:compiler:0.9.11")
 
   // YAML Parser - Frontmatter Processing
