@@ -7,11 +7,12 @@ import { usePathname } from 'next/navigation';
 import {
     ChartBarIcon, BuildingOffice2Icon, KeyIcon, CalendarDaysIcon,
     CreditCardIcon, TicketIcon, MegaphoneIcon, UserGroupIcon,
-    ChatBubbleLeftRightIcon,
+    ChatBubbleLeftRightIcon, DocumentChartBarIcon,
 } from '@heroicons/react/24/outline';
 
 const navLinks = [
     { href: '/admin-dashboard', label: 'Thống kê', icon: ChartBarIcon },
+    { href: '/admin-reports', label: 'Báo cáo', icon: DocumentChartBarIcon },
     { href: '/admin-hotels', label: 'Khách sạn', icon: BuildingOffice2Icon },
     { href: '/admin-rooms', label: 'Phòng', icon: KeyIcon },
     { href: '/admin-bookings', label: 'Đặt phòng', icon: CalendarDaysIcon },

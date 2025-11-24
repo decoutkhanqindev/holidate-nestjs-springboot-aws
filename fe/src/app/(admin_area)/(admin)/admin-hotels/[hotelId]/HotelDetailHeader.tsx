@@ -39,3 +39,5 @@ export default function HotelDetailHeader({ hotelId }: HotelDetailHeaderProps) {
 
 
 
+
+
