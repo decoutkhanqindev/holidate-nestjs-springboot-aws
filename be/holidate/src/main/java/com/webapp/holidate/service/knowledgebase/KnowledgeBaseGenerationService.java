@@ -1,21 +1,28 @@
 package com.webapp.holidate.service.knowledgebase;
 
-import com.webapp.holidate.dto.knowledgebase.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.webapp.holidate.dto.knowledgebase.HotelKnowledgeBaseDto;
+import com.webapp.holidate.dto.knowledgebase.LocationHierarchyDto;
+import com.webapp.holidate.dto.knowledgebase.NearbyVenueDto;
+import com.webapp.holidate.dto.knowledgebase.PriceReferenceDto;
+import com.webapp.holidate.dto.knowledgebase.ReviewStatsDto;
+import com.webapp.holidate.dto.knowledgebase.RoomSummaryDto;
 import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.entity.accommodation.room.Room;
 import com.webapp.holidate.entity.amenity.HotelAmenity;
 import com.webapp.holidate.entity.location.entertainment_venue.HotelEntertainmentVenue;
 import com.webapp.holidate.repository.knowledgebase.KnowledgeBaseRepository;
 import com.webapp.holidate.type.accommodation.AccommodationStatusType;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Main service for transforming Hotel entities into Knowledge Base DTOs.
@@ -108,8 +115,10 @@ public class KnowledgeBaseGenerationService {
                     .requiredDocuments(policyInfo.requiredDocuments)
                     .cancellationPolicyName(policyInfo.cancellationPolicyName)
                     .reschedulePolicyName(policyInfo.reschedulePolicyName)
-                    .reviewScore(reviewStats != null ? reviewStats.getAverageScore() : 0.0)
-                    .reviewCount(reviewStats != null ? reviewStats.getTotalReviews() : 0L)
+                    .reviewScore(reviewStats != null && reviewStats.getAverageScore() != null 
+                            ? reviewStats.getAverageScore() : 0.0)
+                    .reviewCount(reviewStats != null && reviewStats.getTotalReviews() != null 
+                            ? reviewStats.getTotalReviews() : 0L)
                     .vibeTagsInferred(vibeTags)
                     .locationTags(locationTags)
                     .tags(buildAllTags(vibeTags, locationTags, amenities))
@@ -181,12 +190,28 @@ public class KnowledgeBaseGenerationService {
     
     /**
      * Get review statistics for hotel.
+     * Ensures null-safety: if no reviews exist, returns default values (0.0, 0L).
      */
     private ReviewStatsDto getReviewStats(String hotelId) {
         try {
-            return knowledgeBaseRepository.getReviewStatsByHotelId(hotelId);
+            ReviewStatsDto stats = knowledgeBaseRepository.getReviewStatsByHotelId(hotelId);
+            // Ensure null-safety: if query returns null or has null values, use defaults
+            if (stats == null) {
+                return ReviewStatsDto.builder()
+                        .averageScore(0.0)
+                        .totalReviews(0L)
+                        .build();
+            }
+            // Ensure individual fields are not null
+            if (stats.getAverageScore() == null) {
+                stats.setAverageScore(0.0);
+            }
+            if (stats.getTotalReviews() == null) {
+                stats.setTotalReviews(0L);
+            }
+            return stats;
         } catch (Exception e) {
-            log.warn("Failed to get review stats for hotel {}", hotelId);
+            log.warn("Failed to get review stats for hotel {}: {}", hotelId, e.getMessage());
             return ReviewStatsDto.builder()
                     .averageScore(0.0)
                     .totalReviews(0L)
@@ -236,21 +261,44 @@ public class KnowledgeBaseGenerationService {
     
     /**
      * Build nearby venue DTOs from HotelEntertainmentVenue entities.
+     * Ensures proper mapping even if relationships are lazy-loaded.
      */
     private List<NearbyVenueDto> buildNearbyVenues(Set<HotelEntertainmentVenue> venues) {
         if (venues == null || venues.isEmpty()) {
+            log.debug("No entertainment venues found for hotel");
             return new ArrayList<>();
         }
         
-        return venues.stream()
-                .filter(hev -> hev.getEntertainmentVenue() != null)
-                .map(hev -> NearbyVenueDto.builder()
-                        .name(hev.getEntertainmentVenue().getName())
-                        .distance(formatDistance(hev.getDistance()))
-                        .categoryName(hev.getEntertainmentVenue().getCategory() != null ? 
-                                hev.getEntertainmentVenue().getCategory().getName() : "Other")
-                        .build())
+        List<NearbyVenueDto> venueDtos = venues.stream()
+                .filter(hev -> {
+                    // Ensure entertainment venue is not null
+                    if (hev.getEntertainmentVenue() == null) {
+                        log.warn("HotelEntertainmentVenue has null entertainmentVenue: {}", hev.getId());
+                        return false;
+                    }
+                    return true;
+                })
+                .map(hev -> {
+                    try {
+                        return NearbyVenueDto.builder()
+                                .name(hev.getEntertainmentVenue().getName())
+                                .distance(formatDistance(hev.getDistance()))
+                                .categoryName(hev.getEntertainmentVenue().getCategory() != null ? 
+                                        hev.getEntertainmentVenue().getCategory().getName() : "Other")
+                                .build();
+                    } catch (Exception e) {
+                        log.warn("Error mapping entertainment venue {}: {}", 
+                                hev.getId(), e.getMessage());
+                        return null;
+                    }
+                })
+                .filter(dto -> dto != null) // Remove any null DTOs from failed mappings
                 .collect(Collectors.toList());
+        
+        log.debug("Built {} nearby venue DTOs from {} entertainment venues", 
+                venueDtos.size(), venues.size());
+        
+        return venueDtos;
     }
     
     /**

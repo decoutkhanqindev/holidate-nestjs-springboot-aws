@@ -103,9 +103,89 @@ public class VibeInferenceService {
             vibes.add("standard");
         }
         
-        log.debug("Inferred vibes for hotel {}: {}", hotel.getName(), vibes);
+        // Limit to maximum 5 tags with priority logic
+        List<String> prioritizedVibes = prioritizeAndLimitVibes(new ArrayList<>(vibes), hotel, minPrice);
         
-        return new ArrayList<>(vibes);
+        log.debug("Inferred vibes for hotel {}: {} (limited to 5)", hotel.getName(), prioritizedVibes);
+        
+        return prioritizedVibes;
+    }
+    
+    /**
+     * Prioritize and limit vibe tags to maximum 5.
+     * Priority order:
+     * 1. luxury (if price > 3tr or 5-star)
+     * 2. family_friendly (if has kids_club)
+     * 3. romantic (if has spa/massage and 4+ stars)
+     * 4. beach_resort (if near beach with resort amenities)
+     * 5. business (if has meeting rooms)
+     * 6. boutique (if small and unique)
+     * 7. eco_friendly (if eco-related)
+     * 8. budget_friendly (if low price)
+     * 
+     * @param vibes All detected vibe tags
+     * @param hotel Hotel entity
+     * @param minPrice Optional minimum price
+     * @return Prioritized list with maximum 5 tags
+     */
+    private List<String> prioritizeAndLimitVibes(List<String> vibes, Hotel hotel, OptionalDouble minPrice) {
+        if (vibes.size() <= 5) {
+            return vibes;
+        }
+        
+        List<String> prioritized = new ArrayList<>();
+        
+        // Priority 1: Luxury (high price or 5-star)
+        if (vibes.contains("luxury")) {
+            prioritized.add("luxury");
+        }
+        
+        // Priority 2: Family friendly (if has kids_club)
+        if (vibes.contains("family_friendly")) {
+            prioritized.add("family_friendly");
+        }
+        
+        // Priority 3: Romantic (spa/massage + 4+ stars)
+        if (vibes.contains("romantic")) {
+            prioritized.add("romantic");
+        }
+        
+        // Priority 4: Beach resort (near beach with amenities)
+        if (vibes.contains("beach_resort")) {
+            prioritized.add("beach_resort");
+        }
+        
+        // Priority 5: Business (meeting rooms)
+        if (vibes.contains("business") && prioritized.size() < 5) {
+            prioritized.add("business");
+        }
+        
+        // Priority 6: Boutique (small and unique)
+        if (vibes.contains("boutique") && prioritized.size() < 5) {
+            prioritized.add("boutique");
+        }
+        
+        // Priority 7: Eco friendly
+        if (vibes.contains("eco_friendly") && prioritized.size() < 5) {
+            prioritized.add("eco_friendly");
+        }
+        
+        // Priority 8: Budget friendly (only if no luxury)
+        if (vibes.contains("budget_friendly") && !prioritized.contains("luxury") && prioritized.size() < 5) {
+            prioritized.add("budget_friendly");
+        }
+        
+        // If still not 5, add remaining vibes in order
+        for (String vibe : vibes) {
+            if (prioritized.size() >= 5) {
+                break;
+            }
+            if (!prioritized.contains(vibe)) {
+                prioritized.add(vibe);
+            }
+        }
+        
+        return prioritized;
     }
     
     /**

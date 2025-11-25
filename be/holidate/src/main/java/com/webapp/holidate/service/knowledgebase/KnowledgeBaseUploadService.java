@@ -79,18 +79,54 @@ public class KnowledgeBaseUploadService {
      * Build relative path for hotel markdown file
      * Format: vietnam/{city-slug}/{district-slug}/hotels/{hotel-slug}.md
      * 
+     * IMPORTANT: Uses dto.getSlug() which is generated from hotel.getName() via SlugService.
+     * No hardcoded values are used - all slugs are dynamically generated.
+     * 
      * @param dto Hotel DTO
      * @return Relative path string
      */
     private String buildRelativePath(HotelKnowledgeBaseDto dto) {
-        LocationHierarchyDto location = dto.getLocation();
+        if (dto == null) {
+            throw new IllegalArgumentException("Hotel DTO cannot be null");
+        }
         
-        return String.format(
-            "vietnam/%s/%s/hotels/%s.md",
-            location.getCitySlug() != null ? location.getCitySlug() : "unknown-city",
-            location.getDistrictSlug() != null ? location.getDistrictSlug() : "unknown-district",
-            dto.getSlug() != null ? dto.getSlug() : "unknown-hotel"
-        );
+        LocationHierarchyDto location = dto.getLocation();
+        if (location == null) {
+            throw new IllegalArgumentException("Hotel location cannot be null");
+        }
+        
+        // Get slug from DTO (generated from hotel name via SlugService)
+        String hotelSlug = dto.getSlug();
+        if (hotelSlug == null || hotelSlug.isBlank()) {
+            log.warn("Hotel slug is null or blank for hotel: {} (ID: {}). Using fallback.", 
+                    dto.getName(), dto.getHotelId());
+            // Generate fallback slug from hotel name if slug is missing
+            hotelSlug = dto.getName() != null 
+                    ? dto.getName().toLowerCase().replaceAll("[^a-z0-9]+", "-")
+                    : "unknown-hotel";
+        }
+        
+        String citySlug = location.getCitySlug();
+        if (citySlug == null || citySlug.isBlank()) {
+            log.warn("City slug is null or blank for hotel: {} (ID: {})", 
+                    dto.getName(), dto.getHotelId());
+            citySlug = "unknown-city";
+        }
+        
+        String districtSlug = location.getDistrictSlug();
+        if (districtSlug == null || districtSlug.isBlank()) {
+            log.warn("District slug is null or blank for hotel: {} (ID: {})", 
+                    dto.getName(), dto.getHotelId());
+            districtSlug = "unknown-district";
+        }
+        
+        String relativePath = String.format("vietnam/%s/%s/hotels/%s.md", 
+                citySlug, districtSlug, hotelSlug);
+        
+        log.debug("Built relative path for hotel {} (ID: {}): {}", 
+                dto.getName(), dto.getHotelId(), relativePath);
+        
+        return relativePath;
     }
 
     /**

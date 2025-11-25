@@ -1,19 +1,23 @@
 package com.webapp.holidate.service.knowledgebase;
 
-import com.webapp.holidate.dto.knowledgebase.BatchResult;
-import com.webapp.holidate.dto.knowledgebase.HotelKnowledgeBaseDto;
-import com.webapp.holidate.entity.accommodation.Hotel;
-import com.webapp.holidate.entity.accommodation.room.Room;
-import com.webapp.holidate.type.accommodation.AccommodationStatusType;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.webapp.holidate.dto.knowledgebase.BatchResult;
+import com.webapp.holidate.dto.knowledgebase.HotelKnowledgeBaseDto;
+import com.webapp.holidate.entity.accommodation.Hotel;
+import com.webapp.holidate.entity.accommodation.room.Room;
+import com.webapp.holidate.repository.knowledgebase.KnowledgeBaseRepository;
+import com.webapp.holidate.type.accommodation.AccommodationStatusType;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service for batch processing of Knowledge Base generation and upload.
@@ -37,6 +41,7 @@ public class KnowledgeBaseBatchService {
     
     private final KnowledgeBaseGenerationService generationService;
     private final KnowledgeBaseUploadService uploadService;
+    private final KnowledgeBaseRepository repository;
     
     private static final int PROGRESS_LOG_INTERVAL = 50; // Log progress every 50 hotels
     
@@ -66,6 +71,10 @@ public class KnowledgeBaseBatchService {
         
         LocalDateTime startTime = LocalDateTime.now();
         log.info("Starting batch processing for {} hotels", hotels.size());
+        
+        // Load collections (amenities, entertainment venues, rooms) separately to avoid cartesian product
+        // This ensures all data is available for DTO generation
+        loadHotelCollections(hotels);
         
         BatchResult.BatchResultBuilder resultBuilder = BatchResult.builder()
                 .totalCount(hotels.size())
@@ -169,6 +178,90 @@ public class KnowledgeBaseBatchService {
             
             if (roomCount > 0) {
                 log.debug("Processed {} active rooms for hotel: {}", roomCount, hotelName);
+            }
+        }
+    }
+    
+    /**
+     * Load hotel collections (amenities, entertainment venues, rooms) separately.
+     * This is necessary because findAllActiveHotelsForKnowledgeBase doesn't fetch collections
+     * to avoid cartesian product issues.
+     * 
+     * @param hotels List of hotels to load collections for
+     */
+    private void loadHotelCollections(List<Hotel> hotels) {
+        if (hotels == null || hotels.isEmpty()) {
+            return;
+        }
+        
+        List<String> hotelIds = hotels.stream()
+                .map(Hotel::getId)
+                .collect(Collectors.toList());
+        
+        String activeStatus = AccommodationStatusType.ACTIVE.getValue();
+        
+        // Load amenities
+        List<Hotel> hotelsWithAmenities = repository.findHotelsWithAmenities(hotelIds);
+        mergeAmenities(hotels, hotelsWithAmenities);
+        
+        // Load entertainment venues (for nearby_venues)
+        List<Hotel> hotelsWithVenues = repository.findHotelsWithEntertainmentVenues(hotelIds);
+        mergeEntertainmentVenues(hotels, hotelsWithVenues);
+        
+        // Load rooms
+        List<Room> rooms = repository.findRoomsByHotelIds(hotelIds, activeStatus);
+        mergeRooms(hotels, rooms);
+        
+        log.debug("Loaded collections for {} hotels: amenities, venues, rooms", hotels.size());
+    }
+    
+    /**
+     * Merge amenities from loaded hotels into the main hotel list.
+     */
+    private void mergeAmenities(List<Hotel> hotels, List<Hotel> hotelsWithAmenities) {
+        if (hotelsWithAmenities == null || hotelsWithAmenities.isEmpty()) {
+            return;
+        }
+        
+        for (Hotel hotel : hotels) {
+            hotelsWithAmenities.stream()
+                    .filter(h -> h.getId().equals(hotel.getId()))
+                    .findFirst()
+                    .ifPresent(h -> hotel.setAmenities(h.getAmenities()));
+        }
+    }
+    
+    /**
+     * Merge entertainment venues from loaded hotels into the main hotel list.
+     */
+    private void mergeEntertainmentVenues(List<Hotel> hotels, List<Hotel> hotelsWithVenues) {
+        if (hotelsWithVenues == null || hotelsWithVenues.isEmpty()) {
+            return;
+        }
+        
+        for (Hotel hotel : hotels) {
+            hotelsWithVenues.stream()
+                    .filter(h -> h.getId().equals(hotel.getId()))
+                    .findFirst()
+                    .ifPresent(h -> hotel.setEntertainmentVenues(h.getEntertainmentVenues()));
+        }
+    }
+    
+    /**
+     * Merge rooms from loaded list into the main hotel list.
+     */
+    private void mergeRooms(List<Hotel> hotels, List<Room> rooms) {
+        if (rooms == null || rooms.isEmpty()) {
+            return;
+        }
+        
+        for (Hotel hotel : hotels) {
+            Set<Room> hotelRooms = rooms.stream()
+                    .filter(room -> room.getHotel() != null && room.getHotel().getId().equals(hotel.getId()))
+                    .collect(Collectors.toSet());
+            
+            if (!hotelRooms.isEmpty()) {
+                hotel.setRooms(hotelRooms);
             }
         }
     }
