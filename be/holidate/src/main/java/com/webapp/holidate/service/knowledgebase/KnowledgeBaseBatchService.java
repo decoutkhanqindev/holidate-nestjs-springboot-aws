@@ -2,6 +2,7 @@ package com.webapp.holidate.service.knowledgebase;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -212,7 +213,15 @@ public class KnowledgeBaseBatchService {
         List<Room> rooms = repository.findRoomsByHotelIds(hotelIds, activeStatus);
         mergeRooms(hotels, rooms);
         
-        log.debug("Loaded collections for {} hotels: amenities, venues, rooms", hotels.size());
+        // Load hotel photos
+        List<Hotel> hotelsWithPhotos = repository.findHotelsWithPhotos(hotelIds);
+        mergePhotos(hotels, hotelsWithPhotos);
+        
+        // Load room photos
+        List<Room> roomsWithPhotos = repository.findRoomsWithPhotos(hotelIds, activeStatus);
+        mergeRoomPhotos(rooms, roomsWithPhotos);
+        
+        log.debug("Loaded collections for {} hotels: amenities, venues, rooms, photos", hotels.size());
     }
     
     /**
@@ -249,20 +258,54 @@ public class KnowledgeBaseBatchService {
     
     /**
      * Merge rooms from loaded list into the main hotel list.
+     * Ensures all hotels have a rooms collection (at least empty set) to avoid LazyInitializationException.
      */
     private void mergeRooms(List<Hotel> hotels, List<Room> rooms) {
-        if (rooms == null || rooms.isEmpty()) {
-            return;
-        }
-        
         for (Hotel hotel : hotels) {
+            if (rooms == null || rooms.isEmpty()) {
+                // Ensure hotel has an empty set to avoid lazy loading issues
+                hotel.setRooms(new HashSet<>());
+                continue;
+            }
+            
             Set<Room> hotelRooms = rooms.stream()
                     .filter(room -> room.getHotel() != null && room.getHotel().getId().equals(hotel.getId()))
                     .collect(Collectors.toSet());
             
-            if (!hotelRooms.isEmpty()) {
-                hotel.setRooms(hotelRooms);
-            }
+            // Always set rooms, even if empty, to ensure collection is initialized
+            hotel.setRooms(hotelRooms);
+        }
+    }
+    
+    /**
+     * Merge photos from loaded hotels into the main hotel list.
+     */
+    private void mergePhotos(List<Hotel> hotels, List<Hotel> hotelsWithPhotos) {
+        if (hotelsWithPhotos == null || hotelsWithPhotos.isEmpty()) {
+            return;
+        }
+        
+        for (Hotel hotel : hotels) {
+            hotelsWithPhotos.stream()
+                    .filter(h -> h.getId().equals(hotel.getId()))
+                    .findFirst()
+                    .ifPresent(h -> hotel.setPhotos(h.getPhotos()));
+        }
+    }
+    
+    /**
+     * Merge room photos from loaded rooms into the main room list.
+     */
+    private void mergeRoomPhotos(List<Room> rooms, List<Room> roomsWithPhotos) {
+        if (roomsWithPhotos == null || roomsWithPhotos.isEmpty() || rooms == null || rooms.isEmpty()) {
+            return;
+        }
+        
+        for (Room room : rooms) {
+            roomsWithPhotos.stream()
+                    .filter(r -> r.getId().equals(room.getId()))
+                    .findFirst()
+                    .ifPresent(r -> room.setPhotos(r.getPhotos()));
         }
     }
 }

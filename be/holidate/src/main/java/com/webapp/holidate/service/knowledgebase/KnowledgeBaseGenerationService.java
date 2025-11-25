@@ -5,9 +5,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import com.webapp.holidate.constants.AppProperties;
 import com.webapp.holidate.dto.knowledgebase.HotelKnowledgeBaseDto;
 import com.webapp.holidate.dto.knowledgebase.LocationHierarchyDto;
 import com.webapp.holidate.dto.knowledgebase.NearbyVenueDto;
@@ -17,6 +18,8 @@ import com.webapp.holidate.dto.knowledgebase.RoomSummaryDto;
 import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.entity.accommodation.room.Room;
 import com.webapp.holidate.entity.amenity.HotelAmenity;
+import com.webapp.holidate.entity.image.HotelPhoto;
+import com.webapp.holidate.entity.image.RoomPhoto;
 import com.webapp.holidate.entity.location.entertainment_venue.HotelEntertainmentVenue;
 import com.webapp.holidate.repository.knowledgebase.KnowledgeBaseRepository;
 import com.webapp.holidate.type.accommodation.AccommodationStatusType;
@@ -51,20 +54,27 @@ public class KnowledgeBaseGenerationService {
     private final VibeInferenceService vibeInferenceService;
     private final LocationTagService locationTagService;
     
+    @Value(AppProperties.KB_IMAGE_DEFAULT_PLACEHOLDER_URL)
+    private String defaultPlaceholderImageUrl;
+    
     /**
      * Build complete Knowledge Base DTO for a hotel.
      * This method aggregates all hotel information into a single DTO.
      * 
+     * Note: This method should be called within an existing transaction context.
+     * The @Transactional annotation is removed to avoid nested transaction issues
+     * when called from KnowledgeBaseBatchService.processBatch().
+     * 
      * @param hotel Hotel entity (must have relationships loaded)
      * @return Complete HotelKnowledgeBaseDto
      */
-    @Transactional(readOnly = true)
     public HotelKnowledgeBaseDto buildHotelKB(Hotel hotel) {
         if (hotel == null) {
             throw new IllegalArgumentException("Hotel cannot be null");
         }
         
-        log.debug("Building Knowledge Base DTO for hotel: {} ({})", hotel.getName(), hotel.getId());
+        // CRITICAL: Log hotel details to verify correct hotel is being processed
+        log.info("Building Knowledge Base DTO for hotel: {} (ID: {})", hotel.getName(), hotel.getId());
         
         try {
             // Build location hierarchy
@@ -78,6 +88,10 @@ public class KnowledgeBaseGenerationService {
             
             // Build amenity list
             List<String> amenities = buildAmenityList(hotel.getAmenities());
+            
+            // Extract hotel images
+            String mainImageUrl = extractMainImageUrl(hotel.getPhotos());
+            List<String> galleryImageUrls = extractGalleryImageUrls(hotel.getPhotos());
             
             // Build room summaries
             List<RoomSummaryDto> rooms = buildRoomSummaries(hotel.getRooms());
@@ -94,10 +108,17 @@ public class KnowledgeBaseGenerationService {
             // Generate location tags
             List<String> locationTags = locationTagService.generateLocationTags(hotel);
             
+            // Generate slug from hotel name
+            String slug = slugService.generateSlug(hotel.getName());
+            
+            // CRITICAL: Log DTO values before building to verify correctness
+            log.info("DTO values before build - hotelId: {}, name: {}, slug: {}", 
+                    hotel.getId(), hotel.getName(), slug);
+            
             // Build complete DTO
-            return HotelKnowledgeBaseDto.builder()
+            HotelKnowledgeBaseDto dto = HotelKnowledgeBaseDto.builder()
                     .hotelId(hotel.getId())
-                    .slug(slugService.generateSlug(hotel.getName()))
+                    .slug(slug)
                     .name(hotel.getName())
                     .description(hotel.getDescription())
                     .starRating(hotel.getStarRating())
@@ -119,11 +140,19 @@ public class KnowledgeBaseGenerationService {
                             ? reviewStats.getAverageScore() : 0.0)
                     .reviewCount(reviewStats != null && reviewStats.getTotalReviews() != null 
                             ? reviewStats.getTotalReviews() : 0L)
+                    .mainImageUrl(mainImageUrl)
+                    .galleryImageUrls(galleryImageUrls)
                     .vibeTagsInferred(vibeTags)
                     .locationTags(locationTags)
                     .tags(buildAllTags(vibeTags, locationTags, amenities))
                     .lastUpdated(java.time.LocalDateTime.now())
                     .build();
+            
+            // CRITICAL: Log DTO values after building to verify correctness
+            log.info("DTO values after build - hotelId: {}, name: {}, slug: {}", 
+                    dto.getHotelId(), dto.getName(), dto.getSlug());
+            
+            return dto;
                     
         } catch (Exception e) {
             log.error("Error building Knowledge Base for hotel {}: {}", hotel.getId(), e.getMessage(), e);
@@ -237,26 +266,41 @@ public class KnowledgeBaseGenerationService {
     
     /**
      * Build room summary DTOs from Room entities.
+     * Uses null-safe check to avoid LazyInitializationException when collection is a proxy.
      */
     private List<RoomSummaryDto> buildRoomSummaries(Set<Room> rooms) {
-        if (rooms == null || rooms.isEmpty()) {
+        if (rooms == null) {
             return new ArrayList<>();
         }
         
-        return rooms.stream()
-                .filter(room -> AccommodationStatusType.ACTIVE.getValue().equalsIgnoreCase(room.getStatus()))
-                .map(room -> RoomSummaryDto.builder()
-                        .name(room.getName())
-                        .area(room.getArea())
-                        .view(room.getView())
-                        .bedType(room.getBedType() != null ? room.getBedType().getName() : "N/A")
-                        .maxAdults(room.getMaxAdults())
-                        .maxChildren(room.getMaxChildren())
-                        .smokingAllowed(room.isSmokingAllowed())
-                        .wifiAvailable(room.isWifiAvailable())
-                        .breakfastIncluded(room.isBreakfastIncluded())
-                        .build())
-                .collect(Collectors.toList());
+        // Use stream().findFirst() to safely check if collection has elements
+        // This avoids calling isEmpty() on a potentially uninitialized proxy collection
+        try {
+            return rooms.stream()
+                    .filter(room -> room != null && AccommodationStatusType.ACTIVE.getValue().equalsIgnoreCase(room.getStatus()))
+                    .map(room -> {
+                        String roomMainImageUrl = extractRoomMainImageUrl(room.getPhotos());
+                        List<String> roomGalleryImageUrls = extractRoomGalleryImageUrls(room.getPhotos());
+                        
+                        return RoomSummaryDto.builder()
+                                .name(room.getName())
+                                .area(room.getArea())
+                                .view(room.getView())
+                                .bedType(room.getBedType() != null ? room.getBedType().getName() : "N/A")
+                                .maxAdults(room.getMaxAdults())
+                                .maxChildren(room.getMaxChildren())
+                                .smokingAllowed(room.isSmokingAllowed())
+                                .wifiAvailable(room.isWifiAvailable())
+                                .breakfastIncluded(room.isBreakfastIncluded())
+                                .mainImageUrl(roomMainImageUrl)
+                                .galleryImageUrls(roomGalleryImageUrls)
+                                .build();
+                    })
+                    .collect(Collectors.toList());
+        } catch (org.hibernate.LazyInitializationException e) {
+            log.warn("LazyInitializationException when building room summaries, returning empty list: {}", e.getMessage());
+            return new ArrayList<>();
+        }
     }
     
     /**
@@ -363,6 +407,122 @@ public class KnowledgeBaseGenerationService {
                 .distinct()
                 .sorted()
                 .collect(Collectors.toList());
+    }
+    
+    /**
+     * Extract main image URL from hotel photos.
+     * Returns the first photo URL, or default placeholder if no photos exist.
+     * 
+     * @param hotelPhotos Set of HotelPhoto entities
+     * @return Main image URL
+     */
+    private String extractMainImageUrl(Set<HotelPhoto> hotelPhotos) {
+        if (hotelPhotos == null || hotelPhotos.isEmpty()) {
+            return defaultPlaceholderImageUrl;
+        }
+        
+        try {
+            return hotelPhotos.stream()
+                    .filter(hp -> hp != null && hp.getPhoto() != null && hp.getPhoto().getUrl() != null)
+                    .map(hp -> hp.getPhoto().getUrl())
+                    .findFirst()
+                    .orElse(defaultPlaceholderImageUrl);
+        } catch (Exception e) {
+            log.warn("Error extracting main image URL from hotel photos: {}", e.getMessage());
+            return defaultPlaceholderImageUrl;
+        }
+    }
+    
+    /**
+     * Extract gallery image URLs from hotel photos (up to 5 best images).
+     * Returns list of photo URLs, excluding the main image.
+     * 
+     * @param hotelPhotos Set of HotelPhoto entities
+     * @return List of gallery image URLs (max 5)
+     */
+    private List<String> extractGalleryImageUrls(Set<HotelPhoto> hotelPhotos) {
+        if (hotelPhotos == null || hotelPhotos.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        try {
+            List<String> allUrls = hotelPhotos.stream()
+                    .filter(hp -> hp != null && hp.getPhoto() != null && hp.getPhoto().getUrl() != null)
+                    .map(hp -> hp.getPhoto().getUrl())
+                    .distinct()
+                    .collect(Collectors.toList());
+            
+            // Return up to 5 images (skip first one as it's the main image)
+            if (allUrls.size() <= 1) {
+                return new ArrayList<>();
+            }
+            
+            return allUrls.stream()
+                    .skip(1) // Skip main image
+                    .limit(5) // Max 5 gallery images
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.warn("Error extracting gallery image URLs from hotel photos: {}", e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+    
+    /**
+     * Extract main image URL from room photos.
+     * Returns the first photo URL, or default placeholder if no photos exist.
+     * 
+     * @param roomPhotos Set of RoomPhoto entities
+     * @return Main image URL
+     */
+    private String extractRoomMainImageUrl(Set<RoomPhoto> roomPhotos) {
+        if (roomPhotos == null || roomPhotos.isEmpty()) {
+            return defaultPlaceholderImageUrl;
+        }
+        
+        try {
+            return roomPhotos.stream()
+                    .filter(rp -> rp != null && rp.getPhoto() != null && rp.getPhoto().getUrl() != null)
+                    .map(rp -> rp.getPhoto().getUrl())
+                    .findFirst()
+                    .orElse(defaultPlaceholderImageUrl);
+        } catch (Exception e) {
+            log.warn("Error extracting main image URL from room photos: {}", e.getMessage());
+            return defaultPlaceholderImageUrl;
+        }
+    }
+    
+    /**
+     * Extract gallery image URLs from room photos (up to 5 best images).
+     * Returns list of photo URLs, excluding the main image.
+     * 
+     * @param roomPhotos Set of RoomPhoto entities
+     * @return List of gallery image URLs (max 5)
+     */
+    private List<String> extractRoomGalleryImageUrls(Set<RoomPhoto> roomPhotos) {
+        if (roomPhotos == null || roomPhotos.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        try {
+            List<String> allUrls = roomPhotos.stream()
+                    .filter(rp -> rp != null && rp.getPhoto() != null && rp.getPhoto().getUrl() != null)
+                    .map(rp -> rp.getPhoto().getUrl())
+                    .distinct()
+                    .collect(Collectors.toList());
+            
+            // Return up to 5 images (skip first one as it's the main image)
+            if (allUrls.size() <= 1) {
+                return new ArrayList<>();
+            }
+            
+            return allUrls.stream()
+                    .skip(1) // Skip main image
+                    .limit(5) // Max 5 gallery images
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.warn("Error extracting gallery image URLs from room photos: {}", e.getMessage());
+            return new ArrayList<>();
+        }
     }
     
     /**

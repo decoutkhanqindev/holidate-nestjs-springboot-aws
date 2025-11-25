@@ -181,5 +181,28 @@ public class KnowledgeBaseQueries {
             "LEFT JOIN FETCH pol.requiredIdentificationDocuments rid " +
             "LEFT JOIN FETCH rid.identificationDocument " +
             "WHERE h.id = :id";
+
+    /**
+     * Query to fetch hotels with their photos.
+     * Separated from main query to avoid cartesian product.
+     * Fetches HotelPhoto -> Photo relationships.
+     */
+    public static final String FIND_HOTELS_WITH_PHOTOS =
+            "SELECT DISTINCT h FROM Hotel h " +
+            "LEFT JOIN FETCH h.photos hp " +
+            "LEFT JOIN FETCH hp.photo p " +
+            "WHERE h.id IN :hotelIds";
+
+    /**
+     * Query to fetch rooms with their photos.
+     * Separated from main query to avoid cartesian product.
+     * Fetches RoomPhoto -> Photo relationships.
+     */
+    public static final String FIND_ROOMS_WITH_PHOTOS =
+            "SELECT DISTINCT r FROM Room r " +
+            "LEFT JOIN FETCH r.photos rp " +
+            "LEFT JOIN FETCH rp.photo p " +
+            "WHERE r.hotel.id IN :hotelIds " +
+            "AND r.status = :activeStatus";
 }
 

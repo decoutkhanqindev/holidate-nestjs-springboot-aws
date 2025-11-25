@@ -1,5 +1,6 @@
 package com.webapp.holidate.dto.knowledgebase;
 
+import java.util.List;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -22,5 +23,7 @@ public class RoomSummaryDto {
     Boolean smokingAllowed;
     Boolean wifiAvailable;
     Boolean breakfastIncluded;
+    String mainImageUrl;
+    List<String> galleryImageUrls; // Up to 5 best images
 }
 

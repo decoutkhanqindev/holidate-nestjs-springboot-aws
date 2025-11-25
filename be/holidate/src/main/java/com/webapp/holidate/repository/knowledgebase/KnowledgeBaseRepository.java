@@ -153,5 +153,28 @@ public interface KnowledgeBaseRepository extends JpaRepository<Hotel, String> {
      */
     @Query(KnowledgeBaseQueries.FIND_BY_ID_FOR_KNOWLEDGE_BASE)
     java.util.Optional<Hotel> findByIdForKnowledgeBase(@Param("id") String id);
+
+    /**
+     * Fetch hotels with their photos.
+     * Should be called after fetching base hotel data to avoid cartesian product.
+     * 
+     * @param hotelIds List of hotel IDs to fetch photos for
+     * @return List of hotels with eagerly loaded photos
+     */
+    @Query(KnowledgeBaseQueries.FIND_HOTELS_WITH_PHOTOS)
+    List<Hotel> findHotelsWithPhotos(@Param("hotelIds") List<String> hotelIds);
+
+    /**
+     * Fetch rooms with their photos.
+     * Should be called after fetching base room data to avoid cartesian product.
+     * 
+     * @param hotelIds List of hotel IDs to fetch room photos for
+     * @param activeStatus Room status (typically "active" or "ACTIVE")
+     * @return List of rooms with eagerly loaded photos
+     */
+    @Query(KnowledgeBaseQueries.FIND_ROOMS_WITH_PHOTOS)
+    List<Room> findRoomsWithPhotos(
+            @Param("hotelIds") List<String> hotelIds,
+            @Param("activeStatus") String activeStatus);
 }
 

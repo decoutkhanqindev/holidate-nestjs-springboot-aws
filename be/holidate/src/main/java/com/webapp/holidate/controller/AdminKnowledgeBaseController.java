@@ -201,6 +201,24 @@ public class AdminKnowledgeBaseController {
         // Ensure each room has the correct hotel reference
         rooms.forEach(room -> room.setHotel(hotel));
         hotel.setRooms(new java.util.HashSet<>(rooms));
+        
+        // Fetch hotel photos
+        List<Hotel> hotelsWithPhotos = repository.findHotelsWithPhotos(hotelIds);
+        if (!hotelsWithPhotos.isEmpty()) {
+            hotel.setPhotos(hotelsWithPhotos.get(0).getPhotos());
+        }
+        
+        // Fetch room photos
+        List<com.webapp.holidate.entity.accommodation.room.Room> roomsWithPhotos = 
+                repository.findRoomsWithPhotos(hotelIds, activeStatus);
+        // Merge room photos into rooms
+        for (com.webapp.holidate.entity.accommodation.room.Room room : rooms) {
+            roomsWithPhotos.stream()
+                    .filter(r -> r.getId().equals(room.getId()))
+                    .findFirst()
+                    .ifPresent(r -> room.setPhotos(r.getPhotos()));
+        }
+        
         List<Hotel> hotels = Collections.singletonList(hotel);
         
         BatchResult result = batchService.processBatch(hotels);

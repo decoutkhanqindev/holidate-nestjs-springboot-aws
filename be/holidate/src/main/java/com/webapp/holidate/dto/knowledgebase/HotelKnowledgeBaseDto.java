@@ -53,6 +53,10 @@ public class HotelKnowledgeBaseDto {
     Double reviewScore;
     Long reviewCount;
 
+    // Images
+    String mainImageUrl;
+    List<String> galleryImageUrls; // Up to 5 best images
+
     // Metadata
     List<String> vibeTagsInferred;
     List<String> locationTags;

@@ -5,150 +5,109 @@
 
 # === DOCUMENT IDENTIFICATION ===
 doc_type: "hotel_profile"
-doc_id: "00d60e60-d366-4d73-b3c0-614ecb95feb7"  # UUID from hotels.id
-slug: "grand-mercure-danang"
-last_updated: "2025-11-23T14:30:00Z"
+doc_id: "{{doc_id}}"  # UUID from hotels.id
+slug: "{{slug}}"
+last_updated: "{{last_updated}}"
 language: "vi"
 
 # === LOCATION HIERARCHY ===
 # Source: Hotel entity → Country/Province/City/District/Ward/Street relationships
 location:
-  country: "vietnam"
-  country_code: "VN"
-  province: "da-nang"
-  province_name: "Đà Nẵng"
-  city: "da-nang" 
-  city_name: "Thành phố Đà Nẵng"
-  district: "son-tra"
-  district_name: "Quận Sơn Trà"
-  ward: "tho-quang"
-  ward_name: "Phường Thọ Quang"
-  street: "vo-nguyen-giap"
-  street_name: "Võ Nguyên Giáp"
-  address: "Lô A1, Đường Võ Nguyên Giáp, Phường Thọ Quang"
+  country: "{{location.country}}"
+  country_code: "{{location.country_code}}"
+  province: "{{location.province}}"
+  province_name: "{{location.province_name}}"
+  city: "{{location.city}}" 
+  city_name: "{{location.city_name}}"
+  district: "{{location.district}}"
+  district_name: "{{location.district_name}}"
+  ward: "{{location.ward}}"
+  ward_name: "{{location.ward_name}}"
+  street: "{{location.street}}"
+  street_name: "{{location.street_name}}"
+  address: "{{location.address}}"
   coordinates:
-    lat: 16.0544
-    lng: 108.2442
+    lat: {{location.coordinates.lat}}
+    lng: {{location.coordinates.lng}}
 
 # === SEARCH OPTIMIZATION TAGS ===
 # Source: Location entity names + Entertainment venues + Manual curation
 location_tags:
-  - "Đà Nẵng"
-  - "Sơn Trà"
-  - "Bãi biển Mỹ Khê"
-  - "Bán đảo Sơn Trà"
-  - "Ngũ Hành Sơn"
-  - "Chùa Linh Ứng"
-  - "Biển Đà Nẵng"
-  - "Phố biển"
+{{#location_tags}}
+  - "{{.}}"
+{{/location_tags}}
 
 # Source: HotelAmenity → Amenity relationship, mapped to English tags
 amenity_tags:
-  - "outdoor_pool"
-  - "spa"
-  - "fitness_center"
-  - "beachfront"
-  - "restaurant"
-  - "beach_bar"
-  - "free_wifi"
-  - "airport_shuttle"
-  - "24h_reception"
-  - "room_service"
-  - "kids_pool"
-  - "parking"
-  - "breakfast_buffet"
-  - "meeting_rooms"
-  - "laundry"
-  - "concierge"
+{{#amenity_tags}}
+  - "{{.}}"
+{{/amenity_tags}}
 
 # Source: Inferred from star_rating + amenities + location + price range
 vibe_tags:
-  - "luxury"
-  - "romantic"
-  - "family_friendly"
-  - "beach_resort"
-  - "business"
-  - "wedding_venue"
+{{#vibe_tags}}
+  - "{{.}}"
+{{/vibe_tags}}
 
 # === PRICING REFERENCE (STATIC) ===
 # Source: MIN(rooms.base_price_per_night WHERE rooms.status='active')
-reference_min_price: 1445000  # VNĐ
-reference_min_price_room: "Superior Garden View"
-reference_max_price: 4725000  # VNĐ (optional, for range display)
+reference_min_price: {{reference_min_price}}  # VNĐ
+reference_min_price_room: "{{reference_min_price_room}}"
+reference_max_price: {{reference_max_price}}  # VNĐ (optional, for range display)
 
 # === HOTEL CLASSIFICATION ===
 # Source: Hotel.star_rating
-star_rating: 5
+star_rating: {{star_rating}}
 
 # === BUSINESS METADATA ===
-hotel_id: "00d60e60-d366-4d73-b3c0-614ecb95feb7"
-partner_id: "510639ce-df36-4666-9d26-101388127029"
-status: "active"  # From Hotel.status
+hotel_id: "{{hotel_id}}"
+partner_id: "{{partner_id}}"
+status: "{{status}}"  # From Hotel.status
 
 # === PERFORMANCE STATS ===
 # Source: Review aggregation (computed field)
-total_rooms: 12
-available_room_types: 4
-review_score: 9.2  # From AVG(reviews.score)
-review_count: 187  # From COUNT(reviews)
+total_rooms: {{total_rooms}}
+available_room_types: {{available_room_types}}
+review_score: {{review_score}}  # From AVG(reviews.score)
+review_count: {{review_count}}  # From COUNT(reviews)
 
 # === NEARBY ATTRACTIONS ===
 # Source: HotelEntertainmentVenue → EntertainmentVenue relationships
 nearby_venues:
-  - name: "Bãi biển Mỹ Khê"
-    distance: "200m"
-    category: "beach"
-    description: "Bãi biển đẹp nhất Việt Nam"
-  - name: "Chùa Linh Ứng"
-    distance: "5km"
-    category: "temple"
-    description: "Tượng Phật Quan Âm cao 67m"
-  - name: "Asia Park Danang"
-    distance: "8km"
-    category: "theme_park"
-    description: "Công viên giải trí Sun Wheel"
-  - name: "Ngũ Hành Sơn"
-    distance: "10km"
-    category: "cultural"
-    description: "Quần thể núi đá với hang động"
-  - name: "Bà Nà Hills"
-    distance: "30km"
-    category: "theme_park"
-    description: "Cầu Vàng và khu du lịch núi"
+{{#nearby_venues}}
+  - name: "{{name}}"
+    distance: "{{distance}}"
+    category: "{{category}}"
+    description: "{{description}}"
+{{/nearby_venues}}
 
 # === POLICIES ===
 # Source: HotelPolicy entity
-check_in_time: "14:00"
-check_out_time: "12:00"
-early_check_in_available: true
-late_check_out_available: true
-cancellation_policy: "Linh hoạ 7 ngày"  # From CancellationPolicy.name
-allows_pay_at_hotel: false
-smoking_policy: "Khu vực hút thuốc riêng"
+check_in_time: "{{check_in_time}}"
+check_out_time: "{{check_out_time}}"
+early_check_in_available: {{early_check_in_available}}
+late_check_out_available: {{late_check_out_available}}
+cancellation_policy: "{{cancellation_policy}}"  # From CancellationPolicy.name
+allows_pay_at_hotel: {{allows_pay_at_hotel}}
+smoking_policy: "{{smoking_policy}}"
 
 # === SEO KEYWORDS ===
 keywords:
-  - "khách sạn 5 sao đà nẵng"
-  - "resort biển mỹ khê"
-  - "grand mercure danang"
-  - "nghỉ dưỡng gia đình đà nẵng"
-  - "khách sạn gần biển đà nẵng"
-  - "resort spa đà nẵng"
-  - "khách sạn tổ chức tiệc cưới"
+{{#keywords}}
+  - "{{.}}"
+{{/keywords}}
 
 ---
 
-# 🏨 Grand Mercure Danang - Thiên Đường Nghỉ Dưỡng Bên Bờ Biển Mỹ Khê
+# 🏨 {{name}} - Thiên Đường Nghỉ Dưỡng Bên Bờ Biển Mỹ Khê
 
-![Grand Mercure Danang](https://holidate-s3-bucket.s3.ap-southeast-1.amazonaws.com/hotels/grand-mercure/main-view.jpg)
+![{{name}}]({{mainImageUrl}})
 
 ## 📖 Giới Thiệu
 
-**Grand Mercure Danang** là một trong những resort 5 sao hàng đầu tại Đà Nẵng, tọa lạc trên đoạn đường "Hoàng hôn đẹp nhất hành tinh" - Võ Nguyên Giáp, cách bãi biển Mỹ Khê chỉ vài bước chân. Với thiết kế hiện đại pha trộn nét kiến trúc Á Đông, khách sạn sở hữu 200 phòng và suite sang trọng, tất cả đều hướng biển hoặc view vườn nhiệt đới xanh mát.
+{{description}}
 
-Nơi đây là lựa chọn hoàn hảo cho những ai tìm kiếm sự kết hợp giữa nghỉ dưỡng thư giãn và khám phá thành phố năng động. Từ khách sạn, du khách có thể dễ dàng di chuyển đến các địa danh nổi tiếng như Bán đảo Sơn Trà, Ngũ Hành Sơn, hay Bà Nà Hills chỉ trong vòng 30 phút.
-
-> 🌟 **Điểm nổi bật**: Được 187 du khách đánh giá **9.2/10** điểm - "Xuất sắc" về dịch vụ, vị trí và tiện nghi.
+> 🌟 **Điểm nổi bật**: Được {{review_count}} du khách đánh giá **{{review_score}}/10** điểm - "Xuất sắc" về dịch vụ, vị trí và tiện nghi.
 
 ---
 
@@ -178,14 +137,13 @@ Nơi đây là lựa chọn hoàn hảo cho những ai tìm kiếm sự kết h�
 
 ## 🛏️ Hạng Phòng Đa Dạng
 
-Khách sạn cung cấp 4 loại phòng chính, phù hợp từ kỳ nghỉ gia đình đến chuyến công tác hay honeymoon:
+Khách sạn cung cấp {{available_room_types}} loại phòng chính, phù hợp từ kỳ nghỉ gia đình đến chuyến công tác hay honeymoon:
 
 | Hạng Phòng               | Diện tích | View      | Sức chứa       | Đặc điểm nổi bật           |
 |--------------------------|-----------|-----------|----------------|----------------------------|
-| **Superior Garden View** | 42m²      | Vườn      | 2 người lớn + 1 trẻ em | Ban công riêng, phòng tắm đứng |
-| **Deluxe Ocean View**    | 45m²      | Biển      | 2 người lớn + 1 trẻ em | Bồn tắm, view biển trực diện   |
-| **Premium Suite**        | 72m²      | Biển      | 2 người lớn + 2 trẻ em | Phòng khách riêng, minibar miễn phí |
-| **Presidential Suite**   | 120m²     | Biển      | 4 người lớn | 2 phòng ngủ, bồn tắm jacuzzi    |
+{{#rooms}}
+| **{{name}}** | {{area}}m²      | {{view}}      | {{max_adults}} người lớn{{#max_children}} + {{max_children}} trẻ em{{/max_children}} | {{#breakfast_included}}Bữa sáng miễn phí{{/breakfast_included}}{{#wifi_available}} WiFi miễn phí{{/wifi_available}} |
+{{/rooms}}
 
 > 💡 **Lưu ý**: Tất cả phòng đều được bao gồm:
 > - ✅ WiFi tốc độ cao miễn phí
@@ -197,11 +155,13 @@ Khách sạn cung cấp 4 loại phòng chính, phù hợp từ kỳ nghỉ gia 
 
 ## 💰 Thông Tin Giá Tham Khảo
 
-**Giá khởi điểm**: Từ **1.445.000 VNĐ**/đêm  
-*(Áp dụng cho phòng **Superior Garden View**, 1-2 khách)*
+**Giá khởi điểm**: Từ **{{reference_min_price}} VNĐ**/đêm  
+*(Áp dụng cho phòng **{{reference_min_price_room}}**, 1-2 khách)*
 
-**Giá cao nhất**: Khoảng **4.725.000 VNĐ**/đêm  
-*(Presidential Suite, mùa cao điểm)*
+{{#reference_max_price}}
+**Giá cao nhất**: Khoảng **{{reference_max_price}} VNĐ**/đêm  
+*({{reference_max_price_room}}, mùa cao điểm)*
+{{/reference_max_price}}
 
 > ⚠️ **Disclaimer quan trọng**:  
 > Giá trên là **mức tham khảo từ giá cơ bản** của khách sạn. Giá thực tế sẽ dao động theo:
@@ -216,36 +176,26 @@ Khách sạn cung cấp 4 loại phòng chính, phù hợp từ kỳ nghỉ gia 
 > - Số người lớn và trẻ em
 > - Loại phòng ưa thích
 > 
-> Tôi sẽ kiểm tra ngay: {{TOOL:check_availability|hotel_id=00d60e60-d366-4d73-b3c0-614ecb95feb7}}
+> Tôi sẽ kiểm tra ngay cho khách sạn này.
 
 ---
 
 ## 📍 Địa Điểm Lân Cận
 
-### 🏖️ Biển & Thiên Nhiên
-- **Bãi biển Mỹ Khê** (200m): Bơi lội, lướt sóng, tắm biển
-- **Bán đảo Sơn Trà** (5km): Trekking, ngắm khỉ hoang dã, Chùa Linh Ứng
-- **Ngũ Hành Sơn** (10km): Khám phá hang động, chùa núi
-
-### 🎡 Vui Chơi & Giải Trí
-- **Asia Park** (8km): Công viên giải trí với vòng quay Sun Wheel cao nhất Việt Nam
-- **Bà Nà Hills** (30km): Cầu Vàng, làng Pháp, cáp treo dài nhất thế giới
-
-### 🍜 Ẩm Thực & Mua Sắm
-- **Chợ Hàn** (6km): Chợ truyền thống, mua quà lưu niệm
-- **Phố đi bộ An Thượng** (7km): Khu ẩm thực - bar - cafe sôi động về đêm
-- **Vincom Plaza** (9km): Trung tâm thương mại hiện đại
+{{#nearby_venues}}
+- **{{name}}** ({{distance}}): {{description}}
+{{/nearby_venues}}
 
 ---
 
 ## 📋 Chính Sách Khách Sạn
 
 ### ⏰ Giờ Nhận/Trả Phòng
-- **Check-in**: Từ 14:00 (Hỗ trợ nhận phòng sớm tùy tình trạng phòng trống - có thể phát sinh phí)
-- **Check-out**: Trước 12:00 (Trả phòng muộn đến 18:00 với phụ thu 50% giá phòng)
+- **Check-in**: Từ {{check_in_time}}{{#early_check_in_available}} (Hỗ trợ nhận phòng sớm tùy tình trạng phòng trống - có thể phát sinh phí){{/early_check_in_available}}
+- **Check-out**: Trước {{check_out_time}}{{#late_check_out_available}} (Trả phòng muộn đến 18:00 với phụ thu 50% giá phòng){{/late_check_out_available}}
 
 ### ❌ Chính Sách Hủy Phòng
-**Áp dụng gói "Linh hoạt 7 ngày"**:
+**Áp dụng gói "{{cancellation_policy}}"**:
 - ✅ **Hủy MIỄN PHÍ** nếu hủy trước **7 ngày** so với ngày check-in
 - ⚠️ **Hủy trong vòng 7 ngày**: Giữ lại 100% tiền phòng
 - ⚠️ **No-show** (không đến nhận phòng): Không hoàn tiền
@@ -255,11 +205,16 @@ Khách sạn cung cấp 4 loại phòng chính, phù hợp từ kỳ nghỉ gia 
 ### 💳 Thanh Toán
 - **Phương thức**: 
   - ✅ Thanh toán online qua VNPay (ATM, Visa, Mastercard, QR Pay)
+  {{#allows_pay_at_hotel}}
+  - ✅ Hỗ trợ thanh toán tại khách sạn
+  {{/allows_pay_at_hotel}}
+  {{^allows_pay_at_hotel}}
   - ❌ **KHÔNG** hỗ trợ thanh toán tại khách sạn
+  {{/allows_pay_at_hotel}}
 - **Hóa đơn VAT**: Cung cấp theo yêu cầu (thông báo trước khi đặt phòng)
 
 ### 🚭 Quy Định Khác
-- **Hút thuốc**: Không cho phép hút thuốc trong phòng. Có khu vực hút thuốc riêng tại sân thượng.
+- **Hút thuốc**: {{smoking_policy}}
 - **Thú cưng**: Không cho phép
 - **Trẻ em**: 
   - Trẻ dưới 6 tuổi ngủ chung giường bố mẹ: **Miễn phí**
