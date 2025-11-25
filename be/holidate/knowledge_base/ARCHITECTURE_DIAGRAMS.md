@@ -41,35 +41,35 @@ This document provides detailed architectural diagrams for the Holidate Knowledg
     └─────────────────────┘ └─────────────────────┘ └─────────────────────┘
                                         │                       │
                                         └───────────────────────┘
-                                                    │
-                                                    ▼
-                                        ┌─────────────────────┐
+                                                                │
+                                                                ▼
+                                                    ┌─────────────────────┐
                                         │   AWS S3 Bucket     │
                                         │   (Knowledge Base)  │ ◄── New Storage Layer
                                         │   /knowledge_base/  │
-                                        └─────────────────────┘
+                                                    └─────────────────────┘
                                                     │
                                         ┌───────────┴───────────┐
                                         │   S3 Event Trigger    │ ◄── ObjectCreated/Put
                                         └───────────────────────┘
-                                                    │
-                                                    ▼
-                                        ┌─────────────────────┐
-                                        │   n8n Automation    │
-                                        │   (Vector Indexing) │
-                                        └─────────────────────┘
-                                                    │
-                                                    ▼
-                                        ┌─────────────────────┐
-                                        │   Pinecone VectorDB │
-                                        │   (Search Engine)   │
-                                        └─────────────────────┘
-                                                    │
-                                                    ▼
-                                        ┌─────────────────────┐
-                                        │   AI Chatbot        │
-                                        │   (User Interface)  │
-                                        └─────────────────────┘
+                                                                │
+                                                                ▼
+                                                    ┌─────────────────────┐
+                                                    │   n8n Automation    │
+                                                    │   (Vector Indexing) │
+                                                    └─────────────────────┘
+                                                                │
+                                                                ▼
+                                                    ┌─────────────────────┐
+                                                    │   Pinecone VectorDB │
+                                                    │   (Search Engine)   │
+                                                    └─────────────────────┘
+                                                                │
+                                                                ▼
+                                                    ┌─────────────────────┐
+                                                    │   AI Chatbot        │
+                                                    │   (User Interface)  │
+                                                    └─────────────────────┘
 ```
 
 ---
@@ -579,3 +579,4 @@ Phase 7: Production Deployment
 ---
 
 **End of Architecture Diagrams**
+

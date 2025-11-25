@@ -120,5 +120,66 @@ public class KnowledgeBaseQueries {
             ") " +
             "FROM Review r " +
             "WHERE r.hotel.id = :hotelId";
+
+    /**
+     * Query to find hotels modified after a specific timestamp.
+     * Uses LEFT JOIN FETCH to eagerly load all relationships (similar to findAllActiveHotelsForKnowledgeBase)
+     * to prevent LazyInitializationException during batch processing.
+     * 
+     * This query fetches:
+     * - Hotel basic info
+     * - Location hierarchy (country, province, city, district, ward, street)
+     * - Hotel policy with cancellation and reschedule policies
+     * - Required identification documents
+     * 
+     * Note: Collections (rooms, amenities, entertainment venues) are NOT fetched here
+     * to avoid cartesian product. They should be fetched separately using hotel IDs.
+     */
+    public static final String FIND_BY_UPDATED_AT_AFTER =
+            "SELECT DISTINCT h FROM Hotel h " +
+            "LEFT JOIN FETCH h.country co " +
+            "LEFT JOIN FETCH h.province pr " +
+            "LEFT JOIN FETCH h.city ci " +
+            "LEFT JOIN FETCH h.district di " +
+            "LEFT JOIN FETCH h.ward wa " +
+            "LEFT JOIN FETCH h.street st " +
+            "LEFT JOIN FETCH h.policy pol " +
+            "LEFT JOIN FETCH pol.cancellationPolicy cp " +
+            "LEFT JOIN FETCH pol.reschedulePolicy rp " +
+            "LEFT JOIN FETCH pol.requiredIdentificationDocuments rid " +
+            "LEFT JOIN FETCH rid.identificationDocument " +
+            "WHERE h.status = :status " +
+            "AND h.updatedAt IS NOT NULL " +
+            "AND h.updatedAt > :lastRunTime " +
+            "ORDER BY h.name ASC";
+
+    /**
+     * Query to find a single hotel by ID with complete relationships for Knowledge Base generation.
+     * Uses LEFT JOIN FETCH to eagerly load all relationships (similar to findAllActiveHotelsForKnowledgeBase)
+     * to prevent LazyInitializationException during batch processing.
+     * 
+     * This query fetches:
+     * - Hotel basic info
+     * - Location hierarchy (country, province, city, district, ward, street)
+     * - Hotel policy with cancellation and reschedule policies
+     * - Required identification documents
+     * 
+     * Note: Collections (rooms, amenities, entertainment venues) are NOT fetched here
+     * to avoid cartesian product. They should be fetched separately using hotel IDs.
+     */
+    public static final String FIND_BY_ID_FOR_KNOWLEDGE_BASE =
+            "SELECT DISTINCT h FROM Hotel h " +
+            "LEFT JOIN FETCH h.country co " +
+            "LEFT JOIN FETCH h.province pr " +
+            "LEFT JOIN FETCH h.city ci " +
+            "LEFT JOIN FETCH h.district di " +
+            "LEFT JOIN FETCH h.ward wa " +
+            "LEFT JOIN FETCH h.street st " +
+            "LEFT JOIN FETCH h.policy pol " +
+            "LEFT JOIN FETCH pol.cancellationPolicy cp " +
+            "LEFT JOIN FETCH pol.reschedulePolicy rp " +
+            "LEFT JOIN FETCH pol.requiredIdentificationDocuments rid " +
+            "LEFT JOIN FETCH rid.identificationDocument " +
+            "WHERE h.id = :id";
 }
 

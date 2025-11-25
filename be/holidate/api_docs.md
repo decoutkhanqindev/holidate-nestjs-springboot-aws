@@ -2732,6 +2732,114 @@ All admin report endpoints support period comparison. When `compare-from` and `c
 
 ---
 
+## Knowledge Base
+
+### 1. Trigger Full Sync
+
+**POST** `/admin/kb/sync/full`
+
+- **Role Required**: ADMIN
+- **Description**: Triggers full synchronization of all active hotels for Knowledge Base generation. This operation runs asynchronously to avoid blocking the HTTP request.
+- **Request Body**: None
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "Full sync started",
+  "data": "Full sync triggered successfully. Processing in background."
+}
+```
+
+- **Notes**:
+  - This endpoint triggers a background job that processes all active hotels
+  - The operation runs asynchronously, so the response is returned immediately
+  - Check application logs for processing status and results
+
+### 2. Trigger Incremental Sync
+
+**POST** `/admin/kb/sync/incremental`
+
+- **Role Required**: ADMIN
+- **Description**: Triggers incremental synchronization of modified hotels for Knowledge Base generation. Only processes hotels that have been modified since the last incremental sync. This operation runs asynchronously to avoid blocking the HTTP request.
+- **Request Body**: None
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "Incremental sync started",
+  "data": "Incremental sync triggered successfully. Processing in background."
+}
+```
+
+- **Notes**:
+  - This endpoint triggers a background job that processes only modified hotels
+  - The operation runs asynchronously, so the response is returned immediately
+  - The system tracks the last incremental run time automatically
+  - Check application logs for processing status and results
+
+### 3. Sync Specific Hotel
+
+**POST** `/admin/kb/sync/hotel/{id}`
+
+- **Role Required**: ADMIN
+- **Description**: Syncs a specific hotel by ID for Knowledge Base generation. Useful for debugging and testing.
+- **Path Parameters**:
+  - `id`: string (required, UUID format) - Hotel ID
+- **Request Body**: None
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "Hotel sync completed",
+  "data": {
+    "totalCount": 1,
+    "successCount": 1,
+    "failureCount": 0,
+    "failedHotelIds": [],
+    "startTime": "datetime (ISO format)",
+    "endTime": "datetime (ISO format)",
+    "durationMillis": "long"
+  }
+}
+```
+
+- **Error Response** (Hotel not found):
+
+```json
+{
+  "statusCode": 200,
+  "message": "Hotel not found",
+  "data": {
+    "totalCount": 0,
+    "successCount": 0,
+    "failureCount": 1,
+    "failedHotelIds": ["hotel-id"],
+    "startTime": "datetime",
+    "endTime": "datetime",
+    "durationMillis": 0
+  }
+}
+```
+
+- **Notes**:
+  - This endpoint processes a single hotel synchronously and returns the result immediately
+  - Useful for testing and debugging specific hotels
+  - Returns detailed batch result with success/failure information
+
+### Notes on Knowledge Base Sync
+
+- **Scheduled Jobs**: The system automatically runs:
+  - Full sync: Every Sunday at 2:00 AM (processes all active hotels)
+  - Incremental sync: Every hour at minute 0 (processes only modified hotels)
+- **Error Handling**: If a hotel fails during processing, it is logged and the batch continues with other hotels. Failed hotel IDs are tracked in the result.
+- **Asynchronous Processing**: Full and incremental sync endpoints run asynchronously to avoid blocking HTTP requests.
+- **State Management**: The system tracks the last incremental run time to determine which hotels have been modified.
+
+---
+
 ## Notes
 
 ### Authentication

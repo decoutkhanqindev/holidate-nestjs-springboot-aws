@@ -9,6 +9,7 @@ import com.webapp.holidate.component.security.oauth2.CustomOAuth2AuthenticationF
 import com.webapp.holidate.component.security.oauth2.CustomOAuth2AuthenticationSuccessHandler;
 import com.webapp.holidate.constants.AppProperties;
 import com.webapp.holidate.constants.api.endpoint.*;
+import com.webapp.holidate.constants.api.endpoint.KnowledgeBaseEndpoints;
 import com.webapp.holidate.constants.api.endpoint.auth.AuthEndpoints;
 import com.webapp.holidate.service.auth.GoogleService;
 import com.webapp.holidate.type.user.RoleType;
@@ -384,7 +385,10 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.POST,
                                                 ReportEndpoints.ADMIN_REPORTS + ReportEndpoints.GENERATE_ALL)
                                 .hasAuthority(RoleType.ADMIN.getValue())
-                                // 12. admin dashboard endpoints
+                                // 12. knowledge base endpoints (admin only)
+                                .requestMatchers(KnowledgeBaseEndpoints.ADMIN_KB + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                // 13. admin dashboard endpoints
                                 .requestMatchers(HttpMethod.GET,
                                                 DashboardEndpoints.ADMIN_DASHBOARD + DashboardEndpoints.SUMMARY)
                                 .hasAuthority(RoleType.ADMIN.getValue())

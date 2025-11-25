@@ -1,41 +1,42 @@
-# Implementation Guide: Generate Knowledge Base with Google Drive Sync
+# Implementation Guide: Generate Knowledge Base with AWS S3 Sync
 
 ## Overview
-This guide explains how to automatically generate `.md` files from the Holidate database and sync them to **Google Drive** for n8n workflow automation.
+This guide explains how to automatically generate `.md` files from the Holidate database and sync them to **AWS S3** for n8n workflow automation.
 
-**Architecture Philosophy**: Backend generates markdown content → Uploads to Google Drive → n8n watches Drive changes → Processes embeddings → Updates Vector DB.
+**Architecture Philosophy**: Backend generates markdown content → Uploads to AWS S3 → n8n watches S3 events → Processes embeddings → Updates Vector DB.
 
 ---
 
-## Architecture (Updated for Google Drive Sync)
+## Architecture (Updated for AWS S3 Sync)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                    KNOWLEDGE BASE GENERATOR (Backend)                    │
 │                                                                           │
 │  ┌──────────────┐   ┌──────────────┐   ┌────────────────────┐          │
-│  │  Extractor   │──▶│  Transformer │──▶│ Google Drive Sync  │          │
+│  │  Extractor   │──▶│  Transformer │──▶│   AWS S3 Upload    │          │
 │  │  (SQL/JPA)   │   │  (DTO→MD)    │   │  (Upload/Update)   │          │
 │  └──────────────┘   └──────────────┘   └────────────────────┘          │
 │         │                   │                       │                    │
 │         ▼                   ▼                       ▼                    │
-│   Hotel/Room          Frontmatter +         Upload to Drive             │
-│   DTOs from DB        Markdown Body         (Check exist → Update/Create)│
+│   Hotel/Room          Frontmatter +         Upload to S3                │
+│   DTOs from DB        Markdown Body         (Idempotent PUT)           │
 └─────────────────────────────────────────────────────────────────────────┘
                                                       │
                                                       ▼
                             ┌─────────────────────────────────────┐
-                            │       Google Drive Storage          │
+                            │         AWS S3 Bucket               │
                             │  knowledge_base/vietnam/{city}/...  │
                             └─────────────────────────────────────┘
                                                       │
-                                                      ▼ (n8n watches changes)
+                                                      ▼ (S3 Event → n8n)
                             ┌─────────────────────────────────────┐
                             │         n8n Workflow                │
-                            │  1. Detect file change              │
-                            │  2. Extract content                 │
-                            │  3. Generate embeddings (OpenAI)    │
-                            │  4. Upsert to Vector DB (Pinecone)  │
+                            │  1. Detect S3 event (PUT)           │
+                            │  2. Download file from S3           │
+                            │  3. Extract content                 │
+                            │  4. Generate embeddings (OpenAI)    │
+                            │  5. Upsert to Vector DB (Pinecone)  │
                             └─────────────────────────────────────┘
                                                       │
                                                       ▼
@@ -47,9 +48,11 @@ This guide explains how to automatically generate `.md` files from the Holidate 
 
 **Key Benefits**:
 - ✅ **Separation of Concerns**: Backend focuses on data transformation, n8n handles vector operations
-- ✅ **Easier Debugging**: Can inspect/edit markdown files directly on Drive
+- ✅ **Simpler Architecture**: No folder hierarchy management needed (path-based keys)
 - ✅ **No-code Workflow**: Change embedding model or vector DB without touching Java code
-- ✅ **Version Control**: Drive maintains file history automatically
+- ✅ **Event-Driven**: Native S3 events trigger n8n workflows automatically
+- ✅ **Better Performance**: Single PUT operation (no folder checks/creation)
+- ✅ **No API Quotas**: S3 has no rate limits like Google Drive API
 
 ---
 
@@ -336,24 +339,18 @@ public class VibeInferenceService {
 
 ---
 
-## Phase 3: Google Drive Integration
+## Phase 3: AWS S3 Integration
 
 ### 3.1 Setup Dependencies
 
-Add to `pom.xml`:
+The AWS SDK for Java is already included in the project. Ensure you have:
 
 ```xml
-<!-- Google Drive API -->
+<!-- AWS SDK for S3 (already in build.gradle.kts) -->
 <dependency>
-    <groupId>com.google.apis</groupId>
-    <artifactId>google-api-services-drive</artifactId>
-    <version>v3-rev20230822-2.0.0</version>
-</dependency>
-
-<dependency>
-    <groupId>com.google.auth</groupId>
-    <artifactId>google-auth-library-oauth2-http</artifactId>
-    <version>1.19.0</version>
+    <groupId>software.amazon.awssdk</groupId>
+    <artifactId>s3</artifactId>
+    <version>2.20.0</version>
 </dependency>
 
 <!-- Template Engine -->
@@ -371,255 +368,195 @@ Add to `pom.xml`:
 </dependency>
 ```
 
-### 3.2 Google Drive Configuration
+### 3.2 AWS S3 Configuration
 
-#### A. Create Service Account
+#### A. Create S3 Bucket
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select existing
-3. Enable **Google Drive API**
-4. Create **Service Account** credentials
-5. Download JSON key file → Save as `src/main/resources/google-service-account.json`
-6. Share your target Google Drive folder with service account email
+1. Go to [AWS Console](https://console.aws.amazon.com/)
+2. Navigate to S3 service
+3. Create a new bucket (e.g., `holidate-knowledge-base`)
+4. Configure bucket permissions (ensure your application IAM role has read/write access)
+5. (Optional) Enable versioning for file history
+6. (Optional) Configure S3 Event Notifications to trigger n8n webhook
 
 #### B. Application Properties
 
 ```properties
-# application.properties
-google.drive.service.account.key.path=classpath:google-service-account.json
-google.drive.knowledge.base.folder.id=1A2B3C4D5E6F7G8H9I0J  # Root folder ID on Drive
-google.drive.application.name=Holidate-KB-Generator
+# application.properties (already configured)
+spring.aws.s3.access-key=${AWS_S3_ACCESS_KEY}
+spring.aws.s3.secret-key=${AWS_S3_SECRET_KEY}
+spring.aws.s3.bucket-name=${AWS_S3_BUCKET_NAME}
+spring.aws.s3.region=${AWS_S3_REGION}
+spring.aws.s3.base-url=${AWS_S3_BASE_URL}
+
+# Knowledge Base specific
+knowledgebase.s3.root-folder=knowledge_base/
 ```
 
-### 3.3 Google Drive Service Implementation
+### 3.3 S3 Knowledge Base Service Implementation
 
 ```java
-// src/main/java/com/webapp/holidate/service/storage/GoogleDriveService.java
-@Service
-@RequiredArgsConstructor
+// src/main/java/com/webapp/holidate/service/storage/S3KnowledgeBaseService.java
+package com.webapp.holidate.service.storage;
+
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.*;
+
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+
 @Slf4j
-public class GoogleDriveService {
+@Service
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@RequiredArgsConstructor
+public class S3KnowledgeBaseService {
+
+    private static final String MARKDOWN_CONTENT_TYPE = "text/markdown; charset=UTF-8";
     
-    @Value("${google.drive.service.account.key.path}")
-    private String serviceAccountKeyPath;
+    S3Client s3Client;
     
-    @Value("${google.drive.knowledge.base.folder.id}")
-    private String rootFolderId;
+    @NonFinal
+    @Value("${spring.aws.s3.bucket-name}")
+    String bucketName;
     
-    @Value("${google.drive.application.name}")
-    private String applicationName;
-    
-    private Drive driveService;
-    private final Map<String, String> folderCache = new ConcurrentHashMap<>();
-    
-    @PostConstruct
-    public void init() throws IOException, GeneralSecurityException {
-        // Load service account credentials
-        InputStream in = new ClassPathResource(
-            serviceAccountKeyPath.replace("classpath:", "")
-        ).getInputStream();
-        
-        GoogleCredentials credentials = GoogleCredentials
-            .fromStream(in)
-            .createScoped(Collections.singleton(DriveScopes.DRIVE_FILE));
-        
-        // Build Drive service
-        NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-        JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
-        
-        this.driveService = new Drive.Builder(httpTransport, jsonFactory, 
-            new HttpCredentialsAdapter(credentials))
-            .setApplicationName(applicationName)
-            .build();
-        
-        log.info("✓ Google Drive service initialized");
-    }
-    
+    @NonFinal
+    @Value("${knowledgebase.s3.root-folder:knowledge_base/}")
+    String rootFolder;
+
     /**
-     * Upload or update markdown file to Google Drive
-     * @param markdownContent The markdown content to upload
-     * @param relativePath Relative path: vietnam/da-nang/son-tra/hotels/grand-mercure.md
-     * @return File ID on Google Drive
+     * Upload or update a markdown file to S3
+     * 
+     * @param content Markdown content
+     * @param relativePath Relative path (e.g., "vietnam/da-nang/hotels/grand-mercure.md")
+     * @return S3 object key (full path)
      */
-    public String uploadOrUpdateMarkdown(String markdownContent, String relativePath) 
-            throws IOException {
+    public String uploadOrUpdateMarkdown(String content, String relativePath) {
+        String objectKey = buildObjectKey(relativePath);
         
-        // Parse path: vietnam/da-nang/son-tra/hotels/grand-mercure.md
-        String[] pathParts = relativePath.split("/");
-        String fileName = pathParts[pathParts.length - 1];
-        String folderPath = String.join("/", 
-            Arrays.copyOfRange(pathParts, 0, pathParts.length - 1));
+        log.info("Uploading markdown to S3: {}", objectKey);
         
-        // 1. Ensure folder structure exists
-        String parentFolderId = ensureFolderPath(folderPath);
-        
-        // 2. Check if file already exists
-        String existingFileId = findFileByName(fileName, parentFolderId);
-        
-        if (existingFileId != null) {
-            // Update existing file
-            log.info("Updating existing file: {} (ID: {})", fileName, existingFileId);
-            return updateFileContent(existingFileId, markdownContent);
-        } else {
-            // Create new file
-            log.info("Creating new file: {} in folder {}", fileName, parentFolderId);
-            return createFile(fileName, markdownContent, parentFolderId);
+        try {
+            // Prepare metadata
+            Map<String, String> metadata = new HashMap<>();
+            metadata.put("content-type", "markdown");
+            metadata.put("encoding", "UTF-8");
+            metadata.put("generated-by", "holidate-knowledge-base");
+            
+            // Create PUT request (idempotent - overwrites if exists)
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(objectKey)
+                    .contentType(MARKDOWN_CONTENT_TYPE)
+                    .metadata(metadata)
+                    .build();
+            
+            // Upload content
+            byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
+            RequestBody requestBody = RequestBody.fromBytes(contentBytes);
+            
+            PutObjectResponse response = s3Client.putObject(putObjectRequest, requestBody);
+            
+            log.info("✓ Successfully uploaded to S3: {} (ETag: {})", objectKey, response.eTag());
+            
+            return objectKey;
+            
+        } catch (S3Exception e) {
+            log.error("✗ Failed to upload to S3: {} - Error: {}", objectKey, e.awsErrorDetails().errorMessage(), e);
+            throw new RuntimeException("Failed to upload markdown to S3: " + e.awsErrorDetails().errorMessage(), e);
+        } catch (Exception e) {
+            log.error("✗ Unexpected error uploading to S3: {}", objectKey, e);
+            throw new RuntimeException("Unexpected error uploading markdown to S3", e);
         }
     }
-    
+
     /**
-     * Ensure folder path exists, create if needed
-     * @param folderPath e.g., "vietnam/da-nang/son-tra/hotels"
-     * @return Folder ID of the deepest folder
+     * Delete a markdown file from S3
+     * 
+     * @param relativePath Relative path
+     * @return true if deleted successfully
      */
-    private String ensureFolderPath(String folderPath) throws IOException {
-        // Check cache first
-        if (folderCache.containsKey(folderPath)) {
-            return folderCache.get(folderPath);
+    public boolean deleteFile(String relativePath) {
+        String objectKey = buildObjectKey(relativePath);
+        
+        log.info("Deleting markdown from S3: {}", objectKey);
+        
+        try {
+            DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(objectKey)
+                    .build();
+            
+            s3Client.deleteObject(deleteObjectRequest);
+            
+            log.info("✓ Successfully deleted from S3: {}", objectKey);
+            return true;
+            
+        } catch (S3Exception e) {
+            log.error("✗ Failed to delete from S3: {} - Error: {}", objectKey, e.awsErrorDetails().errorMessage(), e);
+            return false;
         }
+    }
+
+    /**
+     * Check if a file exists in S3
+     * 
+     * @param relativePath Relative path
+     * @return true if file exists
+     */
+    public boolean fileExists(String relativePath) {
+        String objectKey = buildObjectKey(relativePath);
         
-        String currentParentId = rootFolderId;
-        String[] folders = folderPath.split("/");
-        StringBuilder currentPath = new StringBuilder();
-        
-        for (String folderName : folders) {
-            if (folderName.isEmpty()) continue;
+        try {
+            HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(objectKey)
+                    .build();
             
-            currentPath.append(folderName);
-            String fullPath = currentPath.toString();
+            s3Client.headObject(headObjectRequest);
+            return true;
             
-            // Check cache
-            if (folderCache.containsKey(fullPath)) {
-                currentParentId = folderCache.get(fullPath);
-            } else {
-                // Check if folder exists
-                String folderId = findFolderByName(folderName, currentParentId);
-                
-                if (folderId == null) {
-                    // Create folder
-                    folderId = createFolder(folderName, currentParentId);
-                    log.info("Created folder: {} (ID: {})", folderName, folderId);
-                }
-                
-                folderCache.put(fullPath, folderId);
-                currentParentId = folderId;
-            }
-            
-            currentPath.append("/");
+        } catch (NoSuchKeyException e) {
+            return false;
+        } catch (S3Exception e) {
+            log.warn("Error checking file existence: {}", objectKey, e);
+            return false;
         }
-        
-        return currentParentId;
     }
-    
+
     /**
-     * Find folder by name within parent folder
+     * Get the S3 object URL
+     * 
+     * @param relativePath Relative path
+     * @return S3 URL
      */
-    private String findFolderByName(String folderName, String parentId) throws IOException {
-        String query = String.format(
-            "name='%s' and '%s' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false",
-            folderName, parentId
-        );
-        
-        FileList result = driveService.files().list()
-            .setQ(query)
-            .setSpaces("drive")
-            .setFields("files(id, name)")
-            .execute();
-        
-        List<File> files = result.getFiles();
-        return files.isEmpty() ? null : files.get(0).getId();
+    public String getObjectUrl(String relativePath) {
+        String objectKey = buildObjectKey(relativePath);
+        return String.format("s3://%s/%s", bucketName, objectKey);
     }
-    
+
     /**
-     * Find file by name within parent folder
+     * Build full S3 object key from relative path
+     * 
+     * @param relativePath Relative path
+     * @return Full object key
      */
-    private String findFileByName(String fileName, String parentId) throws IOException {
-        String query = String.format(
-            "name='%s' and '%s' in parents and mimeType='text/markdown' and trashed=false",
-            fileName, parentId
-        );
+    private String buildObjectKey(String relativePath) {
+        // Ensure rootFolder ends with /
+        String normalizedRoot = rootFolder.endsWith("/") ? rootFolder : rootFolder + "/";
         
-        FileList result = driveService.files().list()
-            .setQ(query)
-            .setSpaces("drive")
-            .setFields("files(id, name)")
-            .execute();
+        // Remove leading slash from relativePath if exists
+        String normalizedPath = relativePath.startsWith("/") ? relativePath.substring(1) : relativePath;
         
-        List<File> files = result.getFiles();
-        return files.isEmpty() ? null : files.get(0).getId();
-    }
-    
-    /**
-     * Create a new folder
-     */
-    private String createFolder(String folderName, String parentId) throws IOException {
-        File folderMetadata = new File();
-        folderMetadata.setName(folderName);
-        folderMetadata.setMimeType("application/vnd.google-apps.folder");
-        folderMetadata.setParents(Collections.singletonList(parentId));
-        
-        File folder = driveService.files().create(folderMetadata)
-            .setFields("id")
-            .execute();
-        
-        return folder.getId();
-    }
-    
-    /**
-     * Create a new file with content
-     */
-    private String createFile(String fileName, String content, String parentId) 
-            throws IOException {
-        
-        File fileMetadata = new File();
-        fileMetadata.setName(fileName);
-        fileMetadata.setMimeType("text/markdown");
-        fileMetadata.setParents(Collections.singletonList(parentId));
-        
-        ByteArrayContent mediaContent = new ByteArrayContent(
-            "text/markdown", 
-            content.getBytes(StandardCharsets.UTF_8)
-        );
-        
-        File file = driveService.files().create(fileMetadata, mediaContent)
-            .setFields("id, name, createdTime")
-            .execute();
-        
-        log.info("✓ Created file: {} (ID: {})", fileName, file.getId());
-        return file.getId();
-    }
-    
-    /**
-     * Update existing file content
-     */
-    private String updateFileContent(String fileId, String newContent) throws IOException {
-        ByteArrayContent mediaContent = new ByteArrayContent(
-            "text/markdown", 
-            newContent.getBytes(StandardCharsets.UTF_8)
-        );
-        
-        File file = driveService.files().update(fileId, null, mediaContent)
-            .setFields("id, name, modifiedTime")
-            .execute();
-        
-        log.info("✓ Updated file ID: {}", file.getId());
-        return file.getId();
-    }
-    
-    /**
-     * Delete file by ID
-     */
-    public void deleteFile(String fileId) throws IOException {
-        driveService.files().delete(fileId).execute();
-        log.info("✓ Deleted file ID: {}", fileId);
-    }
-    
-    /**
-     * Clear folder cache (call after large batch operations)
-     */
-    public void clearFolderCache() {
-        folderCache.clear();
-        log.info("✓ Folder cache cleared");
+        return normalizedRoot + normalizedPath;
     }
 }
 ```
@@ -633,11 +570,11 @@ public class GoogleDriveService {
 @Slf4j
 public class KnowledgeBaseUploadService {
     
-    private final GoogleDriveService driveService;
+    private final S3KnowledgeBaseService s3Service;
     private final MustacheFactory mustacheFactory = new DefaultMustacheFactory();
     
     /**
-     * Generate markdown and upload to Google Drive
+     * Generate markdown and upload to AWS S3
      */
     public String generateAndUploadHotelProfile(HotelKnowledgeBaseDto dto) throws IOException {
         // 1. Load template
@@ -655,11 +592,11 @@ public class KnowledgeBaseUploadService {
         String relativePath = buildRelativePath(dto);
         // Example: vietnam/da-nang/son-tra/hotels/grand-mercure-danang.md
         
-        // 5. Upload to Google Drive
-        String fileId = driveService.uploadOrUpdateMarkdown(markdownContent, relativePath);
+        // 5. Upload to S3
+        String objectKey = s3Service.uploadOrUpdateMarkdown(markdownContent, relativePath);
         
-        log.info("✓ Uploaded hotel profile: {} → Drive ID: {}", dto.getName(), fileId);
-        return fileId;
+        log.info("✓ Uploaded hotel profile: {} → S3 Key: {}", dto.getName(), objectKey);
+        return objectKey;
     }
     
     /**
@@ -677,10 +614,10 @@ public class KnowledgeBaseUploadService {
         String relativePath = buildRoomRelativePath(dto);
         // Example: vietnam/da-nang/son-tra/hotels/grand-mercure-danang/deluxe-ocean-view.md
         
-        String fileId = driveService.uploadOrUpdateMarkdown(markdownContent, relativePath);
+        String objectKey = s3Service.uploadOrUpdateMarkdown(markdownContent, relativePath);
         
-        log.info("✓ Uploaded room detail: {} → Drive ID: {}", dto.getRoomName(), fileId);
-        return fileId;
+        log.info("✓ Uploaded room detail: {} → S3 Key: {}", dto.getRoomName(), objectKey);
+        return objectKey;
     }
     
     /**
@@ -765,7 +702,6 @@ public class KnowledgeBaseGenerationCommand implements CommandLineRunner {
     private final KnowledgeBaseGenerationService generationService;
     private final KnowledgeBaseUploadService uploadService;
     private final KnowledgeBaseRepository repository;
-    private final GoogleDriveService driveService;
     
     @Value("${knowledgebase.generation.enabled:false}")
     private boolean enabled;
@@ -776,7 +712,7 @@ public class KnowledgeBaseGenerationCommand implements CommandLineRunner {
             return;
         }
         
-        log.info("=== Starting Knowledge Base Generation & Upload to Google Drive ===");
+        log.info("=== Starting Knowledge Base Generation & Upload to AWS S3 ===");
         
         List<Hotel> hotels = repository.findAllActiveHotelsForKnowledgeBase();
         log.info("Found {} active hotels to process", hotels.size());
@@ -789,8 +725,8 @@ public class KnowledgeBaseGenerationCommand implements CommandLineRunner {
                 // Build DTO
                 HotelKnowledgeBaseDto dto = generationService.buildHotelKB(hotel);
                 
-                // Generate markdown & upload to Drive
-                String fileId = uploadService.generateAndUploadHotelProfile(dto);
+                // Generate markdown & upload to S3
+                String objectKey = uploadService.generateAndUploadHotelProfile(dto);
                 
                 // Generate room details
                 for (Room room : hotel.getRooms()) {
@@ -801,16 +737,13 @@ public class KnowledgeBaseGenerationCommand implements CommandLineRunner {
                 }
                 
                 successCount++;
-                log.info("✓ [{}] {} → Drive", successCount, hotel.getName());
+                log.info("✓ [{}] {} → S3", successCount, hotel.getName());
                 
             } catch (Exception e) {
                 errorCount++;
                 log.error("✗ Failed to process hotel: {}", hotel.getName(), e);
             }
         }
-        
-        // Clear folder cache after batch
-        driveService.clearFolderCache();
         
         log.info("=== Generation Completed ===");
         log.info("Success: {}, Errors: {}", successCount, errorCount);
@@ -907,7 +840,7 @@ public class KnowledgeBaseScheduler {
 
 ### 5.1 Overview
 
-**Backend's job is done** after uploading markdown to Google Drive. The rest is handled by **n8n workflow automation**.
+**Backend's job is done** after uploading markdown to AWS S3. The rest is handled by **n8n workflow automation** triggered by S3 events.
 
 ### 5.2 n8n Workflow Architecture
 
@@ -916,14 +849,14 @@ public class KnowledgeBaseScheduler {
 │                    n8n Workflow (No-Code)                       │
 └────────────────────────────────────────────────────────────────┘
 
-[1] Google Drive Trigger
-    ↓ (Watches for file changes in knowledge_base/ folder)
+[1] S3 Event Trigger (Webhook)
+    ↓ (Receives S3 PUT event notification)
     │
-    ├─ Event: File Created
-    └─ Event: File Updated
+    ├─ Event: Object Created (PUT)
+    └─ Event: Object Replaced (PUT to existing key)
 
-[2] Read File Content
-    ↓ (Download .md file from Drive)
+[2] Download File from S3
+    ↓ (Get object from S3 bucket)
     │
     └─ Extract: Frontmatter (YAML) + Body (Markdown)
 
@@ -951,7 +884,18 @@ public class KnowledgeBaseScheduler {
     └─ Slack/Discord: "✓ Indexed: grand-mercure-danang.md"
 ```
 
-### 5.3 n8n Workflow Configuration (JSON)
+### 5.3 S3 Event Configuration
+
+First, configure S3 to send events to n8n webhook:
+
+1. Go to AWS S3 Console → Your bucket → Properties → Event notifications
+2. Create event notification:
+   - **Event type**: `s3:ObjectCreated:*` (PUT operations)
+   - **Prefix**: `knowledge_base/`
+   - **Suffix**: `.md`
+   - **Destination**: HTTP/HTTPS endpoint (your n8n webhook URL)
+
+### 5.4 n8n Workflow Configuration (JSON)
 
 Save this as `holidate-kb-sync.json` and import to n8n:
 
@@ -961,18 +905,31 @@ Save this as `holidate-kb-sync.json` and import to n8n:
   "nodes": [
     {
       "parameters": {
-        "folderId": "YOUR_GOOGLE_DRIVE_FOLDER_ID",
-        "event": "fileUpdated,fileCreated"
+        "httpMethod": "POST",
+        "path": "s3-kb-webhook",
+        "responseMode": "responseNode"
       },
-      "name": "Google Drive Trigger",
-      "type": "n8n-nodes-base.googleDriveTrigger"
+      "name": "S3 Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "webhookId": "s3-kb-trigger"
     },
     {
       "parameters": {
-        "fileId": "={{ $json.id }}"
+        "jsCode": "// Extract S3 event data\nconst s3Event = items[0].json;\nconst record = s3Event.Records?.[0];\nconst bucket = record?.s3?.bucket?.name;\nconst key = decodeURIComponent(record?.s3?.object?.key?.replace(/\\+/g, ' '));\n\nreturn [{\n  json: {\n    bucket: bucket,\n    key: key,\n    eventName: record?.eventName\n  }\n}];"
       },
-      "name": "Download File",
-      "type": "n8n-nodes-base.googleDrive"
+      "name": "Parse S3 Event",
+      "type": "n8n-nodes-base.code"
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "aws",
+        "operation": "getObject",
+        "bucket": "={{ $json.bucket }}",
+        "key": "={{ $json.key }}"
+      },
+      "name": "Download from S3",
+      "type": "n8n-nodes-base.aws"
     },
     {
       "parameters": {
@@ -1000,13 +957,23 @@ Save this as `holidate-kb-sync.json` and import to n8n:
       },
       "name": "Pinecone Upsert",
       "type": "n8n-nodes-base.pinecone"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"success\", \"doc_id\": $json.doc_id } }}"
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook"
     }
   ],
   "connections": {
-    "Google Drive Trigger": { "main": [[{ "node": "Download File" }]] },
-    "Download File": { "main": [[{ "node": "Parse Markdown" }]] },
+    "S3 Webhook": { "main": [[{ "node": "Parse S3 Event" }]] },
+    "Parse S3 Event": { "main": [[{ "node": "Download from S3" }]] },
+    "Download from S3": { "main": [[{ "node": "Parse Markdown" }]] },
     "Parse Markdown": { "main": [[{ "node": "OpenAI Embedding" }]] },
-    "OpenAI Embedding": { "main": [[{ "node": "Pinecone Upsert" }]] }
+    "OpenAI Embedding": { "main": [[{ "node": "Pinecone Upsert" }]] },
+    "Pinecone Upsert": { "main": [[{ "node": "Respond to Webhook" }]] }
   }
 }
 ```
@@ -1048,7 +1015,7 @@ public void onHotelUpdated(HotelUpdatedEvent event) {
 
 @EventListener
 public void onHotelDeleted(HotelDeletedEvent event) {
-    // Note: We keep the file on Drive but mark it inactive
+    // Note: We keep the file on S3 but mark it inactive
     // Let n8n workflow handle cleanup based on status field
     log.info("Hotel deleted: {}. n8n will handle cleanup.", event.getHotelId());
 }
@@ -1062,37 +1029,44 @@ public void onHotelDeleted(HotelDeletedEvent event) {
 
 ```java
 @Test
-public void testGoogleDriveUpload() throws IOException {
+public void testS3Upload() {
     // Given
     String markdown = "---\ndoc_id: test-123\n---\n# Test Hotel";
     String path = "vietnam/da-nang/test/hotels/test-hotel.md";
     
     // When
-    String fileId = driveService.uploadOrUpdateMarkdown(markdown, path);
+    String objectKey = s3Service.uploadOrUpdateMarkdown(markdown, path);
     
     // Then
-    assertNotNull(fileId);
-    assertTrue(fileId.matches("[a-zA-Z0-9_-]+"));
+    assertNotNull(objectKey);
+    assertTrue(objectKey.contains("knowledge_base/"));
+    assertTrue(objectKey.endsWith("test-hotel.md"));
 }
 
 @Test
-public void testFolderCreation() throws IOException {
-    // Test that folder path is created recursively
-    String folderId = driveService.ensureFolderPath("vietnam/nha-trang/city/hotels");
+public void testFileExists() {
+    // Upload a file first
+    String path = "vietnam/da-nang/test/hotels/test-hotel.md";
+    s3Service.uploadOrUpdateMarkdown("test content", path);
     
-    assertNotNull(folderId);
-    // Verify folder exists on Drive
+    // Then check existence
+    assertTrue(s3Service.fileExists(path));
+    assertFalse(s3Service.fileExists("non-existent-file.md"));
 }
 
 @Test
-public void testUpdateExistingFile() throws IOException {
+public void testIdempotentUpload() {
     // Upload once
-    String fileId1 = driveService.uploadOrUpdateMarkdown("v1", "test.md");
+    String path = "test.md";
+    String objectKey1 = s3Service.uploadOrUpdateMarkdown("v1", path);
     
-    // Upload again (should update, not create new)
-    String fileId2 = driveService.uploadOrUpdateMarkdown("v2", "test.md");
+    // Upload again (should overwrite, same key)
+    String objectKey2 = s3Service.uploadOrUpdateMarkdown("v2", path);
     
-    assertEquals(fileId1, fileId2); // Same file ID = updated, not created
+    assertEquals(objectKey1, objectKey2); // Same object key = overwritten
+    
+    // Verify content was updated
+    // (You would need to download and check content in integration test)
 }
 ```
 
@@ -1116,15 +1090,16 @@ class KnowledgeBaseIntegrationTest {
         
         // When: Generate and upload
         HotelKnowledgeBaseDto dto = generationService.buildHotelKB(hotel);
-        String fileId = uploadService.generateAndUploadHotelProfile(dto);
+        String objectKey = uploadService.generateAndUploadHotelProfile(dto);
         
-        // Then: File should exist on Drive
-        assertNotNull(fileId);
+        // Then: File should exist on S3
+        assertNotNull(objectKey);
+        assertTrue(s3Service.fileExists(objectKey));
         
-        // Verify file content
-        String content = driveService.downloadFileContent(fileId);
-        assertTrue(content.contains("doc_id: \"" + hotel.getId() + "\""));
-        assertTrue(content.contains("# " + hotel.getName()));
+        // Verify file content (would need S3 download method)
+        // String content = s3Service.downloadFile(objectKey);
+        // assertTrue(content.contains("doc_id: \"" + hotel.getId() + "\""));
+        // assertTrue(content.contains("# " + hotel.getName()));
     }
 }
 ```
@@ -1160,28 +1135,30 @@ public class ParallelKBGenerationService {
 }
 ```
 
-### 2. Rate Limiting (Google Drive API Quota)
+### 2. Rate Limiting (S3)
+
+S3 has no API quotas, but you can still implement rate limiting for cost control:
 
 ```java
 @Component
-public class GoogleDriveRateLimiter {
-    private final RateLimiter rateLimiter = RateLimiter.create(10.0); // 10 req/sec
+public class S3RateLimiter {
+    private final RateLimiter rateLimiter = RateLimiter.create(100.0); // 100 req/sec (S3 supports much higher)
     
     public void acquirePermit() {
         rateLimiter.acquire();
     }
 }
 
-// Usage in GoogleDriveService
-public String uploadOrUpdateMarkdown(String content, String path) throws IOException {
-    rateLimiter.acquirePermit(); // Wait if needed
+// Usage in S3KnowledgeBaseService (optional)
+public String uploadOrUpdateMarkdown(String content, String relativePath) {
+    rateLimiter.acquirePermit(); // Optional - S3 can handle high throughput
     // ... proceed with upload
 }
 ```
 
-### 3. Caching Folder IDs
+### 3. Parallel Processing
 
-Already implemented in `GoogleDriveService` via `folderCache` ConcurrentHashMap.
+S3 supports high concurrency. No folder caching needed - path-based keys are automatic.
 
 ---
 
@@ -1206,9 +1183,9 @@ public class KBGenerationMetrics {
         }
     }
     
-    @AfterReturning("execution(* com.webapp.holidate.service.storage.GoogleDriveService.upload*(..))")
+    @AfterReturning("execution(* com.webapp.holidate.service.storage.S3KnowledgeBaseService.upload*(..))")
     public void countUploads() {
-        registry.counter("kb.drive.uploads").increment();
+        registry.counter("kb.s3.uploads").increment();
     }
 }
 ```
@@ -1217,52 +1194,49 @@ public class KBGenerationMetrics {
 
 ## Deployment Checklist
 
-- [ ] Create Google Cloud project
-- [ ] Enable Google Drive API
-- [ ] Create Service Account + download JSON key
-- [ ] Share target Drive folder with service account email
-- [ ] Add `google-service-account.json` to `src/main/resources/`
-- [ ] Update `application.properties` with folder ID
+- [ ] Create AWS S3 bucket (or use existing)
+- [ ] Configure S3 bucket permissions (IAM role/policy)
+- [ ] Set up S3 Event Notifications → n8n webhook
+- [ ] Configure AWS credentials in environment variables
+- [ ] Update `application.properties` with S3 bucket name and root folder
 - [ ] Test upload with 1 hotel
 - [ ] Setup n8n workflow (import JSON)
-- [ ] Configure n8n credentials (Drive, OpenAI, Pinecone)
-- [ ] Test end-to-end: Backend → Drive → n8n → Vector DB
+- [ ] Configure n8n credentials (AWS, OpenAI, Pinecone)
+- [ ] Test S3 event trigger → n8n webhook
+- [ ] Test end-to-end: Backend → S3 → n8n → Vector DB
 - [ ] Enable scheduled jobs
-- [ ] Setup monitoring alerts
-- [ ] Document Drive folder structure for team
+- [ ] Setup monitoring alerts (CloudWatch)
+- [ ] Document S3 bucket structure for team
 
 ---
 
 ## Troubleshooting
 
-### Issue: "Insufficient permissions" error
+### Issue: "Access Denied" error when uploading to S3
 
 **Solution**:
-1. Check service account email has Editor access to Drive folder
-2. Verify Drive API is enabled in Google Cloud Console
-3. Check service account key file is loaded correctly
+1. Check IAM role/policy has `s3:PutObject` permission for the bucket
+2. Verify AWS credentials are correctly configured in environment variables
+3. Check bucket policy allows your IAM user/role to write
+4. Ensure bucket name is correct in `application.properties`
 
-### Issue: Duplicate files created instead of updating
-
-**Solution**:
-- Check `findFileByName()` query
-- Ensure `mimeType='text/markdown'` matches what you're creating
-- Clear Drive trash (trashed files still count in queries)
-
-### Issue: Slow folder creation
+### Issue: Files not appearing in S3
 
 **Solution**:
-- Folder cache should prevent this
-- Check `folderCache.containsKey()` is working
-- Consider pre-creating folder structure manually
+- Check object key path is correct (use `s3Service.getObjectUrl()` to verify)
+- Verify bucket name and region are correct
+- Check CloudWatch logs for S3 errors
+- Ensure UTF-8 encoding is preserved
 
-### Issue: n8n workflow not triggering
+### Issue: n8n workflow not triggering from S3 events
 
 **Solution**:
-1. Verify Google Drive Trigger is watching correct folder ID
-2. Check n8n execution history for errors
-3. Test manually by uploading a file directly to Drive
-4. Ensure n8n has Drive API permissions
+1. Verify S3 Event Notification is configured correctly
+2. Check webhook URL is accessible from AWS
+3. Test webhook manually with a test S3 event
+4. Check n8n execution history for errors
+5. Verify S3 event notification destination (HTTP/HTTPS endpoint)
+6. Check n8n webhook is active and listening
 
 ---
 
@@ -1270,10 +1244,12 @@ public class KBGenerationMetrics {
 
 | Metric                     | Estimation                         |
 |----------------------------|------------------------------------|
-| **Processing Time**        | ~200 hotels/minute (parallel)      |
-| **Drive Storage**          | ~5KB per hotel, 3KB per room       |
-| **Total for 1000 hotels**  | ~8MB on Drive                      |
-| **Google Drive API Quota** | 20,000 requests/day (plenty)       |
+| **Processing Time**        | ~500 hotels/minute (parallel, no API limits) |
+| **S3 Storage**             | ~5KB per hotel, 3KB per room       |
+| **Total for 1000 hotels**  | ~8MB on S3                         |
+| **S3 API Quota**           | No limits (pay per request)       |
+| **S3 Storage Cost**        | ~$0.023 per GB/month               |
+| **S3 PUT Requests**        | ~$0.005 per 1000 requests         |
 | **n8n Processing**         | ~10 files/minute (embedding)       |
 
 ---
@@ -1282,10 +1258,11 @@ public class KBGenerationMetrics {
 
 1. **Implement Phase 1-3** in your codebase
 2. **Test with 1 hotel** first
-3. **Setup n8n workflow** and test Drive → Vector DB flow
-4. **Scale to batch generation**
-5. **Monitor and optimize**
+3. **Setup S3 Event Notifications** to trigger n8n webhook
+4. **Setup n8n workflow** and test S3 → Vector DB flow
+5. **Scale to batch generation**
+6. **Monitor and optimize**
 
 ---
 
-This implementation guide provides a complete, production-ready solution for generating knowledge base content and syncing it via Google Drive for n8n automation! 🚀
+This implementation guide provides a complete, production-ready solution for generating knowledge base content and syncing it via AWS S3 for n8n automation! 🚀

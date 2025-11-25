@@ -122,5 +122,36 @@ public interface KnowledgeBaseRepository extends JpaRepository<Hotel, String> {
      */
     @Query(KnowledgeBaseQueries.GET_REVIEW_STATS_BY_HOTEL_ID)
     ReviewStatsDto getReviewStatsByHotelId(@Param("hotelId") String hotelId);
+
+    /**
+     * Find hotels modified after a specific timestamp.
+     * Uses LEFT JOIN FETCH to eagerly load all relationships (similar to findAllActiveHotelsForKnowledgeBase)
+     * to prevent LazyInitializationException during batch processing.
+     * 
+     * IMPORTANT: This query does NOT fetch collections (amenities, rooms, reviews, venues)
+     * to avoid cartesian product issues. Use separate queries to fetch those.
+     * 
+     * @param status Hotel status (typically "active" or "ACTIVE")
+     * @param lastRunTime Timestamp to compare against (hotels updated after this time will be returned)
+     * @return List of hotels with eagerly loaded location and policy data
+     */
+    @Query(KnowledgeBaseQueries.FIND_BY_UPDATED_AT_AFTER)
+    List<Hotel> findByUpdatedAtAfter(
+            @Param("status") String status,
+            @Param("lastRunTime") java.time.LocalDateTime lastRunTime);
+
+    /**
+     * Find a single hotel by ID with complete relationships for Knowledge Base generation.
+     * Uses LEFT JOIN FETCH to eagerly load all relationships (similar to findAllActiveHotelsForKnowledgeBase)
+     * to prevent LazyInitializationException during batch processing.
+     * 
+     * IMPORTANT: This query does NOT fetch collections (amenities, rooms, reviews, venues)
+     * to avoid cartesian product issues. Use separate queries to fetch those.
+     * 
+     * @param id Hotel ID
+     * @return Optional hotel with eagerly loaded location and policy data
+     */
+    @Query(KnowledgeBaseQueries.FIND_BY_ID_FOR_KNOWLEDGE_BASE)
+    java.util.Optional<Hotel> findByIdForKnowledgeBase(@Param("id") String id);
 }
 
