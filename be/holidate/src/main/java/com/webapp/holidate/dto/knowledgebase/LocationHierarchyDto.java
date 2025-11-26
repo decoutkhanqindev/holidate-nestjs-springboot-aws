@@ -1,6 +1,10 @@
 package com.webapp.holidate.dto.knowledgebase;
 
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 @Data
@@ -24,6 +28,7 @@ public class LocationHierarchyDto {
     String street;
     String streetName;
     String address;
+    String hotelName; // Optional: for room knowledge base (inherited from hotel)
     Double latitude;
     Double longitude;
 }

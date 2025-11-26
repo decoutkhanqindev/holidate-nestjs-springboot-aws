@@ -7,6 +7,7 @@ import com.webapp.holidate.dto.knowledgebase.HotelKnowledgeBaseDto;
 import com.webapp.holidate.dto.knowledgebase.LocationHierarchyDto;
 import com.webapp.holidate.dto.knowledgebase.NearbyVenueDto;
 import com.webapp.holidate.dto.knowledgebase.PriceReferenceDto;
+import com.webapp.holidate.dto.knowledgebase.RoomKnowledgeBaseDto;
 import com.webapp.holidate.dto.knowledgebase.RoomSummaryDto;
 import com.webapp.holidate.service.storage.S3KnowledgeBaseService;
 import lombok.AccessLevel;
@@ -291,7 +292,9 @@ public class KnowledgeBaseUploadService {
         // Performance stats
         ctx.put("total_rooms", dto.getTotalRooms() != null ? dto.getTotalRooms().intValue() : 0);
         ctx.put("available_room_types", dto.getAvailableRoomTypes() != null ? dto.getAvailableRoomTypes().intValue() : 0);
-        ctx.put("review_score", dto.getReviewScore() != null ? dto.getReviewScore().doubleValue() : 0.0);
+        // Review stats - null-safe handling per DATA_VALIDATION_REPORT.md section 3
+        // If review_count = 0, review_score should be null (not 0.0) for conditional rendering
+        ctx.put("review_score", dto.getReviewScore() != null ? dto.getReviewScore().doubleValue() : null);
         ctx.put("review_count", dto.getReviewCount() != null ? dto.getReviewCount().longValue() : 0L);
         
         // Nearby venues
@@ -443,6 +446,159 @@ public class KnowledgeBaseUploadService {
         }
         
         return keywords.isEmpty() ? List.of("khách sạn", "nghỉ dưỡng") : keywords;
+    }
+
+    /**
+     * Generate room detail and upload
+     */
+    public String generateAndUploadRoomDetail(RoomKnowledgeBaseDto dto) throws IOException {
+        Mustache template = mustacheFactory.compile("templates/template_room_detail.md");
+        
+        Map<String, Object> context = buildRoomTemplateContext(dto);
+        
+        StringWriter writer = new StringWriter();
+        template.execute(writer, context);
+        String markdownContent = writer.toString();
+        
+        String relativePath = buildRoomRelativePath(dto);
+        // Example: vietnam/da-nang/son-tra/hotels/grand-mercure-danang/deluxe-ocean-view.md
+        
+        String objectKey = s3Service.uploadOrUpdateMarkdown(markdownContent, relativePath);
+        
+        log.info("✓ Uploaded room detail: {} → S3 Key: {}", dto.getRoomName(), objectKey);
+        return objectKey;
+    }
+    
+    /**
+     * Build relative path for room
+     */
+    private String buildRoomRelativePath(RoomKnowledgeBaseDto dto) {
+        return String.format(
+            "vietnam/%s/%s/hotels/%s/%s.md",
+            dto.getLocation().getCitySlug(),
+            dto.getLocation().getDistrictSlug(),
+            dto.getParentHotelSlug(),
+            dto.getSlug()
+        );
+    }
+    
+    /**
+     * Build Mustache template context from RoomKnowledgeBaseDto
+     * Maps all DTO fields to template variables matching template_room_detail.md
+     */
+    private Map<String, Object> buildRoomTemplateContext(RoomKnowledgeBaseDto dto) {
+        Map<String, Object> ctx = new HashMap<>();
+        
+        // === FRONTMATTER METADATA ===
+        
+        // Document identification
+        ctx.put("doc_type", "room_detail");
+        ctx.put("doc_id", dto.getRoomId() != null ? new String(dto.getRoomId()) : null);
+        ctx.put("slug", dto.getSlug() != null ? new String(dto.getSlug()) : null);
+        ctx.put("parent_hotel_slug", dto.getParentHotelSlug() != null ? new String(dto.getParentHotelSlug()) : null);
+        ctx.put("parent_hotel_id", dto.getParentHotelId() != null ? new String(dto.getParentHotelId()) : null);
+        ctx.put("last_updated", dto.getLastUpdated() != null
+            ? dto.getLastUpdated().format(ISO_FORMATTER) + "Z"
+            : LocalDateTime.now().format(ISO_FORMATTER) + "Z");
+        ctx.put("language", "vi");
+        
+        // Location hierarchy (inherited from hotel)
+        LocationHierarchyDto loc = dto.getLocation();
+        if (loc != null) {
+            Map<String, Object> locationMap = new HashMap<>();
+            locationMap.put("country", loc.getCountry() != null ? new String(loc.getCountry()) : null);
+            locationMap.put("country_code", loc.getCountryCode() != null ? new String(loc.getCountryCode()) : null);
+            locationMap.put("province", loc.getProvince() != null ? new String(loc.getProvince()) : null);
+            locationMap.put("province_name", loc.getProvinceName() != null ? new String(loc.getProvinceName()) : null);
+            locationMap.put("city", loc.getCity() != null ? new String(loc.getCity()) : null);
+            locationMap.put("city_name", loc.getCityName() != null ? new String(loc.getCityName()) : null);
+            locationMap.put("district", loc.getDistrict() != null ? new String(loc.getDistrict()) : null);
+            locationMap.put("district_name", loc.getDistrictName() != null ? new String(loc.getDistrictName()) : null);
+            locationMap.put("ward", loc.getWard() != null ? new String(loc.getWard()) : null);
+            locationMap.put("ward_name", loc.getWardName() != null ? new String(loc.getWardName()) : null);
+            locationMap.put("street", loc.getStreet() != null ? new String(loc.getStreet()) : null);
+            locationMap.put("street_name", loc.getStreetName() != null ? new String(loc.getStreetName()) : null);
+            locationMap.put("address", loc.getAddress() != null ? new String(loc.getAddress()) : null);
+            locationMap.put("hotel_name", loc.getHotelName() != null ? new String(loc.getHotelName()) : null);
+            
+            // Coordinates
+            if (loc.getLatitude() != null && loc.getLongitude() != null) {
+                Map<String, Object> coordinates = new HashMap<>();
+                coordinates.put("lat", loc.getLatitude());
+                coordinates.put("lng", loc.getLongitude());
+                locationMap.put("coordinates", coordinates);
+            }
+            
+            ctx.put("location", locationMap);
+        }
+        
+        // Room classification
+        ctx.put("room_id", dto.getRoomId() != null ? new String(dto.getRoomId()) : null);
+        ctx.put("room_name", dto.getRoomName() != null ? new String(dto.getRoomName()) : null);
+        ctx.put("room_type", dto.getRoomType() != null ? new String(dto.getRoomType()) : null);
+        ctx.put("room_category", dto.getRoomCategory() != null ? new String(dto.getRoomCategory()) : null);
+        
+        // Room specifications
+        ctx.put("bed_type", dto.getBedType() != null ? new String(dto.getBedType()) : new String("N/A"));
+        ctx.put("bed_type_id", dto.getBedTypeId() != null ? new String(dto.getBedTypeId()) : null);
+        ctx.put("max_adults", dto.getMaxAdults() != null ? dto.getMaxAdults().intValue() : 0);
+        ctx.put("max_children", dto.getMaxChildren() != null ? dto.getMaxChildren().intValue() : 0);
+        ctx.put("area_sqm", dto.getAreaSqm() != null ? dto.getAreaSqm().doubleValue() : 0.0);
+        ctx.put("view", dto.getView() != null ? new String(dto.getView()) : new String("N/A"));
+        ctx.put("floor_range", dto.getFloorRange() != null ? new String(dto.getFloorRange()) : null);
+        
+        // Room features - Create defensive copy to ensure thread safety
+        ctx.put("room_amenity_tags", dto.getRoomAmenityTags() != null 
+            ? new ArrayList<>(dto.getRoomAmenityTags()) : List.of());
+        
+        // Room policies
+        ctx.put("smoking_allowed", dto.getSmokingAllowed() != null ? dto.getSmokingAllowed() : false);
+        ctx.put("wifi_available", dto.getWifiAvailable() != null ? dto.getWifiAvailable() : false);
+        ctx.put("breakfast_included", dto.getBreakfastIncluded() != null ? dto.getBreakfastIncluded() : false);
+        ctx.put("cancellation_policy", dto.getCancellationPolicy() != null 
+            ? new String(dto.getCancellationPolicy()) : new String("Chính sách tiêu chuẩn"));
+        ctx.put("reschedule_policy", dto.getReschedulePolicy() != null
+            ? new String(dto.getReschedulePolicy()) : new String("Chính sách tiêu chuẩn"));
+        
+        // Inventory info
+        ctx.put("quantity", dto.getQuantity() != null ? dto.getQuantity().intValue() : 0);
+        ctx.put("status", dto.getStatus() != null ? new String(dto.getStatus()) : new String("active"));
+        
+        // Pricing info
+        ctx.put("base_price", dto.getBasePrice() != null ? dto.getBasePrice().intValue() : 0);
+        ctx.put("price_note", dto.getPriceNote() != null ? new String(dto.getPriceNote()) : new String(""));
+        
+        // Vibe tags - Create defensive copy
+        ctx.put("vibe_tags", dto.getVibeTags() != null 
+            ? new ArrayList<>(dto.getVibeTags()) : List.of());
+        
+        // SEO keywords - Create defensive copy
+        ctx.put("keywords", dto.getKeywords() != null 
+            ? new ArrayList<>(dto.getKeywords()) : List.of());
+        
+        // === BODY CONTENT ===
+        
+        // Room name and description
+        ctx.put("name", dto.getRoomName() != null ? new String(dto.getRoomName()) : "");
+        ctx.put("description", dto.getDescription() != null ? new String(dto.getDescription()) : "");
+        
+        // Images
+        ctx.put("mainImageUrl", dto.getMainImageUrl() != null ? new String(dto.getMainImageUrl()) : new String(""));
+        ctx.put("galleryImageUrls", dto.getGalleryImageUrls() != null 
+            ? new ArrayList<>(dto.getGalleryImageUrls()) : List.of());
+        
+        // Helper flags for conditional rendering
+        ctx.put("has_balcony", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("balcony"));
+        ctx.put("has_bathtub", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("bathtub"));
+        ctx.put("has_tv", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("tv"));
+        ctx.put("has_bluetooth", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("bluetooth"));
+        ctx.put("has_coffee_maker", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("coffee_maker"));
+        ctx.put("has_minibar", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("minibar"));
+        ctx.put("has_blackout_curtains", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("blackout_curtains"));
+        ctx.put("has_safe_box", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("safe_box"));
+        ctx.put("has_turn_down_service", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("turn_down_service"));
+        
+        return ctx;
     }
 }
 

@@ -5,199 +5,175 @@
 
 # === DOCUMENT IDENTIFICATION ===
 doc_type: "room_detail"
-doc_id: "35a7a8a0-b3b8-4e86-a36a-95edf12bba67"  # UUID from rooms.id
-slug: "deluxe-ocean-view-grand-mercure-danang"
-parent_hotel_slug: "grand-mercure-danang"
-parent_hotel_id: "00d60e60-d366-4d73-b3c0-614ecb95feb7"
-last_updated: "2025-11-23T15:45:00Z"
+doc_id: "{{doc_id}}"  # Source: curl_step_3 -> data.id (GET /accommodation/rooms/{ROOM_ID})
+slug: "{{slug}}"  # Source: Generated from curl_step_3 -> data.name + hotel.name
+parent_hotel_slug: "{{parent_hotel_slug}}"  # Source: Generated from curl_step_2.1 -> data.name
+parent_hotel_id: "{{parent_hotel_id}}"  # Source: curl_step_3 -> data.hotel.id
+last_updated: "{{last_updated}}"  # Source: curl_step_3 -> data.updatedAt (fallback to createdAt if null)
 language: "vi"
 
 # === LOCATION (INHERITED FROM HOTEL) ===
 location:
-  country: "vietnam"
-  city: "da-nang"
-  district: "son-tra"
-  hotel_name: "Grand Mercure Danang"
+  country: "{{location.country}}"  # Source: curl_step_3 -> data.hotel.country.name
+  city: "{{location.city}}"  # Source: curl_step_3 -> data.hotel.city.name
+  district: "{{location.district}}"  # Source: curl_step_3 -> data.hotel.district.name
+  hotel_name: "{{location.hotel_name}}"  # Source: curl_step_3 -> data.hotel.name
 
 # === ROOM CLASSIFICATION ===
-room_id: "35a7a8a0-b3b8-4e86-a36a-95edf12bba67"
-room_name: "Deluxe Ocean View"
-room_type: "deluxe"  # standard | superior | deluxe | suite | villa
-room_category: "double"  # single | double | twin | family | suite
+room_id: "{{room_id}}"  # Source: curl_step_3 -> data.id
+room_name: "{{room_name}}"  # Source: curl_step_3 -> data.name (Vietnamese, e.g., "Premier Deluxe Triple")
+room_type: "{{room_type}}"  # INFERRED from curl_step_3 -> data.name using inferRoomType() logic
+room_category: "{{room_category}}"  # INFERRED from curl_step_3 -> data.maxAdults + maxChildren using inferRoomCategory() logic
 
 # === ROOM SPECIFICATIONS ===
-# Source: Room entity fields
-bed_type: "Giường King (cỡ lớn)"  # From BedType.name
-bed_type_id: "78efc094-a067-11f0-a7b7-0a6aab4924ab"
-max_adults: 2
-max_children: 1
-area_sqm: 45
-view: "ocean"  # ocean | sea | garden | city | mountain | pool | street
-floor_range: "5-12"  # Optional: Which floors this room type is on
+# Source: curl_step_3 -> data (GET /accommodation/rooms/{ROOM_ID})
+bed_type: "{{bed_type}}"  # Source: curl_step_3 -> data.bedType.name (Vietnamese, e.g., "2 giường đơn")
+bed_type_id: "{{bed_type_id}}"  # Source: curl_step_3 -> data.bedType.id
+max_adults: {{max_adults}}  # Source: curl_step_3 -> data.maxAdults
+max_children: {{max_children}}  # Source: curl_step_3 -> data.maxChildren
+area_sqm: {{area_sqm}}  # Source: curl_step_3 -> data.area
+view: "{{view}}"  # Source: curl_step_3 -> data.view (Vietnamese, e.g., "Hướng biển, Nhìn ra thành phố")
+floor_range: "{{floor_range}}"  # Optional: Not in API response, default null
 
 # === ROOM FEATURES ===
-# Source: RoomAmenity → Amenity relationships
+# Source: curl_step_3 -> data.amenities[] -> amenity.name (Vietnamese)
+# Mapped to English via AmenityMappingService using curl_step_2.5 (all amenities) as reference
 room_amenity_tags:
-  - "air_conditioning"
-  - "balcony"
-  - "bathtub"
-  - "shower"
-  - "minibar"
-  - "coffee_maker"
-  - "safe_box"
-  - "tv"
-  - "work_desk"
-  - "blackout_curtains"
-  - "toiletries"
-  - "hairdryer"
-  - "bathrobe"
-  - "slippers"
+{{#room_amenity_tags}}
+  - "{{.}}"  # Source: curl_step_3 -> data.amenities[].amenities[].name -> mapped to English (e.g., "microwave", "refrigerator", "air_conditioning")
+{{/room_amenity_tags}}
 
 # === ROOM POLICIES ===
-# Source: Room entity + RoomPolicy (if exists, else inherit from HotelPolicy)
-smoking_allowed: false
-wifi_available: true
-breakfast_included: true
-cancellation_policy: "Linh hoạt 3 ngày"  # From CancellationPolicy.name via Room.cancellation_policy
-reschedule_policy: "Linh hoạt 2 ngày"  # From ReschedulePolicy.name via Room.reschedule_policy
+# Source: curl_step_3 -> data (room-level) OR curl_step_2.1 -> data.policy (hotel-level inheritance)
+smoking_allowed: {{smoking_allowed}}  # Source: curl_step_3 -> data.smokingAllowed
+wifi_available: {{wifi_available}}  # Source: curl_step_3 -> data.wifiAvailable
+breakfast_included: {{breakfast_included}}  # Source: curl_step_3 -> data.breakfastIncluded
+cancellation_policy: "{{cancellation_policy}}"  # Source: curl_step_3 -> data.cancellationPolicy.name OR curl_step_2.1 -> data.policy.cancellationPolicy.name (inherit)
+reschedule_policy: "{{reschedule_policy}}"  # Source: curl_step_3 -> data.reschedulePolicy.name OR curl_step_2.1 -> data.policy.reschedulePolicy.name (inherit)
 
 # === INVENTORY INFO (STATIC) ===
-# Source: Room.quantity and Room.status
-quantity: 15  # Total rooms of this type
-status: "active"  # active | inactive | maintenance | closed
+# Source: curl_step_3 -> data
+quantity: {{quantity}}  # Source: curl_step_3 -> data.totalRooms
+status: "{{status}}"  # Source: curl_step_3 -> data.status
 
 # === PRICING INFO (STATIC REFERENCE) ===
-# Source: Room.base_price_per_night
-base_price: 3200000  # VNĐ/night (BASE price, not dynamic)
-price_note: "Giá có thể thay đổi theo ngày trong tuần, mùa cao điểm và tình trạng phòng trống"
+# Source: curl_step_3 -> data
+base_price: {{base_price}}  # Source: curl_step_3 -> data.basePricePerNight (VNĐ/night, BASE price, not dynamic)
+current_price: {{current_price}}  # Source: curl_step_3 -> data.currentPricePerNight (may differ from base_price if discount applied)
+price_note: "{{price_note}}"  # Template string: "Giá có thể thay đổi theo ngày trong tuần, mùa cao điểm và tình trạng phòng trống"
 
 # === VIBE TAGS (ROOM-SPECIFIC) ===
+# INFERRED from room features: view, amenities, room_type, max_children
 vibe_tags:
-  - "romantic"
-  - "luxury"
-  - "honeymoon"
-  - "sea_view"
-  - "balcony_room"
+{{#vibe_tags}}
+  - "{{.}}"  # Inferred from: view contains "biển"/"ocean" → "sea_view", has bathtub + sea_view → "romantic", maxChildren > 0 → "family_friendly"
+{{/vibe_tags}}
 
 # === SEO KEYWORDS ===
 keywords:
-  - "phòng deluxe view biển đà nẵng"
-  - "grand mercure deluxe ocean"
-  - "phòng có ban công nhìn biển"
-  - "phòng honeymoon đà nẵng"
-  - "giường king size view biển"
+{{#keywords}}
+  - "{{.}}"  # Generated from: room.name, city.name, view, bed_type, room_type
+{{/keywords}}
 
 ---
 
-# 🛏️ Deluxe Ocean View - Phòng Hướng Biển Sang Trọng
+# 🛏️ {{room_name}} - {{room_description_title}}
 
-![Deluxe Ocean View Room](https://holidate-s3-bucket.s3.ap-southeast-1.amazonaws.com/rooms/grand-mercure/deluxe-ocean-view.jpg)
+![{{room_name}}]({{mainImageUrl}})  # Source: curl_step_3 -> data.photos[].photos[0].url (first photo, or filter by category)
 
 ## 📐 Thông Số Phòng
 
 | Đặc điểm              | Thông tin chi tiết                       |
 |-----------------------|------------------------------------------|
-| **Diện tích**         | 45 m²                                    |
-| **Loại giường**       | 1 Giường King (cỡ lớn) - 180x200cm      |
-| **Sức chứa**          | Tối đa 2 người lớn + 1 trẻ em           |
-| **Hướng nhìn**        | Biển Đông (Ocean View)                   |
-| **Tầng**              | Từ tầng 5 đến tầng 12                    |
-| **Ban công**          | Có (riêng tư, 6m²)                       |
-| **Phòng tắm**         | Phòng tắm trong với bồn tắm & vòi sen   |
+| **Diện tích**         | {{area_sqm}} m²                         |  # Source: curl_step_3 -> data.area
+| **Loại giường**       | {{bed_type}}                            |  # Source: curl_step_3 -> data.bedType.name
+| **Sức chứa**          | Tối đa {{max_adults}} người lớn{{#max_children}} + {{max_children}} trẻ em{{/max_children}} |  # Source: curl_step_3 -> data.maxAdults, maxChildren
+| **Hướng nhìn**        | {{view}}                                 |  # Source: curl_step_3 -> data.view
+{{#floor_range}}
+| **Tầng**              | {{floor_range}}                          |  # Optional: Not in API
+{{/floor_range}}
 
 ---
 
 ## 💎 Mô Tả Không Gian
 
-**Deluxe Ocean View** là hạng phòng "hot" nhất tại Grand Mercure Danang, được thiết kế đặc biệt dành cho các cặp đôi honeymoon và những ai yêu thích sự lãng mạn của biển cả.
+**{{room_name}}** là hạng phòng{{#view}} {{view_description}}{{/view}} tại {{location.hotel_name}}, với diện tích {{area_sqm}}m², phù hợp cho tối đa {{max_adults}} người lớn{{#max_children}} và {{max_children}} trẻ em{{/max_children}}.
 
+{{#view_contains_ocean}}
 ### 🌊 Tầm Nhìn Panorama
-Bước vào phòng, bạn sẽ bị cuốn hút bởi khung cửa kính lớn từ sàn đến trần, mở ra tầm nhìn 180° ôm trọn **bãi biển Mỹ Khê** và đường chân trời nơi biển trời hòa quyện. Mỗi buổi sáng thức dậy với ánh bình minh vàng óng trên mặt nước, và buổi tối thư giãn ngắm hoàng hôn từ ban công riêng - đây chính là trải nghiệm mà du khách miêu tả là "đáng đồng tiền bát gạo".
-
-### 🛋️ Nội Thất Tinh Tế
-- **Không gian ngủ**: Giường King size đệm Simmons cao cấp, ga trải giường cotton Ai Cập 400 thread count, 4 gối êm ái (2 gối cứng + 2 gối mềm).
-- **Khu vực làm việc**: Bàn làm việc gỗ tự nhiên kèm ghế ergonomic, đèn đọc sách chuyên dụng.
-- **Góc thư giãn**: Sofa đôi bên cửa sổ, bàn trà tròn - lý tưởng cho afternoon tea hoặc ngắm cảnh.
-- **Tủ quần áo**: Walk-in closet rộng rãi với két an toàn, bàn ủi & máy ủi quần áo.
-
-### 🛁 Phòng Tắm Spa-Like
-Phòng tắm rộng 12m² với:
-- **Bồn tắm đứng**: Đặt sát cửa sổ, ngâm mình trong nước ấm vừa ngắm biển
-- **Vòi sen nhiệt đới**: Rain shower cỡ lớn với áp suất mạnh
-- **Bồn rửa đôi**: Hai lavabo riêng biệt, rất tiện cho cặp đôi
-- **Đồ vệ sinh cao cấp**: Bộ amenities thương hiệu Occitane (shampoo, conditioner, sữa tắm, body lotion)
-- **Tiện ích**: Máy sấy tóc Panasonic, cân điện tử, gương trang điểm có đèn
+Phòng có tầm nhìn đẹp hướng biển, lý tưởng cho các cặp đôi và những ai yêu thích cảnh biển.
+{{/view_contains_ocean}}
 
 ---
 
 ## ✨ Tiện Nghi Trong Phòng
 
 ### 🔌 Công Nghệ & Giải Trí
-- ✅ **WiFi tốc độ cao**: Miễn phí, 100 Mbps (đủ cho video call/streaming)
-- ✅ **Smart TV 55 inch**: Samsung QLED, có Netflix, YouTube
-- ✅ **Bluetooth speaker**: Kết nối điện thoại phát nhạc
-- ✅ **Ổ cắm đa năng**: USB charging port bên cạnh giường, ổ cắm quốc tế
+{{#wifi_available}}
+- ✅ **WiFi tốc độ cao**: Miễn phí
+{{/wifi_available}}
+{{#room_amenity_tags}}
+{{#. == "tv"}}
+- ✅ **TV**: Smart TV với các kênh giải trí
+{{/.}}
+{{/room_amenity_tags}}
 
 ### ☕ Ăn Uống & Minibar
-- ✅ **Máy pha cà phê Nespresso**: 4 viên capsule miễn phí/ngày
-- ✅ **Ấm đun nước điện**: Trà túi lọc cao cấp (sencha, earl grey, herbal)
-- ✅ **Minibar tủ lạnh**: 
-  - 2 chai nước suối (500ml) - miễn phí, bổ sung hàng ngày
-  - Soft drinks, bia, rượu vang - có phí
-- ✅ **Bộ chén tách sứ**: Phục vụ afternoon tea
+{{#room_amenity_tags}}
+{{#. == "coffee_maker"}}
+- ✅ **Máy pha cà phê**: Phục vụ trong phòng
+{{/.}}
+{{#. == "refrigerator"}}
+- ✅ **Tủ lạnh**: Minibar
+{{/.}}
+{{/room_amenity_tags}}
 
 ### 🌡️ Tiện Nghi Khác
-- ✅ **Điều hòa trung tâm**: Điều khiển nhiệt độ cá nhân
+{{#room_amenity_tags}}
+{{#. == "air_conditioning"}}
+- ✅ **Điều hòa**: Điều khiển nhiệt độ cá nhân
+{{/.}}
+{{#. == "safe_box"}}
+- ✅ **Két an toàn**: Đủ lớn cho laptop
+{{/.}}
+{{#. == "blackout_curtains"}}
 - ✅ **Rèm che sáng**: Blackout curtains để ngủ ngon
-- ✅ **Két an toàn điện tử**: Đủ lớn cho laptop 15 inch
-- ✅ **Điện thoại nội bộ**: Gọi room service 24/7
-
-### 🧺 Dịch Vụ Phòng Hàng Ngày
-- ✅ **Dọn phòng**: 2 lần/ngày (sáng + chiều)
-- ✅ **Thay ga trải giường**: Mỗi 2 ngày hoặc theo yêu cầu
-- ✅ **Thay khăn tắm**: Hàng ngày
-- ✅ **Turn-down service**: Buổi tối có trang trí giường + chocolate
+{{/.}}
+{{/room_amenity_tags}}
 
 ---
 
 ## 🍽️ Ăn Sáng & Dịch Vụ Ăn Uống
 
+{{#breakfast_included}}
 ### Bữa Sáng Buffet (Đã Bao Gồm)
-- ⏰ **Thời gian**: 06:00 - 10:00 tại The Sail Restaurant
-- 🍳 **Menu**: Hơn 80 món Á - Âu:
-  - Góc phở & bánh mì Việt Nam
-  - Trứng omelet/chiên/luộc theo yêu cầu
-  - Pancake, waffle, bánh ngọt Pháp
-  - Trái cây tươi, nước ép tự chọn
-  - Đặc sản: Bánh xèo, bún chả
-- 👶 **Trẻ em**: Có high chair & kids menu
-
-### Room Service (24/7)
-Phục vụ ăn trong phòng với phụ thu **100.000 VNĐ**/đơn hàng.  
-*(Lưu ý: Menu giá tham khảo trong phòng, giá thực tế có thể thay đổi)*
+- ⏰ **Thời gian**: 06:00 - 10:00
+- 🍳 **Menu**: Buffet quốc tế với nhiều món Á - Âu
+{{/breakfast_included}}
+{{^breakfast_included}}
+### Bữa Sáng
+- Bữa sáng không bao gồm trong giá phòng. Có thể đặt thêm với phụ thu.
+{{/breakfast_included}}
 
 ---
 
 ## 📋 Chính Sách Đặt Phòng
 
 ### ❌ Chính Sách Hủy
-**Gói "Linh hoạt 3 ngày"**:
-- ✅ **Hủy miễn phí** nếu hủy trước **3 ngày** (72 giờ) so với ngày check-in
-- ⚠️ **Hủy trong vòng 3 ngày**: Phạt 50% tổng giá trị đặt phòng
-- ⚠️ **No-show**: Giữ lại 100% tiền
-
-> 💡 **Có thể nâng cấp**: Gói "Linh hoạt 7 ngày" (phí thêm 200.000 VNĐ/đêm) hoặc xuống gói "Không hoàn hủy" (giảm 300.000 VNĐ/đêm) - tùy chọn khi đặt phòng.
+**Gói "{{cancellation_policy}}"**:  # Source: curl_step_3 -> data.cancellationPolicy.name OR curl_step_2.1 -> data.policy.cancellationPolicy.name
+{{#cancellation_policy_rules}}
+- {{description}}  # Generated from policy rules
+{{/cancellation_policy_rules}}
 
 ### 🔄 Chính Sách Đổi Lịch
-**Gói "Linh hoạt 2 ngày"**:
-- ✅ Đổi ngày check-in **miễn phí 1 lần** nếu thông báo trước 2 ngày
-- ⚠️ Đổi trong vòng 2 ngày: Phụ thu 15% tổng giá trị booking
-- ⚠️ Lần đổi thứ 2 trở đi: Phụ thu 500.000 VNĐ/lần
+**Gói "{{reschedule_policy}}"**:  # Source: curl_step_3 -> data.reschedulePolicy.name OR curl_step_2.1 -> data.policy.reschedulePolicy.name
+{{#reschedule_policy_rules}}
+- {{description}}  # Generated from policy rules
+{{/reschedule_policy_rules}}
 
 ### 🚭 Quy Định Trong Phòng
-- **Hút thuốc**: ❌ Nghiêm cấm (phạt 3.000.000 VNĐ nếu vi phạm). Có khu hút thuốc tại sân thượng tầng 13.
-- **Thú cưng**: ❌ Không cho phép
-- **Khách thêm**: Mỗi người lớn thêm phụ thu **800.000 VNĐ/đêm** (bao gồm giường phụ + breakfast). Trẻ dưới 6 tuổi ngủ chung giường cha mẹ miễn phí.
+- **Hút thuốc**: {{#smoking_allowed}}Cho phép{{/smoking_allowed}}{{^smoking_allowed}}Nghiêm cấm{{/smoking_allowed}}
+- **Thú cưng**: Không cho phép
 
 ---
 
@@ -205,106 +181,45 @@ Phục vụ ăn trong phòng với phụ thu **100.000 VNĐ**/đơn hàng.
 
 > ⚠️ **QUAN TRỌNG: Giá Động Theo Ngày**
 > 
-> Phòng **Deluxe Ocean View** có **giá cơ bản** là **3.200.000 VNĐ/đêm**, nhưng giá thực tế bạn phải trả sẽ **thay đổi** tùy vào:
+> Phòng **{{room_name}}** có **giá cơ bản** là **{{base_price}} VNĐ/đêm**, nhưng giá thực tế bạn phải trả sẽ **thay đổi** tùy vào:
 > 
-> 1. **📅 Thời điểm đặt phòng**:
->    - Thứ 2-5: Giá gốc (100%)
->    - Thứ 6-CN: Tăng 30-40%
->    - Ngày lễ (30/4, 2/9, Tết...): Tăng 50-80%
-> 
-> 2. **🌡️ Mùa du lịch**:
->    - Tháng 11-3 (mùa đẹp nhất): Giá cao nhất
->    - Tháng 4-8 (nắng nóng): Giá trung bình
->    - Tháng 9-10 (mùa mưa): Giá thấp nhất
-> 
-> 3. **📊 Tình trạng phòng trống**:
->    - Occupancy < 50%: Giá gốc
->    - Occupancy 50-80%: Tăng 10-20%
->    - Occupancy > 80%: Tăng 30-50%
->    - Chỉ còn 1-2 phòng: Có thể tăng đột biến
-> 
-> 4. **🎁 Khuyến mãi đang chạy**:
->    - Early bird (đặt trước 30 ngày): Giảm 15%
->    - Last minute (đặt trong 24h): Giảm 20% (nếu còn phòng trống)
->    - Combo ăn tối: +500.000 VNĐ (set menu 2 người)
->    - Gói spa: +800.000 VNĐ (massage 60 phút)
-
-### 💵 Ví Dụ Giá Thực Tế (Chỉ Mang Tính Tham Khảo)
-
-| Tình huống                              | Giá ước tính (VNĐ/đêm) |
-|-----------------------------------------|-------------------------|
-| Thứ 3, tháng 10 (mùa thấp điểm)        | ~2.800.000              |
-| Thứ 7, tháng 12 (cao điểm)             | ~4.500.000              |
-| Tết Nguyên Đán (3 ngày)                | ~6.000.000              |
-| Promotion Last Minute (nếu may mắn)    | ~2.560.000              |
+> 1. **📅 Thời điểm đặt phòng**: Cuối tuần/ngày lễ cao hơn
+> 2. **🌡️ Mùa du lịch**: Mùa cao điểm giá tăng
+> 3. **📊 Tình trạng phòng trống**: Occupancy cao → giá tăng
+> 4. **🎁 Khuyến mãi đang chạy**: Early bird, last minute, combo
 
 > 🔍 **Để biết giá chính xác cho kỳ nghỉ của bạn**, vui lòng cho tôi biết:
 > - Ngày check-in và check-out cụ thể
 > - Số người lớn và trẻ em
-> - Có muốn thêm dịch vụ nào không (spa, ăn tối, tour...)
+> - Có muốn thêm dịch vụ nào không
 > 
 > Tôi sẽ kiểm tra hệ thống ngay và báo giá chi tiết kèm các khuyến mãi đang có!
 > 
-> {{TOOL:get_room_price|room_id=35a7a8a0-b3b8-4e86-a36a-95edf12bba67|check_in={date}|check_out={date}}}
+> {{TOOL:get_room_price|room_id={{room_id}}|check_in={date}|check_out={date}}}
 
 ---
 
 ## 🎯 Phù Hợp Với Ai?
 
-✅ **Cặp đôi honeymoon**: View biển lãng mạn, bồn tắm ngâm mình, không gian riêng tư  
-✅ **Kỷ niệm ngày cưới**: Request trang trí hoa hồng + rượu vang (phụ thu 500k)  
-✅ **Khách một mình**: Không gian yên tĩnh để relax/workation  
-✅ **Business traveler**: Bàn làm việc thoải mái, wifi tốc độ cao  
-❌ **Gia đình >3 người**: Nên chọn **Premium Suite** (72m²) hoặc đặt 2 phòng liền kề  
+{{#vibe_tags}}
+{{#. == "family_friendly"}}
+✅ **Gia đình có trẻ nhỏ**: Phù hợp cho kỳ nghỉ gia đình
+{{/.}}
+{{#. == "romantic"}}
+✅ **Cặp đôi honeymoon**: View đẹp, không gian lãng mạn
+{{/.}}
+{{#. == "business"}}
+✅ **Khách công tác**: Tiện nghi phục vụ công việc
+{{/.}}
+{{/vibe_tags}}
 
 ---
 
-## 📸 Góc Chụp Ảnh "Sống Ảo"
+## 📸 Hình Ảnh Phòng
 
-Những góc được khách yêu thích nhất:
-1. 🌅 **Ban công lúc hoàng hôn**: Golden hour 17:00-18:00
-2. 🛁 **Bồn tắm với view biển**: Buổi sáng ánh sáng tự nhiên đẹp nhất
-3. 🛏️ **Giường với background biển**: Shot từ ban công nhìn vào trong
-4. ☕ **Cà phê trên ban công**: Ly Nespresso + bánh croissant
-
-> 💡 **Pro tip**: Đặt phòng tầng 9-12 sẽ có view "thoáng" hơn (không bị cây che), nhưng tầng 5-7 gần hồ bơi hơn.
-
----
-
-## ❓ Câu Hỏi Thường Gặp
-
-**Q: Phòng này có kết nối phòng bên cạnh được không?**  
-A: Có, một số phòng có cửa liên thông (connecting door). Vui lòng ghi chú yêu cầu khi đặt phòng, khách sạn sẽ sắp xếp tùy tình trạng.
-
-**Q: Có thể yêu cầu tầng cao không?**  
-A: Có, nhưng không đảm bảo 100%. Khách sạn sẽ ưu tiên theo thứ tự:
-1. Khách đặt phòng trước
-2. Khách VIP/thành viên
-3. Yêu cầu đặc biệt (honeymoon, birthday...)
-
-**Q: Minibar có tính tiền không?**  
-A: Nước suối miễn phí. Các đồ uống khác (cola, bia, rượu) có phí, thanh toán khi check-out.
-
-**Q: Có được hút thuốc trên ban công không?**  
-A: Không, toàn bộ phòng và ban công đều là khu vực không hút thuốc.
-
----
-
-## 🔄 So Sánh Với Các Hạng Phòng Khác
-
-Chưa chắc chắn **Deluxe Ocean View** phù hợp với bạn? Hãy xem so sánh:
-
-| Tiêu chí           | Superior Garden | **Deluxe Ocean** | Premium Suite |
-|--------------------|-----------------|------------------|---------------|
-| **Diện tích**      | 42m²            | **45m²**         | 72m²          |
-| **View**           | Vườn/Pool       | **🌊 Biển**      | 🌊 Biển       |
-| **Giá tham khảo**  | ~1.4tr          | **~3.2tr**       | ~4.7tr        |
-| **Ban công**       | Có              | **Có (lớn hơn)** | Có (riêng)    |
-| **Bồn tắm**        | ❌ (Chỉ shower) | **✅**           | ✅ Jacuzzi    |
-| **Phòng khách**    | ❌              | **❌**           | ✅ Riêng      |
-| **Phù hợp**        | Tiết kiệm       | **⭐Phổ biến**   | Gia đình/VIP  |
-
-> 💬 Bạn muốn tôi giải thích chi tiết hơn về từng loại phòng? Hoặc so sánh giá cụ thể cho ngày bạn định đi?
+{{#galleryImageUrls}}  # Source: curl_step_3 -> data.photos[].photos[].url (all except main, limit 10)
+![{{room_name}}]({{.}})
+{{/galleryImageUrls}}
 
 ---
 
@@ -314,8 +229,7 @@ Tôi có thể giúp bạn:
 - ✅ Kiểm tra phòng trống cho ngày cụ thể
 - ✅ Tính toán giá chính xác (bao gồm thuế, phí)
 - ✅ Tìm mã giảm giá đang có hiệu lực
-- ✅ Gợi ý combo tiết kiệm (phòng + spa + ăn tối)
-- ✅ Đăng ký yêu cầu đặc biệt (honeymoon decoration, birthday cake...)
+- ✅ Gợi ý combo tiết kiệm
 
 Hãy cho tôi biết kế hoạch của bạn để được hỗ trợ tốt nhất! 😊
 
@@ -323,69 +237,125 @@ Hãy cho tôi biết kế hoạch của bạn để được hỗ trợ tốt nh
 
 <!-- 
 ====================================================================
-DTO MAPPING REFERENCE (For AI Training)
+DATA SOURCE MAPPING REFERENCE (Based on Actual API Responses)
 ====================================================================
 
-FRONTMATTER MAPPING:
-- doc_id → Room.id
-- slug → Slugify(Room.name + Hotel.name)
-- parent_hotel_slug → Slugify(Hotel.name)
-- parent_hotel_id → Room.hotel_id
-- room_name → Room.name
-- room_type → Inferred from Room.name pattern (deluxe|suite|standard...)
-- bed_type → BedType.name (via Room.bed_type_id)
-- max_adults → Room.max_adults
-- max_children → Room.max_children
-- area_sqm → Room.area
-- view → Room.view
-- room_amenity_tags → RoomAmenity → Amenity.name (mapped to English keys)
-- smoking_allowed → Room.smoking_allowed
-- wifi_available → Room.wifi_available
-- breakfast_included → Room.breakfast_included
-- cancellation_policy → Room.cancellation_policy.name (or Hotel.policy.cancellation_policy.name)
-- reschedule_policy → Room.reschedule_policy.name
-- quantity → Room.quantity
-- status → Room.status
-- base_price → Room.base_price_per_night
+CURL COMMANDS EXECUTED:
+1. curl_step_2.2: GET /accommodation/rooms?hotel-id={HOTEL_ID}
+   → Extract: ROOM_ID (first room in data.content[])
 
-BODY CONTENT MAPPING:
-- H1 Title → Room.name
-- "Thông Số Phòng" table → Room (area, bed_type, max_adults, max_children, view)
-- "Mô Tả Không Gian" → Room description enhanced from photos + amenities
-- "Tiện Nghi Trong Phòng" → RoomAmenity[] grouped by categories
-- "Ăn Sáng" section → Room.breakfast_included + Hotel restaurant info
-- "Chính Sách" → Room policies + HotelPolicy (check-in/out times)
-- "Thông Tin Giá" → Room.base_price_per_night + DISCLAIMER + tool call
-- "So Sánh" table → Other Room[] of same hotel
+2. curl_step_3: GET /accommodation/rooms/{ROOM_ID}
+   → Response: RoomDetailsResponse
+   → Fields used:
+     - data.id → doc_id, room_id
+     - data.name → room_name (Vietnamese, e.g., "Premier Deluxe Triple")
+     - data.hotel.id → parent_hotel_id
+     - data.hotel.name → location.hotel_name
+     - data.hotel.country/city/district → location.*
+     - data.view → view (Vietnamese, e.g., "Hướng biển, Nhìn ra thành phố")
+     - data.area → area_sqm
+     - data.maxAdults → max_adults
+     - data.maxChildren → max_children
+     - data.bedType.name → bed_type (Vietnamese, e.g., "2 giường đơn")
+     - data.bedType.id → bed_type_id
+     - data.amenities[] → room_amenity_tags (via mapping)
+     - data.smokingAllowed → smoking_allowed
+     - data.wifiAvailable → wifi_available
+     - data.breakfastIncluded → breakfast_included
+     - data.cancellationPolicy → cancellation_policy (or inherit from hotel)
+     - data.reschedulePolicy → reschedule_policy (or inherit from hotel)
+     - data.totalRooms → quantity
+     - data.status → status
+     - data.basePricePerNight → base_price
+     - data.currentPricePerNight → current_price
+     - data.photos[] → mainImageUrl, galleryImageUrls
+     - data.updatedAt/createdAt → last_updated
+
+3. curl_step_2.1: GET /accommodation/hotels/{HOTEL_ID}
+   → Purpose: Inherit policies if room-level policies are null
+   → Fields used:
+     - data.policy.cancellationPolicy.name → cancellation_policy (if room.cancellationPolicy is null)
+     - data.policy.reschedulePolicy.name → reschedule_policy (if room.reschedulePolicy is null)
+
+4. curl_step_2.5: GET /amenity/amenities
+   → Purpose: Reference mapping table for Vietnamese → English amenity names
+   → Used by: AmenityMappingService to map curl_step_3 -> data.amenities[].amenities[].name
+
+INFERRED FIELDS (CRITICAL - NOT IN API RESPONSE):
+1. room_type: INFERRED from curl_step_3 -> data.name using inferRoomType() logic
+   - Pattern matching on Vietnamese room name
+   - Examples from actual data:
+     * "Premier Deluxe Triple" → "deluxe" (contains "Deluxe")
+     * "Twin Premier Deluxe Twin" → "deluxe" (contains "Deluxe")
+     * "Executive Family" → "suite" (contains "Executive")
+   - Logic: See inferRoomType() implementation below
+
+2. room_category: INFERRED from curl_step_3 -> data.maxAdults + maxChildren using inferRoomCategory() logic
+   - Examples from actual data:
+     * maxAdults=3, maxChildren=1 → "family" (maxChildren > 0)
+     * maxAdults=2, maxChildren=1 → "family" (maxChildren > 0)
+     * maxAdults=4, maxChildren=0 → "suite" (maxAdults > 2)
+   - Logic: See inferRoomCategory() implementation below
+
+3. description: GENERATED from template (NOT in API response)
+   - Template: "{roomName} là hạng phòng {viewDescription} tại {hotelName}, với diện tích {area}m², phù hợp cho tối đa {maxAdults} người lớn{+maxChildren trẻ em}."
+   - Example: "Premier Deluxe Triple là hạng phòng hướng biển tại Khách sạn Minh Toan SAFI Ocean, với diện tích 35m², phù hợp cho tối đa 3 người lớn và 1 trẻ em."
+
+4. vibe_tags: INFERRED from room features
+   - view contains "biển"/"ocean" → "sea_view"
+   - has bathtub + sea_view → "romantic", "honeymoon"
+   - maxChildren > 0 → "family_friendly"
+   - room_type contains "deluxe"/"suite"/"villa" → "luxury"
+
+MAPPING LOGIC:
+- room_amenity_tags: Map Vietnamese names from curl_step_3 -> data.amenities[].amenities[].name
+  to English using AmenityMappingService with curl_step_2.5 as reference
+  - Example mappings from actual data:
+    * "Lò vi sóng" → "microwave"
+    * "Tủ lạnh" → "refrigerator"
+    * "Máy lạnh" → "air_conditioning"
+    * "TV" → "tv"
+    * "Két an toàn tại phòng" → "safe_box"
+    * "Bộ vệ sinh cá nhân" → "toiletries"
+    * "Máy sấy tóc" → "hairdryer"
+    * "Nước nóng" → "hot_water"
+- mainImageUrl: Filter photos by category name="Phòng" or use first photo
+- galleryImageUrls: All photos except main, limit 10
+
+INFERENCE LOGIC IMPLEMENTATION:
+
+1. inferRoomType(String roomName):
+   Input: "Premier Deluxe Triple"
+   Process:
+     - Normalize: Remove accents, lowercase
+     - Check patterns in priority order:
+       * "presidential"/"tong thong" → "suite"
+       * "villa"/"biet thu" → "villa"
+       * "deluxe"/"cao cap"/"premium"/"thuong hang" → "deluxe"
+       * "superior"/"hang trung" → "superior"
+       * "suite"/"executive" → "suite"
+     - Default: "standard"
+   Output: "deluxe"
+
+2. inferRoomCategory(Room room):
+   Input: maxAdults=3, maxChildren=1
+   Process:
+     - If maxChildren > 0 → "family"
+     - Else if maxAdults == 1 → "single"
+     - Else if maxAdults == 2 → "double"
+     - Else → "suite"
+   Output: "family"
+
+VALIDATION OF DATA_GAP_ANALYSIS.md:
+✅ CONFIRMED: room_type is MISSING in API response → Needs inference
+✅ CONFIRMED: room_category is MISSING in API response → Needs inference
+✅ CONFIRMED: description is MISSING in API response → Needs generation
 
 PROHIBITED DATA:
-- ❌ DO NOT hardcode exact prices for specific dates
-- ❌ DO NOT show RoomInventory data (availableRooms, dynamic prices)
-- ❌ DO NOT expose Partner commission or internal pricing rules
-- ❌ DO NOT promise guaranteed availability
-
-DYNAMIC PLACEHOLDERS:
-- {{TOOL:get_room_price}} → For specific date range pricing
-- {{TOOL:check_room_availability}} → For real-time availability check
-- {{TOOL:compare_room_types}} → To show side-by-side comparison with pricing
-
-DTO SOURCES:
-- Primary: RoomResponse (from RoomController.getById)
-- Secondary: RoomDetailsResponse with full amenities
-- Related: BedTypeResponse, AmenityResponse[], PolicyResponse
-
-DATA FRESHNESS:
-- Static: Room specs, amenities, photos (updated on edit)
-- Base price: Updated when hotel partner changes pricing
-- Availability: NEVER shown in static file, always via tool
-- Review scores: Inherited from hotel-level reviews
-
-WRITING GUIDELINES:
-- Length: 150-250 words for main description
-- Tone: Descriptive, evocative (paint a picture)
-- Focus: Help user visualize the space and imagine their stay
-- Call-to-action: Always end with tool call for dynamic data
+- DO NOT hardcode exact prices for specific dates
+- DO NOT show RoomInventory data (availableRooms, dynamic prices)
+- DO NOT expose Partner commission or internal pricing rules
+- DO NOT promise guaranteed availability
 
 ====================================================================
 -->
-

@@ -143,6 +143,57 @@ public class NearbyVenueDto {
     private String category;
     private String description;
 }
+
+@Data
+@Builder
+public class RoomKnowledgeBaseDto {
+    // Basic Info
+    private String roomId;
+    private String roomName;
+    private String slug;
+    private String parentHotelSlug;
+    private String parentHotelId;
+    private String roomType; // standard | superior | deluxe | suite | villa
+    private String roomCategory; // single | double | twin | family | suite
+    
+    // Location (inherited from hotel)
+    private LocationHierarchyDto location;
+    
+    // Room Specifications
+    private String bedType; // From BedType.name
+    private String bedTypeId;
+    private Integer maxAdults;
+    private Integer maxChildren;
+    private Double areaSqm;
+    private String view; // ocean | sea | garden | city | mountain | pool | street
+    private String floorRange; // Optional: "5-12"
+    
+    // Room Features
+    private List<String> roomAmenityTags; // Mapped to English keys
+    
+    // Room Policies
+    private Boolean smokingAllowed;
+    private Boolean wifiAvailable;
+    private Boolean breakfastIncluded;
+    private String cancellationPolicy; // From CancellationPolicy.name
+    private String reschedulePolicy; // From ReschedulePolicy.name
+    
+    // Inventory Info
+    private Integer quantity; // Total rooms of this type
+    private String status; // active | inactive | maintenance | closed
+    
+    // Pricing Info
+    private Double basePrice; // VNĐ/night (BASE price, not dynamic)
+    private String priceNote;
+    
+    // Metadata
+    private List<String> vibeTags; // Room-specific vibe tags
+    private List<String> keywords; // SEO keywords
+    private String description; // Room description
+    private String mainImageUrl; // Main room image
+    private List<String> galleryImageUrls; // Gallery images
+    private LocalDateTime lastUpdated;
+}
 ```
 
 ### 1.2 Implement Repository Query
@@ -280,6 +331,302 @@ public class KnowledgeBaseGenerationService {
         return amenities.stream()
             .map(ha -> mapping.getOrDefault(ha.getAmenity().getName(), 
                                             slugService.toSnakeCase(ha.getAmenity().getName())))
+            .collect(Collectors.toList());
+    }
+    
+    /**
+     * Builds a comprehensive RoomKnowledgeBaseDto from a Room entity.
+     * This DTO is used to render the markdown content for Room Detail Knowledge Base.
+     */
+    public RoomKnowledgeBaseDto buildRoomKB(Room room) {
+        if (room == null) {
+            throw new IllegalArgumentException("Room cannot be null");
+        }
+        
+        Hotel hotel = room.getHotel();
+        if (hotel == null) {
+            throw new IllegalArgumentException("Room must have an associated hotel");
+        }
+        
+        // Build location hierarchy from hotel
+        LocationHierarchyDto location = buildLocationHierarchy(hotel);
+        location.setHotelName(hotel.getName());
+        
+        // Extract room images
+        String mainImageUrl = extractMainRoomImageUrl(room.getPhotos());
+        List<String> galleryImageUrls = extractRoomGalleryImageUrls(room.getPhotos());
+        
+        // Build amenity list for room
+        List<String> roomAmenityTags = buildRoomAmenityList(room.getAmenities());
+        
+        // Infer vibe tags for room
+        List<String> vibeTags = inferRoomVibeTags(room);
+        
+        // Generate keywords
+        List<String> keywords = generateRoomKeywords(room, hotel);
+        
+        // Determine room type and category from name
+        String roomType = inferRoomType(room.getName());
+        String roomCategory = inferRoomCategory(room);
+        
+        // Build complete DTO
+        return RoomKnowledgeBaseDto.builder()
+            .roomId(room.getId())
+            .roomName(room.getName())
+            .slug(slugService.generateSlug(room.getName() + " " + hotel.getName()))
+            .parentHotelSlug(slugService.generateSlug(hotel.getName()))
+            .parentHotelId(hotel.getId())
+            .roomType(roomType)
+            .roomCategory(roomCategory)
+            .location(location)
+            .bedType(room.getBedType() != null ? room.getBedType().getName() : "N/A")
+            .bedTypeId(room.getBedType() != null ? room.getBedType().getId() : null)
+            .maxAdults(room.getMaxAdults())
+            .maxChildren(room.getMaxChildren())
+            .areaSqm(room.getArea())
+            .view(room.getView())
+            .floorRange(null) // Optional field, can be enhanced later
+            .roomAmenityTags(roomAmenityTags)
+            .smokingAllowed(room.getSmokingAllowed())
+            .wifiAvailable(room.getWifiAvailable())
+            .breakfastIncluded(room.getBreakfastIncluded())
+            .cancellationPolicy(room.getCancellationPolicy() != null 
+                ? room.getCancellationPolicy().getName() 
+                : (hotel.getPolicy() != null && hotel.getPolicy().getCancellationPolicy() != null
+                    ? hotel.getPolicy().getCancellationPolicy().getName()
+                    : "Chính sách tiêu chuẩn"))
+            .reschedulePolicy(room.getReschedulePolicy() != null
+                ? room.getReschedulePolicy().getName()
+                : (hotel.getPolicy() != null && hotel.getPolicy().getReschedulePolicy() != null
+                    ? hotel.getPolicy().getReschedulePolicy().getName()
+                    : "Chính sách tiêu chuẩn"))
+            .quantity(room.getQuantity())
+            .status(room.getStatus())
+            .basePrice(room.getBasePricePerNight())
+            .priceNote("Giá có thể thay đổi theo ngày trong tuần, mùa cao điểm và tình trạng phòng trống")
+            .vibeTags(vibeTags)
+            .keywords(keywords)
+            .description(buildRoomDescription(room, hotel))
+            .mainImageUrl(mainImageUrl)
+            .galleryImageUrls(galleryImageUrls)
+            .lastUpdated(LocalDateTime.now())
+            .build();
+    }
+    
+    /**
+     * Build room amenity list from RoomAmenity relationships
+     */
+    private List<String> buildRoomAmenityList(Set<RoomAmenity> roomAmenities) {
+        if (roomAmenities == null || roomAmenities.isEmpty()) {
+            return List.of();
+        }
+        
+        Map<String, String> mapping = loadAmenityMapping(); // Same mapping as hotel amenities
+        
+        return roomAmenities.stream()
+            .map(ra -> mapping.getOrDefault(ra.getAmenity().getName(),
+                                            slugService.toSnakeCase(ra.getAmenity().getName())))
+            .distinct()
+            .collect(Collectors.toList());
+    }
+    
+    /**
+     * Infer room-specific vibe tags based on room features
+     */
+    private List<String> inferRoomVibeTags(Room room) {
+        List<String> vibes = new ArrayList<>();
+        
+        // Rule 1: Sea/Ocean view
+        if (room.getView() != null && (room.getView().contains("ocean") || room.getView().contains("sea"))) {
+            vibes.add("sea_view");
+        }
+        
+        // Rule 2: Romantic (bathtub + ocean view)
+        if (hasRoomAmenity(room, "bathtub") && vibes.contains("sea_view")) {
+            vibes.add("romantic");
+            vibes.add("honeymoon");
+        }
+        
+        // Rule 3: Balcony room
+        if (hasRoomAmenity(room, "balcony")) {
+            vibes.add("balcony_room");
+        }
+        
+        // Rule 4: Luxury (based on room type and amenities)
+        if (room.getRoomType() != null && (room.getRoomType().contains("suite") || 
+                                           room.getRoomType().contains("villa") ||
+                                           room.getRoomType().contains("premium"))) {
+            vibes.add("luxury");
+        }
+        
+        // Rule 5: Family friendly (if max children > 0)
+        if (room.getMaxChildren() != null && room.getMaxChildren() > 0) {
+            vibes.add("family_friendly");
+        }
+        
+        return vibes.isEmpty() ? List.of("standard") : vibes;
+    }
+    
+    /**
+     * Check if room has a specific amenity
+     */
+    private boolean hasRoomAmenity(Room room, String amenityKey) {
+        if (room.getAmenities() == null) {
+            return false;
+        }
+        
+        Map<String, String> mapping = loadAmenityMapping();
+        Set<String> roomTags = room.getAmenities().stream()
+            .map(ra -> mapping.getOrDefault(ra.getAmenity().getName(),
+                                            slugService.toSnakeCase(ra.getAmenity().getName())))
+            .collect(Collectors.toSet());
+        
+        return roomTags.contains(amenityKey);
+    }
+    
+    /**
+     * Generate SEO keywords for room
+     */
+    private List<String> generateRoomKeywords(Room room, Hotel hotel) {
+        List<String> keywords = new ArrayList<>();
+        
+        // Add room name variations
+        if (room.getName() != null) {
+            keywords.add(room.getName().toLowerCase());
+        }
+        
+        // Add location-based keywords
+        if (hotel.getCity() != null) {
+            keywords.add("phòng " + hotel.getCity().getName().toLowerCase());
+        }
+        
+        // Add view-based keywords
+        if (room.getView() != null) {
+            if (room.getView().contains("ocean") || room.getView().contains("sea")) {
+                keywords.add("phòng view biển " + hotel.getCity().getName().toLowerCase());
+            }
+        }
+        
+        // Add bed type keywords
+        if (room.getBedType() != null) {
+            if (room.getBedType().getName().contains("King")) {
+                keywords.add("giường king size");
+            }
+        }
+        
+        // Add room type keywords
+        String roomType = inferRoomType(room.getName());
+        if (roomType != null) {
+            keywords.add("phòng " + roomType.toLowerCase());
+        }
+        
+        return keywords.isEmpty() ? List.of("phòng khách sạn", "đặt phòng") : keywords;
+    }
+    
+    /**
+     * Infer room type from room name
+     */
+    private String inferRoomType(String roomName) {
+        if (roomName == null) {
+            return "standard";
+        }
+        
+        String lowerName = roomName.toLowerCase();
+        if (lowerName.contains("suite") || lowerName.contains("presidential")) {
+            return "suite";
+        } else if (lowerName.contains("villa")) {
+            return "villa";
+        } else if (lowerName.contains("deluxe") || lowerName.contains("premium")) {
+            return "deluxe";
+        } else if (lowerName.contains("superior")) {
+            return "superior";
+        } else {
+            return "standard";
+        }
+    }
+    
+    /**
+     * Infer room category based on max adults and children
+     */
+    private String inferRoomCategory(Room room) {
+        if (room.getMaxChildren() != null && room.getMaxChildren() > 0) {
+            return "family";
+        } else if (room.getMaxAdults() != null && room.getMaxAdults() == 1) {
+            return "single";
+        } else if (room.getMaxAdults() != null && room.getMaxAdults() == 2) {
+            return "double";
+        } else {
+            return "suite";
+        }
+    }
+    
+    /**
+     * Build room description from room data
+     */
+    private String buildRoomDescription(Room room, Hotel hotel) {
+        StringBuilder desc = new StringBuilder();
+        
+        desc.append("**").append(room.getName()).append("**");
+        
+        if (room.getView() != null) {
+            desc.append(" là hạng phòng");
+            if (room.getView().contains("ocean") || room.getView().contains("sea")) {
+                desc.append(" hướng biển");
+            } else if (room.getView().contains("garden")) {
+                desc.append(" hướng vườn");
+            } else if (room.getView().contains("city")) {
+                desc.append(" hướng thành phố");
+            }
+        }
+        
+        desc.append(" tại ").append(hotel.getName());
+        
+        if (room.getArea() != null) {
+            desc.append(", với diện tích ").append(room.getArea()).append("m²");
+        }
+        
+        if (room.getMaxAdults() != null) {
+            desc.append(", phù hợp cho tối đa ").append(room.getMaxAdults()).append(" người lớn");
+            if (room.getMaxChildren() != null && room.getMaxChildren() > 0) {
+                desc.append(" và ").append(room.getMaxChildren()).append(" trẻ em");
+            }
+        }
+        
+        desc.append(".");
+        
+        return desc.toString();
+    }
+    
+    /**
+     * Extract main room image URL
+     */
+    private String extractMainRoomImageUrl(Set<RoomPhoto> photos) {
+        if (photos == null || photos.isEmpty()) {
+            return "";
+        }
+        
+        return photos.stream()
+            .filter(p -> p.getCategory() != null && "main".equalsIgnoreCase(p.getCategory().getName()))
+            .findFirst()
+            .map(RoomPhoto::getUrl)
+            .orElse(photos.stream()
+                .findFirst()
+                .map(RoomPhoto::getUrl)
+                .orElse(""));
+    }
+    
+    /**
+     * Extract room gallery image URLs
+     */
+    private List<String> extractRoomGalleryImageUrls(Set<RoomPhoto> photos) {
+        if (photos == null || photos.isEmpty()) {
+            return List.of();
+        }
+        
+        return photos.stream()
+            .filter(p -> p.getCategory() == null || !"main".equalsIgnoreCase(p.getCategory().getName()))
+            .map(RoomPhoto::getUrl)
+            .limit(10) // Limit to 10 gallery images
             .collect(Collectors.toList());
     }
 }
@@ -680,9 +1027,135 @@ public class KnowledgeBaseUploadService {
         return ctx;
     }
     
+    /**
+     * Build Mustache template context from RoomKnowledgeBaseDto
+     * Maps all DTO fields to template variables matching template_room_detail.md
+     */
+    /**
+     * Build Mustache template context from RoomKnowledgeBaseDto
+     * Maps all DTO fields to template variables matching template_room_detail.md
+     * 
+     * Note: Requires imports:
+     * import java.time.LocalDateTime;
+     * import java.time.format.DateTimeFormatter;
+     * import java.util.ArrayList;
+     * import java.util.HashMap;
+     * import java.util.List;
+     * import java.util.Map;
+     */
     private Map<String, Object> buildRoomTemplateContext(RoomKnowledgeBaseDto dto) {
-        // Similar implementation for rooms
-        // ...
+        Map<String, Object> ctx = new HashMap<>();
+        
+        // === FRONTMATTER METADATA ===
+        
+        // Document identification
+        ctx.put("doc_type", "room_detail");
+        ctx.put("doc_id", dto.getRoomId() != null ? new String(dto.getRoomId()) : null);
+        ctx.put("slug", dto.getSlug() != null ? new String(dto.getSlug()) : null);
+        ctx.put("parent_hotel_slug", dto.getParentHotelSlug() != null ? new String(dto.getParentHotelSlug()) : null);
+        ctx.put("parent_hotel_id", dto.getParentHotelId() != null ? new String(dto.getParentHotelId()) : null);
+        ctx.put("last_updated", dto.getLastUpdated() != null
+            ? dto.getLastUpdated().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z"
+            : LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z");
+        ctx.put("language", "vi");
+        
+        // Location hierarchy (inherited from hotel)
+        LocationHierarchyDto loc = dto.getLocation();
+        if (loc != null) {
+            Map<String, Object> locationMap = new HashMap<>();
+            locationMap.put("country", loc.getCountry() != null ? new String(loc.getCountry()) : null);
+            locationMap.put("country_code", loc.getCountryCode() != null ? new String(loc.getCountryCode()) : null);
+            locationMap.put("province", loc.getProvince() != null ? new String(loc.getProvince()) : null);
+            locationMap.put("province_name", loc.getProvinceName() != null ? new String(loc.getProvinceName()) : null);
+            locationMap.put("city", loc.getCity() != null ? new String(loc.getCity()) : null);
+            locationMap.put("city_name", loc.getCityName() != null ? new String(loc.getCityName()) : null);
+            locationMap.put("district", loc.getDistrict() != null ? new String(loc.getDistrict()) : null);
+            locationMap.put("district_name", loc.getDistrictName() != null ? new String(loc.getDistrictName()) : null);
+            locationMap.put("ward", loc.getWard() != null ? new String(loc.getWard()) : null);
+            locationMap.put("ward_name", loc.getWardName() != null ? new String(loc.getWardName()) : null);
+            locationMap.put("street", loc.getStreet() != null ? new String(loc.getStreet()) : null);
+            locationMap.put("street_name", loc.getStreetName() != null ? new String(loc.getStreetName()) : null);
+            locationMap.put("address", loc.getAddress() != null ? new String(loc.getAddress()) : null);
+            locationMap.put("hotel_name", loc.getHotelName() != null ? new String(loc.getHotelName()) : null);
+            
+            // Coordinates
+            if (loc.getLatitude() != null && loc.getLongitude() != null) {
+                Map<String, Object> coordinates = new HashMap<>();
+                coordinates.put("lat", loc.getLatitude());
+                coordinates.put("lng", loc.getLongitude());
+                locationMap.put("coordinates", coordinates);
+            }
+            
+            ctx.put("location", locationMap);
+        }
+        
+        // Room classification
+        ctx.put("room_id", dto.getRoomId() != null ? new String(dto.getRoomId()) : null);
+        ctx.put("room_name", dto.getRoomName() != null ? new String(dto.getRoomName()) : null);
+        ctx.put("room_type", dto.getRoomType() != null ? new String(dto.getRoomType()) : null);
+        ctx.put("room_category", dto.getRoomCategory() != null ? new String(dto.getRoomCategory()) : null);
+        
+        // Room specifications
+        ctx.put("bed_type", dto.getBedType() != null ? new String(dto.getBedType()) : new String("N/A"));
+        ctx.put("bed_type_id", dto.getBedTypeId() != null ? new String(dto.getBedTypeId()) : null);
+        ctx.put("max_adults", dto.getMaxAdults() != null ? dto.getMaxAdults().intValue() : 0);
+        ctx.put("max_children", dto.getMaxChildren() != null ? dto.getMaxChildren().intValue() : 0);
+        ctx.put("area_sqm", dto.getAreaSqm() != null ? dto.getAreaSqm().doubleValue() : 0.0);
+        ctx.put("view", dto.getView() != null ? new String(dto.getView()) : new String("N/A"));
+        ctx.put("floor_range", dto.getFloorRange() != null ? new String(dto.getFloorRange()) : null);
+        
+        // Room features - Create defensive copy to ensure thread safety
+        ctx.put("room_amenity_tags", dto.getRoomAmenityTags() != null 
+            ? new ArrayList<>(dto.getRoomAmenityTags()) : List.of());
+        
+        // Room policies
+        ctx.put("smoking_allowed", dto.getSmokingAllowed() != null ? dto.getSmokingAllowed() : false);
+        ctx.put("wifi_available", dto.getWifiAvailable() != null ? dto.getWifiAvailable() : false);
+        ctx.put("breakfast_included", dto.getBreakfastIncluded() != null ? dto.getBreakfastIncluded() : false);
+        ctx.put("cancellation_policy", dto.getCancellationPolicy() != null 
+            ? new String(dto.getCancellationPolicy()) : new String("Chính sách tiêu chuẩn"));
+        ctx.put("reschedule_policy", dto.getReschedulePolicy() != null
+            ? new String(dto.getReschedulePolicy()) : new String("Chính sách tiêu chuẩn"));
+        
+        // Inventory info
+        ctx.put("quantity", dto.getQuantity() != null ? dto.getQuantity().intValue() : 0);
+        ctx.put("status", dto.getStatus() != null ? new String(dto.getStatus()) : new String("active"));
+        
+        // Pricing info
+        ctx.put("base_price", dto.getBasePrice() != null ? dto.getBasePrice().intValue() : 0);
+        ctx.put("price_note", dto.getPriceNote() != null ? new String(dto.getPriceNote()) : new String(""));
+        
+        // Vibe tags - Create defensive copy
+        ctx.put("vibe_tags", dto.getVibeTags() != null 
+            ? new ArrayList<>(dto.getVibeTags()) : List.of());
+        
+        // SEO keywords - Create defensive copy
+        ctx.put("keywords", dto.getKeywords() != null 
+            ? new ArrayList<>(dto.getKeywords()) : List.of());
+        
+        // === BODY CONTENT ===
+        
+        // Room name and description
+        ctx.put("name", dto.getRoomName() != null ? new String(dto.getRoomName()) : "");
+        ctx.put("description", dto.getDescription() != null ? new String(dto.getDescription()) : "");
+        
+        // Images
+        ctx.put("mainImageUrl", dto.getMainImageUrl() != null ? new String(dto.getMainImageUrl()) : new String(""));
+        ctx.put("galleryImageUrls", dto.getGalleryImageUrls() != null 
+            ? new ArrayList<>(dto.getGalleryImageUrls()) : List.of());
+        
+        // Helper flags for conditional rendering
+        ctx.put("has_balcony", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("balcony"));
+        ctx.put("has_bathtub", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("bathtub"));
+        ctx.put("has_tv", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("tv"));
+        ctx.put("has_bluetooth", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("bluetooth"));
+        ctx.put("has_coffee_maker", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("coffee_maker"));
+        ctx.put("has_minibar", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("minibar"));
+        ctx.put("has_blackout_curtains", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("blackout_curtains"));
+        ctx.put("has_safe_box", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("safe_box"));
+        ctx.put("has_turn_down_service", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("turn_down_service"));
+        
+        return ctx;
     }
 }
 ```

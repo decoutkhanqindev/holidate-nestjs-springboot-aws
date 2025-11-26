@@ -85,6 +85,22 @@ public class AmenityMappingService {
         AMENITY_MAPPING.put("lò vi sóng", "microwave");
         AMENITY_MAPPING.put("máy giặt", "washing_machine");
         
+        // Room-specific amenities from actual API data (DATA_VALIDATION_REPORT.md section 2.2)
+        AMENITY_MAPPING.put("lò vi sóng", "microwave");  // Confirmed from API: "Lò vi sóng"
+        AMENITY_MAPPING.put("tủ lạnh", "refrigerator");  // Confirmed from API: "Tủ lạnh"
+        AMENITY_MAPPING.put("máy lạnh", "air_conditioning");  // Confirmed from API: "Máy lạnh"
+        AMENITY_MAPPING.put("quạt", "fan");  // Confirmed from API: "Quạt"
+        AMENITY_MAPPING.put("tv", "tv");  // Confirmed from API: "TV"
+        AMENITY_MAPPING.put("tivi", "tv");  // Alternative spelling
+        AMENITY_MAPPING.put("két an toàn tại phòng", "safe_box");  // Confirmed from API: "Két an toàn tại phòng"
+        AMENITY_MAPPING.put("bộ vệ sinh cá nhân", "toiletries");  // Confirmed from API: "Bộ vệ sinh cá nhân"
+        AMENITY_MAPPING.put("máy sấy tóc", "hairdryer");  // Confirmed from API: "Máy sấy tóc"
+        AMENITY_MAPPING.put("nước nóng", "hot_water");  // Confirmed from API: "Nước nóng"
+        AMENITY_MAPPING.put("bàn làm việc", "work_desk");  // From template
+        AMENITY_MAPPING.put("ban công / sân hiên", "balcony");  // From template
+        AMENITY_MAPPING.put("blackout_curtains", "blackout_curtains");  // From template
+        AMENITY_MAPPING.put("máy pha cà phê / trà", "coffee_maker");  // From template
+        
         // Luxury Amenities
         AMENITY_MAPPING.put("nhà hàng cao cấp", "fine_dining");
         AMENITY_MAPPING.put("butler", "butler_service");

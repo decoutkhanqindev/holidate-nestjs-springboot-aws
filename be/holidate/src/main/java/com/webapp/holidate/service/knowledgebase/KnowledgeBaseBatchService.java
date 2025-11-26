@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.webapp.holidate.dto.knowledgebase.BatchResult;
 import com.webapp.holidate.dto.knowledgebase.HotelKnowledgeBaseDto;
+import com.webapp.holidate.dto.knowledgebase.RoomKnowledgeBaseDto;
 import com.webapp.holidate.entity.accommodation.Hotel;
 import com.webapp.holidate.entity.accommodation.room.Room;
 import com.webapp.holidate.repository.knowledgebase.KnowledgeBaseRepository;
@@ -165,9 +166,11 @@ public class KnowledgeBaseBatchService {
             for (Room room : rooms) {
                 if (activeStatus.equalsIgnoreCase(room.getStatus())) {
                     try {
-                        // Note: Room detail upload is not yet implemented in uploadService
-                        // This is a placeholder for future implementation
-                        // uploadService.generateAndUploadRoomDetail(roomDto);
+                        // Build Room Knowledge Base DTO
+                        RoomKnowledgeBaseDto roomDto = generationService.buildRoomKB(room);
+                        
+                        // Generate and upload room detail
+                        uploadService.generateAndUploadRoomDetail(roomDto);
                         roomCount++;
                     } catch (Exception e) {
                         log.warn("Failed to process room {} for hotel {}: {}", 

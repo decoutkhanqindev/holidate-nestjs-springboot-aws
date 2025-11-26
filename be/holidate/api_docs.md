@@ -558,23 +558,23 @@ Base URL: `http://localhost:8080`
 
 - **Role Required**: USER, PARTNER, ADMIN
 - **Query Parameters**:
-  - `userId`: string (optional)
-  - `roomId`: string (optional)
-  - `hotelId`: string (optional)
+  - `user-id`: string (optional)
+  - `room-id`: string (optional)
+  - `hotel-id`: string (optional)
   - `status`: string (optional, see [Booking Status Types](#booking-status-types))
-  - `checkInDate`: date (optional, ISO format)
-  - `checkOutDate`: date (optional, ISO format)
-  - `createdFrom`: datetime (optional, ISO format)
-  - `createdTo`: datetime (optional, ISO format)
-  - `minPrice`: number (optional)
-  - `maxPrice`: number (optional)
-  - `contactEmail`: string (optional)
-  - `contactPhone`: string (optional)
-  - `contactFullName`: string (optional)
+  - `check-in-date`: date (optional, ISO format)
+  - `check-out-date`: date (optional, ISO format)
+  - `created-from`: datetime (optional, ISO format)
+  - `created-to`: datetime (optional, ISO format)
+  - `min-price`: number (optional)
+  - `max-price`: number (optional)
+  - `contact-email`: string (optional)
+  - `contact-phone`: string (optional)
+  - `contact-full-name`: string (optional)
   - `page`: integer (default: 0)
   - `size`: integer (default: 10)
-  - `sortBy`: string (default: "createdAt")
-  - `sortDir`: string (default: "DESC")
+  - `sort-by`: string (default: "created-at")
+  - `sort-dir`: string (default: "desc")
 - **Response**:
 
 ```json
@@ -675,17 +675,7 @@ Base URL: `http://localhost:8080`
   - `id`: string (UUID format)
 - **Response**: Same as Create Booking response
 
-### 9. Update Booking
-
-**PUT** `/bookings/{id}`
-
-- **Role Required**: ADMIN
-- **Path Parameters**:
-  - `id`: string (UUID format)
-- **Request Body**: Same as Create Booking (all fields optional)
-- **Response**: Same as Create Booking response
-
-### 10. Delete Booking
+### 9. Delete Booking
 
 **DELETE** `/bookings/{id}`
 
@@ -734,15 +724,15 @@ Base URL: `http://localhost:8080`
 
 - **Role Required**: Public
 - **Query Parameters**:
-  - `hotelId`: string (optional)
-  - `userId`: string (optional)
-  - `bookingId`: string (optional)
-  - `minScore`: integer (optional)
-  - `maxScore`: integer (optional)
+  - `hotel-id`: string (optional)
+  - `user-id`: string (optional)
+  - `booking-id`: string (optional)
+  - `min-score`: integer (optional)
+  - `max-score`: integer (optional)
   - `page`: integer (default: 0)
   - `size`: integer (default: 10)
-  - `sortBy`: string (default: "createdAt")
-  - `sortDir`: string (default: "DESC")
+  - `sort-by`: string (default: "created-at")
+  - `sort-dir`: string (default: "desc")
 - **Response**:
 
 ```json
@@ -879,27 +869,27 @@ Base URL: `http://localhost:8080`
 - **Role Required**: Public
 - **Query Parameters**:
   - `name`: string (optional)
-  - `countryId`: string (optional)
-  - `provinceId`: string (optional)
-  - `cityId`: string (optional)
-  - `districtId`: string (optional)
-  - `wardId`: string (optional)
-  - `streetId`: string (optional)
-  - `starRating`: integer (optional)
-  - `amenityIds`: string[] (optional, array of amenity IDs)
+  - `country-id`: string (optional)
+  - `province-id`: string (optional)
+  - `city-id`: string (optional)
+  - `district-id`: string (optional)
+  - `ward-id`: string (optional)
+  - `street-id`: string (optional)
+  - `star-rating`: integer (optional)
+  - `amenity-ids`: string[] (optional, array of amenity IDs)
   - `status`: string (optional, see [Accommodation Status Types](#accommodation-status-types))
-  - `partnerId`: string (optional, filter hotels by partner/owner ID)
-  - `checkinDate`: date (optional, ISO format)
-  - `checkoutDate`: date (optional, ISO format)
-  - `requiredAdults`: integer (optional)
-  - `requiredChildren`: integer (optional)
-  - `requiredRooms`: integer (optional)
-  - `minPrice`: number (optional)
-  - `maxPrice`: number (optional)
+  - `partner-id`: string (optional, filter hotels by partner/owner ID)
+  - `checkin-date`: date (optional, ISO format)
+  - `checkout-date`: date (optional, ISO format)
+  - `required-adults`: integer (optional)
+  - `required-children`: integer (optional)
+  - `required-rooms`: integer (optional)
+  - `min-price`: number (optional)
+  - `max-price`: number (optional)
   - `page`: integer (default: 0)
   - `size`: integer (default: 10)
-  - `sortBy`: string (default: "createdAt")
-  - `sortDir`: string (default: "ASC")
+  - `sort-by`: string (default: "created-at")
+  - `sort-dir`: string (default: "asc")
 - **Response**:
 
 ```json
@@ -1018,14 +1008,14 @@ Base URL: `http://localhost:8080`
 
 **GET** `/accommodation/rooms`
 
-- **Role Required**: Public (GET without hotelId), PARTNER, ADMIN (GET with hotelId)
+- **Role Required**: Public, PARTNER, ADMIN
 - **Query Parameters**:
-  - `hotelId`: string (required for PARTNER/ADMIN, optional for public)
+  - `hotel-id`: string (required)
   - `status`: string (optional, see [Accommodation Status Types](#accommodation-status-types))
   - `page`: integer (default: 0)
   - `size`: integer (default: 10)
-  - `sortBy`: string (optional)
-  - `sortDir`: string (default: "ASC")
+  - `sort-by`: string (optional)
+  - `sort-dir`: string (default: "asc")
 - **Response**:
 
 ```json
@@ -1096,14 +1086,14 @@ Base URL: `http://localhost:8080`
 
 - **Role Required**: ADMIN, PARTNER
 - **Query Parameters**:
-  - `roomId`: string (required)
-  - `startDate`: date (required, ISO format)
-  - `endDate`: date (required, ISO format)
+  - `room-id`: string (required)
+  - `start-date`: date (required, ISO format)
+  - `end-date`: date (required, ISO format)
   - `status`: string (optional, see [Room Inventory Status Types](#room-inventory-status-types))
   - `page`: integer (default: 0)
   - `size`: integer (default: 10)
-  - `sortBy`: string (optional)
-  - `sortDir`: string (default: "ASC")
+  - `sort-by`: string (optional)
+  - `sort-dir`: string (default: "asc")
 - **Response**:
 
 ```json
@@ -1148,12 +1138,6 @@ Base URL: `http://localhost:8080`
 ```
 
 - **Response**: Same as Get Room Inventories (but wrapped in RoomWithInventoriesResponse)
-
-**Note**: According to SecurityConfig, PUT and DELETE endpoints for room inventories are configured for ADMIN and
-PARTNER roles, but controller endpoints may not be fully implemented yet. If they exist, they would be:
-
-- **PUT** `/accommodation/rooms/inventories` - Update room inventory prices (requires RoomInventoryPriceUpdateRequest)
-- **DELETE** `/accommodation/rooms/inventories/{id}` - Delete room inventory
 
 ---
 
@@ -1428,7 +1412,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 - **Role Required**: Public
 - **Query Parameters**:
   - `name`: string (optional)
-  - `countryId`: string (optional)
+  - `country-id`: string (optional)
 - **Response**:
 
 ```json
@@ -1482,7 +1466,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 - **Role Required**: Public
 - **Query Parameters**:
   - `name`: string (optional)
-  - `provinceId`: string (optional)
+  - `province-id`: string (optional)
 - **Response**: Array of location objects
 
 #### 3. Delete City
@@ -1522,7 +1506,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 - **Role Required**: Public
 - **Query Parameters**:
   - `name`: string (optional)
-  - `cityId`: string (optional)
+  - `city-id`: string (optional)
 - **Response**: Array of location objects
 
 #### 3. Delete District
@@ -1562,7 +1546,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 - **Role Required**: Public
 - **Query Parameters**:
   - `name`: string (optional)
-  - `districtId`: string (optional)
+  - `district-id`: string (optional)
 - **Response**: Array of location objects
 
 #### 3. Delete Ward
@@ -1602,7 +1586,7 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 - **Role Required**: Public
 - **Query Parameters**:
   - `name`: string (optional)
-  - `wardId`: string (optional)
+  - `ward-id`: string (optional)
 - **Response**: Array of location objects
 
 #### 3. Delete Street
@@ -1656,12 +1640,12 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 
 ### 1. Create Discount
 
-**POST** `/discounts?hotelId={hotelId}&specialDayId={specialDayId}`
+**POST** `/discounts?hotel-id={hotel-id}&special-day-id={special-day-id}`
 
 - **Role Required**: ADMIN
 - **Query Parameters**:
-  - `hotelId`: string (optional)
-  - `specialDayId`: string (optional)
+  - `hotel-id`: string (optional)
+  - `special-day-id`: string (optional)
 - **Request Body**:
 
 ```json
@@ -1712,25 +1696,25 @@ PARTNER roles, but controller endpoints may not be fully implemented yet. If the
 - **Query Parameters**:
   - `code`: string (optional)
   - `active`: boolean (optional)
-  - `currentlyValid`: boolean (optional)
-  - `validFrom`: date (optional, ISO format)
-  - `validTo`: date (optional, ISO format)
-  - `minPercentage`: number (optional)
-  - `maxPercentage`: number (optional)
-  - `minBookingPrice`: integer (optional)
-  - `maxBookingPrice`: integer (optional)
-  - `minBookingCount`: integer (optional)
-  - `maxBookingCount`: integer (optional)
+  - `currently-valid`: boolean (optional)
+  - `valid-from`: date (optional, ISO format)
+  - `valid-to`: date (optional, ISO format)
+  - `min-percentage`: number (optional)
+  - `max-percentage`: number (optional)
+  - `min-booking-price`: integer (optional)
+  - `max-booking-price`: integer (optional)
+  - `min-booking-count`: integer (optional)
+  - `max-booking-count`: integer (optional)
   - `available`: boolean (optional)
   - `exhausted`: boolean (optional)
-  - `minTimesUsed`: integer (optional)
-  - `maxTimesUsed`: integer (optional)
-  - `hotelId`: string (optional)
-  - `specialDayId`: string (optional)
+  - `min-times-used`: integer (optional)
+  - `max-times-used`: integer (optional)
+  - `hotel-id`: string (optional)
+  - `special-day-id`: string (optional)
   - `page`: integer (default: 0)
   - `size`: integer (default: 10)
-  - `sortBy`: string (default: "createdAt")
-  - `sortDir`: string (default: "ASC")
+  - `sort-by`: string (default: "created-at")
+  - `sort-dir`: string (default: "asc")
 - **Response**:
 
 ```json
@@ -2312,38 +2296,7 @@ All admin report endpoints support period comparison. When `compare-from` and `c
 - **Currency Rounding**: All financial values are rounded to 2 decimal places.
 - **Rank Change**: Hotel Performance comparison includes rank change tracking, showing how hotel rankings changed between periods.
 
-### 8. Generate All System Daily Reports
-
-**POST** `/admin/reports/generate-all`
-
-- **Role Required**: ADMIN
-- **Description**: Manually triggers the system daily report generation process for all historical data in the system. This endpoint processes all dates from the earliest booking/user creation date to the latest, similar to the background job but for the entire system instead of just one day.
-- **Request Body**: None
-- **Response**:
-
-```json
-{
-  "statusCode": 200,
-  "message": "",
-  "data": {
-    "totalDates": "integer",
-    "successCount": "integer",
-    "failureCount": "integer",
-    "minDate": "date (ISO format: YYYY-MM-DD)",
-    "maxDate": "date (ISO format: YYYY-MM-DD)",
-    "errors": [
-      "string (error messages, max 10 errors)"
-    ]
-  }
-}
-```
-
-- **Notes**:
-  - This endpoint processes all dates from the earliest to the latest date found in the Booking and User tables
-  - Each date is processed in a separate transaction. If one date fails, others continue processing
-  - The response includes a summary of total dates processed, success/failure counts, and up to 10 error messages
-  - This operation may take a long time depending on the amount of historical data
-  - Should be run after `POST /partner/reports/generate-all` to ensure HotelDailyReport data is available
+---
 
 ### 1. Revenue Report
 
