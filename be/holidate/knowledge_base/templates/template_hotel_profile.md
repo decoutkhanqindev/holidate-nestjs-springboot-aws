@@ -100,6 +100,7 @@ mainImageUrl: "{{mainImageUrl}}"  # Source: curl_step_2.1 -> data.photos[].photo
 galleryImageUrls:
 {{#galleryImageUrls}}
   - "{{.}}"  # Source: curl_step_2.1 -> data.photos[].photos[].url (limit 5, exclude main)
+{{/galleryImageUrls}}
 
 # === SEO KEYWORDS ===
 keywords:
@@ -140,11 +141,9 @@ keywords:
 {{/amenity_tags}}
 
 ### 👨‍👩‍👧‍👦 3. Thân Thiện Với Gia Đình
-{{#vibe_tags}}
-{{#. == "family_friendly"}}
+{{#has_family_friendly}}
 - Phù hợp cho gia đình có trẻ em
-{{/.}}
-{{/vibe_tags}}
+{{/has_family_friendly}}
 
 ---
 
@@ -155,7 +154,7 @@ Khách sạn cung cấp {{available_room_types}} loại phòng chính:
 | Hạng Phòng               | Diện tích | View      | Sức chứa       | Đặc điểm nổi bật           |
 |--------------------------|-----------|-----------|----------------|----------------------------|
 {{#rooms}}  # Source: curl_step_2.2 -> data.content[]
-| **{{name}}** | {{area}}m²      | {{view}}      | {{maxAdults}} người lớn{{#maxChildren}} + {{maxChildren}} trẻ em{{/maxChildren}} | {{#breakfastIncluded}}Bữa sáng miễn phí{{/breakfastIncluded}}{{#wifiAvailable}} WiFi miễn phí{{/wifiAvailable}} |
+| **{{name}}** | {{area}}m²      | {{view}}      | {{max_adults}} người lớn{{#max_children}} + {{max_children}} trẻ em{{/max_children}} | {{#breakfast_included}}Bữa sáng miễn phí{{/breakfast_included}}{{#wifi_available}} WiFi miễn phí{{/wifi_available}} |
 {{/rooms}}
 
 ---
@@ -220,17 +219,15 @@ Khách sạn cung cấp {{available_room_types}} loại phòng chính:
 
 ## 🎯 Phù Hợp Với Ai?
 
-{{#vibe_tags}}
-{{#. == "family_friendly"}}
+{{#has_family_friendly}}
 ✅ **Gia đình có trẻ nhỏ**: Phù hợp cho kỳ nghỉ gia đình
-{{/.}}
-{{#. == "romantic"}}
+{{/has_family_friendly}}
+{{#has_romantic}}
 ✅ **Cặp đôi honeymoon**: View đẹp, không gian lãng mạn
-{{/.}}
-{{#. == "business"}}
+{{/has_romantic}}
+{{#has_business}}
 ✅ **Khách công tác**: Tiện nghi phục vụ công việc
-{{/.}}
-{{/vibe_tags}}
+{{/has_business}}
 
 ---
 

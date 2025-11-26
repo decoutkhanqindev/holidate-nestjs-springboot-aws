@@ -112,34 +112,54 @@ Phòng có tầm nhìn đẹp hướng biển, lý tưởng cho các cặp đôi
 {{#wifi_available}}
 - ✅ **WiFi tốc độ cao**: Miễn phí
 {{/wifi_available}}
-{{#room_amenity_tags}}
-{{#. == "tv"}}
+{{#has_tv}}
 - ✅ **TV**: Smart TV với các kênh giải trí
-{{/.}}
-{{/room_amenity_tags}}
+{{/has_tv}}
 
 ### ☕ Ăn Uống & Minibar
-{{#room_amenity_tags}}
-{{#. == "coffee_maker"}}
+{{#has_coffee_maker}}
 - ✅ **Máy pha cà phê**: Phục vụ trong phòng
-{{/.}}
-{{#. == "refrigerator"}}
+{{/has_coffee_maker}}
+{{#has_refrigerator}}
 - ✅ **Tủ lạnh**: Minibar
-{{/.}}
-{{/room_amenity_tags}}
+{{/has_refrigerator}}
+{{#has_minibar}}
+- ✅ **Minibar**: Đồ uống và snack trong phòng
+{{/has_minibar}}
+{{#has_free_bottled_water}}
+- ✅ **Nước đóng chai miễn phí**: Cung cấp hàng ngày
+{{/has_free_bottled_water}}
+
+### 🚿 Phòng Tắm
+{{#has_private_bathroom}}
+- ✅ **Phòng tắm riêng**: Không gian riêng tư
+{{/has_private_bathroom}}
+{{#has_bathtub}}
+- ✅ **Bồn tắm**: Thư giãn sau một ngày dài
+{{/has_bathtub}}
+{{#has_standing_shower}}
+- ✅ **Vòi tắm đứng**: Tiện lợi và hiện đại
+{{/has_standing_shower}}
+{{#has_hot_water}}
+- ✅ **Nước nóng 24/7**: Luôn sẵn sàng
+{{/has_hot_water}}
+{{#has_toiletries}}
+- ✅ **Bộ vệ sinh cá nhân**: Đầy đủ tiện nghi
+{{/has_toiletries}}
 
 ### 🌡️ Tiện Nghi Khác
-{{#room_amenity_tags}}
-{{#. == "air_conditioning"}}
+{{#has_air_conditioning}}
 - ✅ **Điều hòa**: Điều khiển nhiệt độ cá nhân
-{{/.}}
-{{#. == "safe_box"}}
+{{/has_air_conditioning}}
+{{#has_balcony}}
+- ✅ **Ban công**: Không gian mở, view đẹp
+{{/has_balcony}}
+{{#has_safe_box}}
 - ✅ **Két an toàn**: Đủ lớn cho laptop
-{{/.}}
-{{#. == "blackout_curtains"}}
+{{/has_safe_box}}
+{{#has_blackout_curtains}}
 - ✅ **Rèm che sáng**: Blackout curtains để ngủ ngon
-{{/.}}
-{{/room_amenity_tags}}
+{{/has_blackout_curtains}}
 
 ---
 
@@ -201,17 +221,15 @@ Phòng có tầm nhìn đẹp hướng biển, lý tưởng cho các cặp đôi
 
 ## 🎯 Phù Hợp Với Ai?
 
-{{#vibe_tags}}
-{{#. == "family_friendly"}}
+{{#has_family_friendly}}
 ✅ **Gia đình có trẻ nhỏ**: Phù hợp cho kỳ nghỉ gia đình
-{{/.}}
-{{#. == "romantic"}}
+{{/has_family_friendly}}
+{{#has_romantic}}
 ✅ **Cặp đôi honeymoon**: View đẹp, không gian lãng mạn
-{{/.}}
-{{#. == "business"}}
+{{/has_romantic}}
+{{#has_business}}
 ✅ **Khách công tác**: Tiện nghi phục vụ công việc
-{{/.}}
-{{/vibe_tags}}
+{{/has_business}}
 
 ---
 

@@ -5,203 +5,144 @@
 
 # === DOCUMENT IDENTIFICATION ===
 doc_type: "hotel_profile"
-doc_id: "00d60e60-d366-4d73-b3c0-614ecb95feb7"  # UUID from hotels.id
-slug: "grand-mercure-danang"
-last_updated: "2025-11-23T14:30:00Z"
+doc_id: "aa7c737b-56d7-4c48-ad04-76b02a1caa07"  # Source: curl_step_2.1 -> data.id (GET /accommodation/hotels/{id})
+slug: "khach-san-raon-danang-beach-o-24h"  # Source: Generated from curl_step_2.1 -> data.name
+last_updated: "2025-11-27T01:07:59.7251303Z"  # Source: curl_step_2.1 -> data.updatedAt (fallback to createdAt if null)
 language: "vi"
 
 # === LOCATION HIERARCHY ===
-# Source: Hotel entity → Country/Province/City/District/Ward/Street relationships
+# Source: curl_step_2.1 -> data.country/province/city/district/ward/street
 location:
-  country: "vietnam"
-  country_code: "VN"
-  province: "da-nang"
-  province_name: "Đà Nẵng"
-  city: "da-nang" 
-  city_name: "Thành phố Đà Nẵng"
-  district: "son-tra"
-  district_name: "Quận Sơn Trà"
-  ward: "tho-quang"
-  ward_name: "Phường Thọ Quang"
-  street: "vo-nguyen-giap"
-  street_name: "Võ Nguyên Giáp"
-  address: "Lô A1, Đường Võ Nguyên Giáp, Phường Thọ Quang"
+  country: "viet-nam"  # Source: curl_step_2.1 -> data.country.name
+  country_code: "VN"  # Source: curl_step_2.1 -> data.country.code
+  province: "thanh-pho-da-nang"  # Source: curl_step_2.1 -> data.province.name
+  province_name: "Thành phố Đà Nẵng"  # Source: curl_step_2.1 -> data.province.name
+  city: "thanh-pho-da-nang"  # Source: curl_step_2.1 -> data.city.name
+  city_name: "Thành phố Đà Nẵng"  # Source: curl_step_2.1 -> data.city.name
+  district: "quan-ngu-hanh-son"  # Source: curl_step_2.1 -> data.district.name
+  district_name: "Quận Ngũ Hành Sơn"  # Source: curl_step_2.1 -> data.district.name
+  ward: "phuong-my-an"  # Source: curl_step_2.1 -> data.ward.name
+  ward_name: "Phường Mỹ An"  # Source: curl_step_2.1 -> data.ward.name
+  street: "duong-an-thuong-32"  # Source: curl_step_2.1 -> data.street.name
+  street_name: "Đường An Thượng 32"  # Source: curl_step_2.1 -> data.street.name
+  address: "5-7"  # Source: curl_step_2.1 -> data.address
   coordinates:
-    lat: 16.0544
-    lng: 108.2442
+    lat: 0.0  # Source: curl_step_2.1 -> data.latitude
+    lng: 0.0  # Source: curl_step_2.1 -> data.longitude
 
 # === SEARCH OPTIMIZATION TAGS ===
-# Source: Location entity names + Entertainment venues + Manual curation
+# Source: Generated from location + entertainment venues
 location_tags:
-  - "Đà Nẵng"
-  - "Sơn Trà"
-  - "Bãi biển Mỹ Khê"
-  - "Bán đảo Sơn Trà"
-  - "Ngũ Hành Sơn"
-  - "Chùa Linh Ứng"
-  - "Biển Đà Nẵng"
-  - "Phố biển"
+  - "viet_nam"  # Generated from: city.name, district.name, + venue names from curl_step_2.4
+  - "thanh_pho_da_nang"  # Generated from: city.name, district.name, + venue names from curl_step_2.4
+  - "beach_city"  # Generated from: city.name, district.name, + venue names from curl_step_2.4
+  - "central_vietnam"  # Generated from: city.name, district.name, + venue names from curl_step_2.4
+  - "quan_ngu_hanh_son"  # Generated from: city.name, district.name, + venue names from curl_step_2.4
+  - "phuong_my_an"  # Generated from: city.name, district.name, + venue names from curl_step_2.4
 
-# Source: HotelAmenity → Amenity relationship, mapped to English tags
+# Source: curl_step_2.1 -> data.amenities[] -> amenity.name (Vietnamese)
+# Mapped to English via AmenityMappingService using curl_step_2.5 (all amenities) as reference
 amenity_tags:
-  - "outdoor_pool"
-  - "spa"
-  - "fitness_center"
-  - "beachfront"
-  - "restaurant"
-  - "beach_bar"
-  - "free_wifi"
-  - "airport_shuttle"
-  - "24h_reception"
-  - "room_service"
-  - "kids_pool"
-  - "parking"
-  - "breakfast_buffet"
-  - "meeting_rooms"
-  - "laundry"
-  - "concierge"
 
 # Source: Inferred from star_rating + amenities + location + price range
 vibe_tags:
-  - "luxury"
-  - "romantic"
-  - "family_friendly"
-  - "beach_resort"
-  - "business"
-  - "wedding_venue"
+  - "boutique"  # Inferred from: curl_step_2.1 -> data.starRating + amenity_tags + location_tags
+  - "luxury"  # Inferred from: curl_step_2.1 -> data.starRating + amenity_tags + location_tags
 
 # === PRICING REFERENCE (STATIC) ===
-# Source: MIN(rooms.base_price_per_night WHERE rooms.status='active')
-reference_min_price: 1445000  # VNĐ
-reference_min_price_room: "Superior Garden View"
-reference_max_price: 4725000  # VNĐ (optional, for range display)
+# Source: curl_step_2.2 -> data.content[] -> MIN(basePricePerNight) where status='active'
+reference_min_price: 0  # VNĐ - Source: MIN from curl_step_2.2
+reference_min_price_room: "N/A"  # Source: Room.name of cheapest room from curl_step_2.2
+reference_max_price: 0  # VNĐ - Source: MAX from curl_step_2.2 (optional)
 
 # === HOTEL CLASSIFICATION ===
-# Source: Hotel.star_rating
+# Source: curl_step_2.1 -> data.starRating
 star_rating: 5
 
 # === BUSINESS METADATA ===
-hotel_id: "00d60e60-d366-4d73-b3c0-614ecb95feb7"
-partner_id: "510639ce-df36-4666-9d26-101388127029"
-status: "active"  # From Hotel.status
+hotel_id: "aa7c737b-56d7-4c48-ad04-76b02a1caa07"  # Source: curl_step_2.1 -> data.id
+partner_id: ""  # Source: curl_step_2.1 -> data.partner.id
+status: "active"  # Source: curl_step_2.1 -> data.status
 
 # === PERFORMANCE STATS ===
-# Source: Review aggregation (computed field)
-total_rooms: 12
-available_room_types: 4
-review_score: 9.2  # From AVG(reviews.score)
-review_count: 187  # From COUNT(reviews)
+# Source: curl_step_2.2 -> data.content.length (total rooms)
+total_rooms: 0  # Source: curl_step_2.2 -> data.totalItems
+available_room_types: 0  # Source: curl_step_2.2 -> COUNT(DISTINCT data.content[].name)
+
+# Source: curl_step_2.3 -> Aggregated from reviews
+review_score:   # Source: curl_step_2.3 -> AVG(data.content[].score) or null if empty
+review_count: 0  # Source: curl_step_2.3 -> data.totalItems
 
 # === NEARBY ATTRACTIONS ===
-# Source: HotelEntertainmentVenue → EntertainmentVenue relationships
+# Source: curl_step_2.1 -> data.entertainmentVenues[] OR curl_step_2.4 -> data[].entertainmentVenues[]
 nearby_venues:
-  - name: "Bãi biển Mỹ Khê"
-    distance: "200m"
-    category: "beach"
-    description: "Bãi biển đẹp nhất Việt Nam"
-  - name: "Chùa Linh Ứng"
-    distance: "5km"
-    category: "temple"
-    description: "Tượng Phật Quan Âm cao 67m"
-  - name: "Asia Park Danang"
-    distance: "8km"
-    category: "theme_park"
-    description: "Công viên giải trí Sun Wheel"
-  - name: "Ngũ Hành Sơn"
-    distance: "10km"
-    category: "cultural"
-    description: "Quần thể núi đá với hang động"
-  - name: "Bà Nà Hills"
-    distance: "30km"
-    category: "theme_park"
-    description: "Cầu Vàng và khu du lịch núi"
 
 # === POLICIES ===
-# Source: HotelPolicy entity
-check_in_time: "14:00"
-check_out_time: "12:00"
-early_check_in_available: true
-late_check_out_available: true
-cancellation_policy: "Linh hoạ 7 ngày"  # From CancellationPolicy.name
-allows_pay_at_hotel: false
-smoking_policy: "Khu vực hút thuốc riêng"
+# Source: curl_step_2.1 -> data.policy
+check_in_time: "14:00"  # Source: curl_step_2.1 -> data.policy.checkInTime (format: "HH:mm:ss")
+check_out_time: "12:00"  # Source: curl_step_2.1 -> data.policy.checkOutTime
+early_check_in_available: true  # Source: Check if amenity "EARLY_CHECK_IN" exists in curl_step_2.1 -> data.amenities
+late_check_out_available: true  # Source: Check if amenity "Trả phòng muộn" exists
+cancellation_policy: "Chính sách tiêu chuẩn"  # Source: curl_step_2.1 -> data.policy.cancellationPolicy.name
+reschedule_policy: "Chính sách tiêu chuẩn"  # Source: curl_step_2.1 -> data.policy.reschedulePolicy.name
+allows_pay_at_hotel: false  # Source: curl_step_2.1 -> data.policy.allowsPayAtHotel
+smoking_policy: "Khu vực hút thuốc riêng"  # Source: Inferred from hotel-level amenities or default "Không hút thuốc"
+
+# === IMAGES ===
+mainImageUrl: "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-8ca9569de0ab3f614019d698d56cc793.jpeg"  # Source: curl_step_2.1 -> data.photos[].photos[0].url (first photo, or filter by category name="main")
+galleryImageUrls:
+  - "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-b0698f733b24661b9d24b98b30019ca1.jpeg"  # Source: curl_step_2.1 -> data.photos[].photos[].url (limit 5, exclude main)
+  - "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-aec1028c4f98d763a9ed14d005add27a.jpeg"  # Source: curl_step_2.1 -> data.photos[].photos[].url (limit 5, exclude main)
+  - "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-85b3ba41998cace6b8c56e546ad9a0bc.jpeg"  # Source: curl_step_2.1 -> data.photos[].photos[].url (limit 5, exclude main)
+  - "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-c5671fb5232227e8d841abcbab94f24c.jpeg"  # Source: curl_step_2.1 -> data.photos[].photos[].url (limit 5, exclude main)
 
 # === SEO KEYWORDS ===
 keywords:
-  - "khách sạn 5 sao đà nẵng"
-  - "resort biển mỹ khê"
-  - "grand mercure danang"
-  - "nghỉ dưỡng gia đình đà nẵng"
-  - "khách sạn gần biển đà nẵng"
-  - "resort spa đà nẵng"
-  - "khách sạn tổ chức tiệc cưới"
+  - "khách sạn raon danang beach - ở 24h"  # Generated from: hotel.name, city.name, district.name, star_rating, amenity_tags
+  - "khách sạn thành phố đà nẵng"  # Generated from: hotel.name, city.name, district.name, star_rating, amenity_tags
+  - "quận ngũ hành sơn"  # Generated from: hotel.name, city.name, district.name, star_rating, amenity_tags
+  - "khách sạn 5 sao"  # Generated from: hotel.name, city.name, district.name, star_rating, amenity_tags
 
 ---
 
-# 🏨 Grand Mercure Danang - Thiên Đường Nghỉ Dưỡng Bên Bờ Biển Mỹ Khê
+# 🏨 Khách sạn Raon Danang Beach - Ở 24H - 
 
-![Grand Mercure Danang](https://holidate-s3-bucket.s3.ap-southeast-1.amazonaws.com/hotels/grand-mercure/main-view.jpg)
+![Khách sạn Raon Danang Beach - Ở 24H](https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-8ca9569de0ab3f614019d698d56cc793.jpeg)
 
 ## 📖 Giới Thiệu
 
-**Grand Mercure Danang** là một trong những resort 5 sao hàng đầu tại Đà Nẵng, tọa lạc trên đoạn đường "Hoàng hôn đẹp nhất hành tinh" - Võ Nguyên Giáp, cách bãi biển Mỹ Khê chỉ vài bước chân. Với thiết kế hiện đại pha trộn nét kiến trúc Á Đông, khách sạn sở hữu 200 phòng và suite sang trọng, tất cả đều hướng biển hoặc view vườn nhiệt đới xanh mát.
+Không chỉ nằm trong tầm tay dễ dàng đến các địa điểm tham quan khác nhau cho cuộc phiêu lưu của bạn, mà việc ở tại Raon Danang Beach Hotel - STAY 24H cũng sẽ mang đến cho bạn một kỳ nghỉ dễ chịu.&#10;&#10;Raon Danang Beach Hotel - STAY 24H rất được khuyến khích cho những người đi du lịch ba lô, những người muốn có một kỳ nghỉ giá cả phải chăng nhưng vẫn thoải mái.&#10;&#10;Đối với bạn, những du khách muốn đi du lịch thoải mái với ngân sách, Raon Danang Beach Hotel - STAY 24H là nơi hoàn hảo để ở, nơi cung cấp các tiện nghi đầy đủ cũng như các dịch vụ tuyệt vời.&#10;&#10;Khách sạn này là sự lựa chọn hoàn hảo cho các cặp đôi đang tìm kiếm một kỳ nghỉ lãng mạn hoặc một nơi nghỉ trăng mật. Tận hưởng những đêm đáng nhớ nhất với người yêu của bạn bằng cách ở tại Raon Danang Beach Hotel - STAY 24H.&#10;&#10;Từ sự kiện kinh doanh đến các buổi họp mặt của công ty, Raon Danang Beach Hotel - STAY 24H cung cấp các dịch vụ và tiện nghi đầy đủ mà bạn và đồng nghiệp của bạn cần.&#10;&#10;Hãy vui vẻ với nhiều tiện nghi giải trí khác nhau dành cho bạn và cả gia đình tại Raon Danang Beach Hotel - STAY 24H, một chỗ ở tuyệt vời cho kỳ nghỉ gia đình của bạn.&#10;&#10;Nếu bạn dự định có một kỳ nghỉ dài hạn, việc ở tại Raon Danang Beach Hotel - STAY 24H là sự lựa chọn đúng đắn dành cho bạn. Cung cấp nhiều tiện nghi và chất lượng dịch vụ tuyệt vời, chỗ ở này chắc chắn sẽ khiến bạn cảm thấy như ở nhà.&#10;&#10;Trong khi đi du lịch với bạn bè có thể rất vui, thì việc đi du lịch một mình lại có những đặc quyền riêng. Đối với chỗ ở, Raon Danang Beach Hotel - STAY 24H phù hợp với những người coi trọng sự riêng tư trong thời gian lưu trú của bạn.&#10;&#10;Dịch vụ tuyệt vời cùng với nhiều tiện nghi được cung cấp sẽ khiến bạn không phàn nàn trong suốt thời gian lưu trú tại Raon Danang Beach Hotel - STAY 24H.&#10;&#10;Có một ngày vui vẻ và thư giãn tại hồ bơi, cho dù bạn đi du lịch một mình hay với những người thân yêu của mình.&#10;&#10;Quầy lễ tân 24 giờ luôn sẵn sàng phục vụ bạn, từ nhận phòng đến trả phòng hoặc bất kỳ sự hỗ trợ nào bạn cần. Nếu bạn muốn nhiều hơn, đừng ngần ngại hỏi quầy lễ tân, chúng tôi luôn sẵn sàng phục vụ bạn.&#10;&#10;Thưởng thức các món ăn yêu thích của bạn với các món ăn đặc biệt từ Raon Danang Beach Hotel - STAY 24H dành riêng cho bạn.&#10;&#10;Wi-Fi có sẵn trong các khu vực công cộng của khách sạn để giúp bạn giữ liên lạc với gia đình và bạn bè.&#10;&#10;Raon Danang Beach Hotel - STAY 24H là một khách sạn có sự thoải mái tuyệt vời và dịch vụ tuyệt vời theo ý kiến của hầu hết khách của khách sạn.&#10;&#10;Với tất cả các tiện nghi được cung cấp, Raon Danang Beach Hotel - STAY 24H là nơi thích hợp để ở.  # Source: curl_step_2.1 -> data.description
 
-Nơi đây là lựa chọn hoàn hảo cho những ai tìm kiếm sự kết hợp giữa nghỉ dưỡng thư giãn và khám phá thành phố năng động. Từ khách sạn, du khách có thể dễ dàng di chuyển đến các địa danh nổi tiếng như Bán đảo Sơn Trà, Ngũ Hành Sơn, hay Bà Nà Hills chỉ trong vòng 30 phút.
-
-> 🌟 **Điểm nổi bật**: Được 187 du khách đánh giá **9.2/10** điểm - "Xuất sắc" về dịch vụ, vị trí và tiện nghi.
+> 🌟 **Điểm nổi bật**: Được 0 du khách đánh giá **/10** điểm - "" về dịch vụ, vị trí và tiện nghi.
 
 ---
 
 ## ⭐ Đặc Điểm Nổi Bật
 
-### 🏖️ 1. Vị Trí "Vàng" Ngay Sát Biển
-- **200m đến bãi biển Mỹ Khê**: Được CNN bình chọn là một trong 6 bãi biển đẹp nhất hành tinh
-- Nằm trên tuyến đường ven biển lãng mạn nhất Đà Nẵng
-- Thuận tiện di chuyển: 10 phút đến trung tâm thành phố, 15 phút đến sân bay Đà Nẵng
+### 🏖️ 1. Vị Trí
+- **5-7**, Đường An Thượng 32, Phường Mỹ An, Quận Ngũ Hành Sơn, Thành phố Đà Nẵng
 
-### 💎 2. Tiện Nghi Resort Đẳng Cấp
-- **Hồ bơi ngoài trời**: View biển panorama, kết nối với khu vực hồ bơi trẻ em
-- **Ocean Spa & Wellness**: Phòng massage, xông hơi khô, phòng xông hơi ướt, jacuzzi
-- **Phòng gym 24/7**: Trang bị máy móc hiện đại Technogym
-- **3 nhà hàng & 2 quầy bar**: 
-  - **The Sail Restaurant**: Buffet quốc tế với gần 100 món
-  - **Maison Vie**: Ẩm thực Pháp fine dining
-  - **Beach Bar**: Cocktail & BBQ seafood bên bờ biển
+### 💎 2. Tiện Nghi Khách Sạn
 
 ### 👨‍👩‍👧‍👦 3. Thân Thiện Với Gia Đình
-- **Kids Club miễn phí**: Khu vui chơi trẻ em với hoạt động giám sát
-- Hồ bơi trẻ em riêng biệt
-- Menu trẻ em đặc biệt tại nhà hàng
-- Dịch vụ trông trẻ theo yêu cầu
 
 ---
 
 ## 🛏️ Hạng Phòng Đa Dạng
 
-Khách sạn cung cấp 4 loại phòng chính, phù hợp từ kỳ nghỉ gia đình đến chuyến công tác hay honeymoon:
+Khách sạn cung cấp 0 loại phòng chính:
 
 | Hạng Phòng               | Diện tích | View      | Sức chứa       | Đặc điểm nổi bật           |
 |--------------------------|-----------|-----------|----------------|----------------------------|
-| **Superior Garden View** | 42m²      | Vườn      | 2 người lớn + 1 trẻ em | Ban công riêng, phòng tắm đứng |
-| **Deluxe Ocean View**    | 45m²      | Biển      | 2 người lớn + 1 trẻ em | Bồn tắm, view biển trực diện   |
-| **Premium Suite**        | 72m²      | Biển      | 2 người lớn + 2 trẻ em | Phòng khách riêng, minibar miễn phí |
-| **Presidential Suite**   | 120m²     | Biển      | 4 người lớn | 2 phòng ngủ, bồn tắm jacuzzi    |
-
-> 💡 **Lưu ý**: Tất cả phòng đều được bao gồm:
-> - ✅ WiFi tốc độ cao miễn phí
-> - ✅ Bữa sáng buffet quốc tế
-> - ✅ Nước đóng chai miễn phí hàng ngày
-> - ✅ Máy pha cà phê/trà Nespresso
 
 ---
 
 ## 💰 Thông Tin Giá Tham Khảo
 
-**Giá khởi điểm**: Từ **1.445.000 VNĐ**/đêm  
-*(Áp dụng cho phòng **Superior Garden View**, 1-2 khách)*
+**Giá khởi điểm**: Từ **0 VNĐ**/đêm  
+*(Áp dụng cho phòng **N/A**, 1-2 khách)*
 
-**Giá cao nhất**: Khoảng **4.725.000 VNĐ**/đêm  
-*(Presidential Suite, mùa cao điểm)*
+**Giá cao nhất**: Khoảng **0 VNĐ**/đêm  
 
 > ⚠️ **Disclaimer quan trọng**:  
 > Giá trên là **mức tham khảo từ giá cơ bản** của khách sạn. Giá thực tế sẽ dao động theo:
@@ -216,25 +157,12 @@ Khách sạn cung cấp 4 loại phòng chính, phù hợp từ kỳ nghỉ gia 
 > - Số người lớn và trẻ em
 > - Loại phòng ưa thích
 > 
-> Tôi sẽ kiểm tra ngay: 
+> Tôi sẽ kiểm tra ngay: }}
 
 ---
 
 ## 📍 Địa Điểm Lân Cận
 
-### 🏖️ Biển & Thiên Nhiên
-- **Bãi biển Mỹ Khê** (200m): Bơi lội, lướt sóng, tắm biển
-- **Bán đảo Sơn Trà** (5km): Trekking, ngắm khỉ hoang dã, Chùa Linh Ứng
-- **Ngũ Hành Sơn** (10km): Khám phá hang động, chùa núi
-
-### 🎡 Vui Chơi & Giải Trí
-- **Asia Park** (8km): Công viên giải trí với vòng quay Sun Wheel cao nhất Việt Nam
-- **Bà Nà Hills** (30km): Cầu Vàng, làng Pháp, cáp treo dài nhất thế giới
-
-### 🍜 Ẩm Thực & Mua Sắm
-- **Chợ Hàn** (6km): Chợ truyền thống, mua quà lưu niệm
-- **Phố đi bộ An Thượng** (7km): Khu ẩm thực - bar - cafe sôi động về đêm
-- **Vincom Plaza** (9km): Trung tâm thương mại hiện đại
 
 ---
 
@@ -245,41 +173,17 @@ Khách sạn cung cấp 4 loại phòng chính, phù hợp từ kỳ nghỉ gia 
 - **Check-out**: Trước 12:00 (Trả phòng muộn đến 18:00 với phụ thu 50% giá phòng)
 
 ### ❌ Chính Sách Hủy Phòng
-**Áp dụng gói "Linh hoạt 7 ngày"**:
-- ✅ **Hủy MIỄN PHÍ** nếu hủy trước **7 ngày** so với ngày check-in
-- ⚠️ **Hủy trong vòng 7 ngày**: Giữ lại 100% tiền phòng
-- ⚠️ **No-show** (không đến nhận phòng): Không hoàn tiền
-
-> 💡 **Gợi ý**: Một số loại phòng có gói "Không hoàn hủy" giá rẻ hơn 15-20% nếu bạn chắc chắn về kế hoạch.
+**Áp dụng gói "Chính sách tiêu chuẩn"**:  # Source: curl_step_2.1 -> data.policy.cancellationPolicy.name
 
 ### 💳 Thanh Toán
 - **Phương thức**: 
   - ✅ Thanh toán online qua VNPay (ATM, Visa, Mastercard, QR Pay)
   - ❌ **KHÔNG** hỗ trợ thanh toán tại khách sạn
-- **Hóa đơn VAT**: Cung cấp theo yêu cầu (thông báo trước khi đặt phòng)
-
-### 🚭 Quy Định Khác
-- **Hút thuốc**: Không cho phép hút thuốc trong phòng. Có khu vực hút thuốc riêng tại sân thượng.
-- **Thú cưng**: Không cho phép
-- **Trẻ em**: 
-  - Trẻ dưới 6 tuổi ngủ chung giường bố mẹ: **Miễn phí**
-  - Trẻ 6-12 tuổi: Phụ thu giường phụ **500.000 VNĐ/đêm**
-  - Trên 12 tuổi: Tính như người lớn
-
-### 📄 Giấy Tờ Yêu Cầu
-- **Bắt buộc** khi check-in:
-  - CMND/CCCD/Hộ chiếu (bản gốc)
-  - Thẻ tín dụng/thẻ ghi nợ để giữ deposit (hoàn trả khi check-out)
 
 ---
 
 ## 🎯 Phù Hợp Với Ai?
 
-✅ **Gia đình có trẻ nhỏ**: Kids club, hồ bơi trẻ em, menu trẻ em, phòng rộng  
-✅ **Cặp đôi honeymoon**: View biển lãng mạn, spa couple, bữa tối riêng tư trên bãi biển  
-✅ **Nhóm bạn**: Gần phố đi bộ, nhiều hoạt động thể thao nước  
-✅ **Khách công tác**: Phòng họp, wifi tốc độ cao, gần sân bay  
-✅ **Tổ chức sự kiện**: Hội trường 500 khách, dịch vụ tiệc cưới chuyên nghiệp  
 
 ---
 
@@ -295,68 +199,81 @@ Hãy cho tôi biết kế hoạch của bạn! 😊
 
 ---
 
-## 🏷️ Tags liên quan
-`#khachsan5sao` `#danangresort` `#nghidưỡngbiển` `#giađìnhviệtnam` `#honeymoon` `#mykhếbeach` `#luxuryhotel` `#việtnamtravel`
-
----
-
 <!-- 
 ====================================================================
-DTO MAPPING REFERENCE (For AI Training)
+DATA SOURCE MAPPING REFERENCE (Based on Actual API Responses)
 ====================================================================
 
-FRONTMATTER MAPPING:
-- doc_id → Hotel.id
-- slug → Slugify(Hotel.name)
-- location.* → Hotel.country/province/city/district/ward/street (all entities)
-- location.address → Hotel.address
-- location.coordinates → Hotel.latitude, Hotel.longitude
-- location_tags → Manual curation + HotelEntertainmentVenue.entertainment_venue.name
-- amenity_tags → HotelAmenity → Amenity.name (mapped to English keys)
-- vibe_tags → Inferred from star_rating + amenity_tags + location_tags + min_price
-- reference_min_price → MIN(Room.base_price_per_night WHERE Room.status='active')
-- reference_min_price_room → Room.name of cheapest active room
-- star_rating → Hotel.star_rating
-- hotel_id → Hotel.id
-- partner_id → Hotel.partner_id
-- status → Hotel.status
-- total_rooms → COUNT(Room WHERE Room.hotel_id = Hotel.id)
-- review_score → AVG(Review.score WHERE Review.hotel_id = Hotel.id)
-- review_count → COUNT(Review WHERE Review.hotel_id = Hotel.id)
-- nearby_venues[] → HotelEntertainmentVenue → EntertainmentVenue (name, distance calculated)
-- check_in_time → HotelPolicy.check_in_time
-- check_out_time → HotelPolicy.check_out_time
-- cancellation_policy → HotelPolicy.cancellation_policy.name
-- allows_pay_at_hotel → HotelPolicy.allows_pay_at_hotel
+CURL COMMANDS EXECUTED:
+1. curl_step_1: GET /accommodation/hotels?page=0&size=1
+   → Extract: HOTEL_ID, CITY_ID
 
-BODY CONTENT MAPPING:
-- H1 Title → Hotel.name
-- Introduction paragraph → Hotel.description (enhanced with location context)
-- "Vị Trí" section → Hotel.location + distance to entertainment_venues
-- "Tiện Nghi" section → HotelAmenity[] grouped by AmenityCategory
-- "Hạng Phòng" table → Room[] (name, area, view, max_adults, max_children)
-- "Giá Tham Khảo" → reference_min_price + disclaimer + tool call placeholder
-- "Địa Điểm Lân Cận" → HotelEntertainmentVenue → EntertainmentVenue (with category)
-- "Chính Sách" section → HotelPolicy (check in/out time, cancellation rules, payment)
+2. curl_step_2.1: GET /accommodation/hotels/{HOTEL_ID}
+   → Response: HotelDetailsResponse
+   → Fields used:
+     - data.id → doc_id, hotel_id
+     - data.name → name, slug
+     - data.description → description
+     - data.starRating → star_rating
+     - data.status → status
+     - data.country/province/city/district/ward/street → location.*
+     - data.latitude/longitude → location.coordinates
+     - data.address → location.address
+     - data.amenities[] → amenity_tags (via mapping)
+     - data.photos[] → mainImageUrl, galleryImageUrls
+     - data.policy.* → check_in_time, check_out_time, cancellation_policy, etc.
+     - data.entertainmentVenues[] → nearby_venues
+     - data.partner.id → partner_id
+     - data.updatedAt/createdAt → last_updated
 
-DYNAMIC PLACEHOLDERS:
--  → Triggered when user asks about specific dates
--  → Triggered when user asks about specific room price
--  → Triggered when user wants to compare room types
+3. curl_step_2.2: GET /accommodation/rooms?hotel-id={HOTEL_ID}
+   → Response: Page<RoomResponse>
+   → Fields used:
+     - data.content[] → rooms list
+     - data.totalItems → total_rooms
+     - MIN(data.content[].basePricePerNight) → reference_min_price
+     - MAX(data.content[].basePricePerNight) → reference_max_price
+     - COUNT(DISTINCT data.content[].name) → available_room_types
 
-DTO SOURCES:
-- Primary: HotelDetailsResponse (from HotelController.getById)
-- Secondary: HotelResponse (from HotelController.getAll - for listing)
-- Related: RoomResponse[], AmenityResponse[], PolicyResponse, ReviewSummary
+4. curl_step_2.3: GET /reviews?hotel-id={HOTEL_ID}
+   → Response: Page<ReviewResponse>
+   → Fields used:
+     - AVG(data.content[].score) → review_score
+     - data.totalItems → review_count
+     - Note: May be empty array → review_score = null, review_count = 0
 
-DATA FRESHNESS:
-- Static data (name, description, amenities): Updated on hotel edit
-- Reference prices: Recalculated weekly via batch job
-- Review scores: Updated daily via scheduler
-- Availability: NEVER hardcoded, always via tool call
+5. curl_step_2.4: GET /location/entertainment-venues/city/{CITY_ID}
+   → Response: EntertainmentVenueGroupResponse[]
+   → Fields used:
+     - data[].entertainmentVenues[] → nearby_venues (if not in hotel response)
+     - data[].entertainmentVenues[].name → nearby_venues[].name
+     - data[].entertainmentVenues[].distance → nearby_venues[].distance
+
+6. curl_step_2.5: GET /amenity/amenities
+   → Response: AmenityResponse[]
+   → Purpose: Reference mapping table for Vietnamese → English amenity names
+   → Used by: AmenityMappingService to map curl_step_2.1 -> data.amenities[].name
+
+AGGREGATED FIELDS:
+- review_score: AVG(reviews.score) from curl_step_2.3
+- review_count: COUNT(reviews) from curl_step_2.3
+- reference_min_price: MIN(rooms.basePricePerNight) from curl_step_2.2
+- reference_max_price: MAX(rooms.basePricePerNight) from curl_step_2.2
+- available_room_types: COUNT(DISTINCT rooms.name) from curl_step_2.2
+
+INFERRED FIELDS:
+- vibe_tags: Inferred from star_rating + amenity_tags + location_tags
+- location_tags: Generated from city.name, district.name, + venue names
+- keywords: Generated from hotel.name, city.name, star_rating, amenity_tags
+
+MAPPING LOGIC:
+- amenity_tags: Map Vietnamese names from curl_step_2.1 -> data.amenities[].amenities[].name
+  to English using AmenityMappingService with curl_step_2.5 as reference
+- mainImageUrl: Filter photos by category name="main" or use first photo
+- galleryImageUrls: All photos except main, limit 5
 
 PROHIBITED DATA:
-- DO NOT include: commission_rate, partner contact info, internal IDs
+- DO NOT include: commissionRate, partner contact info, internal IDs
 - DO NOT hardcode: exact prices for specific dates, current availability
 - DO NOT expose: Admin-only fields, Partner-only metrics
 

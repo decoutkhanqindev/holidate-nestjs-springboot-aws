@@ -265,7 +265,13 @@ public class KnowledgeBaseUploadService {
         // Search tags - Create defensive copies to ensure thread safety
         ctx.put("location_tags", dto.getLocationTags() != null ? new ArrayList<>(dto.getLocationTags()) : List.of());
         ctx.put("amenity_tags", dto.getAmenityEnglishTags() != null ? new ArrayList<>(dto.getAmenityEnglishTags()) : List.of());
-        ctx.put("vibe_tags", dto.getVibeTagsInferred() != null ? new ArrayList<>(dto.getVibeTagsInferred()) : List.of());
+        List<String> vibeTags = dto.getVibeTagsInferred() != null ? new ArrayList<>(dto.getVibeTagsInferred()) : List.of();
+        ctx.put("vibe_tags", vibeTags);
+        
+        // Helper flags for vibe_tags (Mustache doesn't support direct comparison)
+        ctx.put("has_family_friendly", vibeTags.contains("family_friendly"));
+        ctx.put("has_romantic", vibeTags.contains("romantic"));
+        ctx.put("has_business", vibeTags.contains("business"));
         
         // Pricing reference - create new String instances
         PriceReferenceDto price = dto.getPriceReference();
@@ -340,6 +346,34 @@ public class KnowledgeBaseUploadService {
         // Hotel name and description - create new String instances
         ctx.put("name", dto.getName() != null ? new String(dto.getName()) : "");
         ctx.put("description", dto.getDescription() != null ? new String(dto.getDescription()) : "");
+        ctx.put("tagline", ""); // Not available in DTO, set empty
+        
+        // Review rating label (generate from review_score)
+        String reviewRatingLabel = "";
+        if (dto.getReviewScore() != null) {
+            double score = dto.getReviewScore();
+            if (score >= 9.0) {
+                reviewRatingLabel = "Xuất sắc";
+            } else if (score >= 8.0) {
+                reviewRatingLabel = "Rất tốt";
+            } else if (score >= 7.0) {
+                reviewRatingLabel = "Tốt";
+            } else if (score >= 6.0) {
+                reviewRatingLabel = "Khá";
+            } else {
+                reviewRatingLabel = "Trung bình";
+            }
+        }
+        ctx.put("review_rating_label", reviewRatingLabel);
+        
+        // Policy rules (not available in DTO, set empty list)
+        ctx.put("cancellation_policy_rules", List.of());
+        ctx.put("reschedule_policy_rules", List.of());
+        
+        // Tool call for hotel availability (pre-formatted to avoid Mustache nested variable issues)
+        String hotelId = dto.getHotelId() != null ? dto.getHotelId() : "";
+        ctx.put("tool_call_check_availability", 
+            String.format("{{TOOL:check_availability|hotel_id=%s|check_in={date}|check_out={date}}}", hotelId));
         
         // Images - Create defensive copy for gallery images to ensure thread safety
         ctx.put("mainImageUrl", dto.getMainImageUrl() != null ? new String(dto.getMainImageUrl()) : new String(""));
@@ -560,6 +594,10 @@ public class KnowledgeBaseUploadService {
         ctx.put("reschedule_policy", dto.getReschedulePolicy() != null
             ? new String(dto.getReschedulePolicy()) : new String("Chính sách tiêu chuẩn"));
         
+        // Policy rules (not available in DTO, set empty list)
+        ctx.put("cancellation_policy_rules", List.of());
+        ctx.put("reschedule_policy_rules", List.of());
+        
         // Inventory info
         ctx.put("quantity", dto.getQuantity() != null ? dto.getQuantity().intValue() : 0);
         ctx.put("status", dto.getStatus() != null ? new String(dto.getStatus()) : new String("active"));
@@ -581,22 +619,54 @@ public class KnowledgeBaseUploadService {
         // Room name and description
         ctx.put("name", dto.getRoomName() != null ? new String(dto.getRoomName()) : "");
         ctx.put("description", dto.getDescription() != null ? new String(dto.getDescription()) : "");
+        ctx.put("room_description_title", dto.getDescription() != null ? new String(dto.getDescription()) : "");
+        
+        // View helpers
+        String view = dto.getView() != null ? dto.getView().toLowerCase() : "";
+        boolean viewContainsOcean = view.contains("ocean") || view.contains("sea") || 
+                                    view.contains("bien") || view.contains("biển");
+        ctx.put("view_contains_ocean", viewContainsOcean);
+        
+        // Generate view_description from view
+        String viewDescription = "";
+        if (viewContainsOcean) {
+            viewDescription = "hướng biển";
+        } else if (view.contains("garden") || view.contains("vuon") || view.contains("vườn")) {
+            viewDescription = "hướng vườn";
+        } else if (view.contains("city") || view.contains("thanh pho") || view.contains("thành phố")) {
+            viewDescription = "hướng thành phố";
+        }
+        ctx.put("view_description", viewDescription);
         
         // Images
         ctx.put("mainImageUrl", dto.getMainImageUrl() != null ? new String(dto.getMainImageUrl()) : new String(""));
         ctx.put("galleryImageUrls", dto.getGalleryImageUrls() != null 
             ? new ArrayList<>(dto.getGalleryImageUrls()) : List.of());
         
-        // Helper flags for conditional rendering
-        ctx.put("has_balcony", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("balcony"));
-        ctx.put("has_bathtub", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("bathtub"));
-        ctx.put("has_tv", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("tv"));
-        ctx.put("has_bluetooth", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("bluetooth"));
-        ctx.put("has_coffee_maker", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("coffee_maker"));
-        ctx.put("has_minibar", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("minibar"));
-        ctx.put("has_blackout_curtains", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("blackout_curtains"));
-        ctx.put("has_safe_box", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("safe_box"));
-        ctx.put("has_turn_down_service", dto.getRoomAmenityTags() != null && dto.getRoomAmenityTags().contains("turn_down_service"));
+        // Helper flags for conditional rendering (Mustache doesn't support direct comparison)
+        List<String> roomAmenityTags = dto.getRoomAmenityTags() != null ? dto.getRoomAmenityTags() : List.of();
+        ctx.put("has_balcony", roomAmenityTags.contains("balcony"));
+        ctx.put("has_bathtub", roomAmenityTags.contains("bathtub") || roomAmenityTags.contains("jacuzzi"));
+        ctx.put("has_tv", roomAmenityTags.contains("tv"));
+        ctx.put("has_bluetooth", roomAmenityTags.contains("bluetooth"));
+        ctx.put("has_coffee_maker", roomAmenityTags.contains("coffee_maker") || roomAmenityTags.contains("coffee_tea_maker"));
+        ctx.put("has_refrigerator", roomAmenityTags.contains("refrigerator") || roomAmenityTags.contains("minibar"));
+        ctx.put("has_minibar", roomAmenityTags.contains("minibar"));
+        ctx.put("has_air_conditioning", roomAmenityTags.contains("air_conditioning"));
+        ctx.put("has_blackout_curtains", roomAmenityTags.contains("blackout_curtains"));
+        ctx.put("has_safe_box", roomAmenityTags.contains("safe_box") || roomAmenityTags.contains("in_room_safe"));
+        ctx.put("has_turn_down_service", roomAmenityTags.contains("turn_down_service"));
+        // Additional helper flags for amenities found in actual data
+        ctx.put("has_hot_water", roomAmenityTags.contains("hot_water"));
+        ctx.put("has_toiletries", roomAmenityTags.contains("toiletries"));
+        ctx.put("has_private_bathroom", roomAmenityTags.contains("private_bathroom"));
+        ctx.put("has_standing_shower", roomAmenityTags.contains("standing_shower"));
+        ctx.put("has_free_bottled_water", roomAmenityTags.contains("free_bottled_water"));
+        
+        // Tool call for room price (pre-formatted to avoid Mustache nested variable issues)
+        String roomId = dto.getRoomId() != null ? dto.getRoomId() : "";
+        ctx.put("tool_call_get_room_price", 
+            String.format("{{TOOL:get_room_price|room_id=%s|check_in={date}|check_out={date}}}", roomId));
         
         return ctx;
     }

@@ -101,6 +101,14 @@ public class AmenityMappingService {
         AMENITY_MAPPING.put("blackout_curtains", "blackout_curtains");  // From template
         AMENITY_MAPPING.put("máy pha cà phê / trà", "coffee_maker");  // From template
         
+        // Additional mappings from actual sync data (SYNC_VALIDATION_REPORT.md)
+        AMENITY_MAPPING.put("nước đóng chai miễn phí", "free_bottled_water");  // From actual data: "nuoc_dong_chai_mien_phi"
+        AMENITY_MAPPING.put("nuoc dong chai mien phi", "free_bottled_water");  // Alternative spelling
+        AMENITY_MAPPING.put("phòng tắm riêng", "private_bathroom");  // From actual data: "phong_tam_rieng"
+        AMENITY_MAPPING.put("phong tam rieng", "private_bathroom");  // Alternative spelling
+        AMENITY_MAPPING.put("vòi tắm đứng", "standing_shower");  // From actual data: "voi_tam_dung"
+        AMENITY_MAPPING.put("voi tam dung", "standing_shower");  // Alternative spelling
+        
         // Luxury Amenities
         AMENITY_MAPPING.put("nhà hàng cao cấp", "fine_dining");
         AMENITY_MAPPING.put("butler", "butler_service");
