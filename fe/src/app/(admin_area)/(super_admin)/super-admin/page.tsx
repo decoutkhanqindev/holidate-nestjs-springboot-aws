@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { getAdminDashboardSummary } from "@/lib/Super_Admin/superAdminDashboardService";
-import { getAdminRevenueReport, getAdminUsersSummaryReport } from "@/lib/Super_Admin/superAdminReportsService";
+import { getAdminRevenueReport, getAdminUsersSummaryReport, getAdminFinancialsReport } from "@/lib/Super_Admin/superAdminReportsService";
 import StatCard from "@/components/AdminSuper/SuperAdminDashboard/StatCard";
 import { FaHotel, FaUsers, FaDollarSign, FaExclamationTriangle, FaCalendarCheck } from "react-icons/fa";
 import dynamic from 'next/dynamic';
@@ -13,6 +13,7 @@ export default function SuperAdminHomePage() {
     const [data, setData] = useState<any>(null);
     const [revenueData, setRevenueData] = useState<any>(null);
     const [usersData, setUsersData] = useState<any>(null);
+    const [financialsData, setFinancialsData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -79,6 +80,40 @@ export default function SuperAdminHomePage() {
                     setUsersData(usersSummary);
                 } catch (usersErr: any) {
                     console.warn('[SuperAdminDashboard] Error fetching users data:', usersErr);
+                    // Không set error vì đây là dữ liệu bổ sung
+                }
+
+                // Fetch financials data để lấy doanh thu hôm nay và tháng này
+                try {
+                    const todayStr = today.toISOString().split('T')[0];
+                    const firstDayThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                    const firstDayStr = firstDayThisMonth.toISOString().split('T')[0];
+                    
+                    // Lấy financials cho hôm nay
+                    const todayFinancials = await getAdminFinancialsReport(
+                        todayStr,
+                        todayStr,
+                        'day'
+                    );
+                    
+                    // Lấy financials cho cả tháng
+                    const monthFinancials = await getAdminFinancialsReport(
+                        firstDayStr,
+                        todayStr,
+                        'day'
+                    );
+                    
+                    console.log('[SuperAdminDashboard] Financials data received:', {
+                        today: todayFinancials,
+                        month: monthFinancials
+                    });
+                    
+                    setFinancialsData({
+                        today: todayFinancials,
+                        month: monthFinancials
+                    });
+                } catch (financialsErr: any) {
+                    console.warn('[SuperAdminDashboard] Error fetching financials data:', financialsErr);
                     // Không set error vì đây là dữ liệu bổ sung
                 }
             } catch (err: any) {
@@ -307,8 +342,32 @@ export default function SuperAdminHomePage() {
                     <StatCard
                         title="Doanh thu hôm nay"
                         value={(() => {
-                            const revenue = data.realtimeFinancials?.todayRevenue ?? 0;
-                            console.log('[SuperAdminDashboard] Today revenue:', revenue);
+                            // Ưu tiên lấy từ financials report, nếu không có thì lấy từ dashboard summary
+                            let revenue = 0;
+                            if (financialsData?.today) {
+                                const todayData = ('currentPeriod' in financialsData.today && financialsData.today.currentPeriod?.summary)
+                                    ? financialsData.today.currentPeriod.summary
+                                    : financialsData.today?.summary;
+                                
+                                // Lấy từ summary trước
+                                revenue = todayData?.totalGrossRevenue ?? 0;
+                                
+                                // Nếu summary = 0, tính tổng từ data array
+                                if (revenue === 0) {
+                                    const dataArray = ('currentPeriod' in financialsData.today && financialsData.today.currentPeriod?.data)
+                                        ? financialsData.today.currentPeriod.data
+                                        : (financialsData.today?.data || []);
+                                    revenue = dataArray.reduce((sum: number, item: any) => {
+                                        return sum + (item?.grossRevenue || 0);
+                                    }, 0);
+                                }
+                            } else {
+                                revenue = data.realtimeFinancials?.todayRevenue ?? 0;
+                            }
+                            console.log('[SuperAdminDashboard] Today revenue:', revenue, {
+                                fromFinancials: !!financialsData?.today,
+                                fromDashboard: !financialsData?.today
+                            });
                             if (revenue >= 1_000_000_000) {
                                 return `${(revenue / 1_000_000_000).toFixed(2)} tỷ`;
                             } else if (revenue >= 1_000_000) {
@@ -320,6 +379,7 @@ export default function SuperAdminHomePage() {
                         })()}
                         icon={FaDollarSign}
                         variant="warning"
+                        tooltip="Tổng doanh thu từ các bookings đã checkout hôm nay (status = COMPLETED)"
                     />
                 </div>
                 <div className="col-xl-3 col-md-6">
@@ -342,14 +402,40 @@ export default function SuperAdminHomePage() {
                 <div className="col-xl-4 col-md-6">
                     <div className="card shadow-sm h-100">
                         <div className="card-body">
-                            <h5 className="card-title text-muted">Doanh thu tháng này (gross)</h5>
+                            <h5 className="card-title text-muted">
+                                Doanh thu tháng này (gross)
+                                <i className="bi bi-info-circle ms-2 text-muted" 
+                                   style={{ fontSize: '0.875rem', cursor: 'help' }}
+                                   title="Tổng doanh thu gộp từ đầu tháng đến hôm nay (từ SystemDailyReport + hôm nay)"></i>
+                            </h5>
                             <h3 className="text-primary">
                                 {(() => {
-                                    const revenue = (data.aggregatedFinancials?.mtdGrossRevenue ?? 0) + (data.realtimeFinancials?.todayRevenue ?? 0);
+                                    // Ưu tiên lấy từ financials report, nếu không có thì lấy từ dashboard summary
+                                    let revenue = 0;
+                                    if (financialsData?.month) {
+                                        const monthData = ('currentPeriod' in financialsData.month && financialsData.month.currentPeriod?.summary)
+                                            ? financialsData.month.currentPeriod.summary
+                                            : financialsData.month?.summary;
+                                        
+                                        // Lấy từ summary trước
+                                        revenue = monthData?.totalGrossRevenue ?? 0;
+                                        
+                                        // Nếu summary = 0, tính tổng từ data array
+                                        if (revenue === 0) {
+                                            const dataArray = ('currentPeriod' in financialsData.month && financialsData.month.currentPeriod?.data)
+                                                ? financialsData.month.currentPeriod.data
+                                                : (financialsData.month?.data || []);
+                                            revenue = dataArray.reduce((sum: number, item: any) => {
+                                                return sum + (item?.grossRevenue || 0);
+                                            }, 0);
+                                        }
+                                    } else {
+                                        revenue = (data.aggregatedFinancials?.mtdGrossRevenue ?? 0) + (data.realtimeFinancials?.todayRevenue ?? 0);
+                                    }
                                     console.log('[SuperAdminDashboard] MTD Gross Revenue:', {
-                                        aggregated: data.aggregatedFinancials?.mtdGrossRevenue,
-                                        today: data.realtimeFinancials?.todayRevenue,
-                                        total: revenue
+                                        fromFinancials: !!financialsData?.month,
+                                        fromDashboard: !financialsData?.month,
+                                        revenue: revenue
                                     });
                                     if (revenue >= 1_000_000_000) {
                                         return `${(revenue / 1_000_000_000).toFixed(2)} tỷ`;
@@ -361,20 +447,47 @@ export default function SuperAdminHomePage() {
                                     return `${revenue.toLocaleString('en-US')} VND`;
                                 })()}
                             </h3>
+                            <small className="text-muted">Tổng tiền khách hàng trả từ đầu tháng</small>
                         </div>
                     </div>
                 </div>
                 <div className="col-xl-4 col-md-6">
                     <div className="card shadow-sm h-100">
                         <div className="card-body">
-                            <h5 className="card-title text-muted">Doanh thu tháng này (net)</h5>
+                            <h5 className="card-title text-muted">
+                                Doanh thu tháng này (net)
+                                <i className="bi bi-info-circle ms-2 text-muted" 
+                                   style={{ fontSize: '0.875rem', cursor: 'help' }}
+                                   title="Doanh thu ròng = Doanh thu gộp × Tỷ lệ hoa hồng. Phần tiền Holidate thực sự thu về sau khi trừ phần trả cho đối tác."></i>
+                            </h5>
                             <h3 className="text-success">
                                 {(() => {
-                                    const revenue = (data.aggregatedFinancials?.mtdNetRevenue ?? 0) + (data.realtimeFinancials?.todayRevenue ?? 0);
+                                    // Ưu tiên lấy từ financials report, nếu không có thì lấy từ dashboard summary
+                                    let revenue = 0;
+                                    if (financialsData?.month) {
+                                        const monthData = ('currentPeriod' in financialsData.month && financialsData.month.currentPeriod?.summary)
+                                            ? financialsData.month.currentPeriod.summary
+                                            : financialsData.month?.summary;
+                                        
+                                        // Lấy từ summary trước
+                                        revenue = monthData?.totalNetRevenue ?? 0;
+                                        
+                                        // Nếu summary = 0, tính tổng từ data array
+                                        if (revenue === 0) {
+                                            const dataArray = ('currentPeriod' in financialsData.month && financialsData.month.currentPeriod?.data)
+                                                ? financialsData.month.currentPeriod.data
+                                                : (financialsData.month?.data || []);
+                                            revenue = dataArray.reduce((sum: number, item: any) => {
+                                                return sum + (item?.netRevenue || 0);
+                                            }, 0);
+                                        }
+                                    } else {
+                                        revenue = (data.aggregatedFinancials?.mtdNetRevenue ?? 0) + (data.realtimeFinancials?.todayRevenue ?? 0);
+                                    }
                                     console.log('[SuperAdminDashboard] MTD Net Revenue:', {
-                                        aggregated: data.aggregatedFinancials?.mtdNetRevenue,
-                                        today: data.realtimeFinancials?.todayRevenue,
-                                        total: revenue
+                                        fromFinancials: !!financialsData?.month,
+                                        fromDashboard: !financialsData?.month,
+                                        revenue: revenue
                                     });
                                     if (revenue >= 1_000_000_000) {
                                         return `${(revenue / 1_000_000_000).toFixed(2)} tỷ`;
@@ -386,6 +499,7 @@ export default function SuperAdminHomePage() {
                                     return `${revenue.toLocaleString('en-US')} VND`;
                                 })()}
                             </h3>
+                            <small className="text-muted">Phần Holidate thu về (sau khi trừ hoa hồng)</small>
                         </div>
                     </div>
                 </div>

@@ -24,7 +24,7 @@ export default function PartnerReportsPage() {
     const [hotels, setHotels] = useState<any[]>([]);
     const [activeTab, setActiveTab] = useState<ReportType>('revenue');
     const [dateRange, setDateRange] = useState({ from: '', to: '' });
-    const [groupBy, setGroupBy] = useState<'day' | 'week' | 'month'>('day');
+    const [groupBy, setGroupBy] = useState<'day' | 'week' | 'month' | 'quarter' | 'year'>('day');
     const [compareEnabled, setCompareEnabled] = useState(false);
     const [compareDateRange, setCompareDateRange] = useState({ from: '', to: '' });
     const [reportData, setReportData] = useState<any>(null);
@@ -38,7 +38,7 @@ export default function PartnerReportsPage() {
         hotelId: string,
         from: string,
         to: string,
-        groupBy: 'day' | 'week' | 'month'
+        groupBy: 'day' | 'week' | 'month' | 'quarter' | 'year'
     ) => {
         try {
             console.log('[PartnerReportsPage] Calculating revenue from bookings...', { hotelId, from, to, groupBy });
@@ -143,6 +143,13 @@ export default function PartnerReportsPage() {
                 } else if (groupBy === 'month') {
                     // Group theo tháng: YYYY-MM-01
                     periodKey = `${checkOutDate.getFullYear()}-${String(checkOutDate.getMonth() + 1).padStart(2, '0')}-01`;
+                } else if (groupBy === 'quarter') {
+                    // Group theo quý: YYYY-Q1, YYYY-Q2, YYYY-Q3, YYYY-Q4
+                    const quarter = Math.floor(checkOutDate.getMonth() / 3) + 1;
+                    periodKey = `${checkOutDate.getFullYear()}-Q${quarter}`;
+                } else if (groupBy === 'year') {
+                    // Group theo năm: YYYY
+                    periodKey = `${checkOutDate.getFullYear()}`;
                 }
 
                 if (periodKey) {
@@ -227,7 +234,7 @@ export default function PartnerReportsPage() {
         hotelId: string,
         from: string,
         to: string,
-        groupBy: 'day' | 'week' | 'month'
+        groupBy: 'day' | 'week' | 'month' | 'quarter' | 'year'
     ) => {
         try {
             console.log('[PartnerReportsPage] Calculating bookings summary by group...', { hotelId, from, to, groupBy });
@@ -327,6 +334,11 @@ export default function PartnerReportsPage() {
                     periodKey = weekStart.toISOString().split('T')[0];
                 } else if (groupBy === 'month') {
                     periodKey = `${bookingDate.getFullYear()}-${String(bookingDate.getMonth() + 1).padStart(2, '0')}-01`;
+                } else if (groupBy === 'quarter') {
+                    const quarter = Math.floor(bookingDate.getMonth() / 3) + 1;
+                    periodKey = `${bookingDate.getFullYear()}-Q${quarter}`;
+                } else if (groupBy === 'year') {
+                    periodKey = `${bookingDate.getFullYear()}`;
                 }
 
                 if (periodKey) {
@@ -451,27 +463,27 @@ export default function PartnerReportsPage() {
     // Initialize dates - luôn cập nhật đến ngày hôm nay
     useEffect(() => {
         const updateDates = () => {
-            const today = new Date();
+        const today = new Date();
             // Đảm bảo lấy đúng ngày hôm nay (UTC)
             const todayStr = today.toISOString().split('T')[0];
-            const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-            const firstDayThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-            
+        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const firstDayThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        
             setDateRange(prev => {
                 // Chỉ cập nhật nếu chưa có hoặc ngày "to" cũ hơn hôm nay
                 if (!prev.to || prev.to < todayStr) {
                     return {
-                        from: firstDayThisMonth.toISOString().split('T')[0],
+            from: firstDayThisMonth.toISOString().split('T')[0],
                         to: todayStr,
                     };
                 }
                 return prev;
-            });
-            
-            setCompareDateRange({
-                from: lastMonth.toISOString().split('T')[0],
-                to: new Date(today.getFullYear(), today.getMonth(), 0).toISOString().split('T')[0],
-            });
+        });
+        
+        setCompareDateRange({
+            from: lastMonth.toISOString().split('T')[0],
+            to: new Date(today.getFullYear(), today.getMonth(), 0).toISOString().split('T')[0],
+        });
         };
         
         updateDates();
@@ -617,13 +629,13 @@ export default function PartnerReportsPage() {
                         break;
                     case 'customers':
                         try {
-                            data = await getPartnerCustomerSummary(
-                                selectedHotelId,
-                                dateRange.from,
-                                dateRange.to,
-                                compareParams.compareFrom,
-                                compareParams.compareTo
-                            );
+                        data = await getPartnerCustomerSummary(
+                            selectedHotelId,
+                            dateRange.from,
+                            dateRange.to,
+                            compareParams.compareFrom,
+                            compareParams.compareTo
+                        );
                         } catch (err: any) {
                             // Xử lý lỗi quyền truy cập
                             if (err.response?.status === 403 || err.response?.data?.message?.includes('not allowed')) {
@@ -935,6 +947,14 @@ export default function PartnerReportsPage() {
                     const formatPeriodLabel = (period: string) => {
                         if (!period) return '';
                         try {
+                            // Xử lý quarter và year format trước (không phải date string)
+                            if (groupBy === 'quarter' && period.includes('Q')) {
+                                return period.replace('-Q', ' Q');
+                            }
+                            if (groupBy === 'year' && period.match(/^\d{4}$/)) {
+                                return period;
+                            }
+                            
                             const date = new Date(period);
                             if (isNaN(date.getTime())) return period;
                             
@@ -946,6 +966,11 @@ export default function PartnerReportsPage() {
                                 return `${date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} - ${weekEnd.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}`;
                             } else if (groupBy === 'month') {
                                 return date.toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' });
+                            } else if (groupBy === 'quarter') {
+                                const quarter = Math.floor(date.getMonth() / 3) + 1;
+                                return `Q${quarter} ${date.getFullYear()}`;
+                            } else if (groupBy === 'year') {
+                                return date.getFullYear().toString();
                             }
                         } catch (e) {
                             console.warn('[PartnerReportsPage] Error formatting period:', period, e);
@@ -977,9 +1002,9 @@ export default function PartnerReportsPage() {
                         xaxis: {
                             categories: categories,
                             labels: {
-                                rotate: groupBy === 'month' ? -45 : (groupBy === 'week' ? -15 : 0),
+                                rotate: groupBy === 'month' || groupBy === 'quarter' ? -45 : (groupBy === 'week' ? -15 : 0),
                                 style: {
-                                    fontSize: groupBy === 'month' ? '10px' : '12px',
+                                    fontSize: groupBy === 'month' || groupBy === 'quarter' ? '10px' : '12px',
                                 },
                             },
                         },
@@ -1038,6 +1063,17 @@ export default function PartnerReportsPage() {
                                 return `${date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} - ${weekEnd.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}`;
                             } else if (groupBy === 'month') {
                                 return date.toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' });
+                            } else if (groupBy === 'quarter') {
+                                if (period.includes('Q')) {
+                                    return period.replace('-Q', ' Q');
+                                }
+                                const quarter = Math.floor(date.getMonth() / 3) + 1;
+                                return `Q${quarter} ${date.getFullYear()}`;
+                            } else if (groupBy === 'year') {
+                                if (period.match(/^\d{4}$/)) {
+                                    return period;
+                                }
+                                return date.getFullYear().toString();
                             }
                         } catch (e) {
                             console.warn('[PartnerReportsPage] Error formatting period:', period, e);
@@ -1052,9 +1088,9 @@ export default function PartnerReportsPage() {
                         xaxis: {
                             categories: categories,
                             labels: {
-                                rotate: groupBy === 'month' ? -45 : (groupBy === 'week' ? -15 : 0),
+                                rotate: groupBy === 'month' || groupBy === 'quarter' ? -45 : (groupBy === 'week' ? -15 : 0),
                                 style: {
-                                    fontSize: groupBy === 'month' ? '10px' : '12px',
+                                    fontSize: groupBy === 'month' || groupBy === 'quarter' ? '10px' : '12px',
                                 },
                             },
                         },
@@ -1527,15 +1563,9 @@ export default function PartnerReportsPage() {
 
         if (!hasValidData) {
             return (
-                <div className="alert alert-warning">
-                    <p>Không có dữ liệu để hiển thị biểu đồ.</p>
-                    <p className="text-sm mt-2">Series count: {chartSeries.length}</p>
-                    <details className="mt-2">
-                        <summary className="cursor-pointer text-sm">Chi tiết (click để xem)</summary>
-                        <pre className="mt-2 text-xs bg-gray-100 p-2 rounded overflow-auto">
-                            {JSON.stringify({ activeTab, chartType, chartSeries }, null, 2)}
-                        </pre>
-                    </details>
+                <div className="alert alert-warning text-center py-4">
+                    <i className="bi bi-info-circle me-2"></i>
+                    <strong>Không có dữ liệu để hiển thị biểu đồ.</strong>
                 </div>
             );
         }
@@ -1743,6 +1773,17 @@ export default function PartnerReportsPage() {
                                                     return `${date.toLocaleDateString('vi-VN')} - ${weekEnd.toLocaleDateString('vi-VN')}`;
                                                 } else if (groupBy === 'month') {
                                                     return date.toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' });
+                                                } else if (groupBy === 'quarter') {
+                                                    if (period.includes('Q')) {
+                                                        return period.replace('-Q', ' Q');
+                                                    }
+                                                    const quarter = Math.floor(date.getMonth() / 3) + 1;
+                                                    return `Q${quarter} ${date.getFullYear()}`;
+                                                } else if (groupBy === 'year') {
+                                                    if (period.match(/^\d{4}$/)) {
+                                                        return period;
+                                                    }
+                                                    return date.getFullYear().toString();
                                                 }
                                             } catch (e) {
                                                 console.warn('[PartnerReportsPage] Error formatting period:', period, e);
@@ -1918,7 +1959,7 @@ export default function PartnerReportsPage() {
                                     className="form-select"
                                     value={groupBy}
                                     onChange={(e) => {
-                                        const newGroupBy = e.target.value as 'day' | 'week' | 'month';
+                                        const newGroupBy = e.target.value as 'day' | 'week' | 'month' | 'quarter' | 'year';
                                         console.log('[PartnerReportsPage] GroupBy changed:', { old: groupBy, new: newGroupBy, dateRange });
                                         setGroupBy(newGroupBy);
                                         setReloadKey(prev => prev + 1); // Force reload
@@ -1927,6 +1968,8 @@ export default function PartnerReportsPage() {
                                     <option value="day">Ngày</option>
                                     <option value="week">Tuần</option>
                                     <option value="month">Tháng</option>
+                                    <option value="quarter">Quý</option>
+                                    <option value="year">Năm</option>
                                 </select>
                             </div>
                         )}

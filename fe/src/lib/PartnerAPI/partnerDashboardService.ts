@@ -21,7 +21,7 @@ export interface PartnerDashboardSummary {
         totalCapacity: number;
         occupancyPercentage: number;
     }>;
-    totalRoomCapacity: number;
+    totalRoomCapacity?: number; // Optional vì backend có thể không trả về
 }
 
 export async function getPartnerDashboardSummary(hotelId: string, forecastDays: number = 7): Promise<PartnerDashboardSummary> {
@@ -34,7 +34,47 @@ export async function getPartnerDashboardSummary(hotelId: string, forecastDays: 
             },
         }
     );
-    return response.data.data;
+    
+    // Log chi tiết để debug
+    const data = response.data.data;
+    const totalRooms = (data?.roomStatusCounts || []).reduce((total: number, item: any) => total + (item.count || 0), 0);
+    
+    // Tính totalRoomCapacity từ occupancyForecast nếu có
+    let calculatedTotalCapacity = 0;
+    if (data?.occupancyForecast && data.occupancyForecast.length > 0) {
+        // Lấy totalCapacity từ item đầu tiên (tất cả items nên có cùng totalCapacity)
+        calculatedTotalCapacity = data.occupancyForecast[0]?.totalCapacity || 0;
+    }
+    
+    console.log('[getPartnerDashboardSummary] API Response:', {
+        hotelId: hotelId,
+        roomStatusCounts: data?.roomStatusCounts,
+        totalRoomsFromStatus: totalRooms,
+        totalRoomCapacityFromResponse: data?.totalRoomCapacity,
+        totalRoomCapacityFromForecast: calculatedTotalCapacity,
+        occupancyForecastLength: data?.occupancyForecast?.length || 0,
+        breakdown: (data?.roomStatusCounts || []).map((item: any) => ({
+            status: item.status,
+            count: item.count
+        })),
+        fullResponse: data
+    });
+    
+    // Cảnh báo nếu số phòng không khớp
+    if (calculatedTotalCapacity > 0 && totalRooms !== calculatedTotalCapacity) {
+        console.warn('[getPartnerDashboardSummary] WARNING: Room count mismatch!', {
+            fromStatus: totalRooms,
+            fromForecast: calculatedTotalCapacity,
+            difference: Math.abs(totalRooms - calculatedTotalCapacity)
+        });
+    }
+    
+    // Set totalRoomCapacity nếu chưa có
+    if (!data.totalRoomCapacity && calculatedTotalCapacity > 0) {
+        data.totalRoomCapacity = calculatedTotalCapacity;
+    }
+    
+    return data;
 }
 
 

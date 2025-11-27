@@ -78,12 +78,12 @@ export default function EditHotelPage() {
                 </div>
             </div>
         );
-    }
+        }
 
-    return (
-        <>
-            <PageHeader title={`Chỉnh sửa: ${hotel.name}`} />
-            <EditHotelClient hotel={hotel} />
-        </>
-    );
+        return (
+            <>
+                <PageHeader title={`Chỉnh sửa: ${hotel.name}`} />
+                <EditHotelClient hotel={hotel} />
+            </>
+        );
 }
