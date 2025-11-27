@@ -1,12 +1,22 @@
 package com.webapp.holidate.dto.request.user;
 
-import com.webapp.holidate.constants.ValidationPatterns;
-import jakarta.validation.constraints.Pattern;
-import lombok.*;
-import lombok.experimental.FieldDefaults;
+import java.time.LocalDateTime;
+
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
+import com.webapp.holidate.constants.ValidationPatterns;
+
+import jakarta.validation.constraints.Pattern;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.FieldDefaults;
 
 @Data
 @Builder
@@ -37,4 +47,6 @@ public class UserUpdateRequest {
   LocalDateTime dateOfBirth;
 
   MultipartFile avatarFile;
+
+  Boolean active;
 }

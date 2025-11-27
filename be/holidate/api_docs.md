@@ -371,6 +371,7 @@ Base URL: `http://localhost:8080`
   - `id`: string (UUID format)
 - **Request Body** (form-data):
   - All fields from Create User (optional)
+  - `active`: boolean (optional) - User active status
   - `avatar`: File (image file)
 - **Response**: Same as Create User response
 

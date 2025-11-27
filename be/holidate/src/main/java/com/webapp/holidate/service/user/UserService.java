@@ -1,9 +1,23 @@
 package com.webapp.holidate.service.user;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.webapp.holidate.dto.request.user.UserCreationRequest;
 import com.webapp.holidate.dto.request.user.UserUpdateRequest;
 import com.webapp.holidate.dto.response.user.UserResponse;
-import com.webapp.holidate.entity.location.*;
+import com.webapp.holidate.entity.location.City;
+import com.webapp.holidate.entity.location.Country;
+import com.webapp.holidate.entity.location.District;
+import com.webapp.holidate.entity.location.Province;
+import com.webapp.holidate.entity.location.Street;
+import com.webapp.holidate.entity.location.Ward;
 import com.webapp.holidate.entity.user.Role;
 import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.entity.user.UserAuthInfo;
@@ -11,22 +25,20 @@ import com.webapp.holidate.exception.AppException;
 import com.webapp.holidate.mapper.user.UserMapper;
 import com.webapp.holidate.repository.accommodation.HotelRepository;
 import com.webapp.holidate.repository.booking.BookingRepository;
-import com.webapp.holidate.repository.location.*;
+import com.webapp.holidate.repository.location.CityRepository;
+import com.webapp.holidate.repository.location.CountryRepository;
+import com.webapp.holidate.repository.location.DistrictRepository;
+import com.webapp.holidate.repository.location.ProvinceRepository;
+import com.webapp.holidate.repository.location.StreetRepository;
+import com.webapp.holidate.repository.location.WardRepository;
 import com.webapp.holidate.repository.user.RoleRepository;
 import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.service.storage.FileService;
 import com.webapp.holidate.type.ErrorType;
+
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -143,6 +155,7 @@ public class UserService {
     updateInfo(user, request);
     updateLocation(user, request);
     updateAvatar(user, request);
+    updateAuthInfo(user, request);
 
     user.setUpdatedAt(LocalDateTime.now());
     userRepository.save(user);
@@ -252,6 +265,19 @@ public class UserService {
       Street street = streetRepository.findById(newStreetId)
         .orElseThrow(() -> new AppException(ErrorType.STREET_NOT_FOUND));
       user.setStreet(street);
+    }
+  }
+
+  private void updateAuthInfo(User user, UserUpdateRequest request) {
+    Boolean newActive = request.getActive();
+    if (newActive != null) {
+      UserAuthInfo authInfo = user.getAuthInfo();
+      if (authInfo != null) {
+        boolean activeChanged = newActive != authInfo.isActive();
+        if (activeChanged) {
+          authInfo.setActive(newActive);
+        }
+      }
     }
   }
 
