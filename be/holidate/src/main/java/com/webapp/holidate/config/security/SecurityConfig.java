@@ -9,6 +9,7 @@ import com.webapp.holidate.component.security.oauth2.CustomOAuth2AuthenticationF
 import com.webapp.holidate.component.security.oauth2.CustomOAuth2AuthenticationSuccessHandler;
 import com.webapp.holidate.constants.AppProperties;
 import com.webapp.holidate.constants.api.endpoint.*;
+import com.webapp.holidate.constants.api.endpoint.KnowledgeBaseEndpoints;
 import com.webapp.holidate.constants.api.endpoint.auth.AuthEndpoints;
 import com.webapp.holidate.service.auth.GoogleService;
 import com.webapp.holidate.type.user.RoleType;
@@ -62,15 +63,17 @@ public class SecurityConfig {
         public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
                 http.authorizeHttpRequests(request -> request
                                 // A. public endpoints
-                                // 1. auth endpoints
+                                // 1. auth endpoints (all auth endpoints are public)
                                 .requestMatchers(AuthEndpoints.AUTH + ALL_ENDPOINTS).permitAll()
-                                // 2. location endpoints
+                                // 2. location endpoints (GET only)
                                 .requestMatchers(HttpMethod.GET, LocationEndpoints.LOCATION + ALL_ENDPOINTS).permitAll()
                                 // 3. accommodation endpoints
+                                // 3.1. hotels (GET only)
                                 .requestMatchers(HttpMethod.GET,
                                                 AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.HOTELS
                                                                 + ALL_ENDPOINTS)
                                 .permitAll()
+                                // 3.2. rooms (GET only)
                                 .requestMatchers(HttpMethod.GET,
                                                 AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS)
                                 .permitAll()
@@ -78,25 +81,30 @@ public class SecurityConfig {
                                                 AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
                                                                 + CommonEndpoints.ID)
                                 .permitAll()
-                                // 3.1. room inventory endpoints - must be protected (not public)
+                                // 3.3. room inventory endpoints - must be protected (not public)
                                 .requestMatchers(HttpMethod.GET,
                                                 AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
                                                                 + AccommodationEndpoints.ROOM_INVENTORIES
                                                                 + ALL_ENDPOINTS)
                                 .hasAnyAuthority(RoleType.ADMIN.getValue(), RoleType.PARTNER.getValue())
-                                // 4. amenity endpoints
+                                // 4. amenity endpoints (GET only)
                                 .requestMatchers(HttpMethod.GET, AmenityEndpoints.AMENITY + ALL_ENDPOINTS).permitAll()
-                                // 4.1. image/photo category endpoints
+                                // 4.1. amenity categories (GET only)
+                                .requestMatchers(HttpMethod.GET,
+                                                AmenityEndpoints.AMENITY + AmenityEndpoints.AMENITY_CATEGORIES
+                                                                + ALL_ENDPOINTS)
+                                .permitAll()
+                                // 4.2. image/photo category endpoints (GET only)
                                 .requestMatchers(HttpMethod.GET,
                                                 ImageEndpoints.IMAGE + ImageEndpoints.PHOTO_CATEGORIES + ALL_ENDPOINTS)
                                 .permitAll()
-                                // 5. special day endpoints
+                                // 5. special day endpoints (GET only)
                                 .requestMatchers(HttpMethod.GET, SpecialDayEndpoints.SPECIAL_DAYS + ALL_ENDPOINTS)
                                 .permitAll()
-                                // 6. discount endpoints
+                                // 6. discount endpoints (GET only)
                                 .requestMatchers(HttpMethod.GET, DiscountEndpoints.DISCOUNTS + ALL_ENDPOINTS)
                                 .permitAll()
-                                // 7. review endpoints
+                                // 7. review endpoints (GET only)
                                 .requestMatchers(HttpMethod.GET, BookingEndpoints.REVIEWS + ALL_ENDPOINTS)
                                 .permitAll()
                                 // 8. payment callback endpoints (VNPay callback)
@@ -105,11 +113,15 @@ public class SecurityConfig {
 
                                 // B. protected endpoints
                                 // I. user role
-                                // 1. profile endpoints
+                                // 1. profile endpoints (USER and PARTNER can access their own profile)
+                                // Note: Authorization logic in controller/service layer determines access based
+                                // on ownership (users can only access their own profile)
                                 .requestMatchers(HttpMethod.GET, UserEndpoints.USERS + CommonEndpoints.ID)
-                                .hasAuthority(RoleType.USER.getValue())
+                                .hasAnyAuthority(RoleType.USER.getValue(), RoleType.PARTNER.getValue(),
+                                                RoleType.ADMIN.getValue())
                                 .requestMatchers(HttpMethod.PUT, UserEndpoints.USERS + CommonEndpoints.ID)
-                                .hasAuthority(RoleType.USER.getValue())
+                                .hasAnyAuthority(RoleType.USER.getValue(), RoleType.PARTNER.getValue(),
+                                                RoleType.ADMIN.getValue())
                                 // 2. booking endpoints (shared by USER, PARTNER, ADMIN)
                                 // Note: Authorization logic in controller/service layer determines access based
                                 // on ownership
@@ -159,11 +171,7 @@ public class SecurityConfig {
                                                 RoleType.ADMIN.getValue())
 
                                 // II. partner role
-                                // 1. profile endpoints
-                                .requestMatchers(HttpMethod.GET, UserEndpoints.USERS + CommonEndpoints.ID)
-                                .hasAuthority(RoleType.PARTNER.getValue())
-                                .requestMatchers(HttpMethod.PUT, UserEndpoints.USERS + CommonEndpoints.ID)
-                                .hasAuthority(RoleType.PARTNER.getValue())
+                                // Note: Profile endpoints are already defined in USER section above
                                 // 2. hotel management endpoints (partner can update hotels they own, but not
                                 // create/delete)
                                 .requestMatchers(HttpMethod.PUT,
@@ -288,18 +296,7 @@ public class SecurityConfig {
                                                 AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
                                                                 + CommonEndpoints.ID)
                                 .hasAuthority(RoleType.ADMIN.getValue())
-                                // 3.2. other accommodation endpoints (general - must be placed after specific
-                                // endpoints)
-                                .requestMatchers(HttpMethod.POST, AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS)
-                                .hasAuthority(RoleType.ADMIN.getValue())
-                                .requestMatchers(HttpMethod.GET, AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS)
-                                .hasAuthority(RoleType.ADMIN.getValue())
-                                .requestMatchers(HttpMethod.PUT, AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS)
-                                .hasAuthority(RoleType.ADMIN.getValue())
-                                .requestMatchers(HttpMethod.DELETE,
-                                                AccommodationEndpoints.ACCOMMODATION + ALL_ENDPOINTS)
-                                .hasAuthority(RoleType.ADMIN.getValue())
-                                // 3.3. room inventory management endpoints (admin can also manage room
+                                // 3.2. room inventory management endpoints (admin can also manage room
                                 // inventories)
                                 .requestMatchers(HttpMethod.POST,
                                                 AccommodationEndpoints.ACCOMMODATION + AccommodationEndpoints.ROOMS
@@ -384,7 +381,10 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.POST,
                                                 ReportEndpoints.ADMIN_REPORTS + ReportEndpoints.GENERATE_ALL)
                                 .hasAuthority(RoleType.ADMIN.getValue())
-                                // 12. admin dashboard endpoints
+                                // 12. knowledge base endpoints (admin only)
+                                .requestMatchers(KnowledgeBaseEndpoints.ADMIN_KB + ALL_ENDPOINTS)
+                                .hasAuthority(RoleType.ADMIN.getValue())
+                                // 13. admin dashboard endpoints
                                 .requestMatchers(HttpMethod.GET,
                                                 DashboardEndpoints.ADMIN_DASHBOARD + DashboardEndpoints.SUMMARY)
                                 .hasAuthority(RoleType.ADMIN.getValue())

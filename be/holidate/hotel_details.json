@@ -1,0 +1,88 @@
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "id": "29c50e2d-8f21-4b17-a238-3e146f1befa5",
+    "name": "Kh├ích sß║ín M╞░ß╗¥ng Thanh Grand ─É├á Nß║╡ng",
+    "description": "Tß╗½ sß╗▒ kiß╗çn kinh doanh ─æß║┐n c├íc cuß╗Öc hß╗ìp c├┤ng ty, Kh├ích sß║ín Muong Thanh Grand Da Nang cung cß║Ñp c├íc dß╗ïch vß╗Ñ v├á tiß╗çn nghi ho├án chß╗ënh m├á bß║ín v├á ─æß╗ông nghiß╗çp cß╗ºa bß║ín cß║ºn.\n\nH├úy sß║╡n s├áng ─æß╗â c├│ ─æ╞░ß╗úc trß║úi nghiß╗çm l╞░u tr├║ kh├│ qu├¬n bß║▒ng dß╗ïch vß╗Ñ ─æß╗Öc quyß╗ün cß╗ºa n├│, ─æ╞░ß╗úc ho├án thiß╗çn bß╗ƒi mß╗Öt loß║ít c├íc tiß╗çn nghi ─æß╗â phß╗Ñc vß╗Ñ mß╗ìi nhu cß║ºu cß╗ºa bß║ín.\n\nTrung t├óm thß╗â dß╗Ñc cß╗ºa kh├ích sß║ín l├á mß╗Öt ─æiß╗üu phß║úi thß╗¡ trong thß╗¥i gian bß║ín ß╗ƒ ─æ├óy.\n\nC├│ mß╗Öt ng├áy vui vß║╗ v├á th╞░ gi├ún tß║íi hß╗ô b╞íi, cho d├╣ bß║ín ─æi du lß╗ïch mß╗Öt m├¼nh hay vß╗¢i nhß╗»ng ng╞░ß╗¥i th├ón y├¬u cß╗ºa bß║ín.\n\nNhß║¡n ╞░u ─æ├úi tß╗æt nhß║Ñt cho chß║Ñt l╞░ß╗úng dß╗ïch vß╗Ñ spa tß╗æt nhß║Ñt ─æß╗â th╞░ gi├ún v├á trß║╗ h├│a bß║ún th├ón.\n\nQuß║ºy lß╗à t├ón 24 giß╗¥ lu├┤n sß║╡n s├áng phß╗Ñc vß╗Ñ bß║ín, tß╗½ nhß║¡n ph├▓ng ─æß║┐n trß║ú ph├▓ng hoß║╖c bß║Ñt kß╗│ sß╗▒ hß╗ù trß╗ú n├áo bß║ín cß║ºn. Nß║┐u bß║ín muß╗æn biß║┐t th├¬m, ─æß╗½ng ngß║ºn ngß║íi hß╗Åi quß║ºy lß╗à t├ón, ch├║ng t├┤i lu├┤n sß║╡n s├áng phß╗Ñc vß╗Ñ bß║ín.\n\nTh╞░ß╗ƒng thß╗⌐c c├íc m├│n ─ân y├¬u th├¡ch cß╗ºa bß║ín vß╗¢i c├íc m├│n ─ân ─æß║╖c biß╗çt tß╗½ Kh├ích sß║ín Muong Thanh Grand Da Nang d├ánh ri├¬ng cho bß║ín.\n\nWi-Fi c├│ sß║╡n trong c├íc khu vß╗▒c c├┤ng cß╗Öng cß╗ºa kh├ích sß║ín ─æß╗â gi├║p bß║ín kß║┐t nß╗æi vß╗¢i gia ─æ├¼nh v├á bß║ín b├¿.\n\nKh├ích sß║ín Muong Thanh Grand Da Nang l├á mß╗Öt kh├ích sß║ín c├│ sß╗▒ thoß║úi m├íi tuyß╗çt vß╗¥i v├á dß╗ïch vß╗Ñ tuyß╗çt vß╗¥i theo hß║ºu hß║┐t kh├ích cß╗ºa kh├ích sß║ín.\n\nC├│ ─æ╞░ß╗úc nhß╗»ng khoß║únh khß║»c qu├╜ gi├í v├á kh├│ qu├¬n trong thß╗¥i gian bß║ín ß╗ƒ tß║íi Kh├ích sß║ín Muong Thanh Grand Da Nang.",
+    "address": "962",
+    "country": {
+      "id": "b718319a-6fce-4a35-81af-d71caba4a916",
+      "name": "Viß╗çt Nam",
+      "code": "VN"
+    },
+    "province": {
+      "id": "1fe5846e-931a-440a-9e88-ffe6896df192",
+      "name": "Th├ánh phß╗æ ─É├á Nß║╡ng",
+      "code": "236"
+    },
+    "city": {
+      "id": "b491043b-97ce-11f0-a7b7-0a6aab4924ab",
+      "name": "Th├ánh phß╗æ ─É├á Nß║╡ng",
+      "code": ""
+    },
+    "district": {
+      "id": "9d0e4548-97d2-11f0-a7b7-0a6aab4924ab",
+      "name": "Quß║¡n S╞ín Tr├á",
+      "code": ""
+    },
+    "ward": {
+      "id": "874f96be-9b46-11f0-a7b7-0a6aab4924ab",
+      "name": "Ph╞░ß╗¥ng An Hß║úi Nam",
+      "code": ""
+    },
+    "street": {
+      "id": "95b7101c-988c-11f0-a7b7-0a6aab4924ab",
+      "name": "─É╞░ß╗¥ng Ng├┤ Quyß╗ün",
+      "code": ""
+    },
+    "entertainmentVenues": [],
+    "photos": [
+      {
+        "id": "a8d2d034-9ed8-11f0-a7b7-0a6aab4924ab",
+        "name": "Kh├íc",
+        "photos": [
+          {
+            "id": "9957ce64-1558-4e18-a581-f32086503bdf",
+            "url": "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-85b3ba41998cace6b8c56e546ad9a0bc.jpeg"
+          },
+          {
+            "id": "93857b4a-d140-4228-b7ba-e87027e87189",
+            "url": "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-aec1028c4f98d763a9ed14d005add27a.jpeg"
+          },
+          {
+            "id": "1ed6c0f4-f7b2-4d6a-a3f1-e690e592e4cf",
+            "url": "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-b0698f733b24661b9d24b98b30019ca1.jpeg"
+          },
+          {
+            "id": "26cd90b4-4fec-436b-914d-658a49e9c6da",
+            "url": "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-8ca9569de0ab3f614019d698d56cc793.jpeg"
+          },
+          {
+            "id": "111987f5-140d-438e-8163-a5bfefb416f2",
+            "url": "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-c5671fb5232227e8d841abcbab94f24c.jpeg"
+          }
+        ]
+      }
+    ],
+    "amenities": [],
+    "policy": null,
+    "partner": {
+      "id": "9acb3732-c499-4a5d-bad9-36f5b986aa16",
+      "email": "partner_dn_1@gmail.com",
+      "fullName": "partner_dn_1",
+      "role": {
+        "id": "e4edf715-eab5-40a3-95f5-8c2de9c9d3d6",
+        "name": "partner",
+        "description": "Role for partner (hotel owner)"
+      }
+    },
+    "latitude": 0.0,
+    "longitude": 0.0,
+    "starRating": 2,
+    "status": "active",
+    "commissionRate": 15.0,
+    "createdAt": "2025-09-27T09:26:24.28389",
+    "updatedAt": "2025-10-03T00:40:06.619394"
+  }
+}
