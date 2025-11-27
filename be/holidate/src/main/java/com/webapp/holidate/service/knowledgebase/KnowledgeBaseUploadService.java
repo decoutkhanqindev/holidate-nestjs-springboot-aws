@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -129,6 +130,9 @@ public class KnowledgeBaseUploadService {
         
         // Clear writer reference to help GC
         writer = null;
+        
+        // Clean HTML comments from markdown content before upload
+        markdownContent = cleanMarkdownContent(markdownContent);
         
         // Debug: Verify rendered content contains correct hotel name
         if (!markdownContent.contains(dto.getName())) {
@@ -413,6 +417,24 @@ public class KnowledgeBaseUploadService {
     }
 
     /**
+     * Remove HTML comments from markdown content
+     * Strips out all content between <!-- and --> including multi-line comments
+     * 
+     * @param content Markdown content that may contain HTML comments
+     * @return Cleaned markdown content without HTML comments
+     */
+    private String cleanMarkdownContent(String content) {
+        if (content == null) {
+            return null;
+        }
+        // Pattern matches HTML comments including multi-line comments
+        // (?s) enables DOTALL mode (dot matches newlines)
+        // .*? is non-greedy to match shortest possible comment
+        Pattern htmlCommentPattern = Pattern.compile("<!--.*?-->", Pattern.DOTALL);
+        return htmlCommentPattern.matcher(content).replaceAll("");
+    }
+
+    /**
      * Format distance from meters to human-readable string
      * 
      * @param distanceInMeters Distance in meters
@@ -493,6 +515,9 @@ public class KnowledgeBaseUploadService {
         StringWriter writer = new StringWriter();
         template.execute(writer, context);
         String markdownContent = writer.toString();
+        
+        // Clean HTML comments from markdown content before upload
+        markdownContent = cleanMarkdownContent(markdownContent);
         
         String relativePath = buildRoomRelativePath(dto);
         // Example: vietnam/da-nang/son-tra/hotels/grand-mercure-danang/deluxe-ocean-view.md
