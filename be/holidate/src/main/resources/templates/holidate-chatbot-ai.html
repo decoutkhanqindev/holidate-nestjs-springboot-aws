@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Holidate AI Chatbot</title>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        h2 { color: #333; }
+    </style>
+    <link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
+</head>
+<body>
+
+    <div style="text-align: center;">
+        <h2>Trang đặt phòng Holidate</h2>
+        <p>Bấm vào biểu tượng chat góc dưới bên phải để bắt đầu.</p>
+    </div>
+
+    <script type="module">
+        import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
+
+        createChat({
+            // 1. Dán Chat URL của bạn vào đây:
+            webhookUrl: 'http://localhost:5678/webhook/05af54f8-474f-46cf-bf5f-4606db3b0ec6/chat',
+
+            // 2. Cấu hình Tiêu đề & Nội dung
+            title: 'Trợ lý ảo AI', // Yêu cầu của bạn
+            subtitle: 'Holidate Support', // Dòng chữ nhỏ dưới tiêu đề
+            
+            // 3. Cấu hình màu sắc (Xanh & Trắng)
+            style: {
+                width: 400, // Chiều rộng khung chat
+                height: 600, // Chiều cao
+                position: 'right', // Vị trí
+                backgroundColor: '#ffffff', // Màu nền khung chat (Trắng)
+                
+                // Màu chủ đạo (Xanh dương)
+                mainColor: '#0066cc', 
+                
+                // Màu tiêu đề & nút gửi
+                headerBackgroundColor: '#0066cc', 
+                headerTextColor: '#ffffff',
+                
+                // Màu tin nhắn người dùng
+                userMessageBackgroundColor: '#0066cc', 
+                userMessageTextColor: '#ffffff',
+                
+                // Màu tin nhắn Bot
+                botMessageBackgroundColor: '#f0f2f5', 
+                botMessageTextColor: '#000000',
+            },
+            
+            // 4. Lời chào mặc định (nếu muốn ghi đè cấu hình trong n8n)
+            initialMessages: [
+                'Xin chào! 👋 Mình là Trợ lý ảo AI của Holidate. Mình có thể giúp gì cho bạn về đặt phòng hôm nay?'
+            ],
+            
+            // Tùy chọn khác
+            mode: 'window', // 'window' (cửa sổ nổi) hoặc 'fullscreen'
+            showWelcomeScreen: true,
+        });
+    </script>
+</body>
+</html>

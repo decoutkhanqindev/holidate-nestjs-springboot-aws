@@ -50,4 +50,10 @@ public class DiscountQueries {
   public static final String FIND_BY_DISCOUNT_ID_WITH_SPECIAL_DAY = "SELECT DISTINCT sdd FROM SpecialDayDiscount sdd "
     +
     "WHERE sdd.discount.id = :discountId";
+  
+  public static final String FIND_ALL_BY_HOTEL_ID_WITH_DISCOUNT = "SELECT DISTINCT hd FROM HotelDiscount hd " +
+    "LEFT JOIN FETCH hd.discount d " +
+    "LEFT JOIN FETCH d.specialDayDiscounts sdd " +
+    "LEFT JOIN FETCH sdd.specialDay sd " +
+    "WHERE hd.hotel.id = :hotelId";
 }

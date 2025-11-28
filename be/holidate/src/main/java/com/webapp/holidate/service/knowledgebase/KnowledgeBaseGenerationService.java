@@ -9,11 +9,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.webapp.holidate.constants.AppProperties;
+import com.webapp.holidate.dto.knowledgebase.ActiveDiscountDto;
+import com.webapp.holidate.dto.knowledgebase.AmenityCategoryDto;
 import com.webapp.holidate.dto.knowledgebase.HotelKnowledgeBaseDto;
 import com.webapp.holidate.dto.knowledgebase.LocationHierarchyDto;
 import com.webapp.holidate.dto.knowledgebase.NearbyVenueDto;
+import com.webapp.holidate.dto.knowledgebase.PolicyDetailDto;
+import com.webapp.holidate.dto.knowledgebase.PriceAnalyticsDto;
 import com.webapp.holidate.dto.knowledgebase.PriceReferenceDto;
 import com.webapp.holidate.dto.knowledgebase.ReviewStatsDto;
+import com.webapp.holidate.dto.knowledgebase.ReviewSummaryDto;
+import com.webapp.holidate.dto.knowledgebase.RoomInventoryCalendarDto;
 import com.webapp.holidate.dto.knowledgebase.RoomKnowledgeBaseDto;
 import com.webapp.holidate.dto.knowledgebase.RoomSummaryDto;
 import com.webapp.holidate.entity.accommodation.Hotel;
@@ -54,6 +60,7 @@ public class KnowledgeBaseGenerationService {
     private final AmenityMappingService amenityMappingService;
     private final VibeInferenceService vibeInferenceService;
     private final LocationTagService locationTagService;
+    private final KnowledgeBaseDataService knowledgeBaseDataService;
     
     @Value(AppProperties.KB_IMAGE_DEFAULT_PLACEHOLDER_URL)
     private String defaultPlaceholderImageUrl;
@@ -84,8 +91,20 @@ public class KnowledgeBaseGenerationService {
             // Get price reference
             PriceReferenceDto priceReference = getPriceReference(hotel.getId());
             
-            // Get review statistics
+            // Get review statistics (basic)
             ReviewStatsDto reviewStats = getReviewStats(hotel.getId());
+            
+            // ENHANCED: Get comprehensive review summary
+            ReviewSummaryDto reviewsSummary = knowledgeBaseDataService.fetchReviewSummary(hotel.getId());
+            
+            // ENHANCED: Get active discounts
+            List<ActiveDiscountDto> activeDiscounts = knowledgeBaseDataService.fetchActiveDiscounts(hotel.getId());
+            
+            // ENHANCED: Get detailed policies with rules
+            PolicyDetailDto policies = knowledgeBaseDataService.buildPolicyDetail(hotel.getPolicy());
+            
+            // ENHANCED: Get amenities by category (placeholder - to be implemented)
+            List<AmenityCategoryDto> hotelAmenitiesByCategory = new ArrayList<>();
             
             // Build amenity list
             List<String> amenities = buildAmenityList(hotel.getAmenities());
@@ -125,7 +144,7 @@ public class KnowledgeBaseGenerationService {
                 reviewCountValue = totalReviews != null ? totalReviews : 0L;
             }
             
-            // Build complete DTO
+            // Build complete DTO with ENHANCED fields
             HotelKnowledgeBaseDto dto = HotelKnowledgeBaseDto.builder()
                     .hotelId(hotel.getId())
                     .slug(slug)
@@ -148,6 +167,11 @@ public class KnowledgeBaseGenerationService {
                     .reschedulePolicyName(policyInfo.reschedulePolicyName)
                     .reviewScore(reviewScoreValue)  // null when no reviews (per DATA_VALIDATION_REPORT.md)
                     .reviewCount(reviewCountValue)
+                    // ENHANCED fields
+                    .reviewsSummary(reviewsSummary)
+                    .activeDiscounts(activeDiscounts)
+                    .policies(policies)
+                    .hotelAmenitiesByCategory(hotelAmenitiesByCategory)
                     .mainImageUrl(mainImageUrl)
                     .galleryImageUrls(galleryImageUrls)
                     .vibeTagsInferred(vibeTags)
@@ -602,7 +626,23 @@ public class KnowledgeBaseGenerationService {
         String roomType = inferRoomType(room.getName());
         String roomCategory = inferRoomCategory(room);
         
-        // Build complete DTO
+        // ENHANCED: Fetch room inventory calendar (next 30 days)
+        List<RoomInventoryCalendarDto> inventoryCalendar = knowledgeBaseDataService.fetchRoomInventoryCalendar(room.getId());
+        
+        // ENHANCED: Calculate price analytics
+        PriceAnalyticsDto priceAnalytics = knowledgeBaseDataService.calculatePriceAnalytics(inventoryCalendar);
+        
+        // ENHANCED: Build room-specific policy details
+        PolicyDetailDto roomPolicies = knowledgeBaseDataService.buildRoomPolicyDetail(room, hotel.getPolicy());
+        boolean policiesInherited = room.getCancellationPolicy() == null && room.getReschedulePolicy() == null;
+        
+        // ENHANCED: Room amenities with details (placeholder - to be implemented)
+        List<AmenityCategoryDto> roomAmenitiesDetailed = new ArrayList<>();
+        
+        // Get current price from room entity
+        Double currentPrice = room.getBasePricePerNight(); // TODO: Get from inventories if available
+        
+        // Build complete DTO with ENHANCED fields
         return RoomKnowledgeBaseDto.builder()
             .roomId(room.getId())
             .roomName(room.getName())
@@ -636,7 +676,14 @@ public class KnowledgeBaseGenerationService {
             .quantity(room.getQuantity())
             .status(room.getStatus())
             .basePrice(room.getBasePricePerNight())
+            .currentPrice(currentPrice)
             .priceNote("Giá có thể thay đổi theo ngày trong tuần, mùa cao điểm và tình trạng phòng trống")
+            // ENHANCED fields
+            .inventoryCalendar(inventoryCalendar)
+            .priceAnalytics(priceAnalytics)
+            .roomPolicies(roomPolicies)
+            .policiesInherited(policiesInherited)
+            .roomAmenitiesDetailed(roomAmenitiesDetailed)
             .vibeTags(vibeTags)
             .keywords(keywords)
             .description(buildRoomDescription(room, hotel))

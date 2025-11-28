@@ -95,6 +95,72 @@ reschedule_policy: "{{reschedule_policy}}"  # Source: curl_step_2.1 -> data.poli
 allows_pay_at_hotel: {{allows_pay_at_hotel}}  # Source: curl_step_2.1 -> data.policy.allowsPayAtHotel
 smoking_policy: "{{smoking_policy}}"  # Source: Inferred from hotel-level amenities or default "Không hút thuốc"
 
+# === ENHANCED: DETAILED POLICY RULES ===
+# Source: /policy/cancellation-policies and /policy/reschedule-policies endpoints
+policies_detail:
+{{#policies}}
+  check_in_time: "{{checkInTime}}"
+  check_out_time: "{{checkOutTime}}"
+  allows_pay_at_hotel: {{allowsPayAtHotel}}
+  cancellation_policy:
+{{#cancellationPolicy}}
+    name: "{{name}}"
+    rules:
+{{#rules}}
+      - days_before_checkin: {{daysBeforeCheckin}}
+        penalty_percentage: {{penaltyPercentage}}
+        description: "{{description}}"
+{{/rules}}
+{{/cancellationPolicy}}
+  reschedule_policy:
+{{#reschedulePolicy}}
+    name: "{{name}}"
+    rules:
+{{#rules}}
+      - days_before_checkin: {{daysBeforeCheckin}}
+        fee_percentage: {{feePercentage}}
+        description: "{{description}}"
+{{/rules}}
+{{/reschedulePolicy}}
+{{/policies}}
+
+# === ENHANCED: COMPREHENSIVE REVIEW STATISTICS ===
+# Source: /reviews?hotel-id={id} endpoint
+reviews_summary:
+{{#reviewsSummary}}
+  total_reviews: {{totalReviews}}
+  average_score: {{averageScore}}
+  score_distribution:
+{{#scoreDistribution}}
+    - bucket: "{{bucket}}"
+      count: {{count}}
+{{/scoreDistribution}}
+  recent_reviews:
+{{#recentReviews}}
+    - score: {{score}}
+      comment_snippet: "{{commentSnippet}}"
+      date: "{{date}}"
+{{/recentReviews}}
+{{/reviewsSummary}}
+
+# === ENHANCED: ACTIVE DISCOUNTS ===
+# Source: /discounts?hotel-id={id}&currently-valid=true endpoint
+active_discounts:
+{{#activeDiscounts}}
+  - code: "{{code}}"
+    description: "{{description}}"
+    percentage: {{percentage}}
+    min_booking_price: {{minBookingPrice}}
+    min_booking_count: {{minBookingCount}}
+    valid_from: "{{validFrom}}"
+    valid_to: "{{validTo}}"
+    usage_limit: {{usageLimit}}
+    times_used: {{timesUsed}}
+{{#specialDayName}}
+    special_day: "{{specialDayName}}"
+{{/specialDayName}}
+{{/activeDiscounts}}
+
 # === IMAGES ===
 mainImageUrl: "{{mainImageUrl}}"  # Source: curl_step_2.1 -> data.photos[].photos[0].url (first photo, or filter by category name="main")
 galleryImageUrls:
@@ -193,17 +259,77 @@ Khách sạn cung cấp {{available_room_types}} loại phòng chính:
 
 ---
 
-## 📋 Chính Sách Khách Sạn
+## ⭐ Đánh Giá Khách Hàng
+
+{{#reviewsSummary}}
+{{#totalReviews}}
+### 📊 Tổng Quan Đánh Giá
+- **Tổng số đánh giá**: {{totalReviews}} đánh giá
+- **Điểm trung bình**: {{averageScore}}/10
+
+### 📈 Phân Bố Điểm Số
+{{#scoreDistribution}}
+- **{{bucket}} điểm**: {{count}} đánh giá
+{{/scoreDistribution}}
+
+### 💬 Đánh Giá Gần Đây
+{{#recentReviews}}
+- **{{score}}/10** - "{{commentSnippet}}" _({{date}})_
+{{/recentReviews}}
+{{/totalReviews}}
+{{^totalReviews}}
+_Chưa có đánh giá cho khách sạn này._
+{{/totalReviews}}
+{{/reviewsSummary}}
+
+---
+
+## 🎁 Khuyến Mãi Đang Có
+
+{{#activeDiscounts}}
+{{#.}}
+### 🏷️ {{code}} - {{description}}
+- **Giảm giá**: {{percentage}}%
+- **Áp dụng cho**: Đơn hàng từ {{minBookingPrice}} VNĐ
+- **Thời gian**: Từ {{validFrom}} đến {{validTo}}
+- **Số lần sử dụng**: {{timesUsed}}/{{usageLimit}}
+{{#specialDayName}}
+- **Dịp đặc biệt**: {{.}}
+{{/specialDayName}}
+
+{{/.}}
+{{/activeDiscounts}}
+{{^activeDiscounts}}
+_Hiện tại không có khuyến mãi nào._
+{{/activeDiscounts}}
+
+---
+
+## 📋 Chính Sách Khách Sạn Chi Tiết
 
 ### ⏰ Giờ Nhận/Trả Phòng
 - **Check-in**: Từ {{check_in_time}}{{#early_check_in_available}} (Hỗ trợ nhận phòng sớm tùy tình trạng phòng trống - có thể phát sinh phí){{/early_check_in_available}}
 - **Check-out**: Trước {{check_out_time}}{{#late_check_out_available}} (Trả phòng muộn đến 18:00 với phụ thu 50% giá phòng){{/late_check_out_available}}
 
-### ❌ Chính Sách Hủy Phòng
-**Áp dụng gói "{{cancellation_policy}}"**:  # Source: curl_step_2.1 -> data.policy.cancellationPolicy.name
-{{#cancellation_policy_rules}}  # Source: curl_step_2.1 -> data.policy.cancellationPolicy.rules[]
-- {{description}}  # Generated from rules
-{{/cancellation_policy_rules}}
+### ❌ Chính Sách Hủy Phòng Chi Tiết
+{{#policies}}
+{{#cancellationPolicy}}
+**Áp dụng gói "{{name}}"**:
+{{#rules}}
+- {{description}}
+{{/rules}}
+{{/cancellationPolicy}}
+{{/policies}}
+
+### 🔄 Chính Sách Đổi Lịch Chi Tiết
+{{#policies}}
+{{#reschedulePolicy}}
+**Áp dụng gói "{{name}}"**:
+{{#rules}}
+- {{description}}
+{{/rules}}
+{{/reschedulePolicy}}
+{{/policies}}
 
 ### 💳 Thanh Toán
 - **Phương thức**: 

@@ -57,7 +57,21 @@ public class RoomKnowledgeBaseDto {
     
     // Pricing Info
     Double basePrice; // VNĐ/night (BASE price, not dynamic)
+    Double currentPrice; // Current price (may differ from base due to discounts)
     String priceNote;
+    
+    // ENHANCED: Room inventory calendar (next 30 days)
+    List<RoomInventoryCalendarDto> inventoryCalendar;
+    
+    // ENHANCED: Price analytics
+    PriceAnalyticsDto priceAnalytics;
+    
+    // ENHANCED: Detailed room policies with rules
+    PolicyDetailDto roomPolicies;
+    Boolean policiesInherited; // True if room inherits hotel policies
+    
+    // ENHANCED: Room amenities with details and categories
+    List<AmenityCategoryDto> roomAmenitiesDetailed;
     
     // Metadata
     List<String> vibeTags; // Room-specific vibe tags

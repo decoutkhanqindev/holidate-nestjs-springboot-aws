@@ -1,11 +1,15 @@
 package com.webapp.holidate.dto.knowledgebase;
 
-import lombok.*;
-import lombok.experimental.FieldDefaults;
-
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.FieldDefaults;
 
 /**
  * Comprehensive DTO aggregating all hotel information for Knowledge Base generation.
@@ -52,6 +56,18 @@ public class HotelKnowledgeBaseDto {
     // Review Stats (flattened for easy access)
     Double reviewScore;
     Long reviewCount;
+    
+    // ENHANCED: Detailed review statistics
+    ReviewSummaryDto reviewsSummary;
+    
+    // ENHANCED: Active discounts
+    List<ActiveDiscountDto> activeDiscounts;
+    
+    // ENHANCED: Detailed policies with rules
+    PolicyDetailDto policies;
+    
+    // ENHANCED: Hotel amenities by category
+    List<AmenityCategoryDto> hotelAmenitiesByCategory;
 
     // Images
     String mainImageUrl;
