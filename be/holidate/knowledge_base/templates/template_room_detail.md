@@ -318,8 +318,6 @@ _Lưu ý: Phòng này có chính sách riêng._
 
 ## 📊 Khả Năng Còn Phòng
 
-{{#inventoryCalendar}}
-{{#.}}
 ### 📈 Phân Tích Tình Trạng Phòng
 {{#inventoryCalendar}}
 {{#hasRooms}}
