@@ -75,6 +75,7 @@ export interface UpdateUserPayload {
     gender?: string;
     dateOfBirth?: string;
     avatarFile?: File; // Multipart file
+    active?: boolean; // User active status
 }
 
 /**
@@ -311,6 +312,7 @@ export async function updateUser(userId: string, payload: UpdateUserPayload): Pr
         if (payload.gender) formData.append('gender', payload.gender);
         if (payload.dateOfBirth) formData.append('dateOfBirth', payload.dateOfBirth);
         if (payload.avatarFile) formData.append('avatarFile', payload.avatarFile);
+        if (payload.active !== undefined) formData.append('active', String(payload.active));
 
         const response = await apiClient.put<ApiResponse<UserResponse>>(
             `${baseURL}/${userId}`,
@@ -357,6 +359,7 @@ export async function updateUserServer(userId: string, payload: UpdateUserPayloa
         if (payload.gender) formData.append('gender', payload.gender);
         if (payload.dateOfBirth) formData.append('dateOfBirth', payload.dateOfBirth);
         if (payload.avatarFile) formData.append('avatarFile', payload.avatarFile);
+        if (payload.active !== undefined) formData.append('active', String(payload.active));
 
         const serverClient = await createServerApiClient();
         const response = await serverClient.put<ApiResponse<UserResponse>>(
