@@ -171,3 +171,10 @@ export default function DiscountsTable({ discounts, onEdit, onDelete }: Discount
 
 
 
+
+
+
+
+
+
+

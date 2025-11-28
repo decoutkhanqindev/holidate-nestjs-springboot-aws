@@ -1,15 +1,13 @@
-// src/app/(admin)/hotels/[hotelId]/page.tsx
+"use client";
+
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { getHotelById, getHotelDetailById, type HotelPolicyResponse } from '@/lib/AdminAPI/hotelService';
-import { notFound } from 'next/navigation';
-import Link from 'next/link';
 import Image from 'next/image';
 import { PageHeader } from '@/components/Admin/ui/PageHeader';
 import { ClockIcon, DocumentTextIcon, XCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import HotelDetailHeader from './HotelDetailHeader';
-
-interface HotelDetailPageProps {
-    params: Promise<{ hotelId: string }>;
-}
+import type { Hotel } from '@/types';
 
 // Helper function để format time
 const formatTime = (time: string) => {
@@ -22,26 +20,77 @@ const formatTime = (time: string) => {
     }
 };
 
-export default async function HotelDetailPage({ params }: HotelDetailPageProps) {
-    // Await params trước khi sử dụng (Next.js 15+)
-    const { hotelId } = await params;
-    const hotel = await getHotelById(hotelId);
-    const hotelDetail = await getHotelDetailById(hotelId);
+export default function HotelDetailPage() {
+    const params = useParams();
+    const router = useRouter();
+    const hotelId = params?.hotelId as string;
 
-    if (!hotel) {
-        notFound();
+    const [hotel, setHotel] = useState<Hotel | null>(null);
+    const [hotelDetail, setHotelDetail] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const loadHotelData = async () => {
+            if (!hotelId) return;
+
+            try {
+                setIsLoading(true);
+                setError(null);
+
+                const [hotelData, detailData] = await Promise.all([
+                    getHotelById(hotelId),
+                    getHotelDetailById(hotelId)
+                ]);
+
+                if (!hotelData) {
+                    setError('Không tìm thấy khách sạn');
+                    return;
+                }
+
+                setHotel(hotelData);
+                setHotelDetail(detailData);
+
+                // Debug: Log để kiểm tra
+                console.log('[HotelDetailPage] Policy data:', detailData?.policy);
+                console.log('[HotelDetailPage] HotelDetail:', detailData);
+            } catch (err: any) {
+                console.error('[HotelDetailPage] Error loading hotel:', err);
+                setError(err.message || 'Không thể tải thông tin khách sạn');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadHotelData();
+    }, [hotelId]);
+
+    if (isLoading) {
+        return (
+            <div className="p-6 md:p-8">
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-gray-500">Đang tải dữ liệu...</div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error || !hotel) {
+        return (
+            <div className="p-6 md:p-8">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <p className="text-red-800">{error || 'Không tìm thấy khách sạn'}</p>
+                </div>
+            </div>
+        );
     }
 
     // Lấy amenities từ hotelDetail
     const amenities = hotelDetail?.amenities || [];
-    const flatAmenities = amenities.flatMap(cat => cat.amenities || []);
+    const flatAmenities = amenities.flatMap((cat: any) => cat.amenities || []);
 
     // Lấy policy từ hotelDetail
     const policy = hotelDetail?.policy;
-    
-    // Debug: Log để kiểm tra
-    console.log('[HotelDetailPage] Policy data:', policy);
-    console.log('[HotelDetailPage] HotelDetail:', hotelDetail);
 
     return (
         <>
@@ -108,7 +157,7 @@ export default async function HotelDetailPage({ params }: HotelDetailPageProps) 
                         Tiện ích chính
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {flatAmenities.map((amenity) => (
+                        {flatAmenities.map((amenity: any) => (
                             <div key={amenity.id} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                                 <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -128,7 +177,6 @@ export default async function HotelDetailPage({ params }: HotelDetailPageProps) 
                 </h3>
 
                 {policy ? (
-
                     <div className="space-y-6">
                         {/* Thời gian check-in/check-out */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -169,7 +217,7 @@ export default async function HotelDetailPage({ params }: HotelDetailPageProps) 
                                     Giấy tờ yêu cầu
                                 </h4>
                                 <ul className="space-y-2">
-                                    {policy.requiredIdentificationDocuments.map((doc) => (
+                                    {policy.requiredIdentificationDocuments.map((doc: any) => (
                                         <li key={doc.id} className="flex items-center gap-2 text-gray-700">
                                             <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -192,7 +240,7 @@ export default async function HotelDetailPage({ params }: HotelDetailPageProps) 
                                 <p className="text-sm text-gray-600">{policy.cancellationPolicy.description}</p>
                                 {policy.cancellationPolicy.rules && policy.cancellationPolicy.rules.length > 0 && (
                                     <div className="mt-3 space-y-1">
-                                        {policy.cancellationPolicy.rules.map((rule) => (
+                                        {policy.cancellationPolicy.rules.map((rule: any) => (
                                             <div key={rule.id} className="text-sm text-gray-600">
                                                 {rule.daysBeforeCheckIn === 0 
                                                     ? 'Hủy ngay trước ngày nhận phòng' 
@@ -216,7 +264,7 @@ export default async function HotelDetailPage({ params }: HotelDetailPageProps) 
                                 <p className="text-sm text-gray-600">{policy.reschedulePolicy.description}</p>
                                 {policy.reschedulePolicy.rules && policy.reschedulePolicy.rules.length > 0 && (
                                     <div className="mt-3 space-y-1">
-                                        {policy.reschedulePolicy.rules.map((rule) => (
+                                        {policy.reschedulePolicy.rules.map((rule: any) => (
                                             <div key={rule.id} className="text-sm text-gray-600">
                                                 {rule.daysBeforeCheckin === 0 
                                                     ? 'Đổi ngay trước ngày nhận phòng' 

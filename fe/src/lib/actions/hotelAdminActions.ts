@@ -49,7 +49,7 @@ export async function createHotelAdminAction(formData: FormData) {
             authProvider: authProvider.trim(),
         };
 
-        await createHotelAdminServer(payload);
+        const newUser =         await createHotelAdminServer(payload);
 
         revalidatePath('/super-user-management');
         return { success: true };

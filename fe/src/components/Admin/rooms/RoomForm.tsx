@@ -28,6 +28,19 @@ function SubmitButton({ isEditing }: { isEditing: boolean }) {
     );
 }
 
+// Hàm format số với dấu chấm phân cách hàng nghìn (VD: 1218673 -> 1.218.673)
+function formatNumber(value: number | string): string {
+    if (!value && value !== 0) return '';
+    const numStr = String(value).replace(/\./g, ''); // Loại bỏ dấu chấm cũ
+    return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+// Hàm parse số (loại bỏ dấu chấm) để lấy giá trị số thực
+function parseNumber(formattedValue: string): string {
+    if (!formattedValue) return '';
+    return formattedValue.replace(/\./g, '');
+}
+
 interface RoomFormProps {
     formAction: (formData: FormData) => void;
     hotelId: string;
@@ -77,6 +90,18 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
     );
     const [amenitySearchQuery, setAmenitySearchQuery] = useState('');
     const [showAmenityDropdown, setShowAmenityDropdown] = useState(false);
+
+    // State cho giá tiền với format (hiển thị với dấu chấm)
+    const [priceDisplay, setPriceDisplay] = useState<string>(
+        room?.basePricePerNight ? formatNumber(room.basePricePerNight) : ''
+    );
+
+    // Load giá tiền khi room data thay đổi
+    useEffect(() => {
+        if (room?.basePricePerNight) {
+            setPriceDisplay(formatNumber(room.basePricePerNight));
+        }
+    }, [room?.basePricePerNight]);
 
     // Danh sách tiện ích phổ biến cần tự động gán
     const commonAmenityNames = [
@@ -315,6 +340,15 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
         console.log("[RoomForm] ===== CLIENT-SIDE: Form submitted =====");
 
         const formData = new FormData(event.currentTarget);
+        
+        // Parse giá tiền từ format (loại bỏ dấu chấm) trước khi gửi
+        const priceInput = event.currentTarget.querySelector('#basePricePerNight') as HTMLInputElement;
+        if (priceInput && priceDisplay) {
+            const parsedPrice = parseNumber(priceDisplay);
+            formData.set('basePricePerNight', parsedPrice);
+            console.log("[RoomForm] Price formatted:", priceDisplay, "-> parsed:", parsedPrice);
+        }
+
         const formDataEntries: Array<{ key: string; value: string }> = [];
 
         for (const [key, value] of formData.entries()) {
@@ -478,16 +512,36 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
                                 Giá cơ bản / đêm (VNĐ) *
                             </label>
                             <input
-                                type="number"
+                                type="text"
                                 id="basePricePerNight"
                                 name="basePricePerNight"
                                 required
-                                min="0"
-                                step="1000"
-                                defaultValue={room?.basePricePerNight ? String(room.basePricePerNight) : ''}
-                                placeholder="VD: 2000000"
+                                value={priceDisplay}
+                                onChange={(e) => {
+                                    // Chỉ cho phép nhập số (loại bỏ tất cả ký tự không phải số)
+                                    const value = e.target.value.replace(/[^\d]/g, '');
+                                    
+                                    // Format lại với dấu chấm phân cách hàng nghìn
+                                    if (value === '' || /^\d+$/.test(value)) {
+                                        const formattedValue = formatNumber(value);
+                                        setPriceDisplay(formattedValue);
+                                    }
+                                }}
+                                onBlur={(e) => {
+                                    // Đảm bảo format đúng khi blur
+                                    const parsed = parseNumber(priceDisplay);
+                                    if (parsed) {
+                                        setPriceDisplay(formatNumber(parsed));
+                                    } else if (priceDisplay === '') {
+                                        setPriceDisplay('');
+                                    }
+                                }}
+                                placeholder="VD: 1.218.673"
                                 className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                             />
+                            <p className="text-xs text-gray-500 mt-1">
+                                Nhập giá với định dạng: 1.218.673 (dấu chấm phân cách hàng nghìn)
+                            </p>
                         </div>
 
                         <div className="space-y-2">
