@@ -64,10 +64,7 @@ public class KnowledgeBaseUploadService {
     public String generateAndUploadHotelProfile(HotelKnowledgeBaseDto dto) throws IOException {
         log.info("Generating hotel profile for: {} (ID: {}, Slug: {})", dto.getName(), dto.getHotelId(), dto.getSlug());
         
-        // CRITICAL VALIDATION: Verify DTO is not null and has required fields
-        if (dto == null) {
-            throw new IllegalArgumentException("DTO cannot be null");
-        }
+        // CRITICAL VALIDATION: Verify DTO has required fields
         if (dto.getHotelId() == null || dto.getHotelId().isEmpty()) {
             throw new IllegalArgumentException("DTO hotelId cannot be null or empty");
         }
@@ -127,9 +124,6 @@ public class KnowledgeBaseUploadService {
         StringWriter writer = new StringWriter();
         template.execute(writer, context);
         String markdownContent = writer.toString();
-        
-        // Clear writer reference to help GC
-        writer = null;
         
         // Clean HTML comments from markdown content before upload
         markdownContent = cleanMarkdownContent(markdownContent);
