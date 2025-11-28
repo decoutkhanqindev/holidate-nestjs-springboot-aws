@@ -368,6 +368,30 @@ export async function createHotelAdminServer(payload: {
                 roleName: newUser.role?.name
             });
 
+            // QUAN TRỌNG: User mới tạo có active = false, cần activate để có thể login
+            // Gọi API Update User với active = true để activate account
+            try {
+                console.log('[createHotelAdminServer] Attempting to activate user by calling update API with active=true...');
+                
+                const { updateUserServer } = await import('@/lib/AdminAPI/userService');
+                
+                // Gọi update với active = true để activate account
+                await updateUserServer(newUser.id, {
+                    active: true
+                });
+                
+                console.log('[createHotelAdminServer] ✅ User activated successfully via update API');
+            } catch (updateError: any) {
+                console.error('[createHotelAdminServer] ⚠️ Error activating user via update API:', {
+                    message: updateError.message,
+                    status: updateError.response?.status,
+                    responseData: updateError.response?.data
+                });
+                // Không throw error vì user đã được tạo thành công
+                // Chỉ log warning
+                console.warn('[createHotelAdminServer] ⚠️ User created but activation failed. User may need manual activation.');
+            }
+
             // Note: HotelUpdateRequest không có partnerId field
             // Không thể update partner của hotel sau khi hotel đã được tạo
             // Partner sẽ được gán khi tạo hotel mới (trong HotelCreationRequest có partnerId)

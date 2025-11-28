@@ -139,6 +139,7 @@ export const findBedTypeIdByName = async (bedTypeName: string, hotelId?: string)
  * Lấy danh sách bedTypes có sẵn trong hệ thống (query từ tất cả rooms)
  * Dùng để hiển thị cho user chọn
  * Note: Backend không có endpoint riêng để lấy tất cả bed types, nên phải query từ rooms
+ * Cải thiện: Query nhiều hotels và rooms hơn để lấy được TẤT CẢ bed types trong database
  */
 export const getAvailableBedTypes = async (hotelId?: string): Promise<BedType[]> => {
     try {
@@ -147,43 +148,76 @@ export const getAvailableBedTypes = async (hotelId?: string): Promise<BedType[]>
 
         // Query từ nhiều hotels để lấy được tất cả bed types có sẵn
         const { getHotels } = await import('./hotelService');
-        const hotelsResult = await getHotels(0, 50); // Lấy 50 hotels đầu để đảm bảo có đủ bed types
+        
+        // Lấy TẤT CẢ hotels để đảm bảo lấy được tất cả bed types
+        // Tăng số lượng lớn để lấy được tất cả
+        const hotelsResult = await getHotels(0, 10000); // Lấy tối đa 10000 hotels để đảm bảo lấy được tất cả
 
         const { getRoomsByHotelId, getRoomById } = await import('./roomService');
 
         // Query từ tất cả hotels để lấy bed types
-        for (const hotel of hotelsResult.hotels) {
-            try {
-                const roomsResult = await getRoomsByHotelId(hotel.id, 0, 50); // Lấy nhiều rooms hơn
-                for (const room of roomsResult.rooms) {
+        let processedHotels = 0;
+        let processedRooms = 0;
+        const maxRoomsPerHotel = 10000; // Tăng lên 10000 rooms mỗi hotel
+        
+        // Xử lý song song một số hotels để tăng tốc độ
+        const batchSize = 10; // Xử lý 10 hotels cùng lúc
+        for (let i = 0; i < hotelsResult.hotels.length; i += batchSize) {
+            const hotelBatch = hotelsResult.hotels.slice(i, i + batchSize);
+            
+            // Xử lý song song batch hotels
+            await Promise.all(
+                hotelBatch.map(async (hotel) => {
                     try {
-                        const roomDetails = await getRoomById(room.id);
-                        if (roomDetails?.bedType) {
-                            bedTypesMap.set(roomDetails.bedType.id, {
-                                id: roomDetails.bedType.id,
-                                name: roomDetails.bedType.name
-                            });
+                        // Lấy tất cả rooms của mỗi hotel
+                        const roomsResult = await getRoomsByHotelId(hotel.id, 0, maxRoomsPerHotel);
+                        
+                        // Xử lý song song một số rooms để tăng tốc độ
+                        const roomBatchSize = 20; // Xử lý 20 rooms cùng lúc
+                        for (let j = 0; j < roomsResult.rooms.length; j += roomBatchSize) {
+                            const roomBatch = roomsResult.rooms.slice(j, j + roomBatchSize);
+                            
+                            await Promise.all(
+                                roomBatch.map(async (room) => {
+                                    try {
+                                        const roomDetails = await getRoomById(room.id);
+                                        if (roomDetails?.bedType) {
+                                            bedTypesMap.set(roomDetails.bedType.id, {
+                                                id: roomDetails.bedType.id,
+                                                name: roomDetails.bedType.name
+                                            });
+                                            processedRooms++;
+                                        }
+                                    } catch (error) {
+                                        // Ignore errors for individual rooms
+                                    }
+                                })
+                            );
+                        }
+                        processedHotels++;
+                        
+                        // Log tiến độ mỗi 50 hotels
+                        if (processedHotels % 50 === 0) {
+                            console.log(`[bedTypeService] Processed ${processedHotels}/${hotelsResult.hotels.length} hotels, found ${bedTypesMap.size} unique bed types so far...`);
                         }
                     } catch (error) {
-                        continue;
+                        // Ignore errors for individual hotels
+                        processedHotels++;
                     }
-                }
-            } catch (error) {
-                continue;
-            }
+                })
+            );
         }
 
-        // Nếu đã có đủ bed types (>= 15 loại như data bạn cung cấp), có thể dừng lại sớm
-        if (bedTypesMap.size >= 15) {
-            console.log(`[bedTypeService] Found ${bedTypesMap.size} bed types (stopping early)`);
-        }
+        console.log(`[bedTypeService] ✅ Completed: Processed ${processedHotels} hotels and ${processedRooms} rooms, found ${bedTypesMap.size} unique bed types`);
 
-        // Sắp xếp theo tên
+        // Sắp xếp theo tên (tiếng Việt)
         const bedTypes = Array.from(bedTypesMap.values()).sort((a, b) => 
-            a.name.localeCompare(b.name, 'vi')
+            a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' })
         );
 
-        console.log(`[bedTypeService] Found ${bedTypes.length} available bed types from all rooms`);
+        console.log(`[bedTypeService] Found ${bedTypes.length} unique bed types from all rooms`);
+        console.log(`[bedTypeService] Bed types (${bedTypes.length} total):`, bedTypes.map(bt => bt.name).join(', '));
+        
         return bedTypes;
     } catch (error: any) {
         console.error("[bedTypeService] Error getting available bedTypes:", error);
