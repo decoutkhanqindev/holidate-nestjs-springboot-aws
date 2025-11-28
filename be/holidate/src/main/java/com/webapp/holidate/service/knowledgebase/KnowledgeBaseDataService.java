@@ -212,14 +212,21 @@ public class KnowledgeBaseDataService {
             }
             
             return inventories.stream()
-                    .map(inv -> RoomInventoryCalendarDto.builder()
-                            .date(inv.getId().getDate())
-                            .price(inv.getPrice())
-                            .availableRooms(inv.getAvailableRooms())
-                            .status(inv.getStatus())
-                            .isWeekend(isWeekend(inv.getId().getDate()))
-                            .isHoliday(false) // TODO: Implement holiday detection
-                            .build())
+                    .map(inv -> {
+                        int available = inv.getAvailableRooms();
+                        return RoomInventoryCalendarDto.builder()
+                                .date(inv.getId().getDate())
+                                .price(inv.getPrice())
+                                .availableRooms(available)
+                                .status(inv.getStatus())
+                                .isWeekend(isWeekend(inv.getId().getDate()))
+                                .isHoliday(false) // TODO: Implement holiday detection
+                                .hasRooms(available > 0)
+                                .hasManyRooms(available >= 3)
+                                .hasLimitedRooms(available > 0 && available < 3)
+                                .isSoldOut(available == 0)
+                                .build();
+                    })
                     .collect(Collectors.toList());
                     
         } catch (Exception e) {
@@ -242,6 +249,9 @@ public class KnowledgeBaseDataService {
                     .avgPriceNext30Days(0.0)
                     .priceVolatility("low")
                     .weekendPriceMultiplier(1.0)
+                    .isHighVolatility(false)
+                    .isMediumVolatility(false)
+                    .isLowVolatility(true)
                     .build();
         }
         
@@ -279,6 +289,9 @@ public class KnowledgeBaseDataService {
                 .avgPriceNext30Days(avgPrice)
                 .priceVolatility(volatility)
                 .weekendPriceMultiplier(weekendMultiplier)
+                .isHighVolatility("high".equals(volatility))
+                .isMediumVolatility("medium".equals(volatility))
+                .isLowVolatility("low".equals(volatility))
                 .build();
     }
     

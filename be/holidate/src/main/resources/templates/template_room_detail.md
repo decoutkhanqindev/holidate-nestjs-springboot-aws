@@ -266,11 +266,17 @@ Phòng có tầm nhìn đẹp hướng biển, lý tưởng cho các cặp đôi
 - **Hệ số giá cuối tuần**: x{{weekendPriceMultiplier}}
 
 ### 📌 Lời Khuyên Đặt Phòng
-{{#priceVolatility}}
-- {{#equals priceVolatility "high"}}💡 Giá biến động mạnh theo ngày. Nên đặt sớm để có giá tốt!{{/equals}}
-- {{#equals priceVolatility "medium"}}💡 Giá có thay đổi nhẹ. Đặt trước 1-2 tuần để đảm bảo phòng trống.{{/equals}}
-- {{#equals priceVolatility "low"}}💡 Giá ổn định. Bạn có thể linh hoạt thời gian đặt phòng.{{/equals}}
-{{/priceVolatility}}
+{{#priceAnalytics}}
+{{#isHighVolatility}}
+- 💡 Giá biến động mạnh theo ngày. Nên đặt sớm để có giá tốt!
+{{/isHighVolatility}}
+{{#isMediumVolatility}}
+- 💡 Giá có thay đổi nhẹ. Đặt trước 1-2 tuần để đảm bảo phòng trống.
+{{/isMediumVolatility}}
+{{#isLowVolatility}}
+- 💡 Giá ổn định. Bạn có thể linh hoạt thời gian đặt phòng.
+{{/isLowVolatility}}
+{{/priceAnalytics}}
 {{/priceAnalytics}}
 
 ---
@@ -316,11 +322,12 @@ _Lưu ý: Phòng này có chính sách riêng._
 {{#.}}
 ### 📈 Phân Tích Tình Trạng Phòng
 {{#inventoryCalendar}}
-{{#availableRooms}}
-- Ngày **{{date}}**: {{#gte availableRooms 3}}✅ Còn nhiều phòng ({{availableRooms}} phòng){{/gte}}{{#lt availableRooms 3}}{{#gt availableRooms 0}}⚠️ Sắp hết phòng ({{availableRooms}} phòng){{/gt}}{{/lt}}{{#eq availableRooms 0}}❌ Đã hết phòng{{/eq}}
-{{/availableRooms}}
-{{/inventoryCalendar}}
-{{/.}}
+{{#hasRooms}}
+- Ngày **{{date}}**: {{#hasManyRooms}}✅ Còn nhiều phòng ({{availableRooms}} phòng){{/hasManyRooms}}{{#hasLimitedRooms}}⚠️ Sắp hết phòng ({{availableRooms}} phòng){{/hasLimitedRooms}}
+{{/hasRooms}}
+{{#isSoldOut}}
+- Ngày **{{date}}**: ❌ Đã hết phòng
+{{/isSoldOut}}
 {{/inventoryCalendar}}
 
 ---

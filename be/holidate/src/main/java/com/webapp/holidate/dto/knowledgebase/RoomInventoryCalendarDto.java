@@ -20,5 +20,11 @@ public class RoomInventoryCalendarDto {
     String status;
     Boolean isWeekend;
     Boolean isHoliday;
+    
+    // Availability status boolean fields for Mustache template conditionals
+    Boolean hasRooms; // availableRooms > 0
+    Boolean hasManyRooms; // availableRooms >= 3
+    Boolean hasLimitedRooms; // availableRooms > 0 && availableRooms < 3
+    Boolean isSoldOut; // availableRooms == 0
 }
 

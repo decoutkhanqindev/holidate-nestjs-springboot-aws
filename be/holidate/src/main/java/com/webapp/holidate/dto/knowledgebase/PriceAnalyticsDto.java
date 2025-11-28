@@ -1,6 +1,10 @@
 package com.webapp.holidate.dto.knowledgebase;
 
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 /**
@@ -17,5 +21,10 @@ public class PriceAnalyticsDto {
     Double avgPriceNext30Days;
     String priceVolatility; // "low" | "medium" | "high"
     Double weekendPriceMultiplier;
+    
+    // Boolean fields for Mustache template conditionals
+    Boolean isHighVolatility;
+    Boolean isMediumVolatility;
+    Boolean isLowVolatility;
 }
 
