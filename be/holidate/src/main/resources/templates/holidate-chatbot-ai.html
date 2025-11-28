@@ -16,7 +16,6 @@
             margin: 0; 
         }
         
-        /* Khung bao quanh chat */
         .chat-container {
             width: 380px;
             height: 600px;
@@ -29,7 +28,6 @@
             position: relative;
         }
 
-        /* Tiêu đề xanh */
         .header {
             background: linear-gradient(135deg, #0066cc, #00c6ff);
             padding: 20px;
@@ -40,7 +38,6 @@
         .header h3 { margin: 0; font-size: 18px; font-weight: 600; }
         .header p { margin: 5px 0 0; font-size: 13px; opacity: 0.9; }
 
-        /* Vùng hiển thị tin nhắn */
         .messages-box {
             flex: 1;
             padding: 20px;
@@ -51,9 +48,8 @@
             background-color: #fff;
         }
 
-        /* Bong bóng tin nhắn */
         .message {
-            max-width: 80%;
+            max-width: 85%;
             padding: 12px 16px;
             border-radius: 18px;
             font-size: 14px;
@@ -61,7 +57,24 @@
             word-wrap: break-word;
         }
 
-        /* Tin nhắn người dùng (Phải - Xanh) */
+        /* Style đặc biệt cho nội dung HTML trong tin nhắn */
+        .message img {
+            max-width: 100%;
+            border-radius: 10px;
+            margin-top: 8px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .message h3 {
+            margin: 5px 0;
+            font-size: 16px;
+            color: #0066cc;
+        }
+        .message b {
+            font-weight: 700;
+        }
+        
+        /* Tin nhắn người dùng */
         .user-message {
             background: #0066cc;
             color: white;
@@ -69,25 +82,26 @@
             border-bottom-right-radius: 4px;
         }
 
-        /* Tin nhắn Bot (Trái - Xám) */
+        /* Tin nhắn Bot */
         .bot-message {
             background: #f0f2f5;
             color: #333;
             align-self: flex-start;
             border-bottom-left-radius: 4px;
         }
+        /* Link trong tin nhắn bot */
+        .bot-message a { color: #0066cc; text-decoration: none; font-weight: 600; }
+        .bot-message a:hover { text-decoration: underline; }
 
-        /* Trạng thái đang gõ */
         .typing { 
             font-style: italic; 
             color: #888; 
             font-size: 12px; 
             margin-left: 20px; 
             margin-bottom: 10px;
-            display: none; /* Mặc định ẩn */
+            display: none; 
         }
 
-        /* Vùng nhập liệu */
         .input-area {
             padding: 15px;
             border-top: 1px solid #eee;
@@ -120,7 +134,6 @@
         }
         button:hover { background: #005bb5; }
 
-        /* Scrollbar đẹp hơn */
         .messages-box::-webkit-scrollbar { width: 6px; }
         .messages-box::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 3px; }
     </style>
@@ -135,7 +148,7 @@
         
         <div class="messages-box" id="messagesBox">
             <div class="message bot-message">
-                Xin chào! 👋 Mình là Trợ lý ảo của Holidate.<br>
+                Xin chào! 👋 Mình là Trợ lý ảo của Hệ thống Đặt phòng Khách sạn Holidate.<br>
                 Mình có thể giúp gì cho bạn về tìm phòng và giá cả hôm nay?
             </div>
         </div>
@@ -149,14 +162,12 @@
     </div>
 
     <script>
-        const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook-test/9c4bdf4a-4fbc-485b-b3bc-e09647d8d450'; // Link từ Webhook node của bạn
+        // 👇 THAY LINK WEBHOOK CỦA BẠN VÀO ĐÂY
+        const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook-test/9c4bdf4a-4fbc-485b-b3bc-e09647d8d450'; 
 
         // 1. Hàm tạo Session ID (Dùng để định danh người chat)
         function getSessionId() {
-            // Kiểm tra xem đã có ID lưu trong máy chưa
             let sessionId = localStorage.getItem('holidate_session_id');
-            
-            // Nếu chưa có (người mới), tạo ID ngẫu nhiên và lưu lại
             if (!sessionId) {
                 sessionId = 'user_' + Math.random().toString(36).substr(2, 9);
                 localStorage.setItem('holidate_session_id', sessionId);
@@ -170,13 +181,11 @@
             if (!message) return;
 
             // Hiển thị tin nhắn người dùng
-            addMessage(message, 'user-message');
+            addMessageHTML(message.replace(/\n/g, '<br>'), 'user-message');
             inputField.value = '';
             
-            // Hiện icon đang gõ
             document.getElementById('typingIndicator').style.display = 'block';
 
-            // Lấy ID hiện tại
             const currentSessionId = getSessionId();
 
             try {
@@ -189,28 +198,51 @@
                     }) 
                 });
 
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+
                 const data = await response.json();
                 
-                // Hiển thị tin nhắn bot
-                addMessage(data.output, 'bot-message');
+                // Xử lý Markdown sang HTML trước khi hiển thị
+                let botReplyHtml = parseMarkdown(data.output);
+                addMessageHTML(botReplyHtml, 'bot-message');
 
             } catch (error) {
-                addMessage("Lỗi kết nối, vui lòng thử lại sau!", 'bot-message');
-                console.error(error);
+                addMessageHTML("⚠️ Lỗi kết nối, vui lòng thử lại sau!", 'bot-message');
+                console.error("Chat Error:", error);
             } finally {
-                // Ẩn icon đang gõ
                 document.getElementById('typingIndicator').style.display = 'none';
             }
         }
 
-        function addMessage(text, className) {
+        // Hàm chuyển đổi Markdown cơ bản sang HTML để hiển thị ảnh, link, chữ đậm
+        function parseMarkdown(text) {
+            if (!text) return "";
+            
+            return text
+                // 1. Xử lý Ảnh: ![alt](url)
+                .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1">')
+                
+                // 2. Xử lý Link: [text](url)
+                .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>')
+                
+                // 3. Xử lý Tiêu đề: ### text
+                .replace(/###\s?(.*?)(?:\n|$)/g, '<h3>$1</h3>')
+                
+                // 4. Xử lý In đậm: **text**
+                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                
+                // 5. Xử lý Xuống dòng
+                .replace(/\n/g, '<br>');
+        }
+
+        function addMessageHTML(htmlContent, className) {
             const box = document.getElementById('messagesBox');
             const div = document.createElement('div');
             div.className = `message ${className}`;
-            // Xử lý xuống dòng cho đẹp
-            div.innerHTML = text.replace(/\n/g, '<br>'); 
+            div.innerHTML = htmlContent; // Render HTML (ảnh, bold, link)
             box.appendChild(div);
-            // Tự động cuộn xuống dưới cùng
             box.scrollTop = box.scrollHeight;
         }
 

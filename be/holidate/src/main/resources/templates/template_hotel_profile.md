@@ -84,6 +84,20 @@ nearby_venues:
     description: "{{description}}"  # Optional: Generated from category + distance
 {{/nearby_venues}}
 
+# === ENHANCED: DETAILED ENTERTAINMENT VENUES BY CATEGORY ===
+# Source: /location/entertainment-venues/city/{cityId} endpoint with distance calculation
+entertainment_venues:
+{{#entertainmentVenues}}
+  - category: "{{categoryName}}"
+    venues:
+{{#venues}}
+      - name: "{{name}}"
+        address: "{{address}}"
+        distance_from_hotel: "{{distanceFromHotel}}m"
+        description: "{{description}}"
+{{/venues}}
+{{/entertainmentVenues}}
+
 # === POLICIES ===
 # Source: curl_step_2.1 -> data.policy
 check_in_time: "{{check_in_time}}"  # Source: curl_step_2.1 -> data.policy.checkInTime (format: "HH:mm:ss")
@@ -256,6 +270,24 @@ Khách sạn cung cấp {{available_room_types}} loại phòng chính:
 {{#nearby_venues}}  # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
 - **{{name}}** ({{distance}}): {{description}}
 {{/nearby_venues}}
+
+---
+
+## 🎯 Địa Điểm Giải Trí Gần Đây
+
+{{#entertainmentVenues}}
+### 🌟 {{categoryName}}
+
+{{#venues}}
+• **{{name}}** ({{distanceFromHotel}}m): {{description}}  
+  📍 {{address}}
+
+{{/venues}}
+{{/entertainmentVenues}}
+
+{{^entertainmentVenues}}
+_Thông tin địa điểm giải trí sẽ được cập nhật sớm._
+{{/entertainmentVenues}}
 
 ---
 
