@@ -214,17 +214,23 @@ public class KnowledgeBaseDataService {
             return inventories.stream()
                     .map(inv -> {
                         int available = inv.getAvailableRooms();
+                        LocalDate date = inv.getId().getDate();
+                        String status = inv.getStatus() != null ? inv.getStatus() : "available";
                         return RoomInventoryCalendarDto.builder()
-                                .date(inv.getId().getDate())
+                                .date(date)
+                                .dayOfWeek(date.getDayOfWeek().name().toLowerCase())
                                 .price(inv.getPrice())
                                 .availableRooms(available)
-                                .status(inv.getStatus())
-                                .isWeekend(isWeekend(inv.getId().getDate()))
+                                .status(status)
+                                .isWeekend(isWeekend(date))
                                 .isHoliday(false) // TODO: Implement holiday detection
                                 .hasRooms(available > 0)
                                 .hasManyRooms(available >= 3)
                                 .hasLimitedRooms(available > 0 && available < 3)
                                 .isSoldOut(available == 0)
+                                .statusAvailable("available".equals(status))
+                                .statusLimited("limited".equals(status))
+                                .statusSoldOut("sold_out".equals(status))
                                 .build();
                     })
                     .collect(Collectors.toList());

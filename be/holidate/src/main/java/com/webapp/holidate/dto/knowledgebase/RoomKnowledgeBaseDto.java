@@ -84,6 +84,73 @@ public class RoomKnowledgeBaseDto {
     List<String> galleryImageUrls; // Gallery images
     LocalDateTime lastUpdated;
     
+    // === NEW FIELDS FOR AI OPTIMIZATION ===
+    
+    // Room specifications
+    RoomSpecs specs;
+    
+    // Pricing information
+    PricingInfo pricing;
+    
+    // Room policies (max occupancy, extra bed)
+    RoomPolicies roomPoliciesDetail;
+    
+    // Nested classes
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class RoomSpecs {
+        Float areaSqm;
+        Boolean hasBalcony;
+        Boolean hasWindow;
+        String viewType; // "ocean", "city", "mountain", "no_view"
+        List<BedConfiguration> bedConfiguration;
+    }
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class BedConfiguration {
+        String type; // "single", "double", "king"
+        Integer count;
+    }
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class PricingInfo {
+        Double basePriceVnd;
+        Double weekendSurchargePercent;
+        Double holidaySurchargePercent;
+    }
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class MaxOccupancy {
+        Integer adults;
+        Integer children;
+    }
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class RoomPolicies {
+        MaxOccupancy maxOccupancy;
+        Boolean extraBedAvailable;
+        Double extraBedPriceVnd;
+    }
+    
     /**
      * Simplified entertainment venue for room template
      */

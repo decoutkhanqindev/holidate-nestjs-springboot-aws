@@ -35,6 +35,24 @@ area_sqm: {{area_sqm}}  # Source: curl_step_3 -> data.area
 view: "{{view}}"  # Source: curl_step_3 -> data.view (Vietnamese, e.g., "Hướng biển, Nhìn ra thành phố")
 floor_range: "{{floor_range}}"  # Optional: Not in API response, default null
 
+# === THÔNG SỐ KỸ THUẬT CHI TIẾT ===
+specs:
+  area_sqm: {{specs.area_sqm}}  # Float, Ví dụ: 33.0
+  has_balcony: {{specs.has_balcony}}  # Boolean
+  has_window: {{specs.has_window}}  # Boolean
+  view_type: "{{specs.view_type}}"  # Enum: "ocean", "city", "mountain", "no_view"
+  bed_configuration:
+{{#specs.bed_configuration}}
+    - type: "{{type}}"  # Ví dụ: "single", "double", "king"
+      count: {{count}}  # Integer
+{{/specs.bed_configuration}}
+
+# === GIÁ CẢ & TỒN KHO CHI TIẾT ===
+pricing:
+  base_price_vnd: {{pricing.base_price_vnd}}  # Giá cơ bản
+  weekend_surcharge_percent: {{pricing.weekend_surcharge_percent}}  # % phụ thu cuối tuần
+  holiday_surcharge_percent: {{pricing.holiday_surcharge_percent}}  # % phụ thu ngày lễ
+
 # === ROOM FEATURES ===
 # Source: curl_step_3 -> data.amenities[] -> amenity.name (Vietnamese)
 # Mapped to English via AmenityMappingService using curl_step_2.5 (all amenities) as reference
@@ -66,13 +84,22 @@ price_note: "{{price_note}}"  # Template string: "Giá có thể thay đổi the
 # Source: /accommodation/rooms/inventories?room-id={id} endpoint
 inventory_calendar:
 {{#inventoryCalendar}}
-  - date: "{{date}}"
-    price: {{price}}
-    available_rooms: {{availableRooms}}
-    status: "{{status}}"
-    is_weekend: {{isWeekend}}
-    is_holiday: {{isHoliday}}
+  - date: "{{date}}"  # ISO format: 2025-11-29
+    day_of_week: "{{day_of_week}}"  # "monday", "tuesday", ..., "sunday"
+    is_weekend: {{isWeekend}}  # Boolean
+    is_holiday: {{isHoliday}}  # Boolean
+    price_vnd: {{price}}  # Giá thực tế cho ngày này
+    available_rooms: {{availableRooms}}  # Số phòng còn trống
+    status: "{{status}}"  # "available", "limited", "sold_out"
 {{/inventoryCalendar}}
+
+# === CHÍNH SÁCH PHÒNG RIÊNG ===
+room_policies:
+  max_occupancy:
+    adults: {{room_policies.max_occupancy.adults}}  # Integer
+    children: {{room_policies.max_occupancy.children}}  # Integer
+  extra_bed_available: {{room_policies.extra_bed_available}}  # Boolean
+  extra_bed_price_vnd: {{room_policies.extra_bed_price_vnd}}  # Integer
 
 # === ENHANCED: PRICE ANALYTICS ===
 # Calculated from inventory calendar data
@@ -144,7 +171,19 @@ keywords:
 
 ![{{room_name}}]({{mainImageUrl}})  # Source: curl_step_3 -> data.photos[].photos[0].url (first photo, or filter by category)
 
-## 📐 Thông Số Phòng
+## 📏 Thông Số Phòng
+
+- **Diện tích**: {{specs.area_sqm}} m²
+
+- **Ban công**: {{#specs.has_balcony}}Có{{/specs.has_balcony}}{{^specs.has_balcony}}Không{{/specs.has_balcony}}
+
+- **Cửa sổ**: {{#specs.has_window}}Có{{/specs.has_window}}{{^specs.has_window}}Không{{/specs.has_window}}
+
+- **Hướng nhìn**: {{#specs.view_type_ocean}}Biển{{/specs.view_type_ocean}}{{#specs.view_type_city}}Thành phố{{/specs.view_type_city}}{{#specs.view_type_mountain}}Núi{{/specs.view_type_mountain}}{{^specs.view_type_ocean}}{{^specs.view_type_city}}{{^specs.view_type_mountain}}Không có view{{/specs.view_type_mountain}}{{/specs.view_type_city}}{{/specs.view_type_ocean}}
+
+- **Giường**: {{specs.bed_configuration.0.count}} giường {{specs.bed_configuration.0.type}}
+
+## 📐 Thông Số Phòng (Chi Tiết)
 
 | Đặc điểm              | Thông tin chi tiết                       |
 |-----------------------|------------------------------------------|
@@ -240,15 +279,23 @@ Phòng có tầm nhìn đẹp hướng biển, lý tưởng cho các cặp đôi
 
 ---
 
+## 💰 Giá & Tình Trạng Trong 7 Ngày Tới
+
+| Ngày | Thứ | Giá (VNĐ) | Tình trạng |
+|------|-----|-----------|------------|
+{{#inventoryCalendar7Days}}
+| {{date}} | {{day_of_week}} | {{price_vnd}} | {{#status_available}}✅ Còn {{available_rooms}} phòng{{/status_available}}{{#status_limited}}⚠️ Còn ít phòng{{/status_limited}}{{#status_sold_out}}❌ Hết phòng{{/status_sold_out}} |
+{{/inventoryCalendar7Days}}
+
 ## 📅 Lịch Tồn Kho & Giá (30 Ngày Tới)
 
 {{#inventoryCalendar}}
 {{#.}}
 ### 📆 Thông Tin Theo Ngày
-| Ngày | Giá (VNĐ/đêm) | Phòng Trống | Loại Ngày |
-|------|---------------|-------------|-----------|
+| Ngày | Thứ | Giá (VNĐ/đêm) | Phòng Trống | Loại Ngày |
+|------|-----|---------------|-------------|-----------|
 {{#inventoryCalendar}}
-| {{date}} | {{price}} | {{availableRooms}} | {{#isWeekend}}🌟 Cuối tuần{{/isWeekend}}{{#isHoliday}}🎉 Ngày lễ{{/isHoliday}}{{^isWeekend}}{{^isHoliday}}Ngày thường{{/isHoliday}}{{/isWeekend}} |
+| {{date}} | {{day_of_week}} | {{price_vnd}} | {{available_rooms}} | {{#isWeekend}}🌟 Cuối tuần{{/isWeekend}}{{#isHoliday}}🎉 Ngày lễ{{/isHoliday}}{{^isWeekend}}{{^isHoliday}}Ngày thường{{/isHoliday}}{{/isWeekend}} |
 {{/inventoryCalendar}}
 {{/.}}
 {{/inventoryCalendar}}
@@ -313,6 +360,14 @@ _Lưu ý: Phòng này có chính sách riêng._
 ### 🚭 Quy Định Trong Phòng
 - **Hút thuốc**: {{#smoking_allowed}}Cho phép{{/smoking_allowed}}{{^smoking_allowed}}Nghiêm cấm{{/smoking_allowed}}
 - **Thú cưng**: Không cho phép
+
+## ⚠️ Chính Sách Phòng
+
+- **Sức chứa tối đa**: {{room_policies.max_occupancy.adults}} người lớn + {{room_policies.max_occupancy.children}} trẻ em
+
+{{#room_policies.extra_bed_available}}
+- **Giường phụ**: Có thể thêm với phí {{room_policies.extra_bed_price_vnd}} VNĐ/đêm
+{{/room_policies.extra_bed_available}}
 
 ---
 

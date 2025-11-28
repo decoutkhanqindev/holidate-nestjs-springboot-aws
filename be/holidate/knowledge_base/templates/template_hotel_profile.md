@@ -30,6 +30,18 @@ location:
     lat: {{location.coordinates.lat}}  # Source: curl_step_2.1 -> data.latitude
     lng: {{location.coordinates.lng}}  # Source: curl_step_2.1 -> data.longitude
 
+# === ĐỊA CHỈ VÀ VỊ TRÍ CHI TIẾT ===
+full_address: "{{full_address}}"  # Ví dụ: "136, Đường Hùng Vương, Phường Lộc Thọ, Nha Trang"
+coordinates:
+  latitude: {{coordinates.latitude}}  # Ví dụ: 12.2432
+  longitude: {{coordinates.longitude}}  # Ví dụ: 109.1942
+
+# === KHOẢNG CÁCH ĐẾN ĐỊA ĐIỂM QUAN TRỌNG (TÍNH BẰNG MÉT) ===
+distances:
+  to_beach_meters: {{distances.to_beach_meters}}  # Integer, Ví dụ: 240
+  to_city_center_meters: {{distances.to_city_center_meters}}  # Integer
+  to_airport_meters: {{distances.to_airport_meters}}  # Integer
+
 # === SEARCH OPTIMIZATION TAGS ===
 # Source: Generated from location + entertainment venues
 location_tags:
@@ -108,6 +120,31 @@ cancellation_policy: "{{cancellation_policy}}"  # Source: curl_step_2.1 -> data.
 reschedule_policy: "{{reschedule_policy}}"  # Source: curl_step_2.1 -> data.policy.reschedulePolicy.name
 allows_pay_at_hotel: {{allows_pay_at_hotel}}  # Source: curl_step_2.1 -> data.policy.allowsPayAtHotel
 smoking_policy: "{{smoking_policy}}"  # Source: Inferred from hotel-level amenities or default "Không hút thuốc"
+
+# === CHÍNH SÁCH NHẬN/TRẢ PHÒNG ===
+check_in_policy:
+  earliest_time: "{{check_in_policy.earliest_time}}"  # Ví dụ: "14:00"
+  latest_time: "{{check_in_policy.latest_time}}"  # Ví dụ: "22:00"
+check_out_policy:
+  latest_time: "{{check_out_policy.latest_time}}"  # Ví dụ: "12:00"
+  late_checkout_available: {{check_out_policy.late_checkout_available}}  # Boolean
+  late_checkout_fee: "{{check_out_policy.late_checkout_fee}}"  # Ví dụ: "50% giá phòng"
+
+# === TIỆN NGHI THEO DANH MỤC (CẤU TRÚC CHI TIẾT) ===
+amenities_by_category:
+{{#amenities_by_category}}
+  {{category}}:
+{{#amenities}}
+    - name: "{{name}}"
+      available: {{available}}
+{{/amenities}}
+{{/amenities_by_category}}
+
+# === CHÍNH SÁCH ĐẶC BIỆT ===
+policies:
+  pets_allowed: {{policies.pets_allowed}}  # Boolean
+  smoking_allowed: {{policies.smoking_allowed}}  # Boolean
+  children_policy: "{{policies.children_policy}}"
 
 # === ENHANCED: DETAILED POLICY RULES ===
 # Source: /policy/cancellation-policies and /policy/reschedule-policies endpoints
@@ -207,18 +244,44 @@ keywords:
 
 ---
 
-## ⭐ Đặc Điểm Nổi Bật
+## 📍 Vị Trí & Liên Hệ
 
-### 🏖️ 1. Vị Trí
-- **{{location.address}}**, {{location.street_name}}, {{location.ward_name}}, {{location.district_name}}, {{location.city_name}}
+**Địa chỉ đầy đủ**: {{full_address}}  
+
+**Tọa độ**: {{coordinates.latitude}}, {{coordinates.longitude}}  
+
+**Cách biển Nha Trang**: {{distances.to_beach_meters}} mét (~{{distances.to_beach_km}} km)
+
 {{#nearby_venues}}
 - **{{name}}**: {{distance}}  # Source: curl_step_2.1 -> data.entertainmentVenues
 {{/nearby_venues}}
 
-### 💎 2. Tiện Nghi Khách Sạn
-{{#amenity_tags}}
-- {{.}}  # Source: curl_step_2.1 -> data.amenities (mapped to readable format)
-{{/amenity_tags}}
+## ⏰ Giờ Nhận/Trả Phòng
+
+- **Nhận phòng**: Từ {{check_in_policy.earliest_time}} đến {{check_in_policy.latest_time}}
+
+- **Trả phòng**: Trước {{check_out_policy.latest_time}}
+
+{{#check_out_policy.late_checkout_available}}
+- **Trả phòng muộn**: Có thể sắp xếp với phí {{check_out_policy.late_checkout_fee}}
+{{/check_out_policy.late_checkout_available}}
+
+## ⭐ Đặc Điểm Nổi Bật
+
+### 🏖️ 1. Vị Trí
+- **{{location.address}}**, {{location.street_name}}, {{location.ward_name}}, {{location.district_name}}, {{location.city_name}}
+
+### ✨ Tiện Nghi Nổi Bật
+{{#amenities_by_category}}
+### {{category_name}}
+
+{{#amenities}}
+{{#available}}
+✅ {{name}}
+{{/available}}
+{{/amenities}}
+
+{{/amenities_by_category}}
 
 ### 👨‍👩‍👧‍👦 3. Thân Thiện Với Gia Đình
 {{#has_family_friendly}}
@@ -342,6 +405,14 @@ _Hiện tại không có khuyến mãi nào._
 ### ⏰ Giờ Nhận/Trả Phòng
 - **Check-in**: Từ {{check_in_time}}{{#early_check_in_available}} (Hỗ trợ nhận phòng sớm tùy tình trạng phòng trống - có thể phát sinh phí){{/early_check_in_available}}
 - **Check-out**: Trước {{check_out_time}}{{#late_check_out_available}} (Trả phòng muộn đến 18:00 với phụ thu 50% giá phòng){{/late_check_out_available}}
+
+## 📜 Chính Sách Đặc Biệt
+
+- **Thú cưng**: {{#policies.pets_allowed}}Được phép{{/policies.pets_allowed}}{{^policies.pets_allowed}}Không được phép{{/policies.pets_allowed}}
+
+- **Hút thuốc**: {{#policies.smoking_allowed}}Được phép ở khu vực chỉ định{{/policies.smoking_allowed}}{{^policies.smoking_allowed}}Không được phép{{/policies.smoking_allowed}}
+
+- **Trẻ em**: {{policies.children_policy}}
 
 ### ❌ Chính Sách Hủy Phòng Chi Tiết
 {{#policies}}

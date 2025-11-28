@@ -7,7 +7,7 @@
 doc_type: "hotel_profile"
 doc_id: "4b2d0a2d-cc1f-4030-8c07-5fa09b8229cf"  # Source: curl_step_2.1 -> data.id (GET /accommodation/hotels/{id})
 slug: "golden-hotel-nha-trang"  # Source: Generated from curl_step_2.1 -> data.name
-last_updated: "2025-11-29T03:54:46.4853382Z"  # Source: curl_step_2.1 -> data.updatedAt (fallback to createdAt if null)
+last_updated: "2025-11-29T04:13:07.1733442Z"  # Source: curl_step_2.1 -> data.updatedAt (fallback to createdAt if null)
 language: "vi"
 
 # === LOCATION HIERARCHY ===
@@ -27,14 +27,14 @@ location:
   street_name: "Đường Hùng Vương"  # Source: curl_step_2.1 -> data.street.name
   address: "136"  # Source: curl_step_2.1 -> data.address
   coordinates:
-    lat: 0.0  # Source: curl_step_2.1 -> data.latitude
-    lng: 0.0  # Source: curl_step_2.1 -> data.longitude
+    lat:   # Source: curl_step_2.1 -> data.latitude
+    lng:   # Source: curl_step_2.1 -> data.longitude
 
 # === ĐỊA CHỈ VÀ VỊ TRÍ CHI TIẾT ===
 full_address: "136, Đường Hùng Vương, Phường Lộc Thọ, Thành phố Nha Trang, Thành phố Nha Trang"  # Ví dụ: "136, Đường Hùng Vương, Phường Lộc Thọ, Nha Trang"
 coordinates:
-  latitude: 0.0  # Ví dụ: 12.2432
-  longitude: 0.0  # Ví dụ: 109.1942
+  latitude:   # Ví dụ: 12.2432
+  longitude:   # Ví dụ: 109.1942
 
 # === KHOẢNG CÁCH ĐẾN ĐỊA ĐIỂM QUAN TRỌNG (TÍNH BẰNG MÉT) ===
 distances:
@@ -51,10 +51,10 @@ location_tags:
   - "beach_city"  # Generated from: city.name, district.name, + venue names from curl_step_2.4
   - "resort_city"  # Generated from: city.name, district.name, + venue names from curl_step_2.4
   - "phuong_loc_tho"  # Generated from: city.name, district.name, + venue names from curl_step_2.4
-  - "near_market"  # Generated from: city.name, district.name, + venue names from curl_step_2.4
-  - "near_beach"  # Generated from: city.name, district.name, + venue names from curl_step_2.4
   - "near_park"  # Generated from: city.name, district.name, + venue names from curl_step_2.4
   - "near_museum"  # Generated from: city.name, district.name, + venue names from curl_step_2.4
+  - "near_market"  # Generated from: city.name, district.name, + venue names from curl_step_2.4
+  - "near_beach"  # Generated from: city.name, district.name, + venue names from curl_step_2.4
 
 # Source: curl_step_2.1 -> data.amenities[] -> amenity.name (Vietnamese)
 # Mapped to English via AmenityMappingService using curl_step_2.5 (all amenities) as reference
@@ -92,85 +92,85 @@ review_count: 1  # Source: curl_step_2.3 -> data.totalItems
 # === NEARBY ATTRACTIONS ===
 # Source: curl_step_2.1 -> data.entertainmentVenues[] OR curl_step_2.4 -> data[].entertainmentVenues[]
 nearby_venues:
-  - name: "Massage &amp; Spa HOÀN HẢO ( Perfect ) Ibis Styles Hotels"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
-    distance: "306m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
-    category: "Địa Điểm Lân Cận"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
-    description: ""  # Optional: Generated from category + distance
-  - name: "Nhà Nghỉ Phúc Lộc Cảnh"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
-    distance: "212m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
-    category: "Địa Điểm Lân Cận"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
-    description: ""  # Optional: Generated from category + distance
-  - name: "Giordano Vincom Trần Phú Nha Trang"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
-    distance: "306m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
-    category: "Địa Điểm Lân Cận"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
-    description: ""  # Optional: Generated from category + distance
-  - name: "Chùa Long Sơn"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
-    distance: "2.5km"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
-    category: "Khác"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
-    description: ""  # Optional: Generated from category + distance
-  - name: "Chợ Đầm"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
-    distance: "2.2km"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
-    category: "Trung tâm giải trí"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
-    description: ""  # Optional: Generated from category + distance
-  - name: "Biển Nha Trang"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
-    distance: "240m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
-    category: "Địa Điểm Lân Cận"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
-    description: ""  # Optional: Generated from category + distance
-  - name: "Armenia Nha Trang"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
-    distance: "264m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
-    category: "Địa Điểm Lân Cận"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
-    description: ""  # Optional: Generated from category + distance
-  - name: "Quảng trường 2 tháng 4"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
-    distance: "498m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
-    category: "Trung tâm giải trí"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
-    description: ""  # Optional: Generated from category + distance
-  - name: "Hội Nông Dân Tỉnh Khánh Hòa"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
-    distance: "2.3km"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
-    category: "Khác"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
-    description: ""  # Optional: Generated from category + distance
   - name: "Stay 7 International Hotel Nha Trang"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
     distance: "226m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
-    category: "Địa Điểm Lân Cận"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
-    description: ""  # Optional: Generated from category + distance
-  - name: "Sailing Club Nha Trang"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
-    distance: "294m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
     category: "Địa Điểm Lân Cận"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
     description: ""  # Optional: Generated from category + distance
   - name: "Central Park"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
     distance: "927m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
     category: "Khác"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
     description: ""  # Optional: Generated from category + distance
-  - name: "Alpha Nha Trang"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
-    distance: "363m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
+  - name: "Đường Trần Phú"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
+    distance: "287m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
+    category: "Địa Điểm Lân Cận"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
+    description: ""  # Optional: Generated from category + distance
+  - name: "Nhà Nghỉ Phúc Lộc Cảnh"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
+    distance: "212m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
+    category: "Địa Điểm Lân Cận"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
+    description: ""  # Optional: Generated from category + distance
+  - name: "Armenia Nha Trang"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
+    distance: "264m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
+    category: "Địa Điểm Lân Cận"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
+    description: ""  # Optional: Generated from category + distance
+  - name: "Massage &amp; Spa HOÀN HẢO ( Perfect ) Ibis Styles Hotels"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
+    distance: "306m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
     category: "Địa Điểm Lân Cận"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
     description: ""  # Optional: Generated from category + distance
   - name: "Vincom Plaza Lê Thánh Tôn, Nha Trang"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
     distance: "911m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
     category: "Trung tâm giải trí"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
     description: ""  # Optional: Generated from category + distance
-  - name: "Đường Trần Phú"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
-    distance: "287m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
+  - name: "Đường Hùng Vương Nha Trang"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
+    distance: "278m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
     category: "Địa Điểm Lân Cận"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
+    description: ""  # Optional: Generated from category + distance
+  - name: "Tháp Trầm Hương"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
+    distance: "621m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
+    category: "Trung tâm giải trí"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
     description: ""  # Optional: Generated from category + distance
   - name: "Bảo tàng Không quân Nha Trang"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
     distance: "290m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
     category: "Địa Điểm Lân Cận"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
     description: ""  # Optional: Generated from category + distance
+  - name: "Chợ Đầm"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
+    distance: "2.2km"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
+    category: "Trung tâm giải trí"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
+    description: ""  # Optional: Generated from category + distance
   - name: "Long Beach Pearl - Nguyễn Thị Minh Khai, Nha Trang"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
     distance: "378m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
     category: "Địa Điểm Lân Cận"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
     description: ""  # Optional: Generated from category + distance
-  - name: "Công An Tỉnh Khánh Hòa"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
-    distance: "262m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
+  - name: "Biển Nha Trang"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
+    distance: "240m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
+    category: "Địa Điểm Lân Cận"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
+    description: ""  # Optional: Generated from category + distance
+  - name: "Đường Nguyễn Thiện Thuật Nha Trang"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
+    distance: "162m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
+    category: "Địa Điểm Lân Cận"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
+    description: ""  # Optional: Generated from category + distance
+  - name: "Giordano Vincom Trần Phú Nha Trang"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
+    distance: "306m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
     category: "Địa Điểm Lân Cận"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
     description: ""  # Optional: Generated from category + distance
   - name: "Nhà thờ Núi Nha Trang"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
     distance: "1.5km"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
     category: "Khác"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
     description: ""  # Optional: Generated from category + distance
-  - name: "Tháp Trầm Hương"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
-    distance: "621m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
-    category: "Trung tâm giải trí"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
+  - name: "Công An Tỉnh Khánh Hòa"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
+    distance: "262m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
+    category: "Địa Điểm Lân Cận"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
+    description: ""  # Optional: Generated from category + distance
+  - name: "Alpha Nha Trang"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
+    distance: "363m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
+    category: "Địa Điểm Lân Cận"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
+    description: ""  # Optional: Generated from category + distance
+  - name: "Chùa Long Sơn"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
+    distance: "2.5km"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
+    category: "Khác"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
+    description: ""  # Optional: Generated from category + distance
+  - name: "Hội Nông Dân Tỉnh Khánh Hòa"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
+    distance: "2.3km"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
+    category: "Khác"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
     description: ""  # Optional: Generated from category + distance
   - name: "OASIS"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
     distance: "22m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
@@ -180,12 +180,12 @@ nearby_venues:
     distance: "3.0km"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
     category: "Khác"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
     description: ""  # Optional: Generated from category + distance
-  - name: "Đường Nguyễn Thiện Thuật Nha Trang"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
-    distance: "162m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
-    category: "Địa Điểm Lân Cận"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
+  - name: "Quảng trường 2 tháng 4"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
+    distance: "498m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
+    category: "Trung tâm giải trí"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
     description: ""  # Optional: Generated from category + distance
-  - name: "Đường Hùng Vương Nha Trang"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
-    distance: "278m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
+  - name: "Sailing Club Nha Trang"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].name
+    distance: "294m"  # Source: curl_step_2.1 -> data.entertainmentVenues[].entertainmentVenues[].distance (meters, format: "200m" or "3.5km")
     category: "Địa Điểm Lân Cận"  # Source: curl_step_2.1 -> data.entertainmentVenues[].name (parent category)
     description: ""  # Optional: Generated from category + distance
 
@@ -240,12 +240,12 @@ reviews_summary:
 active_discounts:
 
 # === IMAGES ===
-mainImageUrl: "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-c5671fb5232227e8d841abcbab94f24c.jpeg"  # Source: curl_step_2.1 -> data.photos[].photos[0].url (first photo, or filter by category name="main")
+mainImageUrl: "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-b0698f733b24661b9d24b98b30019ca1.jpeg"  # Source: curl_step_2.1 -> data.photos[].photos[0].url (first photo, or filter by category name="main")
 galleryImageUrls:
+  - "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-aec1028c4f98d763a9ed14d005add27a.jpeg"  # Source: curl_step_2.1 -> data.photos[].photos[].url (limit 5, exclude main)
+  - "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-c5671fb5232227e8d841abcbab94f24c.jpeg"  # Source: curl_step_2.1 -> data.photos[].photos[].url (limit 5, exclude main)
   - "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-85b3ba41998cace6b8c56e546ad9a0bc.jpeg"  # Source: curl_step_2.1 -> data.photos[].photos[].url (limit 5, exclude main)
   - "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-8ca9569de0ab3f614019d698d56cc793.jpeg"  # Source: curl_step_2.1 -> data.photos[].photos[].url (limit 5, exclude main)
-  - "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-b0698f733b24661b9d24b98b30019ca1.jpeg"  # Source: curl_step_2.1 -> data.photos[].photos[].url (limit 5, exclude main)
-  - "https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-aec1028c4f98d763a9ed14d005add27a.jpeg"  # Source: curl_step_2.1 -> data.photos[].photos[].url (limit 5, exclude main)
 
 # === SEO KEYWORDS ===
 keywords:
@@ -257,7 +257,7 @@ keywords:
 
 # 🏨 Golden Hotel Nha Trang - 
 
-![Golden Hotel Nha Trang](https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-c5671fb5232227e8d841abcbab94f24c.jpeg)
+![Golden Hotel Nha Trang](https://holidate-storage.s3.ap-southeast-1.amazonaws.com/20033631-b0698f733b24661b9d24b98b30019ca1.jpeg)
 
 ## 📖 Giới Thiệu
 
@@ -271,34 +271,34 @@ Hãy tận hưởng thời gian vui vẻ cùng cả gia đình với hàng loạ
 
 **Địa chỉ đầy đủ**: 136, Đường Hùng Vương, Phường Lộc Thọ, Thành phố Nha Trang, Thành phố Nha Trang  
 
-**Tọa độ**: 0.0, 0.0  
+**Tọa độ**: ,   
 
 **Cách biển Nha Trang**: 0 mét (~ km)
 
-- **Massage &amp; Spa HOÀN HẢO ( Perfect ) Ibis Styles Hotels**: 306m  # Source: curl_step_2.1 -> data.entertainmentVenues
-- **Nhà Nghỉ Phúc Lộc Cảnh**: 212m  # Source: curl_step_2.1 -> data.entertainmentVenues
-- **Giordano Vincom Trần Phú Nha Trang**: 306m  # Source: curl_step_2.1 -> data.entertainmentVenues
-- **Chùa Long Sơn**: 2.5km  # Source: curl_step_2.1 -> data.entertainmentVenues
-- **Chợ Đầm**: 2.2km  # Source: curl_step_2.1 -> data.entertainmentVenues
-- **Biển Nha Trang**: 240m  # Source: curl_step_2.1 -> data.entertainmentVenues
-- **Armenia Nha Trang**: 264m  # Source: curl_step_2.1 -> data.entertainmentVenues
-- **Quảng trường 2 tháng 4**: 498m  # Source: curl_step_2.1 -> data.entertainmentVenues
-- **Hội Nông Dân Tỉnh Khánh Hòa**: 2.3km  # Source: curl_step_2.1 -> data.entertainmentVenues
 - **Stay 7 International Hotel Nha Trang**: 226m  # Source: curl_step_2.1 -> data.entertainmentVenues
-- **Sailing Club Nha Trang**: 294m  # Source: curl_step_2.1 -> data.entertainmentVenues
 - **Central Park**: 927m  # Source: curl_step_2.1 -> data.entertainmentVenues
-- **Alpha Nha Trang**: 363m  # Source: curl_step_2.1 -> data.entertainmentVenues
-- **Vincom Plaza Lê Thánh Tôn, Nha Trang**: 911m  # Source: curl_step_2.1 -> data.entertainmentVenues
 - **Đường Trần Phú**: 287m  # Source: curl_step_2.1 -> data.entertainmentVenues
-- **Bảo tàng Không quân Nha Trang**: 290m  # Source: curl_step_2.1 -> data.entertainmentVenues
-- **Long Beach Pearl - Nguyễn Thị Minh Khai, Nha Trang**: 378m  # Source: curl_step_2.1 -> data.entertainmentVenues
-- **Công An Tỉnh Khánh Hòa**: 262m  # Source: curl_step_2.1 -> data.entertainmentVenues
-- **Nhà thờ Núi Nha Trang**: 1.5km  # Source: curl_step_2.1 -> data.entertainmentVenues
+- **Nhà Nghỉ Phúc Lộc Cảnh**: 212m  # Source: curl_step_2.1 -> data.entertainmentVenues
+- **Armenia Nha Trang**: 264m  # Source: curl_step_2.1 -> data.entertainmentVenues
+- **Massage &amp; Spa HOÀN HẢO ( Perfect ) Ibis Styles Hotels**: 306m  # Source: curl_step_2.1 -> data.entertainmentVenues
+- **Vincom Plaza Lê Thánh Tôn, Nha Trang**: 911m  # Source: curl_step_2.1 -> data.entertainmentVenues
+- **Đường Hùng Vương Nha Trang**: 278m  # Source: curl_step_2.1 -> data.entertainmentVenues
 - **Tháp Trầm Hương**: 621m  # Source: curl_step_2.1 -> data.entertainmentVenues
+- **Bảo tàng Không quân Nha Trang**: 290m  # Source: curl_step_2.1 -> data.entertainmentVenues
+- **Chợ Đầm**: 2.2km  # Source: curl_step_2.1 -> data.entertainmentVenues
+- **Long Beach Pearl - Nguyễn Thị Minh Khai, Nha Trang**: 378m  # Source: curl_step_2.1 -> data.entertainmentVenues
+- **Biển Nha Trang**: 240m  # Source: curl_step_2.1 -> data.entertainmentVenues
+- **Đường Nguyễn Thiện Thuật Nha Trang**: 162m  # Source: curl_step_2.1 -> data.entertainmentVenues
+- **Giordano Vincom Trần Phú Nha Trang**: 306m  # Source: curl_step_2.1 -> data.entertainmentVenues
+- **Nhà thờ Núi Nha Trang**: 1.5km  # Source: curl_step_2.1 -> data.entertainmentVenues
+- **Công An Tỉnh Khánh Hòa**: 262m  # Source: curl_step_2.1 -> data.entertainmentVenues
+- **Alpha Nha Trang**: 363m  # Source: curl_step_2.1 -> data.entertainmentVenues
+- **Chùa Long Sơn**: 2.5km  # Source: curl_step_2.1 -> data.entertainmentVenues
+- **Hội Nông Dân Tỉnh Khánh Hòa**: 2.3km  # Source: curl_step_2.1 -> data.entertainmentVenues
 - **OASIS**: 22m  # Source: curl_step_2.1 -> data.entertainmentVenues
 - **Bệnh viện quốc tế Vinmec Nha Trang**: 3.0km  # Source: curl_step_2.1 -> data.entertainmentVenues
-- **Đường Nguyễn Thiện Thuật Nha Trang**: 162m  # Source: curl_step_2.1 -> data.entertainmentVenues
-- **Đường Hùng Vương Nha Trang**: 278m  # Source: curl_step_2.1 -> data.entertainmentVenues
+- **Quảng trường 2 tháng 4**: 498m  # Source: curl_step_2.1 -> data.entertainmentVenues
+- **Sailing Club Nha Trang**: 294m  # Source: curl_step_2.1 -> data.entertainmentVenues
 
 ## ⏰ Giờ Nhận/Trả Phòng
 
@@ -325,25 +325,25 @@ Khách sạn cung cấp 10 loại phòng chính:
 | Hạng Phòng               | Diện tích | View      | Sức chứa       | Đặc điểm nổi bật           |
 |--------------------------|-----------|-----------|----------------|----------------------------|
   # Source: curl_step_2.2 -> data.content[]
-| **Senior Double With Ocean View** | 25.0m²      | Hướng mặt biển      | 2 người lớn + 0 trẻ em | Bữa sáng miễn phí WiFi miễn phí |
-  # Source: curl_step_2.2 -> data.content[]
-| **Deluxe Twin With City View** | 33.0m²      | Hướng thành phố      | 2 người lớn + 0 trẻ em | Bữa sáng miễn phí WiFi miễn phí |
-  # Source: curl_step_2.2 -> data.content[]
-| **Standard Double No View** | 18.0m²      | Không có view      | 2 người lớn + 0 trẻ em | Bữa sáng miễn phí WiFi miễn phí |
-  # Source: curl_step_2.2 -> data.content[]
-| **Senior Balcony City View** | 25.0m²      | Hướng thành phố      | 2 người lớn + 0 trẻ em | Bữa sáng miễn phí WiFi miễn phí |
-  # Source: curl_step_2.2 -> data.content[]
-| **Deluxe Without Balcony City View** | 32.0m²      | Hướng thành phố      | 2 người lớn + 0 trẻ em | Bữa sáng miễn phí WiFi miễn phí |
-  # Source: curl_step_2.2 -> data.content[]
-| **Senior Double With City View** | 25.0m²      | Hướng thành phố      | 2 người lớn + 0 trẻ em | Bữa sáng miễn phí WiFi miễn phí |
-  # Source: curl_step_2.2 -> data.content[]
-| **Deluxe Triple With City View** | 25.0m²      | Hướng thành phố      | 2 người lớn + 0 trẻ em | Bữa sáng miễn phí WiFi miễn phí |
+| **Senior Twin With City View** | 25.0m²      | Hướng thành phố      | 2 người lớn + 0 trẻ em | Bữa sáng miễn phí WiFi miễn phí |
   # Source: curl_step_2.2 -> data.content[]
 | **Senior Balcony Ocean View** | 25.0m²      | Hướng mặt biển      | 2 người lớn + 0 trẻ em | Bữa sáng miễn phí WiFi miễn phí |
   # Source: curl_step_2.2 -> data.content[]
+| **Deluxe Triple With City View** | 25.0m²      | Hướng thành phố      | 2 người lớn + 0 trẻ em | Bữa sáng miễn phí WiFi miễn phí |
+  # Source: curl_step_2.2 -> data.content[]
+| **Senior Balcony City View** | 25.0m²      | Hướng thành phố      | 2 người lớn + 0 trẻ em | Bữa sáng miễn phí WiFi miễn phí |
+  # Source: curl_step_2.2 -> data.content[]
+| **Standard Double No View** | 18.0m²      | Không có view      | 2 người lớn + 0 trẻ em | Bữa sáng miễn phí WiFi miễn phí |
+  # Source: curl_step_2.2 -> data.content[]
 | **Superior Double City View** | 18.0m²      | Hướng thành phố      | 2 người lớn + 0 trẻ em | Bữa sáng miễn phí WiFi miễn phí |
   # Source: curl_step_2.2 -> data.content[]
-| **Senior Twin With City View** | 25.0m²      | Hướng thành phố      | 2 người lớn + 0 trẻ em | Bữa sáng miễn phí WiFi miễn phí |
+| **Senior Double With City View** | 25.0m²      | Hướng thành phố      | 2 người lớn + 0 trẻ em | Bữa sáng miễn phí WiFi miễn phí |
+  # Source: curl_step_2.2 -> data.content[]
+| **Deluxe Without Balcony City View** | 32.0m²      | Hướng thành phố      | 2 người lớn + 0 trẻ em | Bữa sáng miễn phí WiFi miễn phí |
+  # Source: curl_step_2.2 -> data.content[]
+| **Senior Double With Ocean View** | 25.0m²      | Hướng mặt biển      | 2 người lớn + 0 trẻ em | Bữa sáng miễn phí WiFi miễn phí |
+  # Source: curl_step_2.2 -> data.content[]
+| **Deluxe Twin With City View** | 33.0m²      | Hướng thành phố      | 2 người lớn + 0 trẻ em | Bữa sáng miễn phí WiFi miễn phí |
 
 ---
 
@@ -374,53 +374,53 @@ Khách sạn cung cấp 10 loại phòng chính:
 ## 📍 Địa Điểm Lân Cận
 
   # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
-- **Massage &amp; Spa HOÀN HẢO ( Perfect ) Ibis Styles Hotels** (306m): 
-  # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
-- **Nhà Nghỉ Phúc Lộc Cảnh** (212m): 
-  # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
-- **Giordano Vincom Trần Phú Nha Trang** (306m): 
-  # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
-- **Chùa Long Sơn** (2.5km): 
-  # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
-- **Chợ Đầm** (2.2km): 
-  # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
-- **Biển Nha Trang** (240m): 
-  # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
-- **Armenia Nha Trang** (264m): 
-  # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
-- **Quảng trường 2 tháng 4** (498m): 
-  # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
-- **Hội Nông Dân Tỉnh Khánh Hòa** (2.3km): 
-  # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
 - **Stay 7 International Hotel Nha Trang** (226m): 
-  # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
-- **Sailing Club Nha Trang** (294m): 
   # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
 - **Central Park** (927m): 
   # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
-- **Alpha Nha Trang** (363m): 
+- **Đường Trần Phú** (287m): 
+  # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
+- **Nhà Nghỉ Phúc Lộc Cảnh** (212m): 
+  # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
+- **Armenia Nha Trang** (264m): 
+  # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
+- **Massage &amp; Spa HOÀN HẢO ( Perfect ) Ibis Styles Hotels** (306m): 
   # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
 - **Vincom Plaza Lê Thánh Tôn, Nha Trang** (911m): 
   # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
-- **Đường Trần Phú** (287m): 
+- **Đường Hùng Vương Nha Trang** (278m): 
+  # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
+- **Tháp Trầm Hương** (621m): 
   # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
 - **Bảo tàng Không quân Nha Trang** (290m): 
   # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
+- **Chợ Đầm** (2.2km): 
+  # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
 - **Long Beach Pearl - Nguyễn Thị Minh Khai, Nha Trang** (378m): 
   # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
-- **Công An Tỉnh Khánh Hòa** (262m): 
+- **Biển Nha Trang** (240m): 
+  # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
+- **Đường Nguyễn Thiện Thuật Nha Trang** (162m): 
+  # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
+- **Giordano Vincom Trần Phú Nha Trang** (306m): 
   # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
 - **Nhà thờ Núi Nha Trang** (1.5km): 
   # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
-- **Tháp Trầm Hương** (621m): 
+- **Công An Tỉnh Khánh Hòa** (262m): 
+  # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
+- **Alpha Nha Trang** (363m): 
+  # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
+- **Chùa Long Sơn** (2.5km): 
+  # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
+- **Hội Nông Dân Tỉnh Khánh Hòa** (2.3km): 
   # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
 - **OASIS** (22m): 
   # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
 - **Bệnh viện quốc tế Vinmec Nha Trang** (3.0km): 
   # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
-- **Đường Nguyễn Thiện Thuật Nha Trang** (162m): 
+- **Quảng trường 2 tháng 4** (498m): 
   # Source: curl_step_2.1 -> data.entertainmentVenues OR curl_step_2.4
-- **Đường Hùng Vương Nha Trang** (278m): 
+- **Sailing Club Nha Trang** (294m): 
 
 ---
 

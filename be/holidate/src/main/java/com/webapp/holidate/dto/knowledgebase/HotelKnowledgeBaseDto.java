@@ -3,6 +3,7 @@ package com.webapp.holidate.dto.knowledgebase;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -81,5 +82,90 @@ public class HotelKnowledgeBaseDto {
     List<String> locationTags;
     List<String> tags; // Combined tags
     LocalDateTime lastUpdated;
+    
+    // === NEW FIELDS FOR AI OPTIMIZATION ===
+    
+    // Full address string
+    String fullAddress;
+    
+    // Coordinates (separate from location hierarchy for easy access)
+    Coordinates coordinates;
+    
+    // Distances to important locations (in meters)
+    Distances distances;
+    
+    // Check-in/Check-out policies
+    CheckInPolicy checkInPolicy;
+    CheckOutPolicy checkOutPolicy;
+    
+    // Amenities grouped by category
+    Map<String, List<Amenity>> amenitiesByCategory;
+    
+    // Hotel policies (pets, smoking, children)
+    HotelPolicies hotelPolicies;
+    
+    // Nested classes
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class Coordinates {
+        Double latitude;
+        Double longitude;
+    }
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class Distances {
+        Integer toBeachMeters;
+        Integer toCityCenterMeters;
+        Integer toAirportMeters;
+    }
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class CheckInPolicy {
+        String earliestTime; // Format: "14:00"
+        String latestTime;   // Format: "22:00"
+    }
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class CheckOutPolicy {
+        String latestTime;              // Format: "12:00"
+        Boolean lateCheckoutAvailable; // Boolean
+        String lateCheckoutFee;         // Example: "50% giá phòng"
+    }
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class Amenity {
+        String name;
+        Boolean available;
+    }
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class HotelPolicies {
+        Boolean petsAllowed;
+        Boolean smokingAllowed;
+        String childrenPolicy;
+    }
 }
 

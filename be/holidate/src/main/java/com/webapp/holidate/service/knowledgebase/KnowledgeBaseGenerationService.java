@@ -1,7 +1,9 @@
 package com.webapp.holidate.service.knowledgebase;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -148,6 +150,30 @@ public class KnowledgeBaseGenerationService {
                 reviewCountValue = totalReviews != null ? totalReviews : 0L;
             }
             
+            // === NEW FIELDS FOR AI OPTIMIZATION ===
+            
+            // Build full address
+            String fullAddress = buildFullAddress(hotel, location);
+            
+            // Build coordinates
+            HotelKnowledgeBaseDto.Coordinates coordinates = HotelKnowledgeBaseDto.Coordinates.builder()
+                    .latitude(hotel.getLatitude())
+                    .longitude(hotel.getLongitude())
+                    .build();
+            
+            // Calculate distances
+            HotelKnowledgeBaseDto.Distances distances = calculateDistances(nearbyVenues);
+            
+            // Extract check-in/check-out policies
+            HotelKnowledgeBaseDto.CheckInPolicy checkInPolicy = extractCheckInPolicy(policyInfo);
+            HotelKnowledgeBaseDto.CheckOutPolicy checkOutPolicy = extractCheckOutPolicy(policyInfo, hotel);
+            
+            // Group amenities by category
+            Map<String, List<HotelKnowledgeBaseDto.Amenity>> amenitiesByCategory = groupAmenitiesByCategory(hotel.getAmenities());
+            
+            // Extract hotel policies
+            HotelKnowledgeBaseDto.HotelPolicies hotelPolicies = extractHotelPolicies(hotel);
+            
             // Build complete DTO with ENHANCED fields
             HotelKnowledgeBaseDto dto = HotelKnowledgeBaseDto.builder()
                     .hotelId(hotel.getId())
@@ -183,6 +209,14 @@ public class KnowledgeBaseGenerationService {
                     .locationTags(locationTags)
                     .tags(buildAllTags(vibeTags, locationTags, amenities))
                     .lastUpdated(java.time.LocalDateTime.now())
+                    // NEW FIELDS FOR AI OPTIMIZATION
+                    .fullAddress(fullAddress)
+                    .coordinates(coordinates)
+                    .distances(distances)
+                    .checkInPolicy(checkInPolicy)
+                    .checkOutPolicy(checkOutPolicy)
+                    .amenitiesByCategory(amenitiesByCategory)
+                    .hotelPolicies(hotelPolicies)
                     .build();
             
             // CRITICAL: Log DTO values after building to verify correctness
@@ -650,6 +684,20 @@ public class KnowledgeBaseGenerationService {
         // Get current price from room entity
         Double currentPrice = room.getBasePricePerNight(); // TODO: Get from inventories if available
         
+        // === NEW FIELDS FOR AI OPTIMIZATION ===
+        
+        // Build room specs
+        RoomKnowledgeBaseDto.RoomSpecs specs = buildRoomSpecs(room, roomAmenityTags);
+        
+        // Build pricing info
+        RoomKnowledgeBaseDto.PricingInfo pricing = buildPricingInfo(room, priceAnalytics);
+        
+        // Build room policies
+        RoomKnowledgeBaseDto.RoomPolicies roomPoliciesDto = buildRoomPoliciesDto(room);
+        
+        // Update inventory calendar with day_of_week
+        updateInventoryCalendarWithDayOfWeek(inventoryCalendar);
+        
         // Build complete DTO with ENHANCED fields
         return RoomKnowledgeBaseDto.builder()
             .roomId(room.getId())
@@ -699,6 +747,10 @@ public class KnowledgeBaseGenerationService {
             .mainImageUrl(mainImageUrl)
             .galleryImageUrls(galleryImageUrls)
             .lastUpdated(java.time.LocalDateTime.now())
+            // NEW FIELDS FOR AI OPTIMIZATION
+            .specs(specs)
+            .pricing(pricing)
+            .roomPoliciesDetail(roomPoliciesDto)
             .build();
     }
     
@@ -1012,6 +1064,365 @@ public class KnowledgeBaseGenerationService {
             return Double.MAX_VALUE;
         } catch (Exception e) {
             return Double.MAX_VALUE;
+        }
+    }
+    
+    // === NEW HELPER METHODS FOR AI OPTIMIZATION ===
+    
+    /**
+     * Build full address string from hotel location data
+     */
+    private String buildFullAddress(Hotel hotel, LocationHierarchyDto location) {
+        if (location == null) {
+            return hotel.getAddress() != null ? hotel.getAddress() : "";
+        }
+        
+        StringBuilder address = new StringBuilder();
+        if (hotel.getAddress() != null && !hotel.getAddress().isEmpty()) {
+            address.append(hotel.getAddress());
+        }
+        if (location.getStreetName() != null && !location.getStreetName().isEmpty()) {
+            if (address.length() > 0) {
+                address.append(", ");
+            }
+            address.append(location.getStreetName());
+        }
+        if (location.getWardName() != null && !location.getWardName().isEmpty()) {
+            if (address.length() > 0) {
+                address.append(", ");
+            }
+            address.append(location.getWardName());
+        }
+        if (location.getDistrictName() != null && !location.getDistrictName().isEmpty()) {
+            if (address.length() > 0) {
+                address.append(", ");
+            }
+            address.append(location.getDistrictName());
+        }
+        if (location.getCityName() != null && !location.getCityName().isEmpty()) {
+            if (address.length() > 0) {
+                address.append(", ");
+            }
+            address.append(location.getCityName());
+        }
+        
+        return address.length() > 0 ? address.toString() : hotel.getAddress() != null ? hotel.getAddress() : "";
+    }
+    
+    /**
+     * Calculate distances to important locations (beach, city center, airport)
+     */
+    private HotelKnowledgeBaseDto.Distances calculateDistances(List<NearbyVenueDto> nearbyVenues) {
+        Integer toBeachMeters = null;
+        Integer toCityCenterMeters = null;
+        Integer toAirportMeters = null;
+        
+        if (nearbyVenues != null) {
+            for (NearbyVenueDto venue : nearbyVenues) {
+                String category = venue.getCategoryName() != null ? venue.getCategoryName().toLowerCase() : "";
+                Double distance = venue.getDistance();
+                
+                if (distance != null) {
+                    Integer distanceMeters = distance.intValue();
+                    if (category.contains("beach") || category.contains("biển") || category.contains("bãi biển")) {
+                        if (toBeachMeters == null || distanceMeters < toBeachMeters) {
+                            toBeachMeters = distanceMeters;
+                        }
+                    } else if (category.contains("city center") || category.contains("trung tâm")) {
+                        if (toCityCenterMeters == null || distanceMeters < toCityCenterMeters) {
+                            toCityCenterMeters = distanceMeters;
+                        }
+                    } else if (category.contains("airport") || category.contains("sân bay")) {
+                        if (toAirportMeters == null || distanceMeters < toAirportMeters) {
+                            toAirportMeters = distanceMeters;
+                        }
+                    }
+                }
+            }
+        }
+        
+        return HotelKnowledgeBaseDto.Distances.builder()
+                .toBeachMeters(toBeachMeters)
+                .toCityCenterMeters(toCityCenterMeters)
+                .toAirportMeters(toAirportMeters)
+                .build();
+    }
+    
+    
+    /**
+     * Extract check-in policy from hotel policy info
+     */
+    private HotelKnowledgeBaseDto.CheckInPolicy extractCheckInPolicy(PolicyInfo policyInfo) {
+        String earliestTime = policyInfo.checkInTime != null ? policyInfo.checkInTime.toString() : "14:00";
+        String latestTime = "22:00"; // Default latest check-in time
+        
+        return HotelKnowledgeBaseDto.CheckInPolicy.builder()
+                .earliestTime(earliestTime)
+                .latestTime(latestTime)
+                .build();
+    }
+    
+    /**
+     * Extract check-out policy from hotel policy info
+     */
+    private HotelKnowledgeBaseDto.CheckOutPolicy extractCheckOutPolicy(PolicyInfo policyInfo, Hotel hotel) {
+        String latestTime = policyInfo.checkOutTime != null ? policyInfo.checkOutTime.toString() : "12:00";
+        boolean lateCheckoutAvailable = false; // TODO: Check from amenities or policy
+        String lateCheckoutFee = "50% giá phòng"; // Default
+        
+        // Check if hotel has late checkout amenity
+        if (hotel.getAmenities() != null) {
+            for (HotelAmenity hotelAmenity : hotel.getAmenities()) {
+                com.webapp.holidate.entity.amenity.Amenity amenity = hotelAmenity.getAmenity();
+                if (amenity != null) {
+                    String name = amenity.getName() != null ? amenity.getName().toLowerCase() : "";
+                    if (name.contains("trả phòng muộn") || name.contains("late checkout")) {
+                        lateCheckoutAvailable = true;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        return HotelKnowledgeBaseDto.CheckOutPolicy.builder()
+                .latestTime(latestTime)
+                .lateCheckoutAvailable(lateCheckoutAvailable)
+                .lateCheckoutFee(lateCheckoutFee)
+                .build();
+    }
+    
+    /**
+     * Group amenities by category
+     */
+    private Map<String, List<HotelKnowledgeBaseDto.Amenity>> groupAmenitiesByCategory(Set<HotelAmenity> hotelAmenities) {
+        Map<String, List<HotelKnowledgeBaseDto.Amenity>> result = new HashMap<>();
+        
+        if (hotelAmenities == null || hotelAmenities.isEmpty()) {
+            return result;
+        }
+        
+        for (HotelAmenity hotelAmenity : hotelAmenities) {
+            com.webapp.holidate.entity.amenity.Amenity amenity = hotelAmenity.getAmenity();
+            if (amenity == null) {
+                continue;
+            }
+            
+            String amenityName = amenity.getName() != null ? amenity.getName() : "";
+            String categoryName = amenity.getCategory() != null && amenity.getCategory().getName() != null 
+                    ? amenity.getCategory().getName() : "other";
+            
+            // Map category names to standard categories
+            String standardCategory = mapCategoryName(categoryName);
+            
+            result.computeIfAbsent(standardCategory, k -> new ArrayList<>())
+                    .add(HotelKnowledgeBaseDto.Amenity.builder()
+                            .name(amenityName)
+                            .available(true)
+                            .build());
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Map category name to standard category
+     */
+    private String mapCategoryName(String categoryName) {
+        if (categoryName == null) {
+            return "other";
+        }
+        
+        String lower = categoryName.toLowerCase();
+        if (lower.contains("wifi") || lower.contains("internet") || lower.contains("thang máy") || lower.contains("elevator")) {
+            return "basic";
+        } else if (lower.contains("reception") || lower.contains("tiếp tân") || lower.contains("room service") || lower.contains("dịch vụ")) {
+            return "service";
+        } else if (lower.contains("restaurant") || lower.contains("nhà hàng") || lower.contains("bar") || lower.contains("quầy bar") || lower.contains("cafe")) {
+            return "food";
+        } else if (lower.contains("pool") || lower.contains("bể bơi") || lower.contains("gym") || lower.contains("spa") || lower.contains("fitness")) {
+            return "recreation";
+        } else {
+            return "other";
+        }
+    }
+    
+    /**
+     * Extract hotel policies (pets, smoking, children)
+     */
+    private HotelKnowledgeBaseDto.HotelPolicies extractHotelPolicies(Hotel hotel) {
+        boolean petsAllowed = false;
+        boolean smokingAllowed = false;
+        String childrenPolicy = "Trẻ em dưới 6 tuổi được ở miễn phí khi ngủ chung giường với bố mẹ";
+        
+        // Check amenities for pets and smoking
+        if (hotel.getAmenities() != null) {
+            for (HotelAmenity hotelAmenity : hotel.getAmenities()) {
+                com.webapp.holidate.entity.amenity.Amenity amenity = hotelAmenity.getAmenity();
+                if (amenity != null) {
+                    String name = amenity.getName() != null ? amenity.getName().toLowerCase() : "";
+                    if (name.contains("pet") || name.contains("thú cưng")) {
+                        petsAllowed = true;
+                    }
+                    if (name.contains("smoking") || name.contains("hút thuốc")) {
+                        smokingAllowed = true;
+                    }
+                }
+            }
+        }
+        
+        return HotelKnowledgeBaseDto.HotelPolicies.builder()
+                .petsAllowed(petsAllowed)
+                .smokingAllowed(smokingAllowed)
+                .childrenPolicy(childrenPolicy)
+                .build();
+    }
+    
+    /**
+     * Build room specs from room entity
+     */
+    private RoomKnowledgeBaseDto.RoomSpecs buildRoomSpecs(Room room, List<String> roomAmenityTags) {
+        boolean hasBalcony = roomAmenityTags != null && roomAmenityTags.contains("balcony");
+        boolean hasWindow = true; // Default to true, can be inferred from view
+        
+        // Infer view type from room view
+        String viewType = inferViewType(room.getView());
+        
+        // Build bed configuration
+        List<RoomKnowledgeBaseDto.BedConfiguration> bedConfiguration = new ArrayList<>();
+        if (room.getBedType() != null) {
+            String bedTypeName = room.getBedType().getName() != null ? room.getBedType().getName().toLowerCase() : "";
+            String type = inferBedType(bedTypeName);
+            Integer count = inferBedCount(bedTypeName);
+            bedConfiguration.add(RoomKnowledgeBaseDto.BedConfiguration.builder()
+                    .type(type)
+                    .count(count)
+                    .build());
+        }
+        
+        return RoomKnowledgeBaseDto.RoomSpecs.builder()
+                .areaSqm((float) room.getArea())
+                .hasBalcony(hasBalcony)
+                .hasWindow(hasWindow)
+                .viewType(viewType)
+                .bedConfiguration(bedConfiguration)
+                .build();
+    }
+    
+    /**
+     * Infer view type from room view string
+     */
+    private String inferViewType(String view) {
+        if (view == null || view.isEmpty()) {
+            return "no_view";
+        }
+        
+        String lower = view.toLowerCase();
+        if (lower.contains("ocean") || lower.contains("sea") || lower.contains("biển")) {
+            return "ocean";
+        } else if (lower.contains("city") || lower.contains("thành phố")) {
+            return "city";
+        } else if (lower.contains("mountain") || lower.contains("núi")) {
+            return "mountain";
+        } else {
+            return "no_view";
+        }
+    }
+    
+    /**
+     * Infer bed type from bed type name
+     */
+    private String inferBedType(String bedTypeName) {
+        if (bedTypeName == null || bedTypeName.isEmpty()) {
+            return "double";
+        }
+        
+        String lower = bedTypeName.toLowerCase();
+        if (lower.contains("single") || lower.contains("đơn")) {
+            return "single";
+        } else if (lower.contains("king")) {
+            return "king";
+        } else {
+            return "double";
+        }
+    }
+    
+    /**
+     * Infer bed count from bed type name
+     */
+    private Integer inferBedCount(String bedTypeName) {
+        if (bedTypeName == null || bedTypeName.isEmpty()) {
+            return 1;
+        }
+        
+        // Try to extract number from string (e.g., "2 giường đơn" -> 2)
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("(\\d+)");
+        java.util.regex.Matcher matcher = pattern.matcher(bedTypeName);
+        if (matcher.find()) {
+            try {
+                return Integer.parseInt(matcher.group(1));
+            } catch (NumberFormatException e) {
+                // Ignore
+            }
+        }
+        
+        return 1; // Default
+    }
+    
+    /**
+     * Build pricing info from room and price analytics
+     */
+    private RoomKnowledgeBaseDto.PricingInfo buildPricingInfo(Room room, PriceAnalyticsDto priceAnalytics) {
+        Double basePriceVnd = room.getBasePricePerNight();
+        Double weekendSurchargePercent = 0.0;
+        Double holidaySurchargePercent = 0.0;
+        
+        // Calculate weekend surcharge from price analytics
+        if (priceAnalytics != null && priceAnalytics.getWeekendPriceMultiplier() != null) {
+            weekendSurchargePercent = (priceAnalytics.getWeekendPriceMultiplier() - 1.0) * 100;
+        }
+        
+        return RoomKnowledgeBaseDto.PricingInfo.builder()
+                .basePriceVnd(basePriceVnd)
+                .weekendSurchargePercent(weekendSurchargePercent)
+                .holidaySurchargePercent(holidaySurchargePercent)
+                .build();
+    }
+    
+    /**
+     * Build room policies DTO
+     */
+    private RoomKnowledgeBaseDto.RoomPolicies buildRoomPoliciesDto(Room room) {
+        RoomKnowledgeBaseDto.MaxOccupancy maxOccupancy = RoomKnowledgeBaseDto.MaxOccupancy.builder()
+                .adults(room.getMaxAdults())  // Autoboxing: int -> Integer
+                .children(room.getMaxChildren())  // Autoboxing: int -> Integer
+                .build();
+        
+        return RoomKnowledgeBaseDto.RoomPolicies.builder()
+                .maxOccupancy(maxOccupancy)
+                .extraBedAvailable(false) // TODO: Check from amenities or room data
+                .extraBedPriceVnd(0.0) // TODO: Get from room data
+                .build();
+    }
+    
+    /**
+     * Update inventory calendar with day_of_week and status flags
+     */
+    private void updateInventoryCalendarWithDayOfWeek(List<RoomInventoryCalendarDto> inventoryCalendar) {
+        if (inventoryCalendar == null) {
+            return;
+        }
+        
+        for (RoomInventoryCalendarDto inv : inventoryCalendar) {
+            if (inv.getDate() != null) {
+                String dayOfWeek = inv.getDate().getDayOfWeek().name().toLowerCase();
+                inv.setDayOfWeek(dayOfWeek);
+            }
+            
+            // Set status flags
+            String status = inv.getStatus() != null ? inv.getStatus() : "available";
+            inv.setStatusAvailable("available".equals(status));
+            inv.setStatusLimited("limited".equals(status));
+            inv.setStatusSoldOut("sold_out".equals(status));
         }
     }
     
