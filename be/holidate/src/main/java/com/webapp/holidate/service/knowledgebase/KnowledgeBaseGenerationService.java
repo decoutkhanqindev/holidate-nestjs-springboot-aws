@@ -1008,20 +1008,34 @@ public class KnowledgeBaseGenerationService {
             }
             
             // Flatten all venues and take top 5 closest
-            return venuesDetail.stream()
-                    .flatMap(category -> category.getVenues().stream()
-                            .map(venue -> RoomKnowledgeBaseDto.NearbyEntertainment.builder()
-                                    .name(venue.getName())
-                                    .category(category.getCategoryName())
-                                    .distance(formatDistance(venue.getDistanceFromHotel()))
-                                    .shortDescription(venue.getShortDescription())
-                                    .build()))
-                    .sorted((a, b) -> {
-                        // Sort by distance (extract numeric value)
-                        double distA = parseDistance(a.getDistance());
-                        double distB = parseDistance(b.getDistance());
-                        return Double.compare(distA, distB);
-                    })
+            List<RoomKnowledgeBaseDto.NearbyEntertainment> entertainmentList = new ArrayList<>();
+            for (EntertainmentVenueDetailDto category : venuesDetail) {
+                if (category.getVenues() != null) {
+                    for (EntertainmentVenueDetailDto.VenueDetail venue : category.getVenues()) {
+                        RoomKnowledgeBaseDto.NearbyEntertainment entertainment = 
+                            RoomKnowledgeBaseDto.NearbyEntertainment.builder()
+                                .name(venue.getName())
+                                .category(category.getCategoryName())
+                                .distance(formatDistance(venue.getDistanceFromHotel()))
+                                .shortDescription(venue.getShortDescription())
+                                .build();
+                        entertainmentList.add(entertainment);
+                    }
+                }
+            }
+            
+            // Sort by distance and take top 5
+            entertainmentList.sort((a, b) -> {
+                // Sort by distance (extract numeric value)
+                // Note: distance is a String field, @Data generates getDistance() getter
+                String distStrA = a.getDistance() != null ? a.getDistance() : "";
+                String distStrB = b.getDistance() != null ? b.getDistance() : "";
+                double distA = parseDistance(distStrA);
+                double distB = parseDistance(distStrB);
+                return Double.compare(distA, distB);
+            });
+            
+            return entertainmentList.stream()
                     .limit(5) // Top 5 closest venues
                     .collect(Collectors.toList());
                     
