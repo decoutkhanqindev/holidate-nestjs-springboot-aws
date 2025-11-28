@@ -115,6 +115,16 @@ room_policies_detail:
 {{/reschedulePolicy}}
 {{/roomPolicies}}
 
+# === ENHANCED: NEARBY ENTERTAINMENT (SIMPLIFIED FOR ROOM VIEW) ===
+# Source: Top 5 closest venues from /location/entertainment-venues/city/{cityId}
+nearby_entertainment:
+{{#nearbyEntertainment}}
+  - name: "{{name}}"
+    category: "{{category}}"
+    distance: "{{distance}}"
+    short_description: "{{shortDescription}}"
+{{/nearbyEntertainment}}
+
 # === VIBE TAGS (ROOM-SPECIFIC) ===
 # INFERRED from room features: view, amenities, room_type, max_children
 vibe_tags:
@@ -356,6 +366,19 @@ _Lưu ý: Phòng này có chính sách riêng._
 {{#galleryImageUrls}}  # Source: curl_step_3 -> data.photos[].photos[].url (all except main, limit 10)
 ![{{room_name}}]({{.}})
 {{/galleryImageUrls}}
+
+---
+
+## 🎯 Điểm Giải Trí Gần Đây
+
+{{#nearbyEntertainment}}
+• **{{name}}** ({{category}}): {{shortDescription}} - _Cách {{distance}}_
+
+{{/nearbyEntertainment}}
+
+{{^nearbyEntertainment}}
+_Vui lòng xem thông tin khách sạn để biết các điểm giải trí gần đây._
+{{/nearbyEntertainment}}
 
 ---
 

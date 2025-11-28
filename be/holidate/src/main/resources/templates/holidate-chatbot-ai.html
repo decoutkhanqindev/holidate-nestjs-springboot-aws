@@ -1,64 +1,223 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Holidate AI Chatbot</title>
-    <meta charset="utf-8">
     <style>
-        body { font-family: sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        h2 { color: #333; }
+        /* --- PHẦN GIAO DIỆN (CSS) --- */
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background-color: #eef2f5; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+        
+        /* Khung bao quanh chat */
+        .chat-container {
+            width: 380px;
+            height: 600px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Tiêu đề xanh */
+        .header {
+            background: linear-gradient(135deg, #0066cc, #00c6ff);
+            padding: 20px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .header h3 { margin: 0; font-size: 18px; font-weight: 600; }
+        .header p { margin: 5px 0 0; font-size: 13px; opacity: 0.9; }
+
+        /* Vùng hiển thị tin nhắn */
+        .messages-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background-color: #fff;
+        }
+
+        /* Bong bóng tin nhắn */
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        /* Tin nhắn người dùng (Phải - Xanh) */
+        .user-message {
+            background: #0066cc;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        /* Tin nhắn Bot (Trái - Xám) */
+        .bot-message {
+            background: #f0f2f5;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        /* Trạng thái đang gõ */
+        .typing { 
+            font-style: italic; 
+            color: #888; 
+            font-size: 12px; 
+            margin-left: 20px; 
+            margin-bottom: 10px;
+            display: none; /* Mặc định ẩn */
+        }
+
+        /* Vùng nhập liệu */
+        .input-area {
+            padding: 15px;
+            border-top: 1px solid #eee;
+            background: white;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus { border-color: #0066cc; }
+
+        button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        button:hover { background: #005bb5; }
+
+        /* Scrollbar đẹp hơn */
+        .messages-box::-webkit-scrollbar { width: 6px; }
+        .messages-box::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 3px; }
     </style>
-    <link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
 </head>
 <body>
 
-    <div style="text-align: center;">
-        <h2>Trang đặt phòng Holidate</h2>
-        <p>Bấm vào biểu tượng chat góc dưới bên phải để bắt đầu.</p>
+    <div class="chat-container">
+        <div class="header">
+            <h3>🏝️ Holidate Assistant</h3>
+            <p>Trợ lý ảo AI hỗ trợ đặt phòng 24/7</p>
+        </div>
+        
+        <div class="messages-box" id="messagesBox">
+            <div class="message bot-message">
+                Xin chào! 👋 Mình là Trợ lý ảo của Holidate.<br>
+                Mình có thể giúp gì cho bạn về tìm phòng và giá cả hôm nay?
+            </div>
+        </div>
+
+        <div class="typing" id="typingIndicator">Bot đang soạn tin...</div>
+
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="Nhập câu hỏi của bạn..." onkeypress="handleEnter(event)">
+            <button onclick="sendMessage()">Gửi</button>
+        </div>
     </div>
 
-    <script type="module">
-        import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
+    <script>
+        const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook-test/9c4bdf4a-4fbc-485b-b3bc-e09647d8d450'; // Link từ Webhook node của bạn
 
-        createChat({
-            // 1. Dán Chat URL của bạn vào đây:
-            webhookUrl: 'http://localhost:5678/webhook/05af54f8-474f-46cf-bf5f-4606db3b0ec6/chat',
+        // 1. Hàm tạo Session ID (Dùng để định danh người chat)
+        function getSessionId() {
+            // Kiểm tra xem đã có ID lưu trong máy chưa
+            let sessionId = localStorage.getItem('holidate_session_id');
+            
+            // Nếu chưa có (người mới), tạo ID ngẫu nhiên và lưu lại
+            if (!sessionId) {
+                sessionId = 'user_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('holidate_session_id', sessionId);
+            }
+            return sessionId;
+        }
 
-            // 2. Cấu hình Tiêu đề & Nội dung
-            title: 'Trợ lý ảo AI', // Yêu cầu của bạn
-            subtitle: 'Holidate Support', // Dòng chữ nhỏ dưới tiêu đề
+        async function sendMessage() {
+            const inputField = document.getElementById('userInput');
+            const message = inputField.value.trim();
+            if (!message) return;
+
+            // Hiển thị tin nhắn người dùng
+            addMessage(message, 'user-message');
+            inputField.value = '';
             
-            // 3. Cấu hình màu sắc (Xanh & Trắng)
-            style: {
-                width: 400, // Chiều rộng khung chat
-                height: 600, // Chiều cao
-                position: 'right', // Vị trí
-                backgroundColor: '#ffffff', // Màu nền khung chat (Trắng)
+            // Hiện icon đang gõ
+            document.getElementById('typingIndicator').style.display = 'block';
+
+            // Lấy ID hiện tại
+            const currentSessionId = getSessionId();
+
+            try {
+                const response = await fetch(N8N_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        message: message,
+                        sessionId: currentSessionId 
+                    }) 
+                });
+
+                const data = await response.json();
                 
-                // Màu chủ đạo (Xanh dương)
-                mainColor: '#0066cc', 
-                
-                // Màu tiêu đề & nút gửi
-                headerBackgroundColor: '#0066cc', 
-                headerTextColor: '#ffffff',
-                
-                // Màu tin nhắn người dùng
-                userMessageBackgroundColor: '#0066cc', 
-                userMessageTextColor: '#ffffff',
-                
-                // Màu tin nhắn Bot
-                botMessageBackgroundColor: '#f0f2f5', 
-                botMessageTextColor: '#000000',
-            },
-            
-            // 4. Lời chào mặc định (nếu muốn ghi đè cấu hình trong n8n)
-            initialMessages: [
-                'Xin chào! 👋 Mình là Trợ lý ảo AI của Holidate. Mình có thể giúp gì cho bạn về đặt phòng hôm nay?'
-            ],
-            
-            // Tùy chọn khác
-            mode: 'window', // 'window' (cửa sổ nổi) hoặc 'fullscreen'
-            showWelcomeScreen: true,
-        });
+                // Hiển thị tin nhắn bot
+                addMessage(data.output, 'bot-message');
+
+            } catch (error) {
+                addMessage("Lỗi kết nối, vui lòng thử lại sau!", 'bot-message');
+                console.error(error);
+            } finally {
+                // Ẩn icon đang gõ
+                document.getElementById('typingIndicator').style.display = 'none';
+            }
+        }
+
+        function addMessage(text, className) {
+            const box = document.getElementById('messagesBox');
+            const div = document.createElement('div');
+            div.className = `message ${className}`;
+            // Xử lý xuống dòng cho đẹp
+            div.innerHTML = text.replace(/\n/g, '<br>'); 
+            box.appendChild(div);
+            // Tự động cuộn xuống dưới cùng
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
     </script>
+
 </body>
 </html>

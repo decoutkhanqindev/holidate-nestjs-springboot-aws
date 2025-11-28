@@ -73,6 +73,9 @@ public class RoomKnowledgeBaseDto {
     // ENHANCED: Room amenities with details and categories
     List<AmenityCategoryDto> roomAmenitiesDetailed;
     
+    // ENHANCED: Nearby entertainment venues (simplified for room view)
+    List<NearbyEntertainment> nearbyEntertainment;
+    
     // Metadata
     List<String> vibeTags; // Room-specific vibe tags
     List<String> keywords; // SEO keywords
@@ -80,5 +83,20 @@ public class RoomKnowledgeBaseDto {
     String mainImageUrl; // Main room image
     List<String> galleryImageUrls; // Gallery images
     LocalDateTime lastUpdated;
+    
+    /**
+     * Simplified entertainment venue for room template
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class NearbyEntertainment {
+        String name;
+        String category;
+        String distance; // Formatted distance (e.g., "500m", "2.5km")
+        String shortDescription;
+    }
 }
 

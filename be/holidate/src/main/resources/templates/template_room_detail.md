@@ -59,8 +59,61 @@ status: "{{status}}"  # Source: curl_step_3 -> data.status
 # === PRICING INFO (STATIC REFERENCE) ===
 # Source: curl_step_3 -> data
 base_price: {{base_price}}  # Source: curl_step_3 -> data.basePricePerNight (VNĐ/night, BASE price, not dynamic)
-# current_price: Not included in KB (dynamic pricing, changes daily)
+current_price: {{current_price}}  # Source: curl_step_3 -> data.currentPricePerNight (may differ from base_price if discount applied)
 price_note: "{{price_note}}"  # Template string: "Giá có thể thay đổi theo ngày trong tuần, mùa cao điểm và tình trạng phòng trống"
+
+# === ENHANCED: DAILY INVENTORY CALENDAR (NEXT 30 DAYS) ===
+# Source: /accommodation/rooms/inventories?room-id={id} endpoint
+inventory_calendar:
+{{#inventoryCalendar}}
+  - date: "{{date}}"
+    price: {{price}}
+    available_rooms: {{availableRooms}}
+    status: "{{status}}"
+    is_weekend: {{isWeekend}}
+    is_holiday: {{isHoliday}}
+{{/inventoryCalendar}}
+
+# === ENHANCED: PRICE ANALYTICS ===
+# Calculated from inventory calendar data
+price_analytics:
+{{#priceAnalytics}}
+  min_price_next_30_days: {{minPriceNext30Days}}
+  max_price_next_30_days: {{maxPriceNext30Days}}
+  avg_price_next_30_days: {{avgPriceNext30Days}}
+  price_volatility: "{{priceVolatility}}"  # low/medium/high
+  weekend_price_multiplier: {{weekendPriceMultiplier}}
+{{/priceAnalytics}}
+
+# === ENHANCED: DETAILED ROOM POLICIES ===
+# Source: Room-specific policies or inherited from hotel
+room_policies_detail:
+  policies_inherited: {{policiesInherited}}
+{{#roomPolicies}}
+  check_in_time: "{{checkInTime}}"
+  check_out_time: "{{checkOutTime}}"
+  allows_pay_at_hotel: {{allowsPayAtHotel}}
+  cancellation_policy:
+{{#cancellationPolicy}}
+    name: "{{name}}"
+    rules:
+{{#rules}}
+      - days_before_checkin: {{daysBeforeCheckin}}
+        penalty_percentage: {{penaltyPercentage}}
+        description: "{{description}}"
+{{/rules}}
+{{/cancellationPolicy}}
+  reschedule_policy:
+{{#reschedulePolicy}}
+    name: "{{name}}"
+    rules:
+{{#rules}}
+      - days_before_checkin: {{daysBeforeCheckin}}
+        fee_percentage: {{feePercentage}}
+        description: "{{description}}"
+{{/rules}}
+{{/reschedulePolicy}}
+{{/roomPolicies}}
 
 # === VIBE TAGS (ROOM-SPECIFIC) ===
 # INFERRED from room features: view, amenities, room_type, max_children
@@ -177,23 +230,88 @@ Phòng có tầm nhìn đẹp hướng biển, lý tưởng cho các cặp đôi
 
 ---
 
-## 📋 Chính Sách Đặt Phòng
+## 📅 Lịch Tồn Kho & Giá (30 Ngày Tới)
 
-### ❌ Chính Sách Hủy
-**Gói "{{cancellation_policy}}"**:  # Source: curl_step_3 -> data.cancellationPolicy.name OR curl_step_2.1 -> data.policy.cancellationPolicy.name
-{{#cancellation_policy_rules}}
-- {{description}}  # Generated from policy rules
-{{/cancellation_policy_rules}}
+{{#inventoryCalendar}}
+{{#.}}
+### 📆 Thông Tin Theo Ngày
+| Ngày | Giá (VNĐ/đêm) | Phòng Trống | Loại Ngày |
+|------|---------------|-------------|-----------|
+{{#inventoryCalendar}}
+| {{date}} | {{price}} | {{availableRooms}} | {{#isWeekend}}🌟 Cuối tuần{{/isWeekend}}{{#isHoliday}}🎉 Ngày lễ{{/isHoliday}}{{^isWeekend}}{{^isHoliday}}Ngày thường{{/isHoliday}}{{/isWeekend}} |
+{{/inventoryCalendar}}
+{{/.}}
+{{/inventoryCalendar}}
+
+---
+
+## 💰 Phân Tích Giá
+
+{{#priceAnalytics}}
+### 📊 Thống Kê Giá 30 Ngày Tới
+- **Giá thấp nhất**: {{minPriceNext30Days}} VNĐ/đêm
+- **Giá cao nhất**: {{maxPriceNext30Days}} VNĐ/đêm
+- **Giá trung bình**: {{avgPriceNext30Days}} VNĐ/đêm
+- **Mức độ biến động giá**: {{priceVolatility}}
+- **Hệ số giá cuối tuần**: x{{weekendPriceMultiplier}}
+
+### 📌 Lời Khuyên Đặt Phòng
+{{#priceVolatility}}
+- {{#equals priceVolatility "high"}}💡 Giá biến động mạnh theo ngày. Nên đặt sớm để có giá tốt!{{/equals}}
+- {{#equals priceVolatility "medium"}}💡 Giá có thay đổi nhẹ. Đặt trước 1-2 tuần để đảm bảo phòng trống.{{/equals}}
+- {{#equals priceVolatility "low"}}💡 Giá ổn định. Bạn có thể linh hoạt thời gian đặt phòng.{{/equals}}
+{{/priceVolatility}}
+{{/priceAnalytics}}
+
+---
+
+## 📋 Chính Sách Đặt Phòng Chi Tiết
+
+{{#policiesInherited}}
+_Lưu ý: Phòng này áp dụng chính sách của khách sạn._
+{{/policiesInherited}}
+{{^policiesInherited}}
+_Lưu ý: Phòng này có chính sách riêng._
+{{/policiesInherited}}
+
+### ❌ Chính Sách Hủy Phòng
+{{#roomPolicies}}
+{{#cancellationPolicy}}
+**Áp dụng gói "{{name}}"**:
+{{#rules}}
+- {{description}}
+{{/rules}}
+{{/cancellationPolicy}}
+{{/roomPolicies}}
 
 ### 🔄 Chính Sách Đổi Lịch
-**Gói "{{reschedule_policy}}"**:  # Source: curl_step_3 -> data.reschedulePolicy.name OR curl_step_2.1 -> data.policy.reschedulePolicy.name
-{{#reschedule_policy_rules}}
-- {{description}}  # Generated from policy rules
-{{/reschedule_policy_rules}}
+{{#roomPolicies}}
+{{#reschedulePolicy}}
+**Áp dụng gói "{{name}}"**:
+{{#rules}}
+- {{description}}
+{{/rules}}
+{{/reschedulePolicy}}
+{{/roomPolicies}}
 
 ### 🚭 Quy Định Trong Phòng
 - **Hút thuốc**: {{#smoking_allowed}}Cho phép{{/smoking_allowed}}{{^smoking_allowed}}Nghiêm cấm{{/smoking_allowed}}
 - **Thú cưng**: Không cho phép
+
+---
+
+## 📊 Khả Năng Còn Phòng
+
+{{#inventoryCalendar}}
+{{#.}}
+### 📈 Phân Tích Tình Trạng Phòng
+{{#inventoryCalendar}}
+{{#availableRooms}}
+- Ngày **{{date}}**: {{#gte availableRooms 3}}✅ Còn nhiều phòng ({{availableRooms}} phòng){{/gte}}{{#lt availableRooms 3}}{{#gt availableRooms 0}}⚠️ Sắp hết phòng ({{availableRooms}} phòng){{/gt}}{{/lt}}{{#eq availableRooms 0}}❌ Đã hết phòng{{/eq}}
+{{/availableRooms}}
+{{/inventoryCalendar}}
+{{/.}}
+{{/inventoryCalendar}}
 
 ---
 
@@ -215,7 +333,7 @@ Phòng có tầm nhìn đẹp hướng biển, lý tưởng cho các cặp đôi
 > 
 > Tôi sẽ kiểm tra hệ thống ngay và báo giá chi tiết kèm các khuyến mãi đang có!
 > 
-> {{{tool_call_get_room_price}}}
+> {{TOOL:get_room_price|room_id={{room_id}}|check_in={date}|check_out={date}}}
 
 ---
 

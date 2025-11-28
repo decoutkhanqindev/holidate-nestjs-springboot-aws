@@ -68,6 +68,9 @@ public class HotelKnowledgeBaseDto {
     
     // ENHANCED: Hotel amenities by category
     List<AmenityCategoryDto> hotelAmenitiesByCategory;
+    
+    // ENHANCED: Entertainment venues by category with details
+    List<EntertainmentVenueDetailDto> entertainmentVenues;
 
     // Images
     String mainImageUrl;

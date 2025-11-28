@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.webapp.holidate.constants.AppProperties;
 import com.webapp.holidate.dto.knowledgebase.ActiveDiscountDto;
 import com.webapp.holidate.dto.knowledgebase.AmenityCategoryDto;
+import com.webapp.holidate.dto.knowledgebase.EntertainmentVenueDetailDto;
 import com.webapp.holidate.dto.knowledgebase.HotelKnowledgeBaseDto;
 import com.webapp.holidate.dto.knowledgebase.LocationHierarchyDto;
 import com.webapp.holidate.dto.knowledgebase.NearbyVenueDto;
@@ -106,6 +107,9 @@ public class KnowledgeBaseGenerationService {
             // ENHANCED: Get amenities by category (placeholder - to be implemented)
             List<AmenityCategoryDto> hotelAmenitiesByCategory = new ArrayList<>();
             
+            // ENHANCED: Get entertainment venues by category with distance from hotel
+            List<EntertainmentVenueDetailDto> entertainmentVenues = knowledgeBaseDataService.fetchEntertainmentVenues(hotel);
+            
             // Build amenity list
             List<String> amenities = buildAmenityList(hotel.getAmenities());
             
@@ -172,6 +176,7 @@ public class KnowledgeBaseGenerationService {
                     .activeDiscounts(activeDiscounts)
                     .policies(policies)
                     .hotelAmenitiesByCategory(hotelAmenitiesByCategory)
+                    .entertainmentVenues(entertainmentVenues)
                     .mainImageUrl(mainImageUrl)
                     .galleryImageUrls(galleryImageUrls)
                     .vibeTagsInferred(vibeTags)
@@ -639,6 +644,9 @@ public class KnowledgeBaseGenerationService {
         // ENHANCED: Room amenities with details (placeholder - to be implemented)
         List<AmenityCategoryDto> roomAmenitiesDetailed = new ArrayList<>();
         
+        // ENHANCED: Get nearby entertainment venues (simplified for room view)
+        List<RoomKnowledgeBaseDto.NearbyEntertainment> nearbyEntertainment = buildNearbyEntertainmentForRoom(hotel);
+        
         // Get current price from room entity
         Double currentPrice = room.getBasePricePerNight(); // TODO: Get from inventories if available
         
@@ -684,6 +692,7 @@ public class KnowledgeBaseGenerationService {
             .roomPolicies(roomPolicies)
             .policiesInherited(policiesInherited)
             .roomAmenitiesDetailed(roomAmenitiesDetailed)
+            .nearbyEntertainment(nearbyEntertainment)
             .vibeTags(vibeTags)
             .keywords(keywords)
             .description(buildRoomDescription(room, hotel))
@@ -932,6 +941,78 @@ public class KnowledgeBaseGenerationService {
         desc.append(".");
         
         return desc.toString();
+    }
+    
+    /**
+     * Build simplified nearby entertainment list for room template.
+     * Takes top 5 closest venues from hotel's entertainment venues.
+     */
+    private List<RoomKnowledgeBaseDto.NearbyEntertainment> buildNearbyEntertainmentForRoom(Hotel hotel) {
+        try {
+            List<EntertainmentVenueDetailDto> venuesDetail = knowledgeBaseDataService.fetchEntertainmentVenues(hotel);
+            
+            if (venuesDetail == null || venuesDetail.isEmpty()) {
+                return new ArrayList<>();
+            }
+            
+            // Flatten all venues and take top 5 closest
+            return venuesDetail.stream()
+                    .flatMap(category -> category.getVenues().stream()
+                            .map(venue -> RoomKnowledgeBaseDto.NearbyEntertainment.builder()
+                                    .name(venue.getName())
+                                    .category(category.getCategoryName())
+                                    .distance(formatDistance(venue.getDistanceFromHotel()))
+                                    .shortDescription(venue.getShortDescription())
+                                    .build()))
+                    .sorted((a, b) -> {
+                        // Sort by distance (extract numeric value)
+                        double distA = parseDistance(a.getDistance());
+                        double distB = parseDistance(b.getDistance());
+                        return Double.compare(distA, distB);
+                    })
+                    .limit(5) // Top 5 closest venues
+                    .collect(Collectors.toList());
+                    
+        } catch (Exception e) {
+            log.warn("Error building nearby entertainment for room: {}", e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+    
+    /**
+     * Format distance from meters to human-readable string.
+     */
+    private String formatDistance(Double distanceInMeters) {
+        if (distanceInMeters == null) {
+            return "N/A";
+        }
+        
+        if (distanceInMeters < 1000) {
+            return String.format("%.0fm", distanceInMeters);
+        } else {
+            return String.format("%.1fkm", distanceInMeters / 1000);
+        }
+    }
+    
+    /**
+     * Parse formatted distance string back to meters for sorting.
+     */
+    private double parseDistance(String distanceStr) {
+        try {
+            if (distanceStr == null || distanceStr.isEmpty()) {
+                return Double.MAX_VALUE;
+            }
+            
+            if (distanceStr.endsWith("km")) {
+                return Double.parseDouble(distanceStr.replace("km", "")) * 1000;
+            } else if (distanceStr.endsWith("m")) {
+                return Double.parseDouble(distanceStr.replace("m", ""));
+            }
+            
+            return Double.MAX_VALUE;
+        } catch (Exception e) {
+            return Double.MAX_VALUE;
+        }
     }
     
     /**
