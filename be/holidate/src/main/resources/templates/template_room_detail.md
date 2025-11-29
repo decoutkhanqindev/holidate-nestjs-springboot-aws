@@ -77,7 +77,9 @@ status: "{{status}}"  # Source: curl_step_3 -> data.status
 # === PRICING INFO (STATIC REFERENCE) ===
 # Source: curl_step_3 -> data
 base_price: {{base_price}}  # Source: curl_step_3 -> data.basePricePerNight (VNĐ/night, BASE price, not dynamic)
+{{#current_price}}
 current_price: {{current_price}}  # Source: curl_step_3 -> data.currentPricePerNight (may differ from base_price if discount applied)
+{{/current_price}}
 price_note: "{{price_note}}"  # Template string: "Giá có thể thay đổi theo ngày trong tuần, mùa cao điểm và tình trạng phòng trống"
 
 # === ENHANCED: DAILY INVENTORY CALENDAR (NEXT 30 DAYS) ===
@@ -403,7 +405,7 @@ _Lưu ý: Phòng này có chính sách riêng._
 > 
 > Tôi sẽ kiểm tra hệ thống ngay và báo giá chi tiết kèm các khuyến mãi đang có!
 > 
-> {{TOOL:get_room_price|room_id={{room_id}}|check_in={date}|check_out={date}}}
+> {{tool_call_get_room_price}}
 
 ---
 
@@ -452,129 +454,3 @@ Tôi có thể giúp bạn:
 
 Hãy cho tôi biết kế hoạch của bạn để được hỗ trợ tốt nhất! 😊
 
----
-
-<!-- 
-====================================================================
-DATA SOURCE MAPPING REFERENCE (Based on Actual API Responses)
-====================================================================
-
-CURL COMMANDS EXECUTED:
-1. curl_step_2.2: GET /accommodation/rooms?hotel-id={HOTEL_ID}
-   → Extract: ROOM_ID (first room in data.content[])
-
-2. curl_step_3: GET /accommodation/rooms/{ROOM_ID}
-   → Response: RoomDetailsResponse
-   → Fields used:
-     - data.id → doc_id, room_id
-     - data.name → room_name (Vietnamese, e.g., "Premier Deluxe Triple")
-     - data.hotel.id → parent_hotel_id
-     - data.hotel.name → location.hotel_name
-     - data.hotel.country/city/district → location.*
-     - data.view → view (Vietnamese, e.g., "Hướng biển, Nhìn ra thành phố")
-     - data.area → area_sqm
-     - data.maxAdults → max_adults
-     - data.maxChildren → max_children
-     - data.bedType.name → bed_type (Vietnamese, e.g., "2 giường đơn")
-     - data.bedType.id → bed_type_id
-     - data.amenities[] → room_amenity_tags (via mapping)
-     - data.smokingAllowed → smoking_allowed
-     - data.wifiAvailable → wifi_available
-     - data.breakfastIncluded → breakfast_included
-     - data.cancellationPolicy → cancellation_policy (or inherit from hotel)
-     - data.reschedulePolicy → reschedule_policy (or inherit from hotel)
-     - data.totalRooms → quantity
-     - data.status → status
-     - data.basePricePerNight → base_price
-     - data.currentPricePerNight → current_price
-     - data.photos[] → mainImageUrl, galleryImageUrls
-     - data.updatedAt/createdAt → last_updated
-
-3. curl_step_2.1: GET /accommodation/hotels/{HOTEL_ID}
-   → Purpose: Inherit policies if room-level policies are null
-   → Fields used:
-     - data.policy.cancellationPolicy.name → cancellation_policy (if room.cancellationPolicy is null)
-     - data.policy.reschedulePolicy.name → reschedule_policy (if room.reschedulePolicy is null)
-
-4. curl_step_2.5: GET /amenity/amenities
-   → Purpose: Reference mapping table for Vietnamese → English amenity names
-   → Used by: AmenityMappingService to map curl_step_3 -> data.amenities[].amenities[].name
-
-INFERRED FIELDS (CRITICAL - NOT IN API RESPONSE):
-1. room_type: INFERRED from curl_step_3 -> data.name using inferRoomType() logic
-   - Pattern matching on Vietnamese room name
-   - Examples from actual data:
-     * "Premier Deluxe Triple" → "deluxe" (contains "Deluxe")
-     * "Twin Premier Deluxe Twin" → "deluxe" (contains "Deluxe")
-     * "Executive Family" → "suite" (contains "Executive")
-   - Logic: See inferRoomType() implementation below
-
-2. room_category: INFERRED from curl_step_3 -> data.maxAdults + maxChildren using inferRoomCategory() logic
-   - Examples from actual data:
-     * maxAdults=3, maxChildren=1 → "family" (maxChildren > 0)
-     * maxAdults=2, maxChildren=1 → "family" (maxChildren > 0)
-     * maxAdults=4, maxChildren=0 → "suite" (maxAdults > 2)
-   - Logic: See inferRoomCategory() implementation below
-
-3. description: GENERATED from template (NOT in API response)
-   - Template: "{roomName} là hạng phòng {viewDescription} tại {hotelName}, với diện tích {area}m², phù hợp cho tối đa {maxAdults} người lớn{+maxChildren trẻ em}."
-   - Example: "Premier Deluxe Triple là hạng phòng hướng biển tại Khách sạn Minh Toan SAFI Ocean, với diện tích 35m², phù hợp cho tối đa 3 người lớn và 1 trẻ em."
-
-4. vibe_tags: INFERRED from room features
-   - view contains "biển"/"ocean" → "sea_view"
-   - has bathtub + sea_view → "romantic", "honeymoon"
-   - maxChildren > 0 → "family_friendly"
-   - room_type contains "deluxe"/"suite"/"villa" → "luxury"
-
-MAPPING LOGIC:
-- room_amenity_tags: Map Vietnamese names from curl_step_3 -> data.amenities[].amenities[].name
-  to English using AmenityMappingService with curl_step_2.5 as reference
-  - Example mappings from actual data:
-    * "Lò vi sóng" → "microwave"
-    * "Tủ lạnh" → "refrigerator"
-    * "Máy lạnh" → "air_conditioning"
-    * "TV" → "tv"
-    * "Két an toàn tại phòng" → "safe_box"
-    * "Bộ vệ sinh cá nhân" → "toiletries"
-    * "Máy sấy tóc" → "hairdryer"
-    * "Nước nóng" → "hot_water"
-- mainImageUrl: Filter photos by category name="Phòng" or use first photo
-- galleryImageUrls: All photos except main, limit 10
-
-INFERENCE LOGIC IMPLEMENTATION:
-
-1. inferRoomType(String roomName):
-   Input: "Premier Deluxe Triple"
-   Process:
-     - Normalize: Remove accents, lowercase
-     - Check patterns in priority order:
-       * "presidential"/"tong thong" → "suite"
-       * "villa"/"biet thu" → "villa"
-       * "deluxe"/"cao cap"/"premium"/"thuong hang" → "deluxe"
-       * "superior"/"hang trung" → "superior"
-       * "suite"/"executive" → "suite"
-     - Default: "standard"
-   Output: "deluxe"
-
-2. inferRoomCategory(Room room):
-   Input: maxAdults=3, maxChildren=1
-   Process:
-     - If maxChildren > 0 → "family"
-     - Else if maxAdults == 1 → "single"
-     - Else if maxAdults == 2 → "double"
-     - Else → "suite"
-   Output: "family"
-
-VALIDATION OF DATA_GAP_ANALYSIS.md:
-✅ CONFIRMED: room_type is MISSING in API response → Needs inference
-✅ CONFIRMED: room_category is MISSING in API response → Needs inference
-✅ CONFIRMED: description is MISSING in API response → Needs generation
-
-PROHIBITED DATA:
-- DO NOT hardcode exact prices for specific dates
-- DO NOT show RoomInventory data (availableRooms, dynamic prices)
-- DO NOT expose Partner commission or internal pricing rules
-- DO NOT promise guaranteed availability
-
-====================================================================
--->

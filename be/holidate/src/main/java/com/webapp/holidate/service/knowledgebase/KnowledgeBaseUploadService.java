@@ -1,21 +1,5 @@
 package com.webapp.holidate.service.knowledgebase;
 
-import com.github.mustachejava.DefaultMustacheFactory;
-import com.github.mustachejava.Mustache;
-import com.github.mustachejava.MustacheFactory;
-import com.webapp.holidate.dto.knowledgebase.HotelKnowledgeBaseDto;
-import com.webapp.holidate.dto.knowledgebase.LocationHierarchyDto;
-import com.webapp.holidate.dto.knowledgebase.NearbyVenueDto;
-import com.webapp.holidate.dto.knowledgebase.PriceReferenceDto;
-import com.webapp.holidate.dto.knowledgebase.RoomKnowledgeBaseDto;
-import com.webapp.holidate.dto.knowledgebase.RoomSummaryDto;
-import com.webapp.holidate.service.storage.S3KnowledgeBaseService;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
 import java.io.IOException;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
@@ -26,6 +10,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
+import com.github.mustachejava.DefaultMustacheFactory;
+import com.github.mustachejava.Mustache;
+import com.github.mustachejava.MustacheFactory;
+import com.webapp.holidate.dto.knowledgebase.HotelKnowledgeBaseDto;
+import com.webapp.holidate.dto.knowledgebase.LocationHierarchyDto;
+import com.webapp.holidate.dto.knowledgebase.NearbyVenueDto;
+import com.webapp.holidate.dto.knowledgebase.PriceReferenceDto;
+import com.webapp.holidate.dto.knowledgebase.RoomKnowledgeBaseDto;
+import com.webapp.holidate.dto.knowledgebase.RoomSummaryDto;
+import com.webapp.holidate.service.storage.S3KnowledgeBaseService;
+
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Knowledge Base Upload Service
@@ -527,21 +529,66 @@ public class KnowledgeBaseUploadService {
     }
 
     /**
-     * Remove HTML comments from markdown content
-     * Strips out all content between <!-- and --> including multi-line comments
+     * Remove HTML comments and inline developer comments from markdown content.
      * 
-     * @param content Markdown content that may contain HTML comments
-     * @return Cleaned markdown content without HTML comments
+     * This method:
+     * 1. Removes HTML comments (<!-- ... -->)
+     * 2. Removes inline developer comments (# Source: ...) from markdown body (not YAML frontmatter)
+     * 3. Cleans up trailing whitespace
+     * 
+     * @param content Markdown content that may contain HTML comments and inline comments
+     * @return Cleaned markdown content without HTML comments and inline developer comments
      */
     private String cleanMarkdownContent(String content) {
         if (content == null) {
             return null;
         }
-        // Pattern matches HTML comments including multi-line comments
-        // (?s) enables DOTALL mode (dot matches newlines)
-        // .*? is non-greedy to match shortest possible comment
+        
+        // Step 1: Remove HTML comments (<!-- ... -->)
         Pattern htmlCommentPattern = Pattern.compile("<!--.*?-->", Pattern.DOTALL);
-        return htmlCommentPattern.matcher(content).replaceAll("");
+        String cleaned = htmlCommentPattern.matcher(content).replaceAll("");
+        
+        // Step 2: Split content into YAML frontmatter and markdown body
+        // YAML frontmatter is between first --- and second ---
+        String yamlFrontmatter = "";
+        String markdownBody = cleaned;
+        
+        int firstDashIndex = cleaned.indexOf("---\n");
+        if (firstDashIndex == 0) {
+            // Has YAML frontmatter starting at beginning
+            int secondDashIndex = cleaned.indexOf("\n---\n", 4);
+            if (secondDashIndex > 0) {
+                // Found second ---, split content
+                yamlFrontmatter = cleaned.substring(0, secondDashIndex + 5); // Include "---\n"
+                markdownBody = cleaned.substring(secondDashIndex + 5).trim(); // Content after second ---
+            }
+        }
+        
+        // Step 3: Remove inline developer comments from markdown body only
+        // Pattern matches lines that are standalone comments: "  # Source: ..." or "# Source: ..."
+        // This removes developer reference comments but keeps YAML comments in frontmatter
+        if (!markdownBody.isEmpty()) {
+            // Remove standalone comment lines (lines that only contain whitespace + # Source: or # Ví dụ:)
+            markdownBody = markdownBody.replaceAll("(?m)^[ \\t]*# (Source:|Ví dụ:).*$", "");
+            
+            // Remove inline comments at end of lines in markdown body (but preserve YAML structure)
+            // Pattern: "  # Source: ..." at end of line (with 2+ spaces before #)
+            markdownBody = markdownBody.replaceAll("(?m)[ \\t]{2,}# (Source:|Ví dụ:).*$", "");
+        }
+        
+        // Step 4: Reassemble content
+        if (!yamlFrontmatter.isEmpty()) {
+            cleaned = yamlFrontmatter + "\n\n" + markdownBody;
+        } else {
+            cleaned = markdownBody;
+        }
+        
+        // Step 5: Clean up trailing whitespace/newlines
+        cleaned = cleaned.replaceAll("(?m)[ \\t]+$", ""); // Remove trailing spaces/tabs on each line
+        cleaned = cleaned.replaceAll("\\n{3,}", "\n\n"); // Replace 3+ consecutive newlines with 2
+        cleaned = cleaned.trim(); // Remove leading/trailing whitespace
+        
+        return cleaned;
     }
 
     /**

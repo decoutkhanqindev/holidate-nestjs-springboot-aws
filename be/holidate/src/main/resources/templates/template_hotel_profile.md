@@ -26,15 +26,19 @@ location:
   street: "{{location.street}}"  # Source: curl_step_2.1 -> data.street.name
   street_name: "{{location.street_name}}"  # Source: curl_step_2.1 -> data.street.name
   address: "{{location.address}}"  # Source: curl_step_2.1 -> data.address
+{{#location.coordinates}}
   coordinates:
     lat: {{location.coordinates.lat}}  # Source: curl_step_2.1 -> data.latitude
     lng: {{location.coordinates.lng}}  # Source: curl_step_2.1 -> data.longitude
+{{/location.coordinates}}
 
 # === ĐỊA CHỈ VÀ VỊ TRÍ CHI TIẾT ===
 full_address: "{{full_address}}"  # Ví dụ: "136, Đường Hùng Vương, Phường Lộc Thọ, Nha Trang"
+{{#coordinates}}
 coordinates:
   latitude: {{coordinates.latitude}}  # Ví dụ: 12.2432
   longitude: {{coordinates.longitude}}  # Ví dụ: 109.1942
+{{/coordinates}}
 
 # === KHOẢNG CÁCH ĐẾN ĐỊA ĐIỂM QUAN TRỌNG (TÍNH BẰNG MÉT) ===
 distances:
@@ -246,9 +250,11 @@ keywords:
 
 ## 📍 Vị Trí & Liên Hệ
 
-**Địa chỉ đầy đủ**: {{full_address}}  
+**Địa chỉ đầy đủ**: {{full_address}}
 
-**Tọa độ**: {{coordinates.latitude}}, {{coordinates.longitude}}  
+{{#coordinates}}
+**Tọa độ**: {{coordinates.latitude}}, {{coordinates.longitude}}
+{{/coordinates}}
 
 **Cách biển Nha Trang**: {{distances.to_beach_meters}} mét (~{{distances.to_beach_km}} km)
 
@@ -324,7 +330,7 @@ Khách sạn cung cấp {{available_room_types}} loại phòng chính:
 > - Số người lớn và trẻ em
 > - Loại phòng ưa thích
 > 
-> Tôi sẽ kiểm tra ngay: {{TOOL:check_availability|hotel_id={{hotel_id}}}}
+> Tôi sẽ kiểm tra ngay: {{tool_call_check_availability}}
 
 ---
 
@@ -470,85 +476,3 @@ Bạn có câu hỏi về khách sạn này? Tôi có thể giúp bạn:
 
 Hãy cho tôi biết kế hoạch của bạn! 😊
 
----
-
-<!-- 
-====================================================================
-DATA SOURCE MAPPING REFERENCE (Based on Actual API Responses)
-====================================================================
-
-CURL COMMANDS EXECUTED:
-1. curl_step_1: GET /accommodation/hotels?page=0&size=1
-   → Extract: HOTEL_ID, CITY_ID
-
-2. curl_step_2.1: GET /accommodation/hotels/{HOTEL_ID}
-   → Response: HotelDetailsResponse
-   → Fields used:
-     - data.id → doc_id, hotel_id
-     - data.name → name, slug
-     - data.description → description
-     - data.starRating → star_rating
-     - data.status → status
-     - data.country/province/city/district/ward/street → location.*
-     - data.latitude/longitude → location.coordinates
-     - data.address → location.address
-     - data.amenities[] → amenity_tags (via mapping)
-     - data.photos[] → mainImageUrl, galleryImageUrls
-     - data.policy.* → check_in_time, check_out_time, cancellation_policy, etc.
-     - data.entertainmentVenues[] → nearby_venues
-     - data.partner.id → partner_id
-     - data.updatedAt/createdAt → last_updated
-
-3. curl_step_2.2: GET /accommodation/rooms?hotel-id={HOTEL_ID}
-   → Response: Page<RoomResponse>
-   → Fields used:
-     - data.content[] → rooms list
-     - data.totalItems → total_rooms
-     - MIN(data.content[].basePricePerNight) → reference_min_price
-     - MAX(data.content[].basePricePerNight) → reference_max_price
-     - COUNT(DISTINCT data.content[].name) → available_room_types
-
-4. curl_step_2.3: GET /reviews?hotel-id={HOTEL_ID}
-   → Response: Page<ReviewResponse>
-   → Fields used:
-     - AVG(data.content[].score) → review_score
-     - data.totalItems → review_count
-     - Note: May be empty array → review_score = null, review_count = 0
-
-5. curl_step_2.4: GET /location/entertainment-venues/city/{CITY_ID}
-   → Response: EntertainmentVenueGroupResponse[]
-   → Fields used:
-     - data[].entertainmentVenues[] → nearby_venues (if not in hotel response)
-     - data[].entertainmentVenues[].name → nearby_venues[].name
-     - data[].entertainmentVenues[].distance → nearby_venues[].distance
-
-6. curl_step_2.5: GET /amenity/amenities
-   → Response: AmenityResponse[]
-   → Purpose: Reference mapping table for Vietnamese → English amenity names
-   → Used by: AmenityMappingService to map curl_step_2.1 -> data.amenities[].name
-
-AGGREGATED FIELDS:
-- review_score: AVG(reviews.score) from curl_step_2.3
-- review_count: COUNT(reviews) from curl_step_2.3
-- reference_min_price: MIN(rooms.basePricePerNight) from curl_step_2.2
-- reference_max_price: MAX(rooms.basePricePerNight) from curl_step_2.2
-- available_room_types: COUNT(DISTINCT rooms.name) from curl_step_2.2
-
-INFERRED FIELDS:
-- vibe_tags: Inferred from star_rating + amenity_tags + location_tags
-- location_tags: Generated from city.name, district.name, + venue names
-- keywords: Generated from hotel.name, city.name, star_rating, amenity_tags
-
-MAPPING LOGIC:
-- amenity_tags: Map Vietnamese names from curl_step_2.1 -> data.amenities[].amenities[].name
-  to English using AmenityMappingService with curl_step_2.5 as reference
-- mainImageUrl: Filter photos by category name="main" or use first photo
-- galleryImageUrls: All photos except main, limit 5
-
-PROHIBITED DATA:
-- DO NOT include: commissionRate, partner contact info, internal IDs
-- DO NOT hardcode: exact prices for specific dates, current availability
-- DO NOT expose: Admin-only fields, Partner-only metrics
-
-====================================================================
--->
