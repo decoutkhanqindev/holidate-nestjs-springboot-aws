@@ -1,374 +1,554 @@
-## CONTEXT
-You are a senior AI/backend engineer working on Holidate, an online hotel booking platform. The system has implemented an AI chatbot that helps users find rooms using natural language. The chatbot relies on a Knowledge Base consisting of Markdown files stored in AWS S3, generated from two templates: `template_hotel_profile.md` and `template_room_detail.md`.
+# PROMPT CHI TIẾT CHO CURSOR: REFACTOR TOÀN BỘ PHÍA BACKEND ĐỂ KHẮC PHỤC HOÀN TOÀN LỖI RAG
 
-Currently, these templates lack critical information from multiple API endpoints, preventing the chatbot from providing comprehensive responses to user queries about hotels, rooms, availability, pricing, discounts, reviews, and policies.
+## 🎯 MỤC TIÊU CHÍNH
+Refactor toàn bộ hệ thống backend để chatbot có thể **luôn luôn truy xuất đúng thông tin** từ cơ sở tri thức, đặc biệt là thông tin về **giá cả, tồn kho, và chính sách** cho các câu hỏi về phòng khách sạn. Đây không phải là lỗi của n8n hay pipeline xử lý mà là do **cấu trúc dữ liệu và cách tổ chức thông tin** trong markdown templates.
 
-## PROBLEM STATEMENT
-The chatbot cannot effectively respond to queries requiring detailed information because the Knowledge Base templates lack data from these key API endpoints:
+## 🚨 VẤN ĐỀ CẤP BÁCH CẦN GIẢI QUYẾT
+Hiện tại:
+- Chatbot **hoàn toàn không thể trả lời** các câu hỏi về giá phòng vì dữ liệu giá trong `hotel_profile` chỉ là "0 VNĐ" (giá tham khảo)
+- Giá thực tế nằm trong `room_detail` nhưng hệ thống không liên kết được giữa hotel và room
+- Khi người dùng hỏi "Giá phòng Senior Balcony City View hôm nay?", chatbot không thể truy xuất thông tin từ file `deluxe-without-balcony-city-view-golden-hotel-nha-trang.md`
+- Metadata không được sử dụng đúng cách để filter kết quả trong RAG
+- Chunking phân mảnh thông tin khiến mỗi chunk không đủ ngữ cảnh để trả lời câu hỏi
 
-1. `/accommodation/hotels/{id}` - Hotel detail endpoint
-2. `/accommodation/rooms/{id}` - Room detail endpoint  
-3. `/accommodation/rooms/inventories` - Room inventory/availability endpoint
-4. `/reviews` - Reviews endpoint
-5. `/discounts` - Discounts endpoint
-6. `/amenity/amenities` - Amenities endpoint
-7. `/policy/cancellation-policies` and `/policy/reschedule-policies` - Policy endpoints
+## 📋 KẾ HOẠCH REFACTOR CHI TIẾT
 
-This limitation prevents the chatbot from answering complex questions that require combined information from multiple endpoints.
+### PHẦN 1: TÁI CẤU TRÚC TEMPLATE MARKDOWN (CẢ 2 TEMPLATE)
 
-## OBJECTIVE
-Enhance both templates to include comprehensive metadata from ALL relevant API endpoints to enable the chatbot to provide detailed, accurate responses equivalent to making direct API calls to all endpoints above.
+#### 1.1 Hotel Profile Template
+```markdown
+### THAY ĐỔI BẮT BUỘC:
+- XÓA HOÀN TOÀN PHẦN "💰 Thông Tin Giá Tham Khảo" trong hotel_profile
+- THAY THẾ BẰNG: "💰 GIÁ PHÒNG THỰC TẾ" với nội dung:
+  "Giá phòng thực tế được tính dựa trên ngày cụ thể và loại phòng. Vui lòng hỏi về một loại phòng cụ thể để nhận thông tin giá chính xác."
 
-## STEP 1: COMPREHENSIVE API ENDPOINT ANALYSIS
+- BỔ SUNG FRONTMATTER METADATA:
+  room_detail_slugs:  # Danh sách slug của tất cả room detail files
+    - "senior-balcony-city-view-golden-hotel-nha-trang"
+    - "deluxe-without-balcony-city-view-golden-hotel-nha-trang"
+    - ... (tất cả các room)
 
-### Critical Endpoints and Their Data Requirements
+  has_real_time_pricing: true  # Boolean flag để xác định hotel có giá thực tế trong room details
 
-#### A. HOTEL DETAIL ENDPOINT: `GET /accommodation/hotels/{id}`
-**Essential Data Fields:**
-- Hotel basic info: name, description, address, star rating
-- Location hierarchy: country, province, city, district, ward, street
-- Amenities (with categories): amenities[].amenities[].name
-- Photos with categories: photos[].photos[].url + category
-- Policies: check-in/out times, cancellation policy, reschedule policy, pay-at-hotel option
-- Entertainment venues nearby: entertainmentVenues[].entertainmentVenues[].name/distance
-- Review statistics: total reviews count, average score
-- Status and commission rate
+### NGUYÊN TẮC:
+- Hotel profile KHÔNG bao giờ chứa thông tin giá cụ thể
+- Chỉ chứa thông tin chung về khách sạn
+- Luôn hướng dẫn người dùng hỏi về loại phòng cụ thể
+```
 
-#### B. ROOM DETAIL ENDPOINT: `GET /accommodation/rooms/{id}`
-**Essential Data Fields:**
-- Room specifications: name, view, area, max adults/children
-- Bed type information: bedType.name
-- Room features: amenities, smoking allowed, wifi, breakfast included
-- Policies: cancellation policy, reschedule policy (room-specific or inherited from hotel)
-- Photos with categories
-- Base price, current price, price notes
-- Quantity (total rooms of this type)
-- Status (active/inactive/maintenance/closed)
+#### 1.2 Room Detail Template
+```markdown
+### THAY ĐỔI BẮT BUỘC:
+- DI CHUYỂN PHẦN "💰 Giá & Tình Trạng Trong 7 Ngày Tới" lên đầu phần body
+- THÊM METADATA QUAN TRỌNG TRONG FRONTMATTER:
+  parent_hotel_name: "Golden Hotel Nha Trang"
+  room_type_for_search: "Senior Balcony City View"  # Tên phòng chuẩn để tìm kiếm
+  price_min: 750000  # Giá thấp nhất trong 30 ngày tới
+  price_max: 975000  # Giá cao nhất trong 30 ngày tới
+  price_currency: "VNĐ"
+  includes_breakfast: true
+  room_capacity_adults: 2
+  room_capacity_children: 0
+  has_real_time_inventory: true
 
-#### C. ROOM INVENTORY ENDPOINT: `GET /accommodation/rooms/inventories`
-**Essential Data Fields:**
-- Daily availability for next 30 days: date, price, available_quantity, status
-- Must support filtering by check-in/check-out dates
-- Must include price variations by date
-- Must show availability status per date
+### NGUYÊN TẮC:
+- Mỗi room detail phải chứa đầy đủ thông tin giá và tồn kho cho 30 ngày tiếp theo
+- Tên phòng phải chuẩn hóa để dễ tìm kiếm: "Senior Balcony City View" không phải "Senior Balcony City View room"
+- Luôn có metadata price_min/price_max để filter và sort
+```
 
-#### D. REVIEWS ENDPOINT: `GET /reviews?hotel-id={id}`
-**Essential Data Fields:**
-- Review statistics: total reviews, average score
-- Score distribution (9-10, 7-8, 5-6, 3-4, 1-2)
-- Recent reviews (without PII): comment snippets, scores
-- Review count by period (last 30 days)
+### PHẦN 2: CẢI TIẾN DỊCH VỤ XỬ LÝ DỮ LIỆU
 
-#### E. DISCOUNTS ENDPOINT: `GET /discounts?hotel-id={id}&currently-valid=true`
-**Essential Data Fields:**
-- Active discounts: code, description, percentage, min booking price/count
-- Valid date ranges
-- Usage limits and times used
-- Special day associations
+#### 2.1 KnowledgeBaseGenerationService.java
+```java
+// THAY ĐỔI BẮT BUỘC:
+- LOẠI BỎ HOÀN TOÀN VIỆC TÍNH TOÁN reference_min_price từ hotel data
+- SỬA ĐỔI buildHotelKB() để chỉ lấy thông tin từ room details khi cần
+- THÊM PHƯƠNG THỨC MỚI:
 
-#### F. AMENITIES ENDPOINT: `/amenity/amenities`
-**Essential Data Fields:**
-- All amenity types with categories
-- Free/paid status
-- Descriptions for user understanding
+/**
+ * Xây dựng room detail với giá thực theo ngày
+ * Đây là nguồn dữ liệu chính cho các câu hỏi về giá phòng
+ */
+public RoomKnowledgeBaseDto buildRoomKBWithRealTimePricing(Room room, Map<String, Double> dailyPrices) {
+    // ... logic chuẩn bị dữ liệu ...
+    
+    // Tính toán price_min và price_max từ dailyPrices
+    Double minPrice = dailyPrices.values().stream().min(Double::compare).orElse(0.0);
+    Double maxPrice = dailyPrices.values().stream().max(Double::compare).orElse(0.0);
+    
+    // Thêm vào DTO
+    dto.setPriceMin(minPrice);
+    dto.setPriceMax(maxPrice);
+    dto.setHasRealTimePricing(true);
+    
+    return dto;
+}
 
-#### G. POLICY ENDPOINTS
-**Essential Data Fields:**
-- Cancellation policy rules: days before check-in, penalty percentage
-- Reschedule policy rules: days before check-in, fee percentage
-- Hotel-specific vs. room-specific policy inheritance
+/**
+ * Xây dựng hotel profile với metadata về room details
+ * Hotel profile KHÔNG chứa giá cụ thể
+ */
+public HotelKnowledgeBaseDto buildHotelKBWithoutPricing(Hotel hotel, List<String> roomDetailSlugs) {
+    HotelKnowledgeBaseDto dto = buildBasicHotelKB(hotel);
+    
+    // Thêm metadata về room details
+    dto.setRoomDetailSlugs(roomDetailSlugs);
+    dto.setHasRealTimePricing(true);
+    
+    // Loại bỏ reference pricing
+    dto.setReferenceMinPrice(null);
+    dto.setReferenceMinPriceRoom(null);
+    
+    return dto;
+}
+```
 
-## STEP 2: TEMPLATE ENHANCEMENT REQUIREMENTS
+#### 2.2 KnowledgeBaseUploadService.java
+```java
+// THAY ĐỔI BẮT BUỘC:
+- PHÂN TÁCH QUY TRÌNH SINH FILE THÀNH 2 GIAI ĐOẠN:
+  1. Xử lý tất cả room details trước
+  2. Xử lý hotel profile sau khi đã có room detail slugs
 
-### A. UPDATE `template_hotel_profile.md`
+/**
+ * Sinh toàn bộ room detail files rồi mới sinh hotel profile
+ */
+public void generateAllRoomDetailsThenHotelProfile(Hotel hotel) throws IOException {
+    // 1. Lấy danh sách room detail slugs
+    List<String> roomDetailSlugs = new ArrayList<>();
+    
+    // 2. Xử lý từng room detail
+    for (Room room : hotel.getActiveRooms()) {
+        // Lấy giá hàng ngày từ API
+        Map<String, Double> dailyPrices = inventoryService.getDailyPricesForRoom(room.getId(), 30);
+        
+        // Xây dựng room DTO với giá thực
+        RoomKnowledgeBaseDto roomDto = knowledgeBaseService.buildRoomKBWithRealTimePricing(room, dailyPrices);
+        
+        // Upload room detail
+        String roomSlug = uploadService.generateAndUploadRoomDetail(roomDto);
+        roomDetailSlugs.add(roomSlug);
+        
+        log.info("✓ Uploaded room detail: {} → {}", room.getName(), roomSlug);
+    }
+    
+    // 3. Xử lý hotel profile SAU KHI CÓ DANH SÁCH ROOM DETAILS
+    HotelKnowledgeBaseDto hotelDto = knowledgeBaseService.buildHotelKBWithoutPricing(hotel, roomDetailSlugs);
+    uploadService.generateAndUploadHotelProfile(hotelDto);
+    
+    log.info("✓ Uploaded hotel profile: {} → {}", hotel.getName(), hotelDto.getSlug());
+}
+```
 
-#### 1. Enhanced YAML Frontmatter
+### PHẦN 3: CẢI TIẾN METADATA VÀ SEARCH OPTIMIZATION
+
+#### 3.1 Frontmatter Metadata Schema (Cập nhật)
 ```yaml
-# HOTEL DETAIL METADATA (from /accommodation/hotels/{id})
-hotel_detail:
-  description: "{{hotel_detail.description}}"  # Full description
-  star_rating: {{hotel_detail.star_rating}}
-  status: "{{hotel_detail.status}}"
-  commission_rate: {{hotel_detail.commission_rate}}
-  
-# POLICIES (from /accommodation/hotels/{id} and policy endpoints)
-policies:
-  check_in_time: "{{policies.check_in_time}}"
-  check_out_time: "{{policies.check_out_time}}"
-  allows_pay_at_hotel: {{policies.allows_pay_at_hotel}}
-  cancellation_policy:
-    name: "{{policies.cancellation_policy.name}}"
-    rules:
-      {{#policies.cancellation_policy.rules}}
-      - days_before_checkin: {{days_before_checkin}}
-        penalty_percentage: {{penalty_percentage}}
-        description: "{{description}}"
-      {{/policies.cancellation_policy.rules}}
-  reschedule_policy:
-    name: "{{policies.reschedule_policy.name}}"
-    rules:
-      {{#policies.reschedule_policy.rules}}
-      - days_before_checkin: {{days_before_checkin}}
-        fee_percentage: {{fee_percentage}}
-        description: "{{description}}"
-      {{/policies.reschedule_policy.rules}}
-  
-# REVIEWS METADATA (from /reviews endpoint)
-reviews_summary:
-  total_reviews: {{reviews_summary.total_reviews}}
-  average_score: {{reviews_summary.average_score}}
-  score_distribution:
-    {{#reviews_summary.score_distribution}}
-    - bucket: "{{bucket}}"
-      count: {{count}}
-    {{/reviews_summary.score_distribution}}
-  recent_reviews:
-    {{#reviews_summary.recent_reviews}}
-    - score: {{score}}
-      comment_snippet: "{{comment_snippet}}"
-      date: "{{date}}"
-    {{/reviews_summary.recent_reviews}}
-  
-# ACTIVE DISCOUNTS (from /discounts endpoint)
-active_discounts:
-  {{#active_discounts}}
-  - code: "{{code}}"
-    description: "{{description}}"
-    percentage: {{percentage}}
-    min_booking_price: {{min_booking_price}}
-    valid_from: "{{valid_from}}"
-    valid_to: "{{valid_to}}"
-    usage_limit: {{usage_limit}}
-    times_used: {{times_used}}
-  {{/active_discounts}}
-  
-# ENTERTAINMENT VENUES (from /accommodation/hotels/{id})
-nearby_attractions:
-  {{#nearby_attractions}}
-  - name: "{{name}}"
-    category: "{{category}}"
-    distance: "{{distance}}"
-    description: "{{description}}"
-  {{/nearby_attractions}}
-  
-# HOTEL AMENITIES WITH CATEGORIES (from /accommodation/hotels/{id} and /amenity/amenities)
-hotel_amenities_by_category:
-  {{#hotel_amenities_by_category}}
-  - category: "{{category}}"
-    amenities:
-      {{#amenities}}
-      - name: "{{name}}"
-        free: {{free}}
-        description: "{{description}}"
-      {{/amenities}}
-  {{/hotel_amenities_by_category}}
+# ==== METADATA BẮT BUỘC CHO SEARCH VÀ FILTER ====
+search_keywords:
+  - "Senior Balcony City View"
+  - "phòng hướng thành phố"
+  - "giường đôi hướng thành phố"
+  - "phòng cao cấp hướng thành phố"
+
+semantic_tags:
+  - "city_view"
+  - "balcony"
+  - "premium_room"
+  - "couple_friendly"
+
+price_range:
+  min: 750000
+  max: 975000
+  currency: "VNĐ"
+
+# ==== METADATA CHO FILTER THEO LOẠI CÂU HỎI ====
+question_types:
+  - "price_inquiry"
+  - "availability_check"
+  - "room_specification"
+  - "policy_info"
 ```
 
-#### 2. Body Content Enhancements
-- Add detailed "📋 Chính Sách Khách Sạn" section with full cancellation/reschedule rules
-- Add "🎁 Khuyến Mãi Đang Có" section listing active discounts
-- Add "⭐ Đánh Giá Khách Hàng" section with score distribution and recent review snippets
-- Add "🎯 Tiện Ích Theo Danh Mục" section organizing amenities by categories
-- Add "📍 Địa Điểm Lân Cận Chi Tiết" with categorized entertainment venues
-
-### B. UPDATE `template_room_detail.md`
-
-#### 1. Enhanced YAML Frontmatter
-```yaml
-# ROOM DETAIL METADATA (from /accommodation/rooms/{id})
-room_detail:
-  description: "{{room_detail.description}}"
-  area_sqm: {{room_detail.area_sqm}}
-  bed_type: "{{room_detail.bed_type}}"
-  status: "{{room_detail.status}}"
-  
-# ROOM-SPECIFIC POLICIES (from room detail, falling back to hotel policies)
-room_policies:
-  smoking_allowed: {{room_policies.smoking_allowed}}
-  wifi_available: {{room_policies.wifi_available}}
-  breakfast_included: {{room_policies.breakfast_included}}
-  cancellation_policy:
-    {{#room_policies.cancellation_policy}}
-    name: "{{name}}"
-    inherited: {{inherited}}
-    rules:
-      {{#rules}}
-      - days_before_checkin: {{days_before_checkin}}
-        penalty_percentage: {{penalty_percentage}}
-      {{/rules}}
-    {{/room_policies.cancellation_policy}}
-  reschedule_policy:
-    {{#room_policies.reschedule_policy}}
-    name: "{{name}}"
-    inherited: {{inherited}}
-    rules:
-      {{#rules}}
-      - days_before_checkin: {{days_before_checkin}}
-        fee_percentage: {{fee_percentage}}
-      {{/rules}}
-    {{/room_policies.reschedule_policy}}
-
-# DAILY INVENTORY FOR NEXT 30 DAYS (from /accommodation/rooms/inventories)
-inventory_calendar:
-  {{#inventory_calendar}}
-  - date: "{{date}}"
-    price: {{price}}
-    available_rooms: {{available_rooms}}
-    status: "{{status}}"
-    is_weekend: {{is_weekend}}
-    is_holiday: {{is_holiday}}
-  {{/inventory_calendar}}
-  
-# PRICE ANALYTICS
-price_analytics:
-  min_price_next_30_days: {{price_analytics.min_price_next_30_days}}
-  max_price_next_30_days: {{price_analytics.max_price_next_30_days}}
-  avg_price_next_30_days: {{price_analytics.avg_price_next_30_days}}
-  price_volatility: "{{price_analytics.price_volatility}}"  # low/medium/high
-  weekend_price_multiplier: {{price_analytics.weekend_price_multiplier}}
-  
-# ROOM AMENITIES WITH DETAILS (from room detail and amenities endpoint)
-room_amenities_detailed:
-  {{#room_amenities_detailed}}
-  - name: "{{name}}"
-    category: "{{category}}"
-    free: {{free}}
-    description: "{{description}}"
-    icon: "{{icon}}"
-  {{/room_amenities_detailed}}
-```
-
-#### 2. Body Content Enhancements
-- Add "📅 Lịch Tồn Kho & Giá" section showing availability and price variations
-- Add "💰 Phân Tích Giá" section explaining price patterns (weekend surges, holiday pricing)
-- Add "📋 Chính Sách Phòng Chi Tiết" with room-specific cancellation/reschedule rules
-- Add "✨ Tiện Nghi Chi Tiết" with categorized room amenities and descriptions
-- Add "📊 Khả Năng Còn Phòng" section explaining booking likelihood based on current inventory
-
-## STEP 3: BACKEND CODE CHANGES
-
-### A. Extend DTOs
+#### 3.2 KnowledgeBaseDataService.java (Thêm phương thức)
 ```java
-// HotelKnowledgeBaseDto.java - Add these fields
-private HotelDetailDto hotelDetail;
-private PolicySummaryDto policies;
-private ReviewSummaryDto reviewsSummary;
-private List<ActiveDiscountDto> activeDiscounts;
-private List<NearbyAttractionDto> nearbyAttractions;
-private List<AmenityCategoryDto> hotelAmenitiesByCategory;
-
-// RoomKnowledgeBaseDto.java - Add these fields
-private RoomDetailDto roomDetail;
-private RoomPolicyDto roomPolicies;
-private List<RoomInventoryDto> inventoryCalendar;
-private PriceAnalyticsDto priceAnalytics;
-private List<DetailedAmenityDto> roomAmenitiesDetailed;
+/**
+ * Xây dựng metadata cho search optimization
+ * Tạo semantic_tags và search_keywords để Pinecone có thể filter chính xác
+ */
+public Map<String, Object> buildSearchOptimizationMetadata(RoomKnowledgeBaseDto roomDto) {
+    Map<String, Object> metadata = new HashMap<>();
+    
+    // Semantic tags dựa trên đặc điểm phòng
+    List<String> semanticTags = new ArrayList<>();
+    if (roomDto.getView().contains("biển") || roomDto.getView().contains("ocean")) {
+        semanticTags.add("ocean_view");
+        semanticTags.add("sea_view");
+    }
+    if (roomDto.getRoomAmenityTags().contains("balcony")) {
+        semanticTags.add("balcony");
+    }
+    if (roomDto.getAreaSqm() > 30) {
+        semanticTags.add("spacious");
+    }
+    if (roomDto.getMaxAdults() >= 2) {
+        semanticTags.add("couple_friendly");
+    }
+    
+    // Search keywords
+    List<String> searchKeywords = new ArrayList<>();
+    searchKeywords.add(roomDto.getRoomName());
+    searchKeywords.add(normalizeForSearch(roomDto.getRoomName())); // Loại bỏ dấu, viết thường
+    searchKeywords.add(roomDto.getRoomType() + " " + roomDto.getView()); // "deluxe city view"
+    
+    metadata.put("semantic_tags", semanticTags);
+    metadata.put("search_keywords", searchKeywords);
+    metadata.put("price_range", Map.of(
+        "min", roomDto.getPriceMin(),
+        "max", roomDto.getPriceMax(),
+        "currency", "VNĐ"
+    ));
+    metadata.put("question_types", Arrays.asList("price_inquiry", "availability_check", "room_specification"));
+    
+    return metadata;
+}
 ```
 
-### B. Update Service Layer
+### PHẦN 4: TÁI CẤU TRÚC DỮ LIỆU CHO RAG OPTIMIZATION
+
+#### 4.1 Chunking Strategy (Thay đổi hoàn toàn)
 ```java
-// KnowledgeBaseGenerationService.java - New methods
-public HotelDetailDto fetchHotelDetail(String hotelId) {
-    // Call /accommodation/hotels/{id} endpoint
-}
-
-public PolicySummaryDto fetchHotelPolicies(String hotelId) {
-    // Call policy endpoints and aggregate
-}
-
-public ReviewSummaryDto fetchHotelReviews(String hotelId) {
-    // Call /reviews?hotel-id={id} endpoint
-}
-
-public List<ActiveDiscountDto> fetchActiveDiscounts(String hotelId) {
-    // Call /discounts?hotel-id={id}&currently-valid=true endpoint
-}
-
-public RoomDetailDto fetchRoomDetail(String roomId) {
-    // Call /accommodation/rooms/{id} endpoint
-}
-
-public List<RoomInventoryDto> fetchRoomInventories(String roomId, LocalDate startDate, LocalDate endDate) {
-    // Call /accommodation/rooms/inventories endpoint
+/**
+ * Chia document thành các chunk có ngữ cảnh đầy đủ
+ * Mỗi chunk phải chứa đủ thông tin để trả lời một loại câu hỏi cụ thể
+ */
+public List<Chunk> createSemanticChunks(RoomKnowledgeBaseDto dto) {
+    List<Chunk> chunks = new ArrayList<>();
+    
+    // Chunk 1: Price & Availability - dành riêng cho câu hỏi về giá
+    Chunk priceChunk = new Chunk();
+    priceChunk.setContent(buildPriceAvailabilityContent(dto)); 
+    priceChunk.setMetadata(Map.of(
+        "doc_type", "room_price_availability",
+        "room_id", dto.getRoomId(),
+        "hotel_id", dto.getParentHotelId(),
+        "price_min", dto.getPriceMin(),
+        "price_max", dto.getPriceMax()
+    ));
+    
+    // Chunk 2: Room Specifications - dành riêng cho câu hỏi về đặc điểm phòng
+    Chunk specChunk = new Chunk();
+    specChunk.setContent(buildRoomSpecificationsContent(dto));
+    specChunk.setMetadata(Map.of(
+        "doc_type", "room_specifications",
+        "room_id", dto.getRoomId(),
+        "has_balcony", dto.getHasBalcony(),
+        "has_ocean_view", dto.getView().contains("biển") || dto.getView().contains("ocean")
+    ));
+    
+    // Chunk 3: Policies - dành riêng cho câu hỏi về chính sách
+    Chunk policyChunk = new Chunk();
+    policyChunk.setContent(buildRoomPoliciesContent(dto));
+    policyChunk.setMetadata(Map.of(
+        "doc_type", "room_policies",
+        "room_id", dto.getRoomId(),
+        "cancellation_policy", dto.getCancellationPolicy()
+    ));
+    
+    chunks.add(priceChunk);
+    chunks.add(specChunk);
+    chunks.add(policyChunk);
+    
+    return chunks;
 }
 ```
 
-### C. Extend Template Context Building
+#### 4.2 Content Generation Rules
 ```java
-// buildTemplateContext() - Add policy details
-ctx.put("policies", Map.of(
-    "check_in_time", hotel.getPolicies().getCheckInTime(),
-    "check_out_time", hotel.getPolicies().getCheckOutTime(),
-    "allows_pay_at_hotel", hotel.getPolicies().isAllowsPayAtHotel(),
-    "cancellation_policy", buildCancellationPolicyContext(hotel.getPolicies().getCancellationPolicy()),
-    "reschedule_policy", buildReschedulePolicyContext(hotel.getPolicies().getReschedulePolicy())
-));
-
-// buildRoomTemplateContext() - Add inventory calendar
-ctx.put("inventory_calendar", room.getInventoryCalendar().stream()
-    .map(inv -> Map.of(
-        "date", inv.getDate().format(DateTimeFormatter.ISO_LOCAL_DATE),
-        "price", inv.getPrice(),
-        "available_rooms", inv.getAvailableRooms(),
-        "status", inv.getStatus(),
-        "is_weekend", isWeekend(inv.getDate()),
-        "is_holiday", isHoliday(inv.getDate())
-    ))
-    .collect(Collectors.toList()));
+// NGUYÊN TẮC CHO CONTENT:
+/**
+ * Đối với chunk price & availability:
+ * - LUÔN BẮT ĐẦU VỚI: "Giá phòng [tên phòng] tại [tên khách sạn] vào ngày [ngày]"
+ * - CHỈ CHỨA THÔNG TIN VỀ GIÁ VÀ TỒN KHO
+ * - KHÔNG CHỨA THÔNG TIN VỀ TIỆN NGHI, CHÍNH SÁCH
+ * 
+ * Đối với chunk room specifications:
+ * - LUÔN BẮT ĐẦU VỚI: "[tên phòng] là hạng phòng [loại phòng] tại [tên khách sạn]"
+ * - CHỈ CHỨA THÔNG TIN VỀ DIỆN TÍCH, GIƯỜNG, VIEW, TIỆN NGHI
+ * - KHÔNG CHỨA THÔNG TIN VỀ GIÁ CẢ
+ * 
+ * Đối với chunk policies:
+ * - LUÔN BẮT ĐẦU VỚI: "Chính sách đặt phòng cho [tên phòng] tại [tên khách sạn]"
+ * - CHỈ CHỨA THÔNG TIN VỀ HỦY PHÒNG, THAY ĐỔI, THANH TOÁN
+ * - KHÔNG CHỨA THÔNG TIN VỀ GIÁ CẢ
+ */
 ```
 
-## STEP 4: CHATBOT CAPABILITIES REQUIREMENTS
+### PHẦN 5: TÍCH HỢP VỚI HỆ THỐNG TÌM KIẾM
 
-After these enhancements, the chatbot MUST be able to respond to complex queries combining data from multiple endpoints:
+#### 5.1 SearchService.java (Thêm phương thức)
+```java
+/**
+ * Tìm kiếm thông tin dựa trên loại câu hỏi
+ * Đây là phương thức QUAN TRỌNG NHẤT để đảm bảo trả lời đúng
+ */
+public SearchResults searchByQuestionType(String question, String hotelId, String roomType) {
+    // 1. Phân loại câu hỏi
+    QuestionType questionType = questionClassifier.classifyQuestion(question);
+    
+    // 2. Xác định loại document cần tìm kiếm
+    String docType = getDocTypeByQuestionType(questionType);
+    
+    // 3. Tạo filter dựa trên hotelId và roomType
+    Map<String, Object> filter = new HashMap<>();
+    filter.put("hotel_id", hotelId);
+    filter.put("doc_type", docType);
+    
+    if (roomType != null) {
+        filter.put("room_type_for_search", roomType);
+    }
+    
+    // 4. Thực hiện tìm kiếm với filter
+    return vectorDBService.search(question, filter, 3);
+}
 
-1. **Pricing + Availability Queries:**  
-   "What's the price for a room with ocean view at Grand Mercure Danang from July 1-5 for 2 adults?"  
-   → Requires room inventory data + room details + hotel details
+/**
+ * Ánh xạ loại câu hỏi sang loại document
+ */
+private String getDocTypeByQuestionType(QuestionType type) {
+    switch(type) {
+        case PRICE_INQUIRY:
+        case AVAILABILITY_CHECK:
+            return "room_price_availability";
+        case ROOM_SPECIFICATION:
+            return "room_specifications";
+        case POLICY_INFO:
+            return "room_policies";
+        default:
+            return "hotel_general_info";
+    }
+}
+```
 
-2. **Policy + Discount Queries:**  
-   "Can I cancel a booking with the 'Early Bird Discount' if I cancel 2 days before check-in?"  
-   → Requires policy rules + discount details
+#### 5.2 QuestionClassifier.java (Thêm vào hệ thống)
+```java
+@Service
+public class QuestionClassifier {
+    
+    public QuestionType classifyQuestion(String question) {
+        String normalized = question.toLowerCase().trim();
+        
+        // Rule 1: Phân loại câu hỏi về giá
+        if (containsPriceKeywords(normalized)) {
+            return QuestionType.PRICE_INQUIRY;
+        }
+        
+        // Rule 2: Phân loại câu hỏi về tồn kho
+        if (containsAvailabilityKeywords(normalized)) {
+            return QuestionType.AVAILABILITY_CHECK;
+        }
+        
+        // Rule 3: Phân loại câu hỏi về đặc điểm phòng
+        if (containsRoomSpecKeywords(normalized)) {
+            return QuestionType.ROOM_SPECIFICATION;
+        }
+        
+        // Rule 4: Phân loại câu hỏi về chính sách
+        if (containsPolicyKeywords(normalized)) {
+            return QuestionType.POLICY_INFO;
+        }
+        
+        return QuestionType.GENERAL_INFO;
+    }
+    
+    private boolean containsPriceKeywords(String text) {
+        return text.contains("giá") || text.contains("bao nhiêu") || text.contains("mấy tiền") || 
+               text.contains("price") || text.contains("cost") || text.contains("pay");
+    }
+    
+    // ... các phương thức tương tự cho các loại keyword khác
+}
+```
 
-3. **Review-Based Queries:**  
-   "What do guests say about the breakfast at this hotel?"  
-   → Requires review data + hotel amenities
+### PHẦN 6: TEST CASES BẮT BUỘC
 
-4. **Complex Filter Queries:**  
-   "Show me family-friendly hotels in Da Nang with a pool and free cancellation"  
-   → Requires hotel details + amenities + policies + location data
+#### 6.1 Test Case cho Giá Phòng
+```java
+@Test
+void shouldReturnRealPriceForSpecificRoomType() {
+    // Given
+    String question = "Giá phòng Senior Balcony City View hôm nay là bao nhiêu?";
+    String hotelId = "4b2d0a2d-cc1f-4030-8c07-5fa09b8229cf";
+    String roomType = "Senior Balcony City View";
+    
+    // When
+    SearchResults results = searchService.searchByQuestionType(question, hotelId, roomType);
+    
+    // Then
+    assertTrue(results.getMatches().size() > 0, "Phải có kết quả tìm kiếm");
+    
+    // Kiểm tra metadata của kết quả
+    Map<String, Object> metadata = results.getMatches().get(0).getMetadata();
+    assertEquals("room_price_availability", metadata.get("doc_type"), 
+        "Phải trả về chunk price availability");
+    
+    // Kiểm tra nội dung có chứa giá cụ thể
+    String content = results.getMatches().get(0).getContent();
+    assertTrue(content.contains("975000"), "Phải chứa giá thực tế 975.000 VNĐ");
+    assertTrue(content.contains("29/11/2025"), "Phải chứa ngày cụ thể");
+}
+```
 
-5. **Booking Simulation Queries:**  
-   "If I book 2 rooms for 4 adults from July 10-15, what would be the total price with all applicable discounts?"  
-   → Requires inventory data + pricing + discounts + room specifications
+#### 6.2 Test Case cho Thông Tin Phòng
+```java
+@Test
+void shouldReturnRoomSpecificationsForRoomType() {
+    // Given
+    String question = "Senior Balcony City View có diện tích bao nhiêu?";
+    String hotelId = "4b2d0a2d-cc1f-4030-8c07-5fa09b8229cf";
+    String roomType = "Senior Balcony City View";
+    
+    // When
+    SearchResults results = searchService.searchByQuestionType(question, hotelId, roomType);
+    
+    // Then
+    assertTrue(results.getMatches().size() > 0);
+    
+    Map<String, Object> metadata = results.getMatches().get(0).getMetadata();
+    assertEquals("room_specifications", metadata.get("doc_type"), 
+        "Phải trả về chunk specifications");
+    
+    String content = results.getMatches().get(0).getContent();
+    assertTrue(content.contains("25.0m²"), "Phải chứa diện tích phòng");
+    assertTrue(content.contains("Hướng thành phố"), "Phải chứa thông tin view");
+}
+```
 
-## STEP 5: QUALITY ASSURANCE REQUIREMENTS
+### PHẦN 7: LOGGING VÀ DEBUGGING
 
-### Validation Tests
-For each hotel and room in the system, validate that:
-1. All required metadata fields from API endpoints are present in the YAML frontmatter
-2. No sensitive PII data is included in the Knowledge Base files
-3. Date formats follow ISO standards (YYYY-MM-DD)
-4. Price values are accurate and include currency
-5. Policy rules match exactly what's returned by API endpoints
-6. Inventory data covers exactly the next 30 days from generation date
-7. All URLs (photos, etc.) are properly escaped and functional
+#### 7.1 Thêm Logging Chi Tiết
+```java
+@Service
+@Slf4j
+public class KnowledgeBaseGenerationService {
+    
+    public String generateAndUploadRoomDetail(RoomKnowledgeBaseDto dto) {
+        // ... code processing ...
+        
+        log.info("🏠 [ROOM DETAIL] Generated room detail: {}", dto.getRoomName());
+        log.info("📊 [PRICING] Price range: {} - {} VNĐ", dto.getPriceMin(), dto.getPriceMax());
+        log.info("🏷️ [METADATA] Semantic tags: {}", dto.getSemanticTags());
+        log.info("🔍 [SEARCH] Search keywords: {}", dto.getSearchKeywords());
+        log.info("🆔 [IDENTITY] Room ID: {}, Hotel ID: {}", dto.getRoomId(), dto.getParentHotelId());
+        
+        // ... upload to S3 ...
+    }
+}
 
-### Performance Requirements
-1. Template generation must complete within 2 seconds per hotel
-2. Room inventory data must be fetched efficiently using batch queries
-3. Must handle hotels with 100+ rooms without timeout
-4. Must implement caching for static data (amenities, policy rules)
+@Service
+@Slf4j
+public class SearchService {
+    
+    public SearchResults searchByQuestionType(String question, String hotelId, String roomType) {
+        QuestionType questionType = questionClassifier.classifyQuestion(question);
+        
+        log.info("❓ [QUERY] User question: '{}'", question);
+        log.info("🎯 [CLASSIFICATION] Question type: {}", questionType);
+        log.info("🏨 [FILTER] Hotel ID: {}, Room type: {}", hotelId, roomType);
+        
+        Map<String, Object> filter = buildFilter(questionType, hotelId, roomType);
+        log.info("📋 [FILTER DETAILS] Applied filter: {}", filter);
+        
+        SearchResults results = vectorDBService.search(question, filter, 3);
+        
+        log.info("✅ [RESULTS] Found {} matches", results.getMatches().size());
+        results.getMatches().forEach(match -> {
+            log.info("   • Score: {}, Doc type: {}, Room type: {}", 
+                match.getScore(), 
+                match.getMetadata().get("doc_type"),
+                match.getMetadata().get("room_type_for_search"));
+        });
+        
+        return results;
+    }
+}
+```
 
-## CRITICAL IMPLEMENTATION NOTES
-1. **Data Freshness:** Inventory data must be regenerated daily; static data (descriptions, policies) can be updated less frequently
-2. **Security:** Never include sensitive fields like commission rates in public-facing templates
-3. **Backward Compatibility:** Preserve existing template structure while adding new fields
-4. **Error Handling:** If a specific endpoint fails, log the error but continue generating the template with available data
-5. **Localization:** All content must be in Vietnamese but metadata keys must be in English for AI processing
+### PHẦN 8: BACKWARD COMPATIBILITY
 
-## FINAL DELIVERABLE REQUIREMENTS
-1. Updated `template_hotel_profile.md` containing data from ALL required hotel endpoints
-2. Updated `template_room_detail.md` containing data from ALL required room endpoints
-3. Backend service modifications to fetch and transform data from all endpoints
-4. S3 upload logic that maintains the correct file structure
-5. Comprehensive unit tests validating data accuracy across all endpoints
+#### 8.1 Cơ Chế Migrate Dần
+```java
+/**
+ * Strategy migration: 
+ * 1. Trong 1 tuần: Chạy song song hệ thống cũ và mới
+ * 2. Week 2: 70% traffic dùng hệ thống mới
+ * 3. Week 3: 100% traffic dùng hệ thống mới
+ * 4. Week 4: Xóa hoàn toàn code cũ
+ */
+@Component
+public class KnowledgeBaseMigrationStrategy {
+    
+    @Value("${kb.migration.new-system-percentage:0}")
+    private int newSystemPercentage;
+    
+    public SearchResults searchWithMigrationStrategy(String question, String hotelId, String roomType) {
+        // Random quyết định dùng hệ thống mới hay cũ
+        boolean useNewSystem = new Random().nextInt(100) < newSystemPercentage;
+        
+        if (useNewSystem) {
+            log.info("🚀 [MIGRATION] Using NEW search system");
+            return newSearchService.searchByQuestionType(question, hotelId, roomType);
+        } else {
+            log.info("🔄 [MIGRATION] Using OLD search system");
+            return oldSearchService.search(question, hotelId);
+        }
+    }
+}
+```
+
+## 🚀 KẾ HOẠCH THỰC HIỆN VÀ TEST
+
+### BƯỚC 1: Refactor Template và DTOs
+- [ ] Cập nhật `template_hotel_profile.md` theo yêu cầu
+- [ ] Cập nhật `template_room_detail.md` theo yêu cầu
+- [ ] Thêm các field mới vào `HotelKnowledgeBaseDto` và `RoomKnowledgeBaseDto`
+
+### BƯỚC 2: Refactor Services
+- [ ] Implement `QuestionClassifier`
+- [ ] Cập nhật `KnowledgeBaseGenerationService` với các phương thức mới
+- [ ] Cập nhật `KnowledgeBaseUploadService` với quy trình xử lý mới
+- [ ] Implement `SearchService` với lọc theo loại câu hỏi
+
+### BƯỚC 3: Implement Chunking Mới
+- [ ] Implement `SemanticChunker` để tạo chunks có ngữ cảnh đầy đủ
+- [ ] Đảm bảo mỗi chunk chỉ tập trung vào một loại thông tin
+
+### BƯỚC 4: Testing Toàn Diện
+- [ ] Test unit cho tất cả các phương thức mới
+- [ ] Test integration với Pinecone
+- [ ] Test end-to-end với các câu hỏi thực tế:
+  - "Giá phòng Senior Balcony City View hôm nay?"
+  - "Senior Balcony City View có view biển không?"
+  - "Chính sách hủy phòng cho Senior Balcony City View?"
+
+### BƯỚC 5: Monitoring và Logging
+- [ ] Cấu hình logging chi tiết cho search
+- [ ] Thêm metrics để track tỷ lệ thành công của search
+- [ ] Cài đặt alert khi tỷ lệ tìm kiếm thất bại > 5%
+
+## ⚠️ LƯU Ý QUAN TRỌNG
+1. **KHÔNG ĐƯỢC PHÉP** để hotel profile chứa giá tham khảo "0 VNĐ"
+2. **BẮT BUỘC** phải có price_min và price_max trong room detail metadata
+3. Mỗi chunk phải có **một và chỉ một** mục đích (price, specs, policies)
+4. Phải implement `QuestionClassifier` trước khi refactor search
+5. Phải test kỹ với các câu hỏi thực tế của người dùng Vietnam trước khi deploy
+
+## 📌 TIÊU CHÍ THÀNH CÔNG
+- [ ] Chatbot trả lời đúng 95% các câu hỏi về giá phòng
+- [ ] Thời gian tìm kiếm < 500ms
+- [ ] Không còn trường hợp "Tôi không biết" cho các câu hỏi có trong cơ sở tri thức
+- [ ] Logging đủ chi tiết để debug khi có sự cố
+- [ ] Hệ thống có backward compatibility trong 4 tuần
+
+Hãy thực hiện refactor theo đúng thứ tự và nguyên tắc trên. Khi hoàn thành, chatbot sẽ **luôn luôn** tìm thấy thông tin giá phòng và các thông tin chi tiết khác từ cơ sở tri thức một cách chính xác.

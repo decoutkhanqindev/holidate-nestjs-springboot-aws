@@ -5,34 +5,34 @@
 
 # === DOCUMENT IDENTIFICATION ===
 doc_type: "room_detail"
-doc_id: "2d708a42-898b-4866-8c78-f203db0949ca"  # Source: curl_step_3 -> data.id (GET /accommodation/rooms/{ROOM_ID})
-slug: "deluxe-without-balcony-city-view-golden-hotel-nha-trang"  # Source: Generated from curl_step_3 -> data.name + hotel.name
-parent_hotel_slug: "golden-hotel-nha-trang"  # Source: Generated from curl_step_2.1 -> data.name
-parent_hotel_id: "4b2d0a2d-cc1f-4030-8c07-5fa09b8229cf"  # Source: curl_step_3 -> data.hotel.id
-last_updated: "2025-11-29T10:09:13.8246342Z"  # Source: curl_step_3 -> data.updatedAt (fallback to createdAt if null)
+doc_id: "2d708a42-898b-4866-8c78-f203db0949ca"
+slug: "deluxe-without-balcony-city-view-golden-hotel-nha-trang"
+parent_hotel_slug: "golden-hotel-nha-trang"
+parent_hotel_id: "4b2d0a2d-cc1f-4030-8c07-5fa09b8229cf"
+last_updated: "2025-11-29T10:25:19.0199975Z"
 language: "vi"
 
 # === LOCATION (INHERITED FROM HOTEL) ===
 location:
-  country: "viet-nam"  # Source: curl_step_3 -> data.hotel.country.name
-  city: "thanh-pho-nha-trang"  # Source: curl_step_3 -> data.hotel.city.name
-  district: "thanh-pho-nha-trang"  # Source: curl_step_3 -> data.hotel.district.name
-  hotel_name: "Golden Hotel Nha Trang"  # Source: curl_step_3 -> data.hotel.name
+  country: "viet-nam"
+  city: "thanh-pho-nha-trang"
+  district: "thanh-pho-nha-trang"
+  hotel_name: "Golden Hotel Nha Trang"
 
 # === ROOM CLASSIFICATION ===
-room_id: "2d708a42-898b-4866-8c78-f203db0949ca"  # Source: curl_step_3 -> data.id
-room_name: "Deluxe Without Balcony City View"  # Source: curl_step_3 -> data.name (Vietnamese, e.g., "Premier Deluxe Triple")
+room_id: "2d708a42-898b-4866-8c78-f203db0949ca"
+room_name: "Deluxe Without Balcony City View"
 room_type: "deluxe"  # INFERRED from curl_step_3 -> data.name using inferRoomType() logic
 room_category: "double"  # INFERRED from curl_step_3 -> data.maxAdults + maxChildren using inferRoomCategory() logic
 
 # === ROOM SPECIFICATIONS ===
-# Source: curl_step_3 -> data (GET /accommodation/rooms/{ROOM_ID})
-bed_type: "2 giường đơn"  # Source: curl_step_3 -> data.bedType.name (Vietnamese, e.g., "2 giường đơn")
-bed_type_id: "78efbc97-a067-11f0-a7b7-0a6aab4924ab"  # Source: curl_step_3 -> data.bedType.id
-max_adults: 2  # Source: curl_step_3 -> data.maxAdults
-max_children: 0  # Source: curl_step_3 -> data.maxChildren
-area_sqm: 32.0  # Source: curl_step_3 -> data.area
-view: "Hướng thành phố"  # Source: curl_step_3 -> data.view (Vietnamese, e.g., "Hướng biển, Nhìn ra thành phố")
+
+bed_type: "2 giường đơn"
+bed_type_id: "78efbc97-a067-11f0-a7b7-0a6aab4924ab"
+max_adults: 2
+max_children: 0
+area_sqm: 32.0
+view: "Hướng thành phố"
 floor_range: ""  # Optional: Not in API response, default null
 
 # === THÔNG SỐ KỸ THUẬT CHI TIẾT ===
@@ -42,7 +42,7 @@ specs:
   has_window: true  # Boolean
   view_type: "city"  # Enum: "ocean", "city", "mountain", "no_view"
   bed_configuration:
-    - type: "single"  # Ví dụ: "single", "double", "king"
+    - type: "single"
       count: 2  # Integer
 
 # === GIÁ CẢ & TỒN KHO CHI TIẾT ===
@@ -52,41 +52,40 @@ pricing:
   holiday_surcharge_percent: 0.0  # % phụ thu ngày lễ
 
 # === ROOM FEATURES ===
-# Source: curl_step_3 -> data.amenities[] -> amenity.name (Vietnamese)
+
 # Mapped to English via AmenityMappingService using curl_step_2.5 (all amenities) as reference
 room_amenity_tags:
-  - "air_conditioning"  # Source: curl_step_3 -> data.amenities[].amenities[].name -> mapped to English (e.g., "microwave", "refrigerator", "air_conditioning")
-  - "free_bottled_water"  # Source: curl_step_3 -> data.amenities[].amenities[].name -> mapped to English (e.g., "microwave", "refrigerator", "air_conditioning")
-  - "hot_water"  # Source: curl_step_3 -> data.amenities[].amenities[].name -> mapped to English (e.g., "microwave", "refrigerator", "air_conditioning")
-  - "minibar"  # Source: curl_step_3 -> data.amenities[].amenities[].name -> mapped to English (e.g., "microwave", "refrigerator", "air_conditioning")
-  - "private_bathroom"  # Source: curl_step_3 -> data.amenities[].amenities[].name -> mapped to English (e.g., "microwave", "refrigerator", "air_conditioning")
-  - "safe_box"  # Source: curl_step_3 -> data.amenities[].amenities[].name -> mapped to English (e.g., "microwave", "refrigerator", "air_conditioning")
-  - "standing_shower"  # Source: curl_step_3 -> data.amenities[].amenities[].name -> mapped to English (e.g., "microwave", "refrigerator", "air_conditioning")
-  - "toiletries"  # Source: curl_step_3 -> data.amenities[].amenities[].name -> mapped to English (e.g., "microwave", "refrigerator", "air_conditioning")
-  - "tv"  # Source: curl_step_3 -> data.amenities[].amenities[].name -> mapped to English (e.g., "microwave", "refrigerator", "air_conditioning")
-  - "work_desk"  # Source: curl_step_3 -> data.amenities[].amenities[].name -> mapped to English (e.g., "microwave", "refrigerator", "air_conditioning")
+  - "air_conditioning"
+  - "free_bottled_water"
+  - "hot_water"
+  - "minibar"
+  - "private_bathroom"
+  - "safe_box"
+  - "standing_shower"
+  - "toiletries"
+  - "tv"
+  - "work_desk"
 
 # === ROOM POLICIES ===
-# Source: curl_step_3 -> data (room-level) OR curl_step_2.1 -> data.policy (hotel-level inheritance)
-smoking_allowed: false  # Source: curl_step_3 -> data.smokingAllowed
-wifi_available: true  # Source: curl_step_3 -> data.wifiAvailable
-breakfast_included: true  # Source: curl_step_3 -> data.breakfastIncluded
-cancellation_policy: "Chính sách tiêu chuẩn"  # Source: curl_step_3 -> data.cancellationPolicy.name OR curl_step_2.1 -> data.policy.cancellationPolicy.name (inherit)
-reschedule_policy: "Chính sách tiêu chuẩn"  # Source: curl_step_3 -> data.reschedulePolicy.name OR curl_step_2.1 -> data.policy.reschedulePolicy.name (inherit)
+
+smoking_allowed: false
+wifi_available: true
+breakfast_included: true
+cancellation_policy: "Chính sách tiêu chuẩn"
+reschedule_policy: "Chính sách tiêu chuẩn"
 
 # === INVENTORY INFO (STATIC) ===
-# Source: curl_step_3 -> data
-quantity: 10  # Source: curl_step_3 -> data.totalRooms
-status: "active"  # Source: curl_step_3 -> data.status
+
+quantity: 10
+status: "active"
 
 # === PRICING INFO (STATIC REFERENCE) ===
-# Source: curl_step_3 -> data
-base_price: 750000  # Source: curl_step_3 -> data.basePricePerNight (VNĐ/night, BASE price, not dynamic)
-current_price:   # Source: curl_step_3 -> data.currentPricePerNight (may differ from base_price if discount applied)
+
+base_price: 750000
 price_note: "Giá có thể thay đổi theo ngày trong tuần, mùa cao điểm và tình trạng phòng trống"  # Template string: "Giá có thể thay đổi theo ngày trong tuần, mùa cao điểm và tình trạng phòng trống"
 
 # === ENHANCED: DAILY INVENTORY CALENDAR (NEXT 30 DAYS) ===
-# Source: /accommodation/rooms/inventories?room-id={id} endpoint
+
 inventory_calendar:
   - date: "2025-11-29"  # ISO format: 2025-11-29
     day_of_week: "saturday"  # "monday", "tuesday", ..., "sunday"
@@ -324,7 +323,7 @@ price_analytics:
   weekend_price_multiplier: 1.3233155598642752
 
 # === ENHANCED: DETAILED ROOM POLICIES ===
-# Source: Room-specific policies or inherited from hotel
+
 room_policies_detail:
   policies_inherited: true
   check_in_time: ""
@@ -334,7 +333,7 @@ room_policies_detail:
   reschedule_policy:
 
 # === ENHANCED: NEARBY ENTERTAINMENT (SIMPLIFIED FOR ROOM VIEW) ===
-# Source: Top 5 closest venues from /location/entertainment-venues/city/{cityId}
+
 nearby_entertainment:
   - name: "Đường Hùng Vương Nha Trang"
     category: "Địa Điểm Lân Cận"
@@ -372,7 +371,7 @@ keywords:
 
 # 🛏️ Deluxe Without Balcony City View - **Deluxe Without Balcony City View** là hạng phòng hướng thành phố tại Golden Hotel Nha Trang, với diện tích 32.0m², phù hợp cho tối đa 2 người lớn.
 
-![Deluxe Without Balcony City View](https://holidate-storage.s3.ap-southeast-1.amazonaws.com/0a26ecd8_z.jpg)  # Source: curl_step_3 -> data.photos[].photos[0].url (first photo, or filter by category)
+![Deluxe Without Balcony City View](https://holidate-storage.s3.ap-southeast-1.amazonaws.com/0a26ecd8_z.jpg)
 
 ## 📏 Thông Số Phòng
 
@@ -390,10 +389,10 @@ keywords:
 
 | Đặc điểm              | Thông tin chi tiết                       |
 |-----------------------|------------------------------------------|
-| **Diện tích**         | 32.0 m²                         |  # Source: curl_step_3 -> data.area
-| **Loại giường**       | 2 giường đơn                            |  # Source: curl_step_3 -> data.bedType.name
-| **Sức chứa**          | Tối đa 2 người lớn + 0 trẻ em |  # Source: curl_step_3 -> data.maxAdults, maxChildren
-| **Hướng nhìn**        | Hướng thành phố                                 |  # Source: curl_step_3 -> data.view
+| **Diện tích**         | 32.0 m²                         |
+| **Loại giường**       | 2 giường đơn                            |
+| **Sức chứa**          | Tối đa 2 người lớn + 0 trẻ em |
+| **Hướng nhìn**        | Hướng thành phố                                 |
 
 ---
 
@@ -1594,7 +1593,7 @@ _Lưu ý: Phòng này áp dụng chính sách của khách sạn._
 >
 > Tôi sẽ kiểm tra hệ thống ngay và báo giá chi tiết kèm các khuyến mãi đang có!
 >
-> |check_in={date}|check_out={date}}}
+> {{TOOL:get_room_price|room_id&#61;2d708a42-898b-4866-8c78-f203db0949ca|check_in&#61;{date}|check_out&#61;{date}}}
 
 ---
 
@@ -1605,9 +1604,9 @@ _Lưu ý: Phòng này áp dụng chính sách của khách sạn._
 
 ## 📸 Hình Ảnh Phòng
 
-  # Source: curl_step_3 -> data.photos[].photos[].url (all except main, limit 10)
+
 ![Deluxe Without Balcony City View](https://holidate-storage.s3.ap-southeast-1.amazonaws.com/087b6ed7_z.jpg)
-  # Source: curl_step_3 -> data.photos[].photos[].url (all except main, limit 10)
+
 ![Deluxe Without Balcony City View](https://holidate-storage.s3.ap-southeast-1.amazonaws.com/3d8210a9_z.jpg)
 
 ---
