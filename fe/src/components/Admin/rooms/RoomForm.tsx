@@ -56,6 +56,8 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
     const [bedTypeName, setBedTypeName] = useState<string>('');
     const [availableBedTypes, setAvailableBedTypes] = useState<Array<{ id: string; name: string }>>([]);
     const [isLoadingBedTypes, setIsLoadingBedTypes] = useState(false);
+    const [showBedTypeDropdown, setShowBedTypeDropdown] = useState(false);
+    const [bedTypeSearchQuery, setBedTypeSearchQuery] = useState('');
 
     // Load bedTypeName khi room data thay đổi
     useEffect(() => {
@@ -340,7 +342,7 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
         console.log("[RoomForm] ===== CLIENT-SIDE: Form submitted =====");
 
         const formData = new FormData(event.currentTarget);
-        
+
         // Parse giá tiền từ format (loại bỏ dấu chấm) trước khi gửi
         const priceInput = event.currentTarget.querySelector('#basePricePerNight') as HTMLInputElement;
         if (priceInput && priceDisplay) {
@@ -452,17 +454,55 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
                                     name="bedTypeName"
                                     required
                                     value={bedTypeName}
-                                    onChange={(e) => setBedTypeName(e.target.value)}
+                                    onChange={(e) => {
+                                        setBedTypeName(e.target.value);
+                                        setBedTypeSearchQuery(e.target.value);
+                                        setShowBedTypeDropdown(true);
+                                    }}
+                                    onFocus={() => {
+                                        setShowBedTypeDropdown(true);
+                                        setBedTypeSearchQuery(bedTypeName);
+                                    }}
+                                    onBlur={(e) => {
+                                        // Delay để cho phép click vào dropdown item
+                                        setTimeout(() => {
+                                            // Kiểm tra xem có phải click vào dropdown không
+                                            if (!e.relatedTarget || !(e.relatedTarget as HTMLElement).closest('.bed-type-dropdown')) {
+                                                setShowBedTypeDropdown(false);
+                                            }
+                                        }, 200);
+                                    }}
                                     placeholder="VD: Giường đôi, Giường King, 2 giường đơn, ..."
-                                    list="bedTypeOptions"
                                     className="block w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                 />
-                                {availableBedTypes.length > 0 && (
-                                    <datalist id="bedTypeOptions">
-                                        {availableBedTypes.map((bedType) => (
-                                            <option key={bedType.id} value={bedType.name} />
-                                        ))}
-                                    </datalist>
+                                {showBedTypeDropdown && availableBedTypes.length > 0 && (
+                                    <div className="bed-type-dropdown absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                                        {availableBedTypes
+                                            .filter((bedType) =>
+                                                bedType.name.toLowerCase().includes(bedTypeSearchQuery.toLowerCase())
+                                            )
+                                            .map((bedType) => (
+                                                <div
+                                                    key={bedType.id}
+                                                    onMouseDown={(e) => {
+                                                        e.preventDefault(); // Ngăn onBlur trigger trước khi click
+                                                        setBedTypeName(bedType.name);
+                                                        setBedTypeSearchQuery(bedType.name);
+                                                        setShowBedTypeDropdown(false);
+                                                    }}
+                                                    className="px-4 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
+                                                >
+                                                    <span className="text-sm text-gray-700">{bedType.name}</span>
+                                                </div>
+                                            ))}
+                                        {availableBedTypes.filter((bedType) =>
+                                            bedType.name.toLowerCase().includes(bedTypeSearchQuery.toLowerCase())
+                                        ).length === 0 && (
+                                                <div className="px-4 py-2 text-sm text-gray-500">
+                                                    Không tìm thấy loại giường phù hợp. Bạn có thể nhập tên mới.
+                                                </div>
+                                            )}
+                                    </div>
                                 )}
                             </div>
                             <p className="text-xs text-gray-500 mt-1">
@@ -520,7 +560,7 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
                                 onChange={(e) => {
                                     // Chỉ cho phép nhập số (loại bỏ tất cả ký tự không phải số)
                                     const value = e.target.value.replace(/[^\d]/g, '');
-                                    
+
                                     // Format lại với dấu chấm phân cách hàng nghìn
                                     if (value === '' || /^\d+$/.test(value)) {
                                         const formattedValue = formatNumber(value);
