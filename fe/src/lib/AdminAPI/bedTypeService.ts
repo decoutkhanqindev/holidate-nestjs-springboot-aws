@@ -179,13 +179,13 @@ export const getAvailableBedTypes = async (hotelId?: string): Promise<BedType[]>
                             
                             await Promise.all(
                                 roomBatch.map(async (room) => {
-                                    try {
-                                        const roomDetails = await getRoomById(room.id);
-                                        if (roomDetails?.bedType) {
-                                            bedTypesMap.set(roomDetails.bedType.id, {
-                                                id: roomDetails.bedType.id,
-                                                name: roomDetails.bedType.name
-                                            });
+                    try {
+                        const roomDetails = await getRoomById(room.id);
+                        if (roomDetails?.bedType) {
+                            bedTypesMap.set(roomDetails.bedType.id, {
+                                id: roomDetails.bedType.id,
+                                name: roomDetails.bedType.name
+                            });
                                             processedRooms++;
                                         }
                                     } catch (error) {
