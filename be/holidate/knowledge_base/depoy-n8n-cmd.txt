@@ -2,7 +2,7 @@
 mkdir -p ~/n8n-docker
 cd ~/n8n-docker
 
-# 2. Tạo file docker-compose.yml (Đã điền sẵn IP 18.143.190.43)
+# 2. Tạo file docker-compose.yml (Đã điền sẵn IP 18.138.100.51)
 cat <<EOF > docker-compose.yml
 version: "3"
 services:
@@ -12,13 +12,14 @@ services:
     ports:
       - "5678:5678"
     environment:
-      - N8N_HOST=18.143.190.43
+      - N8N_HOST=18.138.100.51
       - N8N_PORT=5678
-      - N8N_PROTOCOL=https
-      - WEBHOOK_URL=https://18.143.190.43:5678/
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://18.138.100.51:5678/
       - GENERIC_TIMEZONE=S
       - NODE_OPTIONS=--max-old-space-size=1536
       - N8N_DEFAULT_BINARY_DATA_MODE=filesystem
+      - N8N_SECURE_COOKIE=false
     volumes:
       - ./n8n_data:/home/node/.n8n
 EOF
@@ -27,5 +28,7 @@ EOF
 sudo docker-compose up -d
 
 echo "------------------------------------------------"
-echo "✅ Xong! Hãy truy cập: http://18.143.190.43:5678"
+echo "✅ Xong! Hãy truy cập: http://18.138.100.51:5678"
 echo "------------------------------------------------"
+
+stop docker
