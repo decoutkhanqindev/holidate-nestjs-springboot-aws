@@ -291,15 +291,10 @@ Phòng có tầm nhìn đẹp hướng biển, lý tưởng cho các cặp đôi
 
 ## 📅 Lịch Tồn Kho & Giá (30 Ngày Tới)
 
-{{#inventoryCalendar}}
-{{#.}}
-### 📆 Thông Tin Theo Ngày
 | Ngày | Thứ | Giá (VNĐ/đêm) | Phòng Trống | Loại Ngày |
 |------|-----|---------------|-------------|-----------|
 {{#inventoryCalendar}}
 | {{date}} | {{day_of_week}} | {{price_vnd}} | {{available_rooms}} | {{#isWeekend}}🌟 Cuối tuần{{/isWeekend}}{{#isHoliday}}🎉 Ngày lễ{{/isHoliday}}{{^isWeekend}}{{^isHoliday}}Ngày thường{{/isHoliday}}{{/isWeekend}} |
-{{/inventoryCalendar}}
-{{/.}}
 {{/inventoryCalendar}}
 
 ---
