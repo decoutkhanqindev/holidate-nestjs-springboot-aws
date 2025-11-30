@@ -31,13 +31,13 @@ export default function SuperAdminReportsPage() {
     const [level, setLevel] = useState<'city' | 'province'>('city');
     const [hotelPartnerMap, setHotelPartnerMap] = useState<Map<string, { name: string; email: string }>>(new Map());
     const [filterType, setFilterType] = useState<'custom' | 'quarter' | 'month' | 'year'>('month');
-    const [selectedQuarter, setSelectedQuarter] = useState<{ quarter: number; year: number }>({ 
-        quarter: Math.floor(new Date().getMonth() / 3) + 1, 
-        year: new Date().getFullYear() 
+    const [selectedQuarter, setSelectedQuarter] = useState<{ quarter: number; year: number }>({
+        quarter: Math.floor(new Date().getMonth() / 3) + 1,
+        year: new Date().getFullYear()
     });
-    const [selectedMonth, setSelectedMonth] = useState<{ month: number; year: number }>({ 
-        month: new Date().getMonth() + 1, 
-        year: new Date().getFullYear() 
+    const [selectedMonth, setSelectedMonth] = useState<{ month: number; year: number }>({
+        month: new Date().getMonth() + 1,
+        year: new Date().getFullYear()
     });
     const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
 
@@ -46,16 +46,16 @@ export default function SuperAdminReportsPage() {
         const today = new Date();
         const firstDayThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
         const lastDayThisMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-        
+
         setDateRange({
             from: firstDayThisMonth.toISOString().split('T')[0],
             to: lastDayThisMonth.toISOString().split('T')[0],
         });
-        
+
         // Kỳ so sánh: tháng trước
         const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
         const lastDayLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
-        
+
         setCompareDateRange({
             from: firstDayLastMonth.toISOString().split('T')[0],
             to: lastDayLastMonth.toISOString().split('T')[0],
@@ -100,7 +100,7 @@ export default function SuperAdminReportsPage() {
 
         const fromStr = fromDate.toISOString().split('T')[0];
         const toStr = toDate.toISOString().split('T')[0];
-        
+
         console.log('[SuperAdminReports] Updating date range:', {
             filterType,
             fromDate: fromStr,
@@ -122,13 +122,13 @@ export default function SuperAdminReportsPage() {
         const loadHotelPartnerMap = async () => {
             try {
                 const map = new Map<string, { name: string; email: string }>();
-                
+
                 // Bước 1: Lấy tất cả users với role PARTNER
                 try {
                     const adminsResponse = await getHotelAdmins({ page: 1, limit: 1000 });
                     const admins = adminsResponse.data || [];
-                    
-                    
+
+
                     // Tạo map userId -> {name, email} cho partners
                     const partnerMap = new Map<string, { name: string; email: string }>();
                     admins.forEach((admin: any) => {
@@ -138,13 +138,13 @@ export default function SuperAdminReportsPage() {
                             email: admin.email || 'N/A',
                         });
                     });
-                    
+
                     // Bước 2: Lấy tất cả hotels và map với partnerId
                     try {
                         const hotelsResponse = await getHotels(0, 1000, undefined, undefined, undefined, undefined);
                         const hotels = hotelsResponse.hotels || [];
-                        
-                        
+
+
                         // Map hotels với partner info
                         for (const hotel of hotels) {
                             // Ưu tiên dùng ownerId từ hotel object
@@ -155,7 +155,7 @@ export default function SuperAdminReportsPage() {
                                     continue;
                                 }
                             }
-                            
+
                             // Nếu hotel có ownerName/ownerEmail, dùng luôn
                             if (hotel.ownerName || hotel.ownerEmail) {
                                 map.set(hotel.id, {
@@ -164,7 +164,7 @@ export default function SuperAdminReportsPage() {
                                 });
                                 continue;
                             }
-                            
+
                             // Nếu không có ownerId trong hotel object, thử fetch detail
                             // (chỉ fetch nếu chưa có trong map và hotel có id)
                             if (hotel.id && !map.has(hotel.id)) {
@@ -172,7 +172,7 @@ export default function SuperAdminReportsPage() {
                                     // Import getHotelById dynamically để tránh circular dependency
                                     const { getHotelById } = await import('@/lib/AdminAPI/hotelService');
                                     const hotelDetail = await getHotelById(hotel.id);
-                                    
+
                                     if (hotelDetail?.ownerId) {
                                         const partnerInfo = partnerMap.get(hotelDetail.ownerId);
                                         if (partnerInfo) {
@@ -192,12 +192,12 @@ export default function SuperAdminReportsPage() {
                     } catch (err) {
                     }
                 } catch (err) {
-                    
+
                     // Fallback: thử lấy từ hotels trực tiếp
                     try {
                         const hotelsResponse = await getHotels(0, 1000, undefined, undefined, undefined, undefined);
                         const hotels = hotelsResponse.hotels || [];
-                        
+
                         hotels.forEach((hotel: any) => {
                             if (hotel.ownerId && (hotel.ownerName || hotel.ownerEmail)) {
                                 map.set(hotel.id, {
@@ -209,12 +209,12 @@ export default function SuperAdminReportsPage() {
                     } catch (fallbackErr) {
                     }
                 }
-                
+
                 setHotelPartnerMap(map);
             } catch (err) {
             }
         };
-        
+
         loadHotelPartnerMap();
     }, []);
 
@@ -244,7 +244,7 @@ export default function SuperAdminReportsPage() {
                             filterBy: undefined, // Không filter = lấy TẤT CẢ
                             compareParams
                         });
-                        
+
                         try {
                             data = await getAdminRevenueReport(
                                 dateRange.from,
@@ -256,7 +256,7 @@ export default function SuperAdminReportsPage() {
                                 compareParams.compareFrom,
                                 compareParams.compareTo
                             );
-                            
+
                             // Nếu SystemDailyReport thiếu data, tính tổng từ Hotel Performance làm fallback
                             const dataArray = ('currentPeriod' in data && data.currentPeriod?.data)
                                 ? data.currentPeriod.data
@@ -264,7 +264,7 @@ export default function SuperAdminReportsPage() {
                             const summary = ('currentPeriod' in data && data.currentPeriod?.summary)
                                 ? data.currentPeriod.summary
                                 : data?.summary;
-                            
+
                             // Tính expected data points
                             const fromDateObj = new Date(dateRange.from);
                             const toDateObj = new Date(dateRange.to);
@@ -282,9 +282,9 @@ export default function SuperAdminReportsPage() {
                                 const daysDiff = Math.ceil((toDateObj.getTime() - fromDateObj.getTime()) / (1000 * 60 * 60 * 24)) + 1;
                                 expectedDataPoints = daysDiff;
                             }
-                            
+
                             const dataCompleteness = dataArray.length / expectedDataPoints;
-                            
+
                             // Nếu data completeness < 30%, thử tính tổng từ Hotel Performance report
                             if (dataCompleteness < 0.3 && (summary?.totalRevenue || 0) < 10000000) {
                                 try {
@@ -300,23 +300,27 @@ export default function SuperAdminReportsPage() {
                                         undefined,
                                         undefined
                                     );
-                                    
-                                    const hotelsData = ('currentPeriod' in hotelPerformanceData && hotelPerformanceData.currentPeriod?.data)
-                                        ? hotelPerformanceData.currentPeriod.data
-                                        : (hotelPerformanceData?.data || []);
-                                    
+
+                                    // Type guard để xử lý cả HotelPerformance và HotelPerformanceWithComparison
+                                    let hotelsData: any[] = [];
+                                    if ('currentPeriod' in hotelPerformanceData && hotelPerformanceData.currentPeriod?.data) {
+                                        hotelsData = hotelPerformanceData.currentPeriod.data;
+                                    } else if ('data' in hotelPerformanceData && Array.isArray(hotelPerformanceData.data)) {
+                                        hotelsData = hotelPerformanceData.data;
+                                    }
+
                                     // Tính tổng từ tất cả hotels
                                     const totalFromHotels = hotelsData.reduce((sum: number, hotel: any) => {
                                         return sum + (hotel?.totalRevenue || 0);
                                     }, 0);
-                                    
+
                                     console.log('[SuperAdminReports] Fallback calculation from Hotel Performance:', {
                                         systemDailyReportTotal: summary?.totalRevenue || 0,
                                         hotelPerformanceTotal: totalFromHotels,
                                         numberOfHotels: hotelsData.length,
                                         usingFallback: totalFromHotels > (summary?.totalRevenue || 0) * 1.2
                                     });
-                                    
+
                                     // Nếu tổng từ Hotel Performance lớn hơn nhiều, cập nhật summary
                                     if (totalFromHotels > (summary?.totalRevenue || 0) * 1.2) {
                                         // Cập nhật summary với tổng từ Hotel Performance
@@ -332,7 +336,7 @@ export default function SuperAdminReportsPage() {
                         } catch (revenueErr) {
                             throw revenueErr;
                         }
-                        
+
                         // Lấy lại data sau khi có thể đã được cập nhật bởi fallback
                         const dataArray = ('currentPeriod' in data && data.currentPeriod?.data)
                             ? data.currentPeriod.data
@@ -341,12 +345,12 @@ export default function SuperAdminReportsPage() {
                             ? data.currentPeriod.summary
                             : data?.summary;
                         const totalRevenue = summary?.totalRevenue || 0;
-                        
+
                         // Tính số data points kỳ vọng dựa trên groupBy (đã tính ở trên)
                         const fromDateObj = new Date(dateRange.from);
                         const toDateObj = new Date(dateRange.to);
                         let expectedDataPoints: number;
-                        
+
                         if (groupBy === 'month') {
                             const fromYear = fromDateObj.getFullYear();
                             const fromMonth = fromDateObj.getMonth();
@@ -360,9 +364,9 @@ export default function SuperAdminReportsPage() {
                             const daysDiff = Math.ceil((toDateObj.getTime() - fromDateObj.getTime()) / (1000 * 60 * 60 * 24)) + 1;
                             expectedDataPoints = daysDiff;
                         }
-                        
+
                         const dataCompleteness = dataArray.length / expectedDataPoints;
-                        
+
                         console.log('[SuperAdminReports] Revenue report received:', {
                             hasData: !!data,
                             dataType: typeof data,
@@ -377,7 +381,7 @@ export default function SuperAdminReportsPage() {
                             sampleData: dataArray.slice(0, 3),
                             fullData: data
                         });
-                        
+
                         break;
                     case 'hotels':
                         data = await getAdminHotelPerformanceReport(
@@ -473,8 +477,9 @@ export default function SuperAdminReportsPage() {
 
     const exportToExcel = async () => {
         if (!reportData) return;
-        
-        const XLSX = await import('xlsx');
+
+        // Dynamic import xlsx to avoid SSR issues
+        const XLSX = (await import('xlsx')) as typeof import('xlsx');
         let worksheetData: any[] = [];
 
         switch (activeTab) {
@@ -616,16 +621,16 @@ export default function SuperAdminReportsPage() {
             case 'revenue':
                 // BIỂU ĐỒ CỘT cho doanh thu
                 if ('currentPeriod' in reportData && reportData.currentPeriod?.data) {
-                    const currentData = Array.isArray(reportData.currentPeriod.data) 
-                        ? reportData.currentPeriod.data 
+                    const currentData = Array.isArray(reportData.currentPeriod.data)
+                        ? reportData.currentPeriod.data
                         : [];
-                    const previousData = Array.isArray(reportData.previousPeriod?.data) 
-                        ? reportData.previousPeriod.data 
+                    const previousData = Array.isArray(reportData.previousPeriod?.data)
+                        ? reportData.previousPeriod.data
                         : [];
-                    
+
                     chartOptions = {
-                        chart: { 
-                            type: 'bar', 
+                        chart: {
+                            type: 'bar',
                             toolbar: { show: false },
                             stacked: false,
                         },
@@ -642,7 +647,7 @@ export default function SuperAdminReportsPage() {
                             }),
                             title: { text: 'Thời gian' },
                         },
-                        yaxis: { 
+                        yaxis: {
                             title: { text: 'Doanh thu (VND)' },
                             labels: {
                                 formatter: (val: number) => formatMoney(val),
@@ -678,8 +683,8 @@ export default function SuperAdminReportsPage() {
                 } else if (reportData?.data) {
                     const data = Array.isArray(reportData.data) ? reportData.data : [];
                     chartOptions = {
-                        chart: { 
-                            type: 'bar', 
+                        chart: {
+                            type: 'bar',
                             toolbar: { show: false },
                         },
                         xaxis: {
@@ -695,7 +700,7 @@ export default function SuperAdminReportsPage() {
                             }),
                             title: { text: 'Thời gian' },
                         },
-                        yaxis: { 
+                        yaxis: {
                             title: { text: 'Doanh thu (VND)' },
                             labels: {
                                 formatter: (val: number) => formatMoney(val),
@@ -731,7 +736,7 @@ export default function SuperAdminReportsPage() {
                         xaxis: {
                             categories: data.map((item: any) => item.hotelName || ''),
                         },
-                        yaxis: { 
+                        yaxis: {
                             title: { text: 'Doanh thu (VND)' },
                             labels: {
                                 formatter: (val: number) => formatMoney(val),
@@ -755,7 +760,7 @@ export default function SuperAdminReportsPage() {
                         xaxis: {
                             categories: data.map((item: any) => item.hotelName || ''),
                         },
-                        yaxis: { 
+                        yaxis: {
                             title: { text: 'Doanh thu (VND)' },
                             labels: {
                                 formatter: (val: number) => formatMoney(val),
@@ -782,7 +787,7 @@ export default function SuperAdminReportsPage() {
                         xaxis: {
                             categories: data.map((item: any) => item?.month || ''),
                         },
-                        yaxis: { 
+                        yaxis: {
                             title: { text: metric === 'revenue' ? 'Doanh thu (VND)' : 'Số đặt phòng' },
                             labels: {
                                 formatter: (val: number) => metric === 'revenue' ? formatMoney(val) : val.toLocaleString('en-US'),
@@ -811,7 +816,7 @@ export default function SuperAdminReportsPage() {
                             xaxis: {
                                 categories: data.map((item: any) => item?.roomCategory || ''),
                             },
-                            yaxis: { 
+                            yaxis: {
                                 title: { text: 'Số đêm đã đặt' },
                                 labels: {
                                     formatter: (val: number) => val.toLocaleString('en-US'),
@@ -841,11 +846,16 @@ export default function SuperAdminReportsPage() {
                 if (reportData?.data) {
                     const data = Array.isArray(reportData.data) ? reportData.data : [];
                     chartOptions = {
-                        chart: { type: 'bar', toolbar: { show: false }, horizontal: true },
+                        chart: { type: 'bar', toolbar: { show: false } },
+                        plotOptions: {
+                            bar: {
+                                horizontal: true,
+                            },
+                        },
                         xaxis: {
                             categories: data.map((item: any) => item?.locationName || ''),
                         },
-                        yaxis: { 
+                        yaxis: {
                             title: { text: metric === 'revenue' ? 'Doanh thu (VND)' : 'Số đặt phòng' },
                             labels: {
                                 formatter: (val: number) => metric === 'revenue' ? formatMoney(val) : val.toLocaleString('en-US'),
@@ -867,7 +877,7 @@ export default function SuperAdminReportsPage() {
                         xaxis: {
                             categories: data.map((item: any) => item.period || ''),
                         },
-                        yaxis: { 
+                        yaxis: {
                             title: { text: 'Giá trị (VND)' },
                             labels: {
                                 formatter: (val: number) => formatMoney(val),
@@ -921,7 +931,7 @@ export default function SuperAdminReportsPage() {
                         xaxis: {
                             categories: data.map((item: any) => item.period || ''),
                         },
-                        yaxis: { 
+                        yaxis: {
                             title: { text: 'Giá trị (VND)' },
                             labels: {
                                 formatter: (val: number) => formatMoney(val),
@@ -1038,26 +1048,26 @@ export default function SuperAdminReportsPage() {
                                             const summary = ('currentPeriod' in reportData && reportData.currentPeriod?.summary)
                                                 ? reportData.currentPeriod.summary
                                                 : reportData?.summary;
-                                            
+
                                             // Lấy data array để tính tổng thay thế nếu cần
                                             const dataArray = ('currentPeriod' in reportData && reportData.currentPeriod?.data)
                                                 ? reportData.currentPeriod.data
                                                 : (reportData?.data || []);
-                                            
+
                                             // Tính tổng từ data array (đây là tổng thực tế từ các data points có sẵn)
                                             const calculatedTotal = dataArray.reduce((sum: number, item: any) => {
                                                 return sum + (item?.revenue || 0);
                                             }, 0);
-                                            
+
                                             // Ưu tiên dùng summary.totalRevenue từ backend
                                             // Nhưng nếu calculatedTotal khác nhiều, có thể summary đang thiếu data
                                             let totalRevenue = summary?.totalRevenue || calculatedTotal;
-                                            
+
                                             // Nếu summary.totalRevenue = 0 nhưng có data, dùng calculatedTotal
                                             if (summary?.totalRevenue === 0 && calculatedTotal > 0) {
                                                 totalRevenue = calculatedTotal;
                                             }
-                                            
+
                                             // Nếu calculatedTotal lớn hơn summary nhiều, có thể summary thiếu data
                                             // Trong trường hợp này, dùng calculatedTotal (tổng từ data points có sẵn)
                                             if (calculatedTotal > summary?.totalRevenue * 1.5 && calculatedTotal > 0) {
@@ -1068,19 +1078,19 @@ export default function SuperAdminReportsPage() {
                                                 });
                                                 totalRevenue = calculatedTotal;
                                             }
-                                            
+
                                             console.log('[SuperAdminReports] Revenue calculation:', {
                                                 summaryTotal: summary?.totalRevenue,
                                                 calculatedTotal: calculatedTotal,
                                                 finalTotal: totalRevenue,
                                                 dataLength: dataArray.length
                                             });
-                                            
+
                                             // Kiểm tra data có đầy đủ không (dựa trên groupBy)
                                             const fromDateObj = new Date(dateRange.from);
                                             const toDateObj = new Date(dateRange.to);
                                             let expectedDataPoints: number;
-                                            
+
                                             if (groupBy === 'month') {
                                                 const fromYear = fromDateObj.getFullYear();
                                                 const fromMonth = fromDateObj.getMonth();
@@ -1094,9 +1104,9 @@ export default function SuperAdminReportsPage() {
                                                 const daysDiff = Math.ceil((toDateObj.getTime() - fromDateObj.getTime()) / (1000 * 60 * 60 * 24)) + 1;
                                                 expectedDataPoints = daysDiff;
                                             }
-                                            
+
                                             const dataCompleteness = dataArray.length / expectedDataPoints;
-                                            
+
                                             console.log('[SuperAdminReports] Displaying total revenue:', {
                                                 fromSummary: summary?.totalRevenue,
                                                 fromCalculation: totalRevenue,
@@ -1106,7 +1116,7 @@ export default function SuperAdminReportsPage() {
                                                 completeness: (dataCompleteness * 100).toFixed(1) + '%',
                                                 dateRange: dateRange
                                             });
-                                            
+
                                             return formatMoney(totalRevenue);
                                         })()} VND
                                     </h3>
@@ -1159,27 +1169,27 @@ export default function SuperAdminReportsPage() {
                                     const summary = ('currentPeriod' in reportData && reportData.currentPeriod?.summary)
                                         ? reportData.currentPeriod.summary
                                         : reportData?.summary;
-                                    
+
                                     if (summary?.totalGrossRevenue && summary.totalGrossRevenue > 0) {
                                         const netRevenueRatio = (summary.totalNetRevenue || 0) / summary.totalGrossRevenue;
                                         const commissionRate = netRevenueRatio * 100;
-                                        
+
                                         // Cảnh báo nếu tỷ lệ hoa hồng quá thấp (< 5%)
                                         if (commissionRate < 5) {
                                             return (
                                                 <div className="alert alert-warning mb-3" style={{ fontSize: '0.875rem' }}>
                                                     <i className="bi bi-exclamation-triangle me-2"></i>
-                                                    <strong>Cảnh báo:</strong> Tỷ lệ hoa hồng trung bình hiện tại là <strong>{commissionRate.toFixed(2)}%</strong>, 
-                                                    thấp hơn mức mặc định (15%). 
+                                                    <strong>Cảnh báo:</strong> Tỷ lệ hoa hồng trung bình hiện tại là <strong>{commissionRate.toFixed(2)}%</strong>,
+                                                    thấp hơn mức mặc định (15%).
                                                     <br />
                                                     <small className="text-muted">
-                                                        Điều này có nghĩa là doanh thu ròng của Holidate rất thấp. 
+                                                        Điều này có nghĩa là doanh thu ròng của Holidate rất thấp.
                                                         Vui lòng kiểm tra <code>commission_rate</code> của các khách sạn trong database.
                                                     </small>
                                                 </div>
                                             );
                                         }
-                                        
+
                                         // Hiển thị tỷ lệ hoa hồng bình thường
                                         return (
                                             <div className="alert alert-success mb-3" style={{ fontSize: '0.875rem' }}>
@@ -1267,15 +1277,15 @@ export default function SuperAdminReportsPage() {
                                     {activeTab === 'revenue' && (() => {
                                         let dataArray: any[] = [];
                                         if ('currentPeriod' in reportData && reportData.currentPeriod?.data) {
-                                            dataArray = Array.isArray(reportData.currentPeriod.data) 
-                                                ? reportData.currentPeriod.data 
+                                            dataArray = Array.isArray(reportData.currentPeriod.data)
+                                                ? reportData.currentPeriod.data
                                                 : [];
                                         } else if (reportData?.data) {
-                                            dataArray = Array.isArray(reportData.data) 
-                                                ? reportData.data 
+                                            dataArray = Array.isArray(reportData.data)
+                                                ? reportData.data
                                                 : [];
                                         }
-                                        
+
                                         return (
                                             <>
                                                 {dataArray.map((item: any, index: number) => (
@@ -1289,23 +1299,23 @@ export default function SuperAdminReportsPage() {
                                     })()}
                                     {activeTab === 'hotels' && (
                                         <>
-                                            {((('currentPeriod' in reportData && reportData.currentPeriod?.data) 
-                                                ? reportData.currentPeriod.data 
+                                            {((('currentPeriod' in reportData && reportData.currentPeriod?.data)
+                                                ? reportData.currentPeriod.data
                                                 : (reportData?.data || [])) || []).map((item: any, index: number) => {
-                                                const partnerInfo = hotelPartnerMap.get(item?.hotelId || '');
-                                                return (
-                                                    <tr key={index}>
-                                                        <td>{index + 1}</td>
-                                                        <td>{item?.hotelName || ''}</td>
-                                                        <td>{partnerInfo?.name || 'N/A'}</td>
-                                                        <td>{partnerInfo?.email || 'N/A'}</td>
-                                                        <td>{(item?.totalRevenue || 0).toLocaleString('en-US')} VND</td>
-                                                        <td>{item?.totalCompletedBookings ?? 0}</td>
-                                                        <td>{(item?.averageOccupancyRate ?? 0).toFixed(2)}%</td>
-                                                        <td>{(item?.cancellationRate ?? 0).toFixed(2)}%</td>
-                                                    </tr>
-                                                );
-                                            })}
+                                                    const partnerInfo = hotelPartnerMap.get(item?.hotelId || '');
+                                                    return (
+                                                        <tr key={index}>
+                                                            <td>{index + 1}</td>
+                                                            <td>{item?.hotelName || ''}</td>
+                                                            <td>{partnerInfo?.name || 'N/A'}</td>
+                                                            <td>{partnerInfo?.email || 'N/A'}</td>
+                                                            <td>{(item?.totalRevenue || 0).toLocaleString('en-US')} VND</td>
+                                                            <td>{item?.totalCompletedBookings ?? 0}</td>
+                                                            <td>{(item?.averageOccupancyRate ?? 0).toFixed(2)}%</td>
+                                                            <td>{(item?.cancellationRate ?? 0).toFixed(2)}%</td>
+                                                        </tr>
+                                                    );
+                                                })}
                                         </>
                                     )}
                                     {activeTab === 'users' && (
@@ -1359,17 +1369,17 @@ export default function SuperAdminReportsPage() {
                                     })()}
                                     {activeTab === 'financials' && (
                                         <>
-                                            {((('currentPeriod' in reportData && reportData.currentPeriod?.data) 
-                                                ? reportData.currentPeriod.data 
+                                            {((('currentPeriod' in reportData && reportData.currentPeriod?.data)
+                                                ? reportData.currentPeriod.data
                                                 : (reportData?.data || [])) || []).map((item: any, index: number) => (
-                                                <tr key={index}>
-                                                    <td>{item?.period || ''}</td>
-                                                    <td>{(item?.grossRevenue || 0).toLocaleString('en-US')} VND</td>
-                                                    <td>{(item?.netRevenue || 0).toLocaleString('en-US')} VND</td>
-                                                    <td>{(item?.partnerPayout || 0).toLocaleString('en-US')} VND</td>
-                                                    <td>{(item?.grossMargin || 0).toFixed(2)}%</td>
-                                                </tr>
-                                            ))}
+                                                    <tr key={index}>
+                                                        <td>{item?.period || ''}</td>
+                                                        <td>{(item?.grossRevenue || 0).toLocaleString('en-US')} VND</td>
+                                                        <td>{(item?.netRevenue || 0).toLocaleString('en-US')} VND</td>
+                                                        <td>{(item?.partnerPayout || 0).toLocaleString('en-US')} VND</td>
+                                                        <td>{(item?.grossMargin || 0).toFixed(2)}%</td>
+                                                    </tr>
+                                                ))}
                                         </>
                                     )}
                                 </tbody>

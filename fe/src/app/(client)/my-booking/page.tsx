@@ -193,6 +193,19 @@ function MyBookingsComponent() {
     // Cache để lưu hotel policies (tránh fetch nhiều lần cho cùng một hotel)
     const [hotelPoliciesCache, setHotelPoliciesCache] = useState<Record<string, HotelPolicy | null>>({});
 
+    // Loading states cho các nút
+    const [loadingStates, setLoadingStates] = useState<{
+        cancel: Set<string>;
+        reschedule: Set<string>;
+        viewDetails: Set<string>;
+        review: Set<string>;
+    }>({
+        cancel: new Set(),
+        reschedule: new Set(),
+        viewDetails: new Set(),
+        review: new Set(),
+    });
+
     const fetchBookings = useCallback(async () => {
         if (!user?.id) return;
         setIsLoading(true);
@@ -257,12 +270,22 @@ function MyBookingsComponent() {
 
     const handleCancelBooking = async (bookingId: string) => {
         if (confirm('Bạn có chắc chắn muốn hủy đơn đặt phòng này? Tiền hoàn lại (nếu có) sẽ được tính theo chính sách hủy của khách sạn.')) {
+            setLoadingStates(prev => ({
+                ...prev,
+                cancel: new Set(prev.cancel).add(bookingId)
+            }));
             try {
                 await bookingService.cancelBooking(bookingId);
                 alert('Yêu cầu hủy phòng đã được gửi thành công!');
                 fetchBookings();
             } catch (err: any) {
                 alert(`Lỗi: ${err.message}`);
+            } finally {
+                setLoadingStates(prev => {
+                    const newSet = new Set(prev.cancel);
+                    newSet.delete(bookingId);
+                    return { ...prev, cancel: newSet };
+                });
             }
         }
     };
@@ -272,13 +295,39 @@ function MyBookingsComponent() {
     };
 
     const handleOpenRescheduleModal = (booking: BookingResponse) => {
+        setLoadingStates(prev => ({
+            ...prev,
+            reschedule: new Set(prev.reschedule).add(booking.id)
+        }));
         setSelectedBooking(booking);
         setIsModalOpen(true);
+        // Reset loading sau khi modal mở
+        setTimeout(() => {
+            setLoadingStates(prev => {
+                const newSet = new Set(prev.reschedule);
+                newSet.delete(booking.id);
+                return { ...prev, reschedule: newSet };
+            });
+        }, 100);
     };
 
-    const handleOpenReviewForm = (booking: BookingResponse) => {
-        // Chuyển đến trang detail hotel với bookingId để đánh giá
-        router.push(`/hotels/${booking.hotel.id}?bookingId=${booking.id}&review=true`);
+    const handleOpenReviewForm = async (booking: BookingResponse) => {
+        setLoadingStates(prev => ({
+            ...prev,
+            review: new Set(prev.review).add(booking.id)
+        }));
+        try {
+            // Chuyển đến trang detail hotel với bookingId để đánh giá
+            await router.push(`/hotels/${booking.hotel.id}?bookingId=${booking.id}&review=true`);
+        } catch (err) {
+            // Ignore navigation errors
+        } finally {
+            setLoadingStates(prev => {
+                const newSet = new Set(prev.review);
+                newSet.delete(booking.id);
+                return { ...prev, review: newSet };
+            });
+        }
     };
 
     // Không cần handleReviewSuccess nữa vì sẽ xử lý ở trang detail
@@ -369,19 +418,87 @@ function MyBookingsComponent() {
 
 
                         <div className={styles.cardActions}>
-                            <button onClick={() => router.push(`/payment/success?bookingId=${booking.id}`)} className={styles.actionButton}>Xem chi tiết</button>
+                            <button 
+                                onClick={async () => {
+                                    setLoadingStates(prev => ({
+                                        ...prev,
+                                        viewDetails: new Set(prev.viewDetails).add(booking.id)
+                                    }));
+                                    try {
+                                        await router.push(`/payment/success?bookingId=${booking.id}`);
+                                    } catch (err) {
+                                        // Ignore navigation errors
+                                    } finally {
+                                        setLoadingStates(prev => {
+                                            const newSet = new Set(prev.viewDetails);
+                                            newSet.delete(booking.id);
+                                            return { ...prev, viewDetails: newSet };
+                                        });
+                                    }
+                                }}
+                                disabled={loadingStates.viewDetails.has(booking.id)}
+                                className={styles.actionButton}
+                            >
+                                {loadingStates.viewDetails.has(booking.id) ? (
+                                    <>
+                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        Đang tải...
+                                    </>
+                                ) : (
+                                    'Xem chi tiết'
+                                )}
+                            </button>
                             {(booking.status.toLowerCase() === 'confirmed' || booking.status.toLowerCase() === 'rescheduled') &&
                                 <>
                                     {/* Chỉ hiển thị nút "Đổi lịch" nếu khách sạn cho phép đổi lịch */}
                                     {isRescheduleAllowed(hotelPoliciesCache[booking.hotel.id]) && (
-                                        <button onClick={() => handleOpenRescheduleModal(booking)} className={`${styles.actionButton} ${styles.reschedule}`}>Đổi lịch</button>
+                                        <button 
+                                            onClick={() => handleOpenRescheduleModal(booking)}
+                                            disabled={loadingStates.reschedule.has(booking.id)}
+                                            className={`${styles.actionButton} ${styles.reschedule}`}
+                                        >
+                                            {loadingStates.reschedule.has(booking.id) ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                    Đang tải...
+                                                </>
+                                            ) : (
+                                                'Đổi lịch'
+                                            )}
+                                        </button>
                                     )}
-                                    <button onClick={() => handleCancelBooking(booking.id)} className={`${styles.actionButton} ${styles.cancel}`}>Hủy phòng</button>
+                                    <button 
+                                        onClick={() => handleCancelBooking(booking.id)}
+                                        disabled={loadingStates.cancel.has(booking.id)}
+                                        className={`${styles.actionButton} ${styles.cancel}`}
+                                    >
+                                        {loadingStates.cancel.has(booking.id) ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                Đang xử lý...
+                                            </>
+                                        ) : (
+                                            'Hủy phòng'
+                                        )}
+                                    </button>
                                 </>
                             }
                             {/* Chỉ hiển thị button "Đánh giá" nếu booking đã confirmed (đã thanh toán) */}
                             {booking.status.toLowerCase() === 'confirmed' && (
-                                <button onClick={() => handleOpenReviewForm(booking)} className={`${styles.actionButton} ${styles.review}`}>Đánh giá</button>
+                                <button 
+                                    onClick={() => handleOpenReviewForm(booking)}
+                                    disabled={loadingStates.review.has(booking.id)}
+                                    className={`${styles.actionButton} ${styles.review}`}
+                                >
+                                    {loadingStates.review.has(booking.id) ? (
+                                        <>
+                                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                            Đang tải...
+                                        </>
+                                    ) : (
+                                        'Đánh giá'
+                                    )}
+                                </button>
                             )}
                         </div>
                     </div>
