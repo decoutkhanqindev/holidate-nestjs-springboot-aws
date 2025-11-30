@@ -277,34 +277,34 @@ const getFullAddress = (hotel: HotelResponse) => {
     // Kiểm tra xem address có chứa thông tin location không (tránh lặp lại)
     const addressParts: string[] = [];
     const responseAddress = hotel.address || '';
-    
+
     // Chỉ thêm address nếu nó không phải là giá trị mặc định và không chứa location info đã có
-    if (responseAddress && 
-        responseAddress.trim() !== '' && 
+    if (responseAddress &&
+        responseAddress.trim() !== '' &&
         responseAddress !== 'Chưa có địa chỉ') {
-        
+
         // Kiểm tra xem address có chứa ward, district, city name không
         const wardName = hotel.ward?.name || '';
         const districtName = hotel.district?.name || '';
         const cityName = hotel.city?.name || '';
-        
+
         // Nếu address không chứa các location names, thì thêm vào
-        const containsLocationInfo = 
+        const containsLocationInfo =
             (wardName && responseAddress.includes(wardName)) ||
             (districtName && responseAddress.includes(districtName)) ||
             (cityName && responseAddress.includes(cityName));
-        
+
         if (!containsLocationInfo) {
             // Address là địa chỉ cụ thể (số nhà, tên đường) chưa có location info
             addressParts.push(responseAddress);
         } else {
             // Address đã chứa location info, nhưng có thể là địa chỉ đầy đủ
             // Kiểm tra xem có phải là địa chỉ đầy đủ (chứa cả ward, district, city) không
-            const hasAllLocation = 
+            const hasAllLocation =
                 wardName && responseAddress.includes(wardName) &&
                 districtName && responseAddress.includes(districtName) &&
                 cityName && responseAddress.includes(cityName);
-            
+
             if (hasAllLocation) {
                 // Address đã đầy đủ, không cần append thêm
                 return responseAddress;
@@ -314,7 +314,7 @@ const getFullAddress = (hotel: HotelResponse) => {
             }
         }
     }
-    
+
     // Thêm các location fields nếu chưa có trong address
     if (hotel.ward?.name) {
         const alreadyHasWard = addressParts.some(part => part.includes(hotel.ward!.name!));
@@ -334,7 +334,7 @@ const getFullAddress = (hotel: HotelResponse) => {
             addressParts.push(hotel.city.name);
         }
     }
-    
+
     return addressParts.length > 0 ? addressParts.join(', ') : (responseAddress || 'Chưa có địa chỉ');
 };
 const getHotelImageUrl = (hotel: HotelResponse) => hotel.photos?.[0]?.photos?.[0]?.url || '/placeholder.svg';
@@ -358,6 +358,7 @@ export default function HotelSelection() {
     const [isLoadingInitial, setIsLoadingInitial] = useState(true);
     const [isLoadingTab, setIsLoadingTab] = useState(false);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [isNavigating, setIsNavigating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -504,6 +505,11 @@ export default function HotelSelection() {
     const currentHotels = activeLocation ? (locationData.get(activeLocation.id)?.hotels || []) : [];
     const isLoading = isLoadingInitial || isLoadingTab;
 
+    const handleViewMoreHotels = () => {
+        setIsNavigating(true);
+        router.push('/search');
+    };
+
     return (
         <div className="py-5">
             <div className="container">
@@ -566,7 +572,21 @@ export default function HotelSelection() {
                     </div>
                 </div>
                 <div className="text-center mt-5">
-                    <button onClick={() => router.push('/search')} className="btn btn-primary btn-lg">Xem thêm ưu đãi khách sạn</button>
+                    <button
+                        onClick={handleViewMoreHotels}
+                        disabled={isNavigating}
+                        className="btn btn-primary btn-lg"
+                        style={{ minWidth: '200px' }}
+                    >
+                        {isNavigating ? (
+                            <>
+                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Đang chuyển...
+                            </>
+                        ) : (
+                            'Xem thêm ưu đãi khách sạn'
+                        )}
+                    </button>
                 </div>
             </div>
         </div>
@@ -675,7 +695,7 @@ export default function HotelSelection() {
 //                 setActiveLocation(finalLocations[0]);
 
 //             } catch (err: any) {
-//                 
+//
 //                 setError(err.message || "Lỗi tải danh sách địa điểm.");
 //             } finally {
 //                 setIsLoadingInitial(false);
@@ -735,7 +755,7 @@ export default function HotelSelection() {
 //                 return new Map(prev).set(activeLocation.id, updatedData);
 //             });
 //         } catch (err) {
-//             
+//
 //         } finally {
 //             setIsLoadingMore(false);
 //         }
