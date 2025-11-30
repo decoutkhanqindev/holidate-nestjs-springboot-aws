@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { getHotels } from "@/lib/AdminAPI/hotelService";
-import { getHotelAdmins } from "@/lib/Super_Admin/hotelAdminService";
 import SuperHotelsTable from "@/components/AdminSuper/hotels/SuperHotelsTable";
 import Pagination from "@/components/Admin/pagination/Pagination";
 import SuperHotelFormModal from "@/components/AdminSuper/hotels/SuperHotelFormModal";
@@ -36,14 +35,12 @@ export default function SuperHotelsPage() {
             setIsLoading(true);
             try {
                 // Nếu có selectedPartnerId, filter theo partner
-                // selectedPartnerId giờ đã là UUID string từ dropdown
-                const partnerIdToFilter = selectedPartnerId && selectedPartnerId.trim() !== '' 
-                    ? selectedPartnerId.trim() 
+                const partnerIdToFilter = selectedPartnerId && selectedPartnerId.trim() !== ''
+                    ? selectedPartnerId.trim()
                     : undefined;
-                
-                
+
                 const response = await getHotels(
-                    currentPage, 
+                    currentPage,
                     ITEMS_PER_PAGE,
                     undefined, // cityId
                     undefined, // provinceId
@@ -53,8 +50,6 @@ export default function SuperHotelsPage() {
                 setHotels(response.hotels);
                 setTotalPages(response.totalPages);
                 setTotalItems(response.totalItems);
-                
-                console.log(`[SuperHotelsPage] Loaded ${response.hotels.length} hotels (filter by partner: ${partnerIdToFilter || 'none'})`);
             } catch (error: any) {
                 toast.error(error.message || "Không thể tải danh sách khách sạn", {
                     position: "top-right",
@@ -79,7 +74,7 @@ export default function SuperHotelsPage() {
         const loadHotels = async () => {
             try {
                 const response = await getHotels(
-                    currentPage, 
+                    currentPage,
                     ITEMS_PER_PAGE,
                     undefined,
                     undefined,

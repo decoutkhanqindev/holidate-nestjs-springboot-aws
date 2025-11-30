@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createHotelAdminServer, deleteHotelAdminServer } from '@/lib/Super_Admin/hotelAdminService';
-import { getRoles } from '@/lib/AdminAPI/userService';
+import { getRoles, updateUserServer } from '@/lib/AdminAPI/userService';
 
 /**
  * Server action để tạo Hotel Admin mới
@@ -54,6 +54,49 @@ export async function createHotelAdminAction(formData: FormData) {
         return { success: true };
     } catch (error: any) {
         return { error: error.message || 'Không thể tạo admin khách sạn. Vui lòng thử lại.' };
+    }
+}
+
+/**
+ * Server action để cập nhật Hotel Admin
+ */
+export async function updateHotelAdminAction(formData: FormData) {
+    try {
+        const userId = formData.get('userId') as string;
+        const fullName = formData.get('fullName') as string;
+        const phoneNumber = formData.get('phoneNumber') as string;
+        const active = formData.get('active') as string;
+
+        if (!userId) {
+            return { error: 'Thiếu thông tin user ID.' };
+        }
+
+        // Validation fullName nếu có
+        if (fullName && (fullName.trim().length < 3 || fullName.trim().length > 100)) {
+            return { error: 'Họ và tên phải có từ 3 đến 100 ký tự.' };
+        }
+
+        // Validation phoneNumber nếu có
+        if (phoneNumber && phoneNumber.trim()) {
+            const phoneRegex = /^(\+84|0)[0-9]{9,10}$/;
+            if (!phoneRegex.test(phoneNumber.trim())) {
+                return { error: 'Số điện thoại không hợp lệ. Phải bắt đầu bằng +84 hoặc 0, sau đó 9-10 chữ số.' };
+            }
+        }
+
+        const payload: any = {};
+        if (fullName) payload.fullName = fullName.trim();
+        if (phoneNumber) payload.phoneNumber = phoneNumber.trim();
+        if (active !== null && active !== undefined) {
+            payload.active = active === 'true' || active === '1';
+        }
+
+        await updateUserServer(userId, payload);
+
+        revalidatePath('/super-user-management');
+        return { success: true };
+    } catch (error: any) {
+        return { error: error.message || 'Không thể cập nhật admin khách sạn. Vui lòng thử lại.' };
     }
 }
 

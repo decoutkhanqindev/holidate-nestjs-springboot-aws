@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { PageHeader } from '@/components/Admin/ui/PageHeader';
-import { PencilIcon, ClockIcon, DocumentTextIcon, XCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, ClockIcon, DocumentTextIcon, XCircleIcon, ArrowPathIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 interface HotelDetailPageProps {
     params: Promise<{ hotelId: string }>;
@@ -44,6 +44,17 @@ export default async function SuperHotelDetailPage({ params }: HotelDetailPagePr
 
         return (
             <>
+                {/* Nút Trở về */}
+                <div className="mb-4">
+                    <Link 
+                        href="/super-hotels"
+                        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                    >
+                        <ArrowLeftIcon className="w-5 h-5" />
+                        Trở về
+                    </Link>
+                </div>
+
                 <PageHeader title={`Chi tiết: ${hotel.name}`}>
                 {/* Super-admin chỉ xem, không edit - quyền edit chỉ dành cho PARTNER */}
             </PageHeader>
@@ -65,8 +76,14 @@ export default async function SuperHotelDetailPage({ params }: HotelDetailPagePr
                         )}
                         <div className="space-y-4">
                             <div>
-                                <h3 className="text-sm font-medium text-gray-500">Số thứ tự</h3>
-                                <p className="text-base text-gray-900">{hotel.stt || 'N/A'}</p>
+                                <h3 className="text-sm font-medium text-gray-500">Tên chủ khách sạn</h3>
+                                <p className="text-base text-gray-900">
+                                    {hotelDetail?.partner?.fullName || 
+                                     hotelDetail?.partner?.name || 
+                                     hotelDetail?.partner?.email || 
+                                     hotel?.ownerName || 
+                                     'N/A'}
+                                </p>
                             </div>
                             <div>
                                 <h3 className="text-sm font-medium text-gray-500">Địa chỉ</h3>

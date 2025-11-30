@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getHotelAdmins } from "@/lib/Super_Admin/hotelAdminService";
-import { createHotelAdminAction, deleteHotelAdminAction } from "@/lib/actions/hotelAdminActions";
+import { createHotelAdminAction, deleteHotelAdminAction, updateHotelAdminAction } from "@/lib/actions/hotelAdminActions";
 import HotelAdminsTable from "@/components/AdminSuper/ManageAdmin/HotelAdminsTable";
 import Pagination from "@/components/Admin/pagination/Pagination";
 import type { HotelAdmin } from "@/types";
@@ -44,14 +44,14 @@ export default function SuperAdminsPage() {
     };
 
     const handleDelete = async (admin: HotelAdmin) => {
-        if (!confirm(`Bạn có chắc muốn xóa tài khoản admin "${admin.username}"?`)) {
+        if (!confirm(`Bạn có chắc muốn xóa tài khoản đối tác "${admin.username}"?`)) {
             return;
         }
 
         try {
             // Sử dụng userId (UUID string) thay vì id (number) để gọi API
             await deleteHotelAdminAction(admin.userId);
-            toast.success('Xóa admin khách sạn thành công!', {
+            toast.success('Xóa đối tác khách sạn thành công!', {
                 position: "top-right",
                 autoClose: 2000,
             });
@@ -61,7 +61,7 @@ export default function SuperAdminsPage() {
             setAdmins(response.data);
             setTotalPages(response.totalPages);
         } catch (error: any) {
-            toast.error(error.message || 'Không thể xóa admin khách sạn. Vui lòng thử lại.', {
+            toast.error(error.message || 'Không thể xóa đối tác khách sạn. Vui lòng thử lại.', {
                 position: "top-right",
                 autoClose: 3000,
             });
@@ -70,18 +70,22 @@ export default function SuperAdminsPage() {
 
     const handleSave = async (formData: FormData) => {
         try {
-            const id = formData.get('id') as string;
-            const fullName = formData.get('fullName') as string;
+            const userId = formData.get('userId') as string;
 
-            if (id) {
-                // Cập nhật - Hiện tại backend không hỗ trợ update user trực tiếp
-                // Có thể cần implement updateUserAction tương tự như user management
-                toast.info('Chức năng cập nhật đang được phát triển', {
+            if (userId) {
+                // Cập nhật
+                const result = await updateHotelAdminAction(formData);
+                if (result?.error) {
+                    toast.error(result.error, {
+                        position: "top-right",
+                        autoClose: 3000,
+                    });
+                    return;
+                }
+                toast.success('Cập nhật đối tác khách sạn thành công!', {
                     position: "top-right",
                     autoClose: 2000,
                 });
-                setIsModalOpen(false);
-                return;
             } else {
                 // Tạo mới
                 const result = await createHotelAdminAction(formData);
@@ -92,7 +96,7 @@ export default function SuperAdminsPage() {
                     });
                     return;
                 }
-                toast.success('Tạo admin khách sạn thành công!', {
+                toast.success('Tạo đối tác khách sạn thành công!', {
                     position: "top-right",
                     autoClose: 2000,
                 });
@@ -116,14 +120,14 @@ export default function SuperAdminsPage() {
     return (
         <div className="container-fluid">
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <h1 className="h3 text-dark mb-0">Quản lý Admin Khách sạn</h1>
+                <h1 className="h3 text-dark mb-0">Quản lý Đối tác Khách sạn</h1>
                 <button className="btn btn-primary" onClick={handleAddNew}>
-                    + Thêm Admin
+                    + Thêm Đối tác
                 </button>
             </div>
 
             {isLoading ? (
-                <p>Đang tải danh sách admin...</p>
+                <p>Đang tải danh sách đối tác...</p>
             ) : (
                 <>
                     <HotelAdminsTable
