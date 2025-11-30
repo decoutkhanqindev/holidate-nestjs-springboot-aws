@@ -1392,36 +1392,36 @@ registerLocale('vi', vi);
 // --- HÀM TIỆN ÍCH (GIỮ NGUYÊN) ---
 const getFullAddress = (hotel: HotelResponse) => {
     if (!hotel) return 'Chưa có địa chỉ';
-
+    
     const addressParts: string[] = [];
     const responseAddress = hotel.address || '';
-
+    
     // Chỉ thêm address nếu nó không phải là giá trị mặc định và không chứa location info đã có
-    if (responseAddress &&
-        responseAddress.trim() !== '' &&
+    if (responseAddress && 
+        responseAddress.trim() !== '' && 
         responseAddress !== 'Chưa có địa chỉ') {
-
+        
         // Kiểm tra xem address có chứa ward, district, city name không
         const wardName = hotel.ward?.name || '';
         const districtName = hotel.district?.name || '';
         const cityName = hotel.city?.name || '';
-
+        
         // Nếu address không chứa các location names, thì thêm vào
-        const containsLocationInfo =
+        const containsLocationInfo = 
             (wardName && responseAddress.includes(wardName)) ||
             (districtName && responseAddress.includes(districtName)) ||
             (cityName && responseAddress.includes(cityName));
-
+        
         if (!containsLocationInfo) {
             // Address là địa chỉ cụ thể (số nhà, tên đường) chưa có location info
             addressParts.push(responseAddress);
         } else {
             // Address đã chứa location info, kiểm tra xem có đầy đủ không
-            const hasAllLocation =
+            const hasAllLocation = 
                 wardName && responseAddress.includes(wardName) &&
                 districtName && responseAddress.includes(districtName) &&
                 cityName && responseAddress.includes(cityName);
-
+            
             if (hasAllLocation) {
                 // Address đã đầy đủ, không cần append thêm
                 return responseAddress;
@@ -1431,7 +1431,7 @@ const getFullAddress = (hotel: HotelResponse) => {
             }
         }
     }
-
+    
     // Thêm các location fields theo thứ tự: street -> ward -> district -> city
     // Chỉ thêm nếu chưa có trong addressParts
     if (hotel.street?.name) {
@@ -1458,7 +1458,7 @@ const getFullAddress = (hotel: HotelResponse) => {
             addressParts.push(hotel.city.name);
         }
     }
-
+    
     // Nếu có ít nhất một phần địa chỉ, trả về địa chỉ đầy đủ
     // Nếu không có gì, trả về "Chưa có địa chỉ"
     return addressParts.length > 0 ? addressParts.join(', ') : 'Chưa có địa chỉ';
@@ -1789,13 +1789,6 @@ export default function HotelDetailPageClient({
     const priceDisplayOptions = ["Mỗi phòng mỗi đêm (chưa bao gồm thuế và phí)", "Mỗi phòng mỗi đêm (bao gồm thuế và phí)", "Tổng giá (chưa bao gồm thuế và phí)", "Tổng giá (bao gồm thuế và phí)"];
     const [selectedPriceDisplay, setSelectedPriceDisplay] = useState(priceDisplayOptions[0]);
 
-    // State cho các filter
-    const [filterFreeCancellation, setFilterFreeCancellation] = useState(false);
-    const [filterPayLater, setFilterPayLater] = useState(false);
-    const [filterPayAtHotel, setFilterPayAtHotel] = useState(false);
-    const [filterLargeBed, setFilterLargeBed] = useState(false);
-    const [filterFreeBreakfast, setFilterFreeBreakfast] = useState(false);
-
     const observer = useRef<IntersectionObserver | null>(null);
     const roomsFetchedForHotelId = useRef<string | null>(null); // Track hotel ID mà rooms đã được fetch
     const reviewsFetchedForHotelId = useRef<string | null>(null); // Track hotel ID mà reviews đã được fetch
@@ -1863,7 +1856,7 @@ export default function HotelDetailPageClient({
         // Kiểm tra nếu đã fetch reviews cho hotel này rồi thì không fetch lại
         const hotelIdStr = hotelId as string;
         const currentHotelId = hotel.id; // Lấy hotelId từ hotel object để đảm bảo đúng
-
+        
         // Nếu hotelId không khớp với hotel.id, không fetch
         if (hotelIdStr !== currentHotelId) {
             return;
@@ -1877,19 +1870,19 @@ export default function HotelDetailPageClient({
         const fetchReviewsData = async () => {
             setIsReviewsLoading(true);
             setReviewsError(null);
-
+            
             // Đảm bảo reset reviews trước khi fetch (phòng trường hợp có reviews cũ)
             setReviews([]);
-
+            
             // Validate hotelId trước khi fetch
             if (!hotelIdStr || hotelIdStr.trim() === '') {
                 setReviewsError('Không thể tải đánh giá: ID khách sạn không hợp lệ.');
                 setIsReviewsLoading(false);
                 return;
             }
-
+            
             try {
-
+                
                 // Đảm bảo luôn truyền hotelId khi fetch reviews (phải là string hợp lệ, không rỗng)
                 const reviewsResult = await getReviews({
                     hotelId: hotelIdStr.trim(), // Sử dụng hotelId từ URL params, trim để loại bỏ spaces
@@ -1898,47 +1891,47 @@ export default function HotelDetailPageClient({
                     sortBy: 'createdAt',
                     sortDir: 'DESC'
                 });
-
+                
                 console.log('[HotelDetailPage] Reviews fetched from API:', {
                     total: reviewsResult.data.length,
                     hotelId: hotelIdStr,
-                    reviews: reviewsResult.data.map(r => ({
-                        id: r.id,
-                        hotelId: r.hotelId || 'N/A',
-                        score: r.score
+                    reviews: reviewsResult.data.map(r => ({ 
+                        id: r.id, 
+                        hotelId: r.hotelId || 'N/A', 
+                        score: r.score 
                     }))
                 });
-
+                
                 // VẤN ĐỀ: Backend ReviewResponse không có hotelId, nên không thể verify trực tiếp
                 // Backend đã filter trong query: (:hotelId IS NULL OR r.hotel.id = :hotelId)
                 // Nếu backend không nhận được hotelId (NULL), sẽ trả về TẤT CẢ reviews
-
+                
                 // Strategy: Verify một vài reviews đầu tiên bằng cách fetch detail
                 // Nếu tất cả đều đúng → trust backend cho các reviews còn lại
                 // Nếu có review sai → chỉ lấy reviews đã verify đúng (có thể backend filter không đúng)
-
+                
                 let verifiedReviews: Review[] = [];
                 const shouldVerify = reviewsResult.data.length > 0; // Chỉ verify nếu có reviews
-
+                
                 if (shouldVerify) {
                     // Chỉ verify 1-2 reviews đầu tiên để tránh performance issue
                     const reviewsToVerify = reviewsResult.data.slice(0, Math.min(2, reviewsResult.data.length));
-
+                    
                     console.log('[HotelDetailPage] Verifying reviews hotelId...', {
                         total: reviewsResult.data.length,
                         toVerify: reviewsToVerify.length,
                         hotelId: hotelIdStr
                     });
-
+                    
                     try {
                         const { getReviewById } = await import('@/service/reviewService');
-
+                        
                         const verificationResults = await Promise.all(
                             reviewsToVerify.map(async (review) => {
                                 try {
                                     const detail = await getReviewById(review.id);
                                     const reviewHotelId = detail.hotelId;
-
+                                    
                                     if (reviewHotelId && reviewHotelId !== '' && reviewHotelId !== 'N/A') {
                                         const matches = reviewHotelId === hotelIdStr || reviewHotelId === currentHotelId;
                                         if (!matches) {
@@ -1959,7 +1952,7 @@ export default function HotelDetailPageClient({
                                 }
                             })
                         );
-
+                        
                         // Kiểm tra xem có review nào không thuộc hotel này không
                         const invalidReviews = verificationResults.filter(r => !r.verified);
                         if (invalidReviews.length > 0) {
@@ -1971,7 +1964,7 @@ export default function HotelDetailPageClient({
                                     hotelId: r.hotelId
                                 }))
                             });
-
+                            
                             // Nếu có review sai, chỉ lấy những reviews đã verify đúng
                             // Nếu không có review nào đúng → verifiedReviews = [] (sẽ hiển thị "Chưa có đánh giá")
                             const validReviewIds = new Set(
@@ -1979,10 +1972,10 @@ export default function HotelDetailPageClient({
                                     .filter(r => r.verified)
                                     .map(r => r.review.id)
                             );
-
+                            
                             // Chỉ lấy reviews đã verify đúng
                             verifiedReviews = reviewsResult.data.filter(r => validReviewIds.has(r.id));
-
+                            
                             // Nếu tất cả reviews đều sai → verifiedReviews = [] → sẽ hiển thị "Chưa có đánh giá"
                             // Điều này đúng vì backend filter sai, không thể trust được
                         } else {
@@ -1997,13 +1990,13 @@ export default function HotelDetailPageClient({
                     // Không có reviews, không cần verify
                     verifiedReviews = reviewsResult.data;
                 }
-
+                
                 console.log('[HotelDetailPage] Reviews after verification:', {
                     total: reviewsResult.data.length,
                     verified: verifiedReviews.length,
                     hotelId: hotelIdStr
                 });
-
+                
                 // Chỉ set reviews nếu hotelId vẫn khớp (phòng trường hợp user chuyển trang trong lúc fetch)
                 if (hotelIdStr === (hotelId as string) && hotelIdStr === hotel.id) {
                     setReviews(verifiedReviews);
@@ -2086,15 +2079,15 @@ export default function HotelDetailPageClient({
 
     const loadMoreReviews = useCallback(async () => {
         if (!hotelId || !hotel || isReviewsLoading || !reviewsHasMore) return;
-
+        
         const hotelIdStr = (hotelId as string)?.trim();
         const currentHotelId = hotel.id;
-
+        
         // Validate hotelId
         if (!hotelIdStr || hotelIdStr === '') {
             return;
         }
-
+        
         // Đảm bảo hotelId vẫn khớp trước khi load more
         if (hotelIdStr !== currentHotelId) {
             console.warn('[HotelDetailPage] Cannot load more reviews: hotelId mismatch', {
@@ -2103,21 +2096,21 @@ export default function HotelDetailPageClient({
             });
             return;
         }
-
+        
         setIsReviewsLoading(true);
         try {
             const nextPage = reviewsPage + 1;
-
-
+            
+            
             // Đảm bảo luôn truyền hotelId khi fetch reviews (trim để đảm bảo không có spaces)
-            const result = await getReviews({
-                hotelId: hotelIdStr.trim(),
-                page: nextPage,
-                size: 10,
-                sortBy: 'createdAt',
-                sortDir: 'DESC'
+            const result = await getReviews({ 
+                hotelId: hotelIdStr.trim(), 
+                page: nextPage, 
+                size: 10, 
+                sortBy: 'createdAt', 
+                sortDir: 'DESC' 
             });
-
+            
             // Backend đã filter theo hotelId rồi, nhưng vẫn filter lại để chắc chắn
             const filteredReviews = result.data.filter(review => {
                 // Nếu review không có hotelId (backend không trả về), thì trust backend
@@ -2135,7 +2128,7 @@ export default function HotelDetailPageClient({
                 }
                 return matches;
             });
-
+            
             // Chỉ thêm reviews nếu hotelId vẫn khớp
             if (hotelIdStr === (hotelId as string) && hotelIdStr === hotel.id) {
                 setReviews(prev => [...prev, ...filteredReviews]);
@@ -2452,54 +2445,13 @@ export default function HotelDetailPageClient({
                     <h5 className="fw-bold mb-3 text-dark">Tìm kiếm nhanh hơn bằng cách chọn những tiện nghi bạn cần</h5>
                     <div className="row align-items-start">
                         <div className="col-lg-4 col-md-6">
-                            <label className={styles['custom-checkbox-wrapper']}>
-                                Miễn phí hủy phòng
-                                <input
-                                    type="checkbox"
-                                    checked={filterFreeCancellation}
-                                    onChange={(e) => setFilterFreeCancellation(e.target.checked)}
-                                />
-                                <span className={styles.checkmark}></span>
-                            </label>
-                            <label className={styles['custom-checkbox-wrapper']}>
-                                Thanh toán gần ngày đến ở
-                                <input
-                                    type="checkbox"
-                                    checked={filterPayLater}
-                                    onChange={(e) => setFilterPayLater(e.target.checked)}
-                                />
-                                <span className={styles.checkmark}></span>
-                                <div className="text-muted" style={{ fontSize: '12px', marginLeft: '28px', marginTop: '-8px' }}>Không cần thanh toán ngay hôm nay</div>
-                            </label>
-                            <label className={styles['custom-checkbox-wrapper']}>
-                                Thanh Toán Tại Khách Sạn <i className="bi bi-info-circle ms-1"></i>
-                                <input
-                                    type="checkbox"
-                                    checked={filterPayAtHotel}
-                                    onChange={(e) => setFilterPayAtHotel(e.target.checked)}
-                                />
-                                <span className={styles.checkmark}></span>
-                            </label>
+                            <label className={styles['custom-checkbox-wrapper']}>Miễn phí hủy phòng<input type="checkbox" /><span className={styles.checkmark}></span></label>
+                            <label className={styles['custom-checkbox-wrapper']}>Thanh toán gần ngày đến ở<input type="checkbox" /><span className={styles.checkmark}></span><div className="text-muted" style={{ fontSize: '12px', marginLeft: '28px', marginTop: '-8px' }}>Không cần thanh toán ngay hôm nay</div></label>
+                            <label className={styles['custom-checkbox-wrapper']}>Thanh Toán Tại Khách Sạn <i className="bi bi-info-circle ms-1"></i><input type="checkbox" /><span className={styles.checkmark}></span></label>
                         </div>
                         <div className="col-lg-4 col-md-6 text-dark">
-                            <label className={styles['custom-checkbox-wrapper']}>
-                                Giường lớn <i className="bi bi-info-circle ms-1"></i>
-                                <input
-                                    type="checkbox"
-                                    checked={filterLargeBed}
-                                    onChange={(e) => setFilterLargeBed(e.target.checked)}
-                                />
-                                <span className={styles.checkmark}></span>
-                            </label>
-                            <label className={styles['custom-checkbox-wrapper']}>
-                                Miễn phí bữa sáng
-                                <input
-                                    type="checkbox"
-                                    checked={filterFreeBreakfast}
-                                    onChange={(e) => setFilterFreeBreakfast(e.target.checked)}
-                                />
-                                <span className={styles.checkmark}></span>
-                            </label>
+                            <label className={styles['custom-checkbox-wrapper']}>Giường lớn <i className="bi bi-info-circle ms-1"></i><input type="checkbox" /><span className={styles.checkmark}></span></label>
+                            <label className={styles['custom-checkbox-wrapper']}>Miễn phí bữa sáng<input type="checkbox" /><span className={styles.checkmark}></span></label>
                         </div>
                         <div className="col-lg-4 col-md-12 mt-3 mt-lg-0">
                             <div className="fw-semibold text-dark small mb-1">Hiển thị giá</div>
@@ -2514,64 +2466,20 @@ export default function HotelDetailPageClient({
                         </div>
                     </div>
                 </div>
-                {(() => {
-                    // Filter phòng dựa trên các filter đã chọn
-                    let filteredRooms = [...rooms];
-
-                    if (filterFreeBreakfast) {
-                        filteredRooms = filteredRooms.filter(room => room.breakfastIncluded === true);
-                    }
-
-                    if (filterLargeBed) {
-                        filteredRooms = filteredRooms.filter(room => {
-                            const bedTypeName = room.bedType?.name?.toLowerCase() || '';
-                            return bedTypeName.includes('king') ||
-                                bedTypeName.includes('queen') ||
-                                bedTypeName.includes('giường đôi') ||
-                                bedTypeName.includes('double') ||
-                                bedTypeName.includes('giường lớn');
-                        });
-                    }
-
-                    if (filterFreeCancellation) {
-                        // Filter phòng có chính sách hủy miễn phí
-                        // Kiểm tra cancellation policy của hotel hoặc room
-                        filteredRooms = filteredRooms.filter(room => {
-                            // Kiểm tra cancellation policy của room trước, nếu không có thì dùng của hotel
-                            const cancellationPolicy = room.cancellationPolicy || hotel?.policy?.cancellationPolicy;
-                            if (cancellationPolicy) {
-                                // Kiểm tra xem có rule nào cho phép hủy miễn phí không
-                                const rules = cancellationPolicy.rules || [];
-                                return rules.some((rule: any) => rule.penaltyPercentage === 0 || rule.penaltyPercentage === null);
-                            }
-                            // Nếu không có policy, giả định là không miễn phí
-                            return false;
-                        });
-                    }
-
-                    return isRoomsLoading ? (
-                        <div className="text-center p-5"><div className="spinner-border text-primary" role="status"></div></div>
-                    ) : roomsError ? (
-                        <div className="alert alert-danger">{roomsError}</div>
-                    ) : filteredRooms.length === 0 ? (
-                        <div className="alert alert-info text-center" role="alert">
-                            {rooms.length === 0 ? 'Không có phòng nào khả dụng.' : 'Không có phòng nào phù hợp với bộ lọc đã chọn.'}
-                        </div>
-                    ) : (
-                        <div>
-                            {filteredRooms.map((room, index) => (
-                                <RoomCard
-                                    key={room.id}
-                                    room={room}
-                                    handleSelectRoom={handleSelectRoom}
-                                    onViewDetail={handleViewRoomDetail}
-                                    innerRef={filteredRooms.length === index + 1 ? lastRoomElementRef : undefined}
-                                />
-                            ))}
-                            {isFetchingMore && <div className="text-center p-4"><div className="spinner-border text-primary" role="status"></div></div>}
-                        </div>
-                    );
-                })()}
+                {isRoomsLoading ? (
+                    <div className="text-center p-5"><div className="spinner-border text-primary" role="status"></div></div>
+                ) : roomsError ? (
+                    <div className="alert alert-danger">{roomsError}</div>
+                ) : rooms.length === 0 ? (
+                    <div className="alert alert-info text-center" role="alert">Không có phòng nào khả dụng.</div>
+                ) : (
+                    <div>
+                        {rooms.map((room, index) => (
+                            <RoomCard key={room.id} room={room} handleSelectRoom={handleSelectRoom} onViewDetail={handleViewRoomDetail} innerRef={rooms.length === index + 1 ? lastRoomElementRef : undefined} />
+                        ))}
+                        {isFetchingMore && <div className="text-center p-4"><div className="spinner-border text-primary" role="status"></div></div>}
+                    </div>
+                )}
             </div>
             {/* Luôn hiển thị section reviews để user biết */}
             <div ref={reviewRef} className="container mb-5">
@@ -2627,13 +2535,13 @@ export default function HotelDetailPageClient({
                                     setReviewsPage(0);
                                     const hotelIdStr = (hotelId as string)?.trim();
                                     const currentHotelId = hotel?.id;
-
+                                    
                                     // Validate hotelId
                                     if (!hotelIdStr || hotelIdStr === '') {
                                         setIsReviewsLoading(false);
                                         return;
                                     }
-
+                                    
                                     // Đảm bảo hotelId khớp trước khi reload
                                     if (hotelIdStr !== currentHotelId) {
                                         console.warn('[HotelDetailPage] Cannot reload reviews: hotelId mismatch', {
@@ -2643,14 +2551,14 @@ export default function HotelDetailPageClient({
                                         setIsReviewsLoading(false);
                                         return;
                                     }
-
-
-                                    getReviews({
-                                        hotelId: hotelIdStr.trim(),
-                                        page: 0,
-                                        size: 10,
-                                        sortBy: 'createdAt',
-                                        sortDir: 'DESC'
+                                    
+                                    
+                                    getReviews({ 
+                                        hotelId: hotelIdStr.trim(), 
+                                        page: 0, 
+                                        size: 10, 
+                                        sortBy: 'createdAt', 
+                                        sortDir: 'DESC' 
                                     })
                                         .then((result) => {
                                             // Backend đã filter theo hotelId rồi, nhưng vẫn filter lại để chắc chắn
@@ -2670,7 +2578,7 @@ export default function HotelDetailPageClient({
                                                 }
                                                 return matches;
                                             });
-
+                                            
                                             // Chỉ set reviews nếu hotelId vẫn khớp
                                             if (hotelIdStr === (hotelId as string) && hotelIdStr === hotel?.id) {
                                                 setReviews(filteredReviews);

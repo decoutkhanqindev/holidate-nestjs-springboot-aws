@@ -1,4 +1,4 @@
-Chắc chắn rồi. Dựa trên file yêu cầu cho Admin, tôi sẽ phân tích và đặc tả chi tiết lại **Phần 2: Luồng nghiệp vụ của Tác vụ nền (Mở rộng cho Admin)** theo đúng định dạng Markdown, tập trung vào việc làm rõ các bước, lý do đằng sau các quyết định thiết kế và các yêu cầu nghiệp vụ chi tiết.
+apiChắc chắn rồi. Dựa trên file yêu cầu cho Admin, tôi sẽ phân tích và đặc tả chi tiết lại **Phần 2: Luồng nghiệp vụ của Tác vụ nền (Mở rộng cho Admin)** theo đúng định dạng Markdown, tập trung vào việc làm rõ các bước, lý do đằng sau các quyết định thiết kế và các yêu cầu nghiệp vụ chi tiết.
 
 ---
 
