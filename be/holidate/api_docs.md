@@ -4599,15 +4599,25 @@ All admin report endpoints support period comparison. When `compare-from` and `c
 **GET** `/admin/reports/revenue`
 
 - **Role Required**: ADMIN
+  - **ADMIN**: Can access revenue reports for all hotels in the system
+- **Description**: Retrieves aggregated revenue data for the entire system over a specified date range. This endpoint provides comprehensive revenue insights at the platform level, allowing admins to analyze system-wide revenue trends, identify peak periods, and compare performance across different time periods. Revenue is calculated from completed bookings only (bookings with status `completed`). The data can be grouped by day, week, or month according to the `group-by` parameter. Additionally, the endpoint supports filtering and breakdown by hotel, city, or province to provide detailed revenue analysis by different dimensions. When `filter-by` is provided, the response includes a paginated breakdown showing revenue for each item in the selected dimension. The endpoint optionally supports period comparison to track revenue growth or decline between two time periods.
 - **Query Parameters**:
-  - `from`: date (required, ISO format: YYYY-MM-DD)
-  - `to`: date (required, ISO format: YYYY-MM-DD)
-  - `group-by`: string (optional, enum: `day`, `week`, `month`, default: `day`)
-  - `filter-by`: string (optional, enum: `hotel`, `city`, `province`)
-  - `page`: integer (optional, default: 0)
-  - `size`: integer (optional, default: 10)
-  - `compare-from`: date (optional, ISO format: YYYY-MM-DD)
-  - `compare-to`: date (optional, ISO format: YYYY-MM-DD)
+  - `from`: date (required, ISO format: YYYY-MM-DD) - Start date of the report period (inclusive). Must be less than or equal to `to`
+  - `to`: date (required, ISO format: YYYY-MM-DD) - End date of the report period (inclusive). Must be greater than or equal to `from`
+  - `group-by`: string (optional, default: "day") - How to group the revenue data. Valid values: `day`, `week`, `month`
+    - `day`: Groups revenue by individual days
+    - `week`: Groups revenue by weeks (Monday to Sunday)
+    - `month`: Groups revenue by calendar months
+  - `filter-by`: string (optional) - Dimension to filter and breakdown revenue by. Valid values: `hotel`, `city`, `province`
+    - `hotel`: Provides revenue breakdown by individual hotels
+    - `city`: Provides revenue breakdown by cities
+    - `province`: Provides revenue breakdown by provinces
+    - When provided, the `breakdown` array in the response will be populated with paginated results
+    - When not provided, the `breakdown` array will be `null`
+  - `page`: integer (optional, default: 0, minimum: 0) - Page number for pagination (0-indexed). Only used when `filter-by` is provided. Determines which page of the breakdown results to return
+  - `size`: integer (optional, default: 10, minimum: 1) - Page size for pagination. Only used when `filter-by` is provided. Determines how many items to return per page in the breakdown
+  - `compare-from`: date (optional, ISO format: YYYY-MM-DD) - Start date of the comparison period. Must be provided together with `compare-to`. If only one comparison parameter is provided, the request will fail with a validation error
+  - `compare-to`: date (optional, ISO format: YYYY-MM-DD) - End date of the comparison period. Must be provided together with `compare-from`. If only one comparison parameter is provided, the request will fail with a validation error
 - **Response** (without comparison):
 
 ```json
@@ -4617,42 +4627,112 @@ All admin report endpoints support period comparison. When `compare-from` and `c
   "data": {
     "data": [
       {
-        "period": "date",
-        "revenue": "number"
+        "period": "date (ISO format: YYYY-MM-DD) - The date, week start date, or month start date depending on group-by",
+        "revenue": "number (non-negative, rounded to 2 decimal places) - Total revenue for this period from completed bookings across all hotels"
       }
     ],
     "summary": {
-      "totalRevenue": "number"
+      "totalRevenue": "number (non-negative, rounded to 2 decimal places) - Sum of all revenue data points in the report period (total system revenue)"
     },
     "breakdown": [
       {
-        "id": "string",
-        "name": "string",
-        "revenue": "number"
+        "filterId": "string (UUID) - Unique identifier of the filter dimension item (hotel ID, city ID, or province ID)",
+        "filterName": "string - Name of the filter dimension item (hotel name, city name, or province name)",
+        "revenue": "number (non-negative, rounded to 2 decimal places) - Total revenue for this item from completed bookings in the period"
       }
     ]
   }
 }
 ```
 
-- **Response** (with comparison): Similar structure with `currentPeriod`, `previousPeriod`, and `comparison` objects.
+**Note**: The `breakdown` array is only populated when `filter-by` parameter is provided. When `filter-by` is not provided, `breakdown` will be `null`. The breakdown results are paginated when `filter-by` is provided, using the `page` and `size` parameters.
+
+- **Response** (with comparison):
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "currentPeriod": {
+      "data": [
+        {
+          "period": "date (ISO format: YYYY-MM-DD)",
+          "revenue": "number (non-negative, rounded to 2 decimal places)"
+        }
+      ],
+      "summary": {
+        "totalRevenue": "number (non-negative, rounded to 2 decimal places) - Total revenue for the current period"
+      },
+      "breakdown": [
+        {
+          "filterId": "string (UUID)",
+          "filterName": "string",
+          "revenue": "number (non-negative, rounded to 2 decimal places)"
+        }
+      ]
+    },
+    "previousPeriod": {
+      "data": [
+        {
+          "period": "date (ISO format: YYYY-MM-DD)",
+          "revenue": "number (non-negative, rounded to 2 decimal places)"
+        }
+      ],
+      "summary": {
+        "totalRevenue": "number (non-negative, rounded to 2 decimal places) - Total revenue for the comparison period"
+      },
+      "breakdown": [
+        {
+          "filterId": "string (UUID)",
+          "filterName": "string",
+          "revenue": "number (non-negative, rounded to 2 decimal places)"
+        }
+      ]
+    },
+    "comparison": {
+      "totalRevenueDifference": "number (rounded to 2 decimal places) - Absolute difference: currentPeriod.summary.totalRevenue - previousPeriod.summary.totalRevenue",
+      "totalRevenuePercentageChange": "number (rounded to 2 decimal places) - Percentage change: ((currentPeriod.summary.totalRevenue - previousPeriod.summary.totalRevenue) / previousPeriod.summary.totalRevenue) * 100. Can be positive (growth) or negative (decline)"
+    }
+  }
+}
+```
+
+- **Notes**:
+  - Revenue is calculated only from bookings with status `completed`
+  - The `period` field in data points represents the start of the grouping period (e.g., for `group-by=week`, it shows the Monday of that week)
+  - When `filter-by` is provided, the `breakdown` array contains paginated results. Use `page` and `size` parameters to navigate through pages
+  - The `breakdown` array is sorted by revenue in descending order (highest revenue first)
+  - When comparison parameters are provided, both periods should ideally have the same length for meaningful comparisons
+  - If no revenue data exists for the period, the response will contain empty arrays and zero totals
+  - Percentage change is calculated relative to the previous period. If previous period revenue is zero, percentage change will be 0 or undefined
+  - Both `compare-from` and `compare-to` must be provided together, or both must be omitted. Providing only one will result in a validation error (INVALID_DATE_RANGE)
+  - The `breakdown` array in comparison responses will contain the same items for both periods, allowing for direct comparison of revenue by dimension
 
 ### 2. Hotel Performance Report
 
 **GET** `/admin/reports/hotel-performance`
 
 - **Role Required**: ADMIN
+  - **ADMIN**: Can access hotel performance reports for all hotels in the system
+- **Description**: Retrieves performance metrics for all hotels in the system over a specified date range. This endpoint provides comprehensive hotel performance analysis, allowing admins to identify top-performing hotels, analyze booking patterns, occupancy rates, and cancellation trends across the platform. The report includes key metrics such as total revenue, completed bookings, created bookings, cancelled bookings, average occupancy rate, and cancellation rate for each hotel. Results can be sorted by different criteria (revenue, occupancy, bookings, or cancellation rate) and filtered by city or province to focus on specific geographic regions. The endpoint supports pagination for efficient data retrieval and optionally supports period comparison to track performance changes over time, including rank changes for hotels.
 - **Query Parameters**:
-  - `from`: date (required, ISO format: YYYY-MM-DD)
-  - `to`: date (required, ISO format: YYYY-MM-DD)
-  - `sort-by`: string (optional, enum: `revenue`, `occupancy`, `bookings`, `cancellationRate`, default: `revenue`)
-  - `sort-dir`: string (optional, enum: `asc`, `desc`, default: `desc`)
-  - `city-id`: string (optional, UUID format)
-  - `province-id`: string (optional, UUID format)
-  - `page`: integer (optional, default: 0)
-  - `size`: integer (optional, default: 20)
-  - `compare-from`: date (optional, ISO format: YYYY-MM-DD)
-  - `compare-to`: date (optional, ISO format: YYYY-MM-DD)
+  - `from`: date (required, ISO format: YYYY-MM-DD) - Start date of the report period (inclusive). Must be less than or equal to `to`
+  - `to`: date (required, ISO format: YYYY-MM-DD) - End date of the report period (inclusive). Must be greater than or equal to `from`
+  - `sort-by`: string (optional, default: "revenue") - Field to sort hotels by. Valid values: `revenue`, `occupancy`, `bookings`, `cancellationRate`
+    - `revenue`: Sort by total revenue from completed bookings (descending by default)
+    - `occupancy`: Sort by average occupancy rate (descending by default)
+    - `bookings`: Sort by total completed bookings (descending by default)
+    - `cancellationRate`: Sort by cancellation rate (descending by default)
+  - `sort-dir`: string (optional, default: "desc") - Sort direction. Valid values: `asc`, `desc`
+    - `asc`: Sort in ascending order (lowest values first)
+    - `desc`: Sort in descending order (highest values first)
+  - `city-id`: string (optional, UUID format) - Filter hotels by city ID. When provided, only hotels in the specified city will be included in the results. Can be used together with `province-id` for more specific filtering
+  - `province-id`: string (optional, UUID format) - Filter hotels by province ID. When provided, only hotels in the specified province will be included in the results. Can be used together with `city-id` for more specific filtering
+  - `page`: integer (optional, default: 0, minimum: 0) - Page number for pagination (0-indexed). Determines which page of results to return
+  - `size`: integer (optional, default: 20, minimum: 1) - Page size for pagination. Determines how many hotels to return per page
+  - `compare-from`: date (optional, ISO format: YYYY-MM-DD) - Start date of the comparison period. Must be provided together with `compare-to`. If only one comparison parameter is provided, the request will fail with a validation error
+  - `compare-to`: date (optional, ISO format: YYYY-MM-DD) - End date of the comparison period. Must be provided together with `compare-from`. If only one comparison parameter is provided, the request will fail with a validation error
 - **Response** (without comparison):
 
 ```json
@@ -4662,40 +4742,147 @@ All admin report endpoints support period comparison. When `compare-from` and `c
   "data": {
     "data": [
       {
-        "hotelId": "string",
-        "hotelName": "string",
-        "totalRevenue": "number",
-        "totalCompletedBookings": "integer",
-        "totalCreatedBookings": "integer",
-        "totalCancelledBookings": "integer",
-        "averageOccupancyRate": "number",
-        "cancellationRate": "number"
+        "hotelId": "string (UUID) - Unique identifier of the hotel",
+        "hotelName": "string - Name of the hotel",
+        "totalRevenue": "number (non-negative, rounded to 2 decimal places) - Total revenue from completed bookings for this hotel in the period",
+        "totalCompletedBookings": "integer (non-negative) - Total number of completed bookings for this hotel in the period",
+        "totalCreatedBookings": "integer (non-negative) - Total number of bookings created for this hotel in the period (all statuses)",
+        "totalCancelledBookings": "integer (non-negative) - Total number of cancelled bookings for this hotel in the period",
+        "averageOccupancyRate": "number (0-100, rounded to 2 decimal places) - Average occupancy rate for this hotel across all dates in the period",
+        "cancellationRate": "number (0-100, rounded to 2 decimal places) - Cancellation rate for this hotel: (totalCancelledBookings / totalCreatedBookings) * 100"
       }
     ],
-    "page": "integer",
-    "size": "integer",
-    "totalItems": "long",
-    "totalPages": "integer",
-    "first": boolean,
-    "last": boolean,
-    "hasNext": boolean,
-    "hasPrevious": boolean
+    "page": "integer (non-negative) - Current page number (0-indexed)",
+    "size": "integer (positive) - Number of items per page",
+    "totalItems": "long (non-negative) - Total number of hotels matching the criteria",
+    "totalPages": "integer (non-negative) - Total number of pages available",
+    "first": "boolean - True if this is the first page",
+    "last": "boolean - True if this is the last page",
+    "hasNext": "boolean - True if there is a next page",
+    "hasPrevious": "boolean - True if there is a previous page"
   }
 }
 ```
 
-- **Response** (with comparison): Includes `currentPeriod`, `previousPeriod`, and `comparison` array with detailed comparison metrics including rank changes for each hotel.
+- **Response** (with comparison):
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "currentPeriod": {
+      "data": [
+        {
+          "hotelId": "string (UUID)",
+          "hotelName": "string",
+          "totalRevenue": "number (non-negative, rounded to 2 decimal places)",
+          "totalCompletedBookings": "integer (non-negative)",
+          "totalCreatedBookings": "integer (non-negative)",
+          "totalCancelledBookings": "integer (non-negative)",
+          "averageOccupancyRate": "number (0-100, rounded to 2 decimal places)",
+          "cancellationRate": "number (0-100, rounded to 2 decimal places)"
+        }
+      ],
+      "page": "integer (non-negative)",
+      "size": "integer (positive)",
+      "totalItems": "long (non-negative)",
+      "totalPages": "integer (non-negative)",
+      "first": "boolean",
+      "last": "boolean",
+      "hasNext": "boolean",
+      "hasPrevious": "boolean"
+    },
+    "previousPeriod": {
+      "data": [
+        {
+          "hotelId": "string (UUID)",
+          "hotelName": "string",
+          "totalRevenue": "number (non-negative, rounded to 2 decimal places)",
+          "totalCompletedBookings": "integer (non-negative)",
+          "totalCreatedBookings": "integer (non-negative)",
+          "totalCancelledBookings": "integer (non-negative)",
+          "averageOccupancyRate": "number (0-100, rounded to 2 decimal places)",
+          "cancellationRate": "number (0-100, rounded to 2 decimal places)"
+        }
+      ],
+      "page": "integer (non-negative)",
+      "size": "integer (positive)",
+      "totalItems": "long (non-negative)",
+      "totalPages": "integer (non-negative)",
+      "first": "boolean",
+      "last": "boolean",
+      "hasNext": "boolean",
+      "hasPrevious": "boolean"
+    },
+    "comparison": [
+      {
+        "hotelId": "string (UUID) - Unique identifier of the hotel",
+        "hotelName": "string - Name of the hotel",
+        "currentTotalRevenue": "number (non-negative, rounded to 2 decimal places) - Total revenue in current period",
+        "currentTotalCompletedBookings": "integer (non-negative) - Total completed bookings in current period",
+        "currentTotalCreatedBookings": "integer (non-negative) - Total created bookings in current period",
+        "currentTotalCancelledBookings": "integer (non-negative) - Total cancelled bookings in current period",
+        "currentAverageOccupancyRate": "number (0-100, rounded to 2 decimal places) - Average occupancy rate in current period",
+        "currentCancellationRate": "number (0-100, rounded to 2 decimal places) - Cancellation rate in current period",
+        "previousTotalRevenue": "number (non-negative, rounded to 2 decimal places) - Total revenue in comparison period",
+        "previousTotalCompletedBookings": "integer (non-negative) - Total completed bookings in comparison period",
+        "previousTotalCreatedBookings": "integer (non-negative) - Total created bookings in comparison period",
+        "previousTotalCancelledBookings": "integer (non-negative) - Total cancelled bookings in comparison period",
+        "previousAverageOccupancyRate": "number (0-100, rounded to 2 decimal places) - Average occupancy rate in comparison period",
+        "previousCancellationRate": "number (0-100, rounded to 2 decimal places) - Cancellation rate in comparison period",
+        "revenueDifference": "number (rounded to 2 decimal places) - Absolute difference: currentTotalRevenue - previousTotalRevenue",
+        "revenuePercentageChange": "number (rounded to 2 decimal places) - Percentage change for revenue",
+        "completedBookingsDifference": "integer - Absolute difference: currentTotalCompletedBookings - previousTotalCompletedBookings",
+        "completedBookingsPercentageChange": "number (rounded to 2 decimal places) - Percentage change for completed bookings",
+        "createdBookingsDifference": "integer - Absolute difference: currentTotalCreatedBookings - previousTotalCreatedBookings",
+        "createdBookingsPercentageChange": "number (rounded to 2 decimal places) - Percentage change for created bookings",
+        "cancelledBookingsDifference": "integer - Absolute difference: currentTotalCancelledBookings - previousTotalCancelledBookings",
+        "cancelledBookingsPercentageChange": "number (rounded to 2 decimal places) - Percentage change for cancelled bookings",
+        "occupancyRateDifference": "number (rounded to 2 decimal places) - Absolute difference: currentAverageOccupancyRate - previousAverageOccupancyRate",
+        "occupancyRatePercentageChange": "number (rounded to 2 decimal places) - Percentage change for occupancy rate",
+        "cancellationRateDifference": "number (rounded to 2 decimal places) - Absolute difference: currentCancellationRate - previousCancellationRate",
+        "cancellationRatePercentageChange": "number (rounded to 2 decimal places) - Percentage change for cancellation rate",
+        "rankChange": "integer (nullable) - Change in rank position. Positive value means moved up in ranking, negative value means moved down. Null if hotel didn't exist in previous period or current period",
+        "currentRank": "integer (nullable) - Rank position in current period based on sort-by criteria. Null if hotel doesn't exist in current period",
+        "previousRank": "integer (nullable) - Rank position in previous period based on sort-by criteria. Null if hotel doesn't exist in previous period"
+      }
+    ]
+  }
+}
+```
+
+- **Notes**:
+  - Revenue is calculated only from bookings with status `completed`
+  - `totalCreatedBookings` includes all bookings regardless of their final status
+  - `totalCompletedBookings` counts only bookings that reached `completed` status
+  - `totalCancelledBookings` counts only bookings that reached `cancelled` status
+  - Cancellation rate is calculated as: `(totalCancelledBookings / totalCreatedBookings) * 100`. If `totalCreatedBookings` is 0, cancellation rate will be 0
+  - Average occupancy rate is calculated across all dates in the period for each hotel
+  - Hotels are sorted by the specified `sort-by` field in the specified direction (`sort-dir`)
+  - When `city-id` or `province-id` filters are provided, only hotels matching those criteria are included
+  - Both `city-id` and `province-id` can be provided together for more specific filtering
+  - When comparison parameters are provided, both periods should ideally have the same length for meaningful comparisons
+  - In comparison mode, hotels are sorted by the current period's `sort-by` criteria
+  - Rank is calculated based on the `sort-by` field for each period separately
+  - `rankChange` is calculated as `previousRank - currentRank`, so positive values indicate improvement (moved up) and negative values indicate decline (moved down)
+  - Hotels that exist in one period but not the other will have null values for missing period metrics
+  - The comparison array includes all hotels from both periods, sorted by current period ranking
+  - Both `compare-from` and `compare-to` must be provided together, or both must be omitted. Providing only one will result in a validation error (INVALID_DATE_RANGE)
+  - Pagination metadata in comparison response reflects the pagination of the comparison array, not the individual periods
 
 ### 3. Users Summary Report
 
 **GET** `/admin/reports/users/summary`
 
 - **Role Required**: ADMIN
+  - **ADMIN**: Can access user summary reports for the entire platform
+- **Description**: Retrieves a comprehensive summary of user growth and platform totals over a specified date range. This endpoint provides insights into platform growth by showing the number of new customers and new partners registered during the period, as well as current platform totals including total customers, total partners, and total hotels as of the report generation time. The endpoint helps admins track platform growth trends, understand user acquisition patterns, and monitor the overall scale of the platform. The endpoint optionally supports period comparison to track growth changes over time, showing differences and percentage changes in new user registrations between two periods.
 - **Query Parameters**:
-  - `from`: date (required, ISO format: YYYY-MM-DD)
-  - `to`: date (required, ISO format: YYYY-MM-DD)
-  - `compare-from`: date (optional, ISO format: YYYY-MM-DD)
-  - `compare-to`: date (optional, ISO format: YYYY-MM-DD)
+  - `from`: date (required, ISO format: YYYY-MM-DD) - Start date of the report period (inclusive). Must be less than or equal to `to`. Used to calculate growth metrics (new customers and new partners registered during this period)
+  - `to`: date (required, ISO format: YYYY-MM-DD) - End date of the report period (inclusive). Must be greater than or equal to `from`. Used to calculate growth metrics (new customers and new partners registered during this period)
+  - `compare-from`: date (optional, ISO format: YYYY-MM-DD) - Start date of the comparison period. Must be provided together with `compare-to`. If only one comparison parameter is provided, the request will fail with a validation error
+  - `compare-to`: date (optional, ISO format: YYYY-MM-DD) - End date of the comparison period. Must be provided together with `compare-from`. If only one comparison parameter is provided, the request will fail with a validation error
 - **Response** (without comparison):
 
 ```json
@@ -4703,29 +4890,95 @@ All admin report endpoints support period comparison. When `compare-from` and `c
   "statusCode": 200,
   "message": "",
   "data": {
-    "growth": {
-      "newCustomers": "integer",
-      "newPartners": "integer"
+    "growthInPeriod": {
+      "from": "date (ISO format: YYYY-MM-DD) - Start date of the growth period",
+      "to": "date (ISO format: YYYY-MM-DD) - End date of the growth period",
+      "newCustomers": "integer (non-negative) - Number of new customers (users with role USER) registered during the period",
+      "newPartners": "integer (non-negative) - Number of new partners (users with role PARTNER) registered during the period"
     },
     "platformTotals": {
-      "totalCustomers": "integer",
-      "totalPartners": "integer"
+      "asOf": "datetime (ISO format: YYYY-MM-DDTHH:mm:ss) - Timestamp when the platform totals were calculated",
+      "totalCustomers": "integer (non-negative) - Total number of customers (users with role USER) in the platform as of the report generation time",
+      "totalPartners": "integer (non-negative) - Total number of partners (users with role PARTNER) in the platform as of the report generation time",
+      "totalHotels": "integer (non-negative) - Total number of hotels in the platform as of the report generation time"
     }
   }
 }
 ```
 
-- **Response** (with comparison): Similar structure with `currentPeriod`, `previousPeriod`, and `comparison` objects containing differences and percentage changes.
+- **Response** (with comparison):
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "currentPeriod": {
+      "growthInPeriod": {
+        "from": "date (ISO format: YYYY-MM-DD)",
+        "to": "date (ISO format: YYYY-MM-DD)",
+        "newCustomers": "integer (non-negative)",
+        "newPartners": "integer (non-negative)"
+      },
+      "platformTotals": {
+        "asOf": "datetime (ISO format: YYYY-MM-DDTHH:mm:ss)",
+        "totalCustomers": "integer (non-negative)",
+        "totalPartners": "integer (non-negative)",
+        "totalHotels": "integer (non-negative)"
+      }
+    },
+    "previousPeriod": {
+      "growthInPeriod": {
+        "from": "date (ISO format: YYYY-MM-DD)",
+        "to": "date (ISO format: YYYY-MM-DD)",
+        "newCustomers": "integer (non-negative)",
+        "newPartners": "integer (non-negative)"
+      },
+      "platformTotals": {
+        "asOf": "datetime (ISO format: YYYY-MM-DDTHH:mm:ss)",
+        "totalCustomers": "integer (non-negative)",
+        "totalPartners": "integer (non-negative)",
+        "totalHotels": "integer (non-negative)"
+      }
+    },
+    "comparison": {
+      "newCustomersDifference": "integer - Absolute difference: currentPeriod.growthInPeriod.newCustomers - previousPeriod.growthInPeriod.newCustomers",
+      "newCustomersPercentageChange": "number (rounded to 2 decimal places) - Percentage change for new customers: ((currentPeriod.growthInPeriod.newCustomers - previousPeriod.growthInPeriod.newCustomers) / previousPeriod.growthInPeriod.newCustomers) * 100. Can be positive (growth) or negative (decline)",
+      "newPartnersDifference": "integer - Absolute difference: currentPeriod.growthInPeriod.newPartners - previousPeriod.growthInPeriod.newPartners",
+      "newPartnersPercentageChange": "number (rounded to 2 decimal places) - Percentage change for new partners: ((currentPeriod.growthInPeriod.newPartners - previousPeriod.growthInPeriod.newPartners) / previousPeriod.growthInPeriod.newPartners) * 100. Can be positive (growth) or negative (decline)"
+    }
+  }
+}
+```
+
+- **Notes**:
+  - New customers and new partners are counted based on their registration date (createdAt) within the specified period
+  - `growthInPeriod` shows user registrations during the specified date range only
+  - `platformTotals` shows current totals across the entire platform, not limited to the report period
+  - `platformTotals.asOf` represents the timestamp when the totals were calculated (typically the current time when the report is generated)
+  - `totalHotels` is the count of all hotels in the platform, regardless of their status
+  - Customers are users with role `USER` (RoleType.USER)
+  - Partners are users with role `PARTNER` (RoleType.PARTNER)
+  - When comparison parameters are provided, both periods should ideally have the same length for meaningful comparisons
+  - Percentage change is calculated relative to the previous period. If previous period value is zero, percentage change will be 0 or undefined
+  - Both `compare-from` and `compare-to` must be provided together, or both must be omitted. Providing only one will result in a validation error (INVALID_DATE_RANGE)
+  - The comparison only includes growth metrics (newCustomers and newPartners), not platform totals, as platform totals represent current state rather than period-specific metrics
+  - Platform totals in both periods may differ slightly due to the timestamp difference, but the comparison focuses on growth metrics which are period-specific
 
 ### 4. Seasonality Report
 
 **GET** `/admin/reports/trends/seasonality`
 
 - **Role Required**: ADMIN
+  - **ADMIN**: Can access seasonality reports for the entire platform
+- **Description**: Retrieves seasonality analysis data showing monthly trends for revenue and bookings across the entire platform over a specified date range. This endpoint helps admins identify seasonal patterns, peak months, and low seasons by providing aggregated monthly data. The report groups data by calendar month, showing total revenue and total bookings for each month in the specified period. This analysis is useful for understanding business cycles, planning marketing campaigns, and making strategic decisions based on seasonal trends. The `metric` parameter allows clients to specify which metric to focus on for display purposes, though the response always includes both revenue and bookings data for comprehensive analysis.
 - **Query Parameters**:
-  - `from`: date (required, ISO format: YYYY-MM-DD)
-  - `to`: date (required, ISO format: YYYY-MM-DD)
-  - `metric`: string (optional, enum: `revenue`, `bookings`, default: `bookings`)
+  - `from`: date (required, ISO format: YYYY-MM-DD) - Start date of the report period (inclusive). Must be less than or equal to `to`. Data will be grouped by month starting from the month containing this date
+  - `to`: date (required, ISO format: YYYY-MM-DD) - End date of the report period (inclusive). Must be greater than or equal to `from`. Data will be grouped by month up to the month containing this date
+  - `metric`: string (optional, default: "bookings") - Primary metric to focus on for analysis. Valid values: `revenue`, `bookings`
+    - `revenue`: Focus on revenue trends for seasonality analysis
+    - `bookings`: Focus on booking volume trends for seasonality analysis
+    - **Note**: The response always includes both `totalRevenue` and `totalBookings` for each month, regardless of the `metric` parameter value. This parameter is primarily for client-side display purposes
 - **Response**:
 
 ```json
@@ -4735,26 +4988,45 @@ All admin report endpoints support period comparison. When `compare-from` and `c
   "data": {
     "data": [
       {
-        "month": "date",
-        "totalRevenue": "number",
-        "totalBookings": "integer"
+        "month": "date (ISO format: YYYY-MM-DD) - The first day of the month (always YYYY-MM-01). Represents the calendar month for which the data is aggregated",
+        "totalRevenue": "number (non-negative, rounded to 2 decimal places) - Total revenue from completed bookings for this month across all hotels in the platform",
+        "totalBookings": "integer (non-negative) - Total number of completed bookings for this month across all hotels in the platform"
       }
     ]
   }
 }
 ```
+
+- **Notes**:
+  - Data is grouped by calendar month (January, February, etc.) regardless of the date range specified
+  - The `month` field always represents the first day of the month (YYYY-MM-01) for consistency
+  - Revenue is calculated only from bookings with status `completed`
+  - Bookings are counted only if they have status `completed`
+  - If a month has no data (no completed bookings), it will still appear in the response with zero values for both `totalRevenue` and `totalBookings`
+  - Months are returned in chronological order (earliest month first)
+  - The `metric` parameter is validated but does not affect the response structure - both revenue and bookings are always included
+  - This endpoint does not support period comparison (no `compare-from` or `compare-to` parameters)
+  - The report provides a comprehensive view of seasonal patterns, helping identify peak seasons, low seasons, and trends over time
+  - Data is aggregated from `SystemDailyReport` table, ensuring efficient query performance
 
 ### 5. Popular Locations Report
 
 **GET** `/admin/reports/trends/popular-locations`
 
 - **Role Required**: ADMIN
+  - **ADMIN**: Can access popular locations reports for the entire platform
+- **Description**: Retrieves a ranked list of the most popular locations (cities or provinces) based on revenue or booking volume over a specified date range. This endpoint helps admins identify top-performing destinations, understand geographic trends, and make strategic decisions about marketing focus, expansion opportunities, and resource allocation. Locations are ranked by the specified metric (revenue or bookings) in descending order, showing the top N locations. The report provides both revenue and booking data for each location, allowing for comprehensive analysis of location performance. This analysis is useful for understanding which destinations are driving the most business and identifying potential growth markets.
 - **Query Parameters**:
-  - `from`: date (required, ISO format: YYYY-MM-DD)
-  - `to`: date (required, ISO format: YYYY-MM-DD)
-  - `level`: string (optional, enum: `city`, `province`, default: `city`)
-  - `metric`: string (optional, enum: `revenue`, `bookings`, default: `revenue`)
-  - `limit`: integer (optional, default: 10, max: 100)
+  - `from`: date (required, ISO format: YYYY-MM-DD) - Start date of the report period (inclusive). Must be less than or equal to `to`. Used to filter bookings and revenue data
+  - `to`: date (required, ISO format: YYYY-MM-DD) - End date of the report period (inclusive). Must be greater than or equal to `from`. Used to filter bookings and revenue data
+  - `level`: string (optional, default: "city") - Geographic level to analyze. Valid values: `city`, `province`
+    - `city`: Groups and ranks locations by city
+    - `province`: Groups and ranks locations by province
+  - `metric`: string (optional, default: "revenue") - Metric used to rank locations. Valid values: `revenue`, `bookings`
+    - `revenue`: Rank locations by total revenue from completed bookings (highest revenue first)
+    - `bookings`: Rank locations by total number of completed bookings (highest bookings first)
+    - **Note**: The response always includes both `totalRevenue` and `totalBookings` for each location, regardless of the `metric` parameter value. The `metric` parameter only determines the ranking order
+  - `limit`: integer (optional, default: 10, minimum: 1, maximum: 100) - Number of top locations to return. Results are limited to the top N locations based on the specified metric. If a value less than 1 is provided, it defaults to 10. If a value greater than 100 is provided, it is capped at 100 for performance reasons
 - **Response**:
 
 ```json
@@ -4764,26 +5036,46 @@ All admin report endpoints support period comparison. When `compare-from` and `c
   "data": {
     "data": [
       {
-        "locationId": "string",
-        "locationName": "string",
-        "totalRevenue": "number",
-        "totalBookings": "integer"
+        "locationId": "string (UUID) - Unique identifier of the location (city ID or province ID depending on level parameter)",
+        "locationName": "string - Name of the location (city name or province name depending on level parameter)",
+        "totalRevenue": "number (non-negative, rounded to 2 decimal places) - Total revenue from completed bookings for this location in the period",
+        "totalBookings": "integer (non-negative) - Total number of completed bookings for this location in the period"
       }
     ]
   }
 }
 ```
+
+- **Notes**:
+  - Revenue is calculated only from bookings with status `completed`
+  - Bookings are counted only if they have status `completed`
+  - Locations are sorted by the specified `metric` in descending order (highest values first)
+  - The response always includes both `totalRevenue` and `totalBookings` for each location, allowing for comprehensive analysis
+  - If `level=city`, locations are grouped by city and city names are returned
+  - If `level=province`, locations are grouped by province and province names are returned
+  - The `limit` parameter controls how many top locations are returned. For example, `limit=10` returns the top 10 locations
+  - If there are fewer locations than the specified limit, all available locations are returned
+  - Locations with zero revenue and zero bookings may still appear in results if they have hotels in the system
+  - The ranking is based on the specified metric, but both metrics are always included in the response for comparison
+  - This endpoint does not support period comparison (no `compare-from` or `compare-to` parameters)
+  - Data is aggregated from booking and hotel location data, ensuring accurate geographic analysis
+  - The maximum limit of 100 is enforced to maintain query performance
 
 ### 6. Popular Room Types Report
 
 **GET** `/admin/reports/trends/popular-room-types`
 
 - **Role Required**: ADMIN
+  - **ADMIN**: Can access popular room types reports for the entire platform
+- **Description**: Retrieves a ranked list of the most popular room categories based on total booked nights over a specified date range. This endpoint helps admins understand customer preferences by analyzing which room characteristics (view, bed type, or occupancy capacity) are most in demand. The report groups rooms by the specified attribute and ranks them by total booked nights in descending order, showing the top N categories. This analysis is useful for understanding market trends, identifying popular room features, and making strategic decisions about inventory management, pricing strategies, and marketing focus. The grouping can be done by room view (e.g., "Ocean View", "City View"), bed type (e.g., "Single", "Double", "Queen"), or occupancy capacity (e.g., "1 Guest", "2 Guests", "4 Guests").
 - **Query Parameters**:
-  - `from`: date (required, ISO format: YYYY-MM-DD)
-  - `to`: date (required, ISO format: YYYY-MM-DD)
-  - `group-by`: string (optional, enum: `view`, `bedType`, `occupancy`, default: `occupancy`)
-  - `limit`: integer (optional, default: 10, max: 100)
+  - `from`: date (required, ISO format: YYYY-MM-DD) - Start date of the report period (inclusive). Must be less than or equal to `to`. Used to filter booking data
+  - `to`: date (required, ISO format: YYYY-MM-DD) - End date of the report period (inclusive). Must be greater than or equal to `from`. Used to filter booking data
+  - `group-by`: string (optional, default: "occupancy") - Attribute to group and analyze rooms by. Valid values: `view`, `bedType`, `occupancy`
+    - `view`: Groups rooms by their view type (e.g., "Ocean View", "City View", "Garden View", "Mountain View"). The `roomCategory` field will contain view names
+    - `bedType`: Groups rooms by their bed type (e.g., "Single", "Double", "Queen", "King", "Twin"). The `roomCategory` field will contain bed type names
+    - `occupancy`: Groups rooms by their maximum occupancy capacity (e.g., "1 Guest", "2 Guests", "3 Guests", "4 Guests"). The `roomCategory` field will contain occupancy descriptions
+  - `limit`: integer (optional, default: 10, minimum: 1, maximum: 100) - Number of top room categories to return. Results are limited to the top N categories based on total booked nights. If a value less than 1 is provided, it defaults to 10. If a value greater than 100 is provided, it is capped at 100 for performance reasons
 - **Response**:
 
 ```json
@@ -4793,25 +5085,46 @@ All admin report endpoints support period comparison. When `compare-from` and `c
   "data": {
     "data": [
       {
-        "roomCategory": "string",
-        "totalBookedNights": "integer"
+        "roomCategory": "string - Name of the room category. The content depends on the group-by parameter: view name (e.g., 'Ocean View'), bed type (e.g., 'Double'), or occupancy description (e.g., '2 Guests')",
+        "totalBookedNights": "integer (non-negative) - Total number of room nights booked for this category in the period. This represents the sum of all booked nights across all rooms matching this category"
       }
     ]
   }
 }
 ```
 
+- **Notes**:
+  - Booked nights are counted from all bookings regardless of their final status (including cancelled bookings, as they represent potential occupancy)
+  - Room categories are sorted by `totalBookedNights` in descending order (highest values first)
+  - The `roomCategory` field content depends on the `group-by` parameter:
+    - If `group-by=view`: Contains room view names (e.g., "Ocean View", "City View")
+    - If `group-by=bedType`: Contains bed type names (e.g., "Single", "Double", "Queen", "King")
+    - If `group-by=occupancy`: Contains occupancy descriptions (e.g., "1 Guest", "2 Guests", "3 Guests")
+  - The `limit` parameter controls how many top categories are returned. For example, `limit=10` returns the top 10 categories
+  - If there are fewer categories than the specified limit, all available categories are returned
+  - Categories with zero booked nights may still appear in results if they exist in the system
+  - The ranking is based on total booked nights, which represents the total demand for each category
+  - This endpoint does not support period comparison (no `compare-from` or `compare-to` parameters)
+  - Data is aggregated from `RoomDailyPerformance` table, ensuring efficient query performance
+  - The maximum limit of 100 is enforced to maintain query performance
+  - Results are aggregated across all hotels in the platform, providing a system-wide view of room preferences
+
 ### 7. Financials Report
 
 **GET** `/admin/reports/financials`
 
 - **Role Required**: ADMIN
+  - **ADMIN**: Can access financial reports for the entire platform
+- **Description**: Retrieves comprehensive financial data for the entire platform over a specified date range. This endpoint provides detailed financial insights including gross revenue, net revenue, partner payouts, and gross margin. The data can be grouped by day, week, or month according to the `group-by` parameter, allowing admins to analyze financial trends at different time granularities. This report is essential for understanding the platform's financial health, tracking revenue streams, monitoring partner payouts, and analyzing profitability margins. The endpoint optionally supports period comparison to track financial performance changes over time, showing differences and percentage changes for all financial metrics.
 - **Query Parameters**:
-  - `from`: date (required, ISO format: YYYY-MM-DD)
-  - `to`: date (required, ISO format: YYYY-MM-DD)
-  - `group-by`: string (optional, enum: `day`, `week`, `month`, default: `day`)
-  - `compare-from`: date (optional, ISO format: YYYY-MM-DD)
-  - `compare-to`: date (optional, ISO format: YYYY-MM-DD)
+  - `from`: date (required, ISO format: YYYY-MM-DD) - Start date of the report period (inclusive). Must be less than or equal to `to`
+  - `to`: date (required, ISO format: YYYY-MM-DD) - End date of the report period (inclusive). Must be greater than or equal to `from`
+  - `group-by`: string (optional, default: "day") - How to group the financial data. Valid values: `day`, `week`, `month`
+    - `day`: Groups financial data by individual days
+    - `week`: Groups financial data by weeks (Monday to Sunday)
+    - `month`: Groups financial data by calendar months
+  - `compare-from`: date (optional, ISO format: YYYY-MM-DD) - Start date of the comparison period. Must be provided together with `compare-to`. If only one comparison parameter is provided, the request will fail with a validation error
+  - `compare-to`: date (optional, ISO format: YYYY-MM-DD) - End date of the comparison period. Must be provided together with `compare-from`. If only one comparison parameter is provided, the request will fail with a validation error
 - **Response** (without comparison):
 
 ```json
@@ -4821,31 +5134,103 @@ All admin report endpoints support period comparison. When `compare-from` and `c
   "data": {
     "data": [
       {
-        "period": "date",
-        "grossRevenue": "number",
-        "netRevenue": "number",
-        "partnerPayout": "number",
-        "grossMargin": "number"
+        "period": "date (ISO format: YYYY-MM-DD) - The date, week start date, or month start date depending on group-by",
+        "grossRevenue": "number (non-negative, rounded to 2 decimal places) - Total gross revenue from completed bookings for this period. This is the total amount customers paid",
+        "netRevenue": "number (non-negative, rounded to 2 decimal places) - Net revenue for this period. This is the platform's revenue after partner payouts (grossRevenue - partnerPayout)",
+        "partnerPayout": "number (non-negative, rounded to 2 decimal places) - Total amount paid to partners for this period. Calculated as grossRevenue - netRevenue",
+        "grossMargin": "number (0-100, rounded to 2 decimal places) - Gross margin percentage for this period. Calculated as (netRevenue / grossRevenue) * 100. Represents the platform's profit margin"
       }
     ],
     "summary": {
-      "totalGrossRevenue": "number",
-      "totalNetRevenue": "number",
-      "totalPartnerPayout": "number",
-      "averageGrossMargin": "number"
+      "totalGrossRevenue": "number (non-negative, rounded to 2 decimal places) - Sum of all gross revenue data points in the report period",
+      "totalNetRevenue": "number (non-negative, rounded to 2 decimal places) - Sum of all net revenue data points in the report period",
+      "totalPartnerPayout": "number (non-negative, rounded to 2 decimal places) - Total partner payouts for the entire period. Calculated as totalGrossRevenue - totalNetRevenue",
+      "averageGrossMargin": "number (0-100, rounded to 2 decimal places) - Average gross margin percentage for the entire period. Calculated as (totalNetRevenue / totalGrossRevenue) * 100"
     }
   }
 }
 ```
 
-- **Response** (with comparison): Similar structure with `currentPeriod`, `previousPeriod`, and `comparison` objects containing differences and percentage changes for all financial metrics.
+- **Response** (with comparison):
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "currentPeriod": {
+      "data": [
+        {
+          "period": "date (ISO format: YYYY-MM-DD)",
+          "grossRevenue": "number (non-negative, rounded to 2 decimal places)",
+          "netRevenue": "number (non-negative, rounded to 2 decimal places)",
+          "partnerPayout": "number (non-negative, rounded to 2 decimal places)",
+          "grossMargin": "number (0-100, rounded to 2 decimal places)"
+        }
+      ],
+      "summary": {
+        "totalGrossRevenue": "number (non-negative, rounded to 2 decimal places)",
+        "totalNetRevenue": "number (non-negative, rounded to 2 decimal places)",
+        "totalPartnerPayout": "number (non-negative, rounded to 2 decimal places)",
+        "averageGrossMargin": "number (0-100, rounded to 2 decimal places)"
+      }
+    },
+    "previousPeriod": {
+      "data": [
+        {
+          "period": "date (ISO format: YYYY-MM-DD)",
+          "grossRevenue": "number (non-negative, rounded to 2 decimal places)",
+          "netRevenue": "number (non-negative, rounded to 2 decimal places)",
+          "partnerPayout": "number (non-negative, rounded to 2 decimal places)",
+          "grossMargin": "number (0-100, rounded to 2 decimal places)"
+        }
+      ],
+      "summary": {
+        "totalGrossRevenue": "number (non-negative, rounded to 2 decimal places)",
+        "totalNetRevenue": "number (non-negative, rounded to 2 decimal places)",
+        "totalPartnerPayout": "number (non-negative, rounded to 2 decimal places)",
+        "averageGrossMargin": "number (0-100, rounded to 2 decimal places)"
+      }
+    },
+    "comparison": {
+      "grossRevenueDifference": "number (rounded to 2 decimal places) - Absolute difference: currentPeriod.summary.totalGrossRevenue - previousPeriod.summary.totalGrossRevenue",
+      "grossRevenuePercentageChange": "number (rounded to 2 decimal places) - Percentage change for gross revenue",
+      "netRevenueDifference": "number (rounded to 2 decimal places) - Absolute difference: currentPeriod.summary.totalNetRevenue - previousPeriod.summary.totalNetRevenue",
+      "netRevenuePercentageChange": "number (rounded to 2 decimal places) - Percentage change for net revenue",
+      "partnerPayoutDifference": "number (rounded to 2 decimal places) - Absolute difference: currentPeriod.summary.totalPartnerPayout - previousPeriod.summary.totalPartnerPayout",
+      "partnerPayoutPercentageChange": "number (rounded to 2 decimal places) - Percentage change for partner payout",
+      "grossMarginDifference": "number (rounded to 2 decimal places) - Absolute difference: currentPeriod.summary.averageGrossMargin - previousPeriod.summary.averageGrossMargin",
+      "grossMarginPercentageChange": "number (rounded to 2 decimal places) - Percentage change for gross margin"
+    }
+  }
+}
+```
+
+- **Notes**:
+  - All financial metrics are calculated only from bookings with status `completed`
+  - **Gross Revenue**: Total amount customers paid for completed bookings. This is the revenue before any deductions
+  - **Net Revenue**: Platform's revenue after partner payouts. Calculated as `grossRevenue - partnerPayout`
+  - **Partner Payout**: Amount paid to partners. Calculated as `grossRevenue - netRevenue`. This represents the commission or revenue share paid to hotel partners
+  - **Gross Margin**: Profitability metric calculated as `(netRevenue / grossRevenue) * 100`. Represents the platform's profit margin percentage. If grossRevenue is 0, grossMargin will be 0
+  - The `period` field in data points represents the start of the grouping period (e.g., for `group-by=week`, it shows the Monday of that week; for `group-by=month`, it shows the first day of the month)
+  - All currency values are rounded to 2 decimal places
+  - Summary totals are calculated by summing all data points in the period
+  - Average gross margin in summary is calculated from totals: `(totalNetRevenue / totalGrossRevenue) * 100`, not as an average of individual period margins
+  - When comparison parameters are provided, both periods should ideally have the same length for meaningful comparisons
+  - If no financial data exists for the period, the response will contain empty arrays and zero totals
+  - Percentage change is calculated relative to the previous period. If previous period value is zero, percentage change will be 0 or undefined
+  - Both `compare-from` and `compare-to` must be provided together, or both must be omitted. Providing only one will result in a validation error (INVALID_DATE_RANGE)
+  - Data is aggregated from `SystemDailyReport` table, ensuring efficient query performance
+  - This report provides a comprehensive view of the platform's financial performance, essential for strategic decision-making and financial planning
 
 ### 8. Generate All System Daily Reports
 
 **POST** `/admin/reports/generate-all`
 
 - **Role Required**: ADMIN
-- **Description**: Manually triggers the system daily report generation process for all historical data in the system. This endpoint processes all dates from the earliest booking/user creation date to the latest, similar to the background job but for the entire system instead of just one day.
+  - **ADMIN**: Only administrators can trigger bulk report generation
+- **Description**: Manually triggers the system daily report generation process for all historical data in the system. This endpoint processes all dates from the earliest booking/user creation date to the latest date found in the system, generating `SystemDailyReport` records for each date. This is similar to the background job that runs daily, but processes the entire historical dataset instead of just one day. This endpoint is useful for initial system setup, data migration, or rebuilding reports after schema changes. The endpoint processes each date in a separate transaction, ensuring that failures for one date do not affect others. The operation returns a summary including total dates processed, success/failure counts, date range, and error messages (if any).
+- **Query Parameters**: None
 - **Request Body**: None
 - **Response**:
 
@@ -4854,24 +5239,56 @@ All admin report endpoints support period comparison. When `compare-from` and `c
   "statusCode": 200,
   "message": "",
   "data": {
-    "totalDates": "integer",
-    "successCount": "integer",
-    "failureCount": "integer",
-    "minDate": "date (ISO format: YYYY-MM-DD)",
-    "maxDate": "date (ISO format: YYYY-MM-DD)",
+    "totalDates": "integer (non-negative) - Total number of dates processed (from minDate to maxDate, inclusive)",
+    "successCount": "integer (non-negative) - Number of dates successfully processed",
+    "failureCount": "integer (non-negative) - Number of dates that failed to process",
+    "minDate": "date (ISO format: YYYY-MM-DD) - Earliest date found in the system (from Booking or User tables)",
+    "maxDate": "date (ISO format: YYYY-MM-DD) - Latest date found in the system (from Booking or User tables)",
     "errors": [
-      "string (error messages, max 10 errors)"
+      "string - Error messages for failed dates (optional, limited to first 10 errors for performance)"
     ]
   }
 }
 ```
 
 - **Notes**:
-  - This endpoint processes all dates from the earliest to the latest date found in the Booking and User tables
-  - Each date is processed in a separate transaction. If one date fails, others continue processing
-  - The response includes a summary of total dates processed, success/failure counts, and up to 10 error messages
-  - This operation may take a long time depending on the amount of historical data
-  - Should be run after `POST /partner/reports/generate-all` to ensure HotelDailyReport data is available
+  - **Prerequisites**: This endpoint should be run **after** `POST /partner/reports/generate-all` to ensure that `HotelDailyReport` data is available. System daily reports depend on hotel daily reports for aggregation
+  - **Date Range Detection**: The endpoint automatically determines the date range by finding:
+    - The earliest and latest dates from the `Booking` table (based on booking creation dates)
+    - The earliest and latest dates from the `User` table (based on user registration dates)
+    - The overall min and max dates across both sources
+  - **Processing Logic**: 
+    - Each date is processed sequentially from `minDate` to `maxDate` (inclusive)
+    - Each date is processed in a separate transaction (`REQUIRES_NEW` propagation)
+    - If processing fails for one date, the error is logged and the process continues with the next date
+    - Failed dates are counted in `failureCount` and error messages are added to the `errors` array
+  - **Report Generation Process**: For each date, the endpoint:
+    1. Aggregates data from `HotelDailyReport` (gross revenue, bookings, reviews)
+    2. Calculates net revenue (gross revenue minus partner payouts)
+    3. Aggregates new user registrations (customers and partners)
+    4. Calculates weighted average review score
+    5. Upserts the aggregated data into `SystemDailyReport` table
+  - **Error Handling**:
+    - Errors for individual dates are caught and logged, but do not stop the overall process
+    - Up to 10 error messages are included in the response (to prevent response size issues)
+    - Error messages include the date and the error description
+  - **Performance Considerations**:
+    - This operation may take a **very long time** depending on the amount of historical data
+    - For systems with years of data, this could take hours to complete
+    - The endpoint processes dates sequentially (one at a time) to avoid database overload
+    - Each date is processed in its own transaction to ensure data consistency
+  - **Response Validation**:
+    - `totalDates` = `successCount` + `failureCount`
+    - `totalDates` = number of days between `minDate` and `maxDate` (inclusive)
+    - `errors` array is only included if there are failures (`failureCount > 0`)
+    - `errors` array is limited to the first 10 errors for performance reasons
+  - **Use Cases**:
+    - Initial system setup and data migration
+    - Rebuilding reports after schema changes or data corrections
+    - Backfilling missing report data
+    - System maintenance and data integrity checks
+  - **Important**: This is a **long-running operation**. Consider running it during off-peak hours or as a background job. The client should be prepared for a potentially long response time
+  - **Idempotency**: Running this endpoint multiple times is safe - existing reports will be updated (upserted) rather than duplicated
 
 ### Notes on Admin Reports
 
@@ -5311,79 +5728,170 @@ All admin report endpoints support period comparison. When `compare-from` and `c
 
 ## Knowledge Base
 
+Knowledge Base synchronization endpoints allow administrators to manually trigger synchronization of hotel data for Knowledge Base generation. The Knowledge Base is used to generate structured Markdown files containing comprehensive hotel information for AI processing and search optimization.
+
+**Role Required**: ADMIN
+
+All endpoints require ADMIN role authentication. The endpoints are secured by Spring Security configuration.
+
 ### 1. Trigger Full Sync
 
 **POST** `/admin/kb/sync/full`
 
+- **Content-Type**: `application/json`
 - **Role Required**: ADMIN
-- **Description**: Triggers full synchronization of all active hotels for Knowledge Base generation. This operation runs asynchronously to avoid blocking the HTTP request.
-- **Request Body**: None
+- **Description**: Triggers full synchronization of all active hotels for Knowledge Base generation. This endpoint initiates a background job that processes every active hotel in the system, regardless of when it was last modified. The operation runs asynchronously using Spring's `@Async` annotation to avoid blocking the HTTP request. This is useful for initial Knowledge Base setup or when you need to regenerate all hotel data.
+
+- **Request Body**: None (no request body required)
+
+- **Query Parameters**: None
+
 - **Response**:
 
 ```json
 {
   "statusCode": 200,
   "message": "Full sync started",
-  "data": "Full sync triggered successfully. Processing in background."
+  "data": "string - Confirmation message: 'Full sync triggered successfully. Processing in background.'"
 }
 ```
 
+- **Error Responses**:
+  - **401 Unauthorized**: Missing or invalid JWT token
+  - **403 Forbidden**: User does not have ADMIN role
+  - **500 Internal Server Error**: Server error during sync trigger (rare, as trigger is non-blocking)
+
 - **Notes**:
-  - This endpoint triggers a background job that processes all active hotels
-  - The operation runs asynchronously, so the response is returned immediately
-  - Check application logs for processing status and results
+  - **Asynchronous Execution**: The endpoint returns immediately after triggering the sync. The actual processing happens in the background using Spring's `@Async` mechanism. The HTTP response does not wait for the sync to complete.
+  - **Data Fetching Strategy**: The full sync uses the following query strategy:
+    - **Primary Query**: `findAllActiveHotelsForKnowledgeBase(status)` - Fetches all hotels with status = "active" (or "ACTIVE") using optimized JPQL query with LEFT JOIN FETCH to eagerly load:
+      - Hotel basic information (id, name, slug, description, starRating, status)
+      - Complete location hierarchy (country, province, city, district, ward, street)
+      - Hotel policy with cancellation and reschedule policies (including all policy rules)
+      - Required identification documents
+    - **Collection Queries**: After fetching base hotel data, separate queries are executed to avoid cartesian product issues:
+      - `findHotelsWithAmenities(hotelIds)` - Fetches hotel amenities with category information
+      - `findHotelsWithEntertainmentVenues(hotelIds)` - Fetches nearby entertainment venues with category information
+      - `findRoomsByHotelIds(hotelIds, activeStatus)` - Fetches all active rooms with bed types, room amenities, and room policies
+      - `findHotelsWithPhotos(hotelIds)` - Fetches hotel photos
+      - `findRoomsWithPhotos(hotelIds, activeStatus)` - Fetches room photos
+  - **Processing Logic**: 
+    - Only hotels with status = "active" (or "ACTIVE") are processed
+    - Hotels are processed in batches with error isolation (one hotel failure doesn't stop the batch)
+    - Each hotel is converted to `HotelKnowledgeBaseDto` which includes:
+      - Basic hotel information
+      - Location hierarchy
+      - Amenities (grouped by category)
+      - Rooms with pricing, amenities, and policies
+      - Entertainment venues
+      - Review statistics
+      - Active discounts
+      - Detailed policies with rules
+    - The DTO is then used to generate Markdown files for the Knowledge Base
+  - **Error Handling**: If a hotel fails during processing, the error is logged at ERROR level, the hotel ID is added to `failedHotelIds` in the result, and processing continues with the next hotel. This ensures that one problematic hotel doesn't prevent other hotels from being synced.
+  - **Logging**: Check application logs for detailed processing status:
+    - INFO level: Sync start, number of hotels found, completion summary with success/failure counts and duration
+    - ERROR level: Individual hotel processing failures with error details
+  - **Performance**: The operation can take significant time depending on the number of active hotels. Typical processing time ranges from seconds to minutes for large hotel databases. Progress is logged every 50 hotels processed.
+  - **Use Cases**: 
+    - Initial Knowledge Base setup
+    - Complete regeneration after schema changes
+    - Recovery from data corruption
+    - After bulk hotel data updates
 
 ### 2. Trigger Incremental Sync
 
 **POST** `/admin/kb/sync/incremental`
 
+- **Content-Type**: `application/json`
 - **Role Required**: ADMIN
-- **Description**: Triggers incremental synchronization of modified hotels for Knowledge Base generation. Only processes hotels that have been modified since the last incremental sync. This operation runs asynchronously to avoid blocking the HTTP request.
-- **Request Body**: None
+- **Description**: Triggers incremental synchronization of modified hotels for Knowledge Base generation. This endpoint processes only hotels that have been modified since the last incremental sync run. The system automatically tracks the last incremental run time using `KnowledgeBaseScheduler.getLastIncrementalRunTime()`. This is more efficient than full sync as it only processes changed data. The operation runs asynchronously to avoid blocking the HTTP request.
+
+- **Request Body**: None (no request body required)
+
+- **Query Parameters**: None
+
 - **Response**:
 
 ```json
 {
   "statusCode": 200,
   "message": "Incremental sync started",
-  "data": "Incremental sync triggered successfully. Processing in background."
+  "data": "string - Confirmation message: 'Incremental sync triggered successfully. Processing in background.'"
 }
 ```
 
+- **Error Responses**:
+  - **401 Unauthorized**: Missing or invalid JWT token
+  - **403 Forbidden**: User does not have ADMIN role
+  - **500 Internal Server Error**: Server error during sync trigger (rare, as trigger is non-blocking)
+
 - **Notes**:
-  - This endpoint triggers a background job that processes only modified hotels
-  - The operation runs asynchronously, so the response is returned immediately
-  - The system tracks the last incremental run time automatically
-  - Check application logs for processing status and results
+  - **Asynchronous Execution**: The endpoint returns immediately after triggering the sync. The actual processing happens in the background using Spring's `@Async` mechanism.
+  - **Last Run Time Tracking**: The system maintains the timestamp of the last incremental sync run. This timestamp is retrieved using `scheduler.getLastIncrementalRunTime()` and used to filter hotels that have been modified since then.
+  - **Data Fetching Strategy**: The incremental sync uses the following query strategy:
+    - **Primary Query**: `findByUpdatedAtAfter(status, lastRunTime)` - Fetches hotels with:
+      - Status = "active" (or "ACTIVE")
+      - `updatedAt IS NOT NULL`
+      - `updatedAt > lastRunTime` (hotels modified after the last sync)
+    - The query uses the same LEFT JOIN FETCH optimizations as full sync to eagerly load:
+      - Hotel basic information
+      - Complete location hierarchy
+      - Hotel policy with cancellation and reschedule policies (including all policy rules)
+      - Required identification documents
+    - **Collection Queries**: Same as full sync - separate queries for amenities, entertainment venues, rooms, and photos to avoid cartesian product issues.
+  - **Processing Logic**:
+    - If no hotels are found (no modifications since last run), the sync is skipped and `lastRunTime` is still updated to the current time
+    - If hotels are found, they are processed using the same batch processing logic as full sync
+    - After successful processing, `lastRunTime` is updated to the current timestamp using `scheduler.setLastIncrementalRunTime(LocalDateTime.now())`
+  - **Error Handling**: Same error isolation strategy as full sync - individual hotel failures don't stop the batch
+  - **Logging**: Check application logs for:
+    - INFO level: Last run time used, number of modified hotels found, completion summary
+    - WARN level: If no hotels were modified since last run
+    - ERROR level: Individual hotel processing failures
+  - **Performance**: Typically much faster than full sync as it only processes changed hotels. Processing time depends on the number of modified hotels.
+  - **State Management**: The `lastRunTime` is updated after successful processing, even if no hotels were modified. This ensures the next incremental sync will use the correct baseline timestamp.
+  - **Use Cases**:
+    - Regular updates after hotel data changes
+    - After hotel information updates (name, description, amenities, etc.)
+    - After room additions or modifications
+    - After policy changes
+    - After location updates
 
 ### 3. Sync Specific Hotel
 
 **POST** `/admin/kb/sync/hotel/{id}`
 
+- **Content-Type**: `application/json`
 - **Role Required**: ADMIN
-- **Description**: Syncs a specific hotel by ID for Knowledge Base generation. Useful for debugging and testing.
+- **Description**: Syncs a specific hotel by ID for Knowledge Base generation. Unlike full and incremental sync endpoints, this endpoint processes the hotel synchronously and returns the detailed batch result immediately. This is useful for debugging, testing, and verifying Knowledge Base generation for a specific hotel. The endpoint validates the hotel ID and handles the case where the hotel is not found gracefully.
+
 - **Path Parameters**:
-  - `id`: string (required, UUID format) - Hotel ID
-- **Request Body**: None
-- **Response**:
+  - `id`: string (required, UUID format, pattern: `{id:[a-fA-F0-9\\-]{36}}`) - Unique identifier of the hotel to sync
+
+- **Request Body**: None (no request body required)
+
+- **Query Parameters**: None
+
+- **Response** (Success):
 
 ```json
 {
   "statusCode": 200,
   "message": "Hotel sync completed",
   "data": {
-    "totalCount": 1,
-    "successCount": 1,
-    "failureCount": 0,
-    "failedHotelIds": [],
-    "startTime": "datetime (ISO format)",
-    "endTime": "datetime (ISO format)",
-    "durationMillis": "long"
+    "totalCount": "integer (non-negative) - Total number of hotels in the batch (always 1 for single hotel sync)",
+    "successCount": "integer (non-negative) - Number of hotels successfully processed (0 or 1)",
+    "failureCount": "integer (non-negative) - Number of hotels that failed during processing (0 or 1)",
+    "failedHotelIds": "array of strings (UUIDs) - List of hotel IDs that failed during processing. Empty array if successful",
+    "startTime": "datetime (ISO 8601 format: YYYY-MM-DDTHH:mm:ss) - Timestamp when batch processing started",
+    "endTime": "datetime (ISO 8601 format: YYYY-MM-DDTHH:mm:ss) - Timestamp when batch processing completed",
+    "durationMillis": "long (non-negative) - Duration of batch processing in milliseconds. Calculated as (endTime - startTime) in milliseconds"
   }
 }
 ```
 
-- **Error Response** (Hotel not found):
+- **Response** (Hotel not found):
 
 ```json
 {
@@ -5393,27 +5901,114 @@ All admin report endpoints support period comparison. When `compare-from` and `c
     "totalCount": 0,
     "successCount": 0,
     "failureCount": 1,
-    "failedHotelIds": ["hotel-id"],
-    "startTime": "datetime",
-    "endTime": "datetime",
+    "failedHotelIds": ["string (UUID) - The hotel ID that was not found"],
+    "startTime": "datetime (ISO 8601 format) or null - May be null if hotel not found before processing starts",
+    "endTime": "datetime (ISO 8601 format) or null - May be null if hotel not found before processing starts",
     "durationMillis": 0
   }
 }
 ```
 
+- **Error Responses**:
+  - **400 Bad Request**: Invalid hotel ID format (not a valid UUID) or hotel ID is null/blank (`IllegalArgumentException`)
+  - **401 Unauthorized**: Missing or invalid JWT token
+  - **403 Forbidden**: User does not have ADMIN role
+  - **500 Internal Server Error**: Server error during hotel processing
+
 - **Notes**:
-  - This endpoint processes a single hotel synchronously and returns the result immediately
-  - Useful for testing and debugging specific hotels
-  - Returns detailed batch result with success/failure information
+  - **Synchronous Execution**: Unlike full and incremental sync, this endpoint processes the hotel synchronously and waits for completion before returning the response. This allows immediate feedback on the sync result.
+  - **Hotel ID Validation**: The endpoint validates that the hotel ID is not null or blank. If invalid, it throws `IllegalArgumentException` with message "Hotel ID cannot be null or empty".
+  - **Data Fetching Strategy**: Uses specialized queries optimized for single hotel processing:
+    - **Primary Query**: `findByIdForKnowledgeBase(id)` - Fetches the hotel by ID with the same LEFT JOIN FETCH optimizations as other sync methods:
+      - Hotel basic information
+      - Complete location hierarchy
+      - Hotel policy with cancellation and reschedule policies (including all policy rules)
+      - Required identification documents
+    - **Collection Queries**: After fetching base hotel data, the following queries are executed with the single hotel ID:
+      - `findHotelsWithAmenities([id])` - Fetches hotel amenities
+      - `findHotelsWithEntertainmentVenues([id])` - Fetches entertainment venues
+      - `findRoomsByHotelIds([id], activeStatus)` - Fetches all active rooms with complete relationships
+      - `findHotelsWithPhotos([id])` - Fetches hotel photos
+      - `findRoomsWithPhotos([id], activeStatus)` - Fetches room photos
+    - The fetched collections are then manually merged into the hotel entity to ensure all relationships are properly loaded
+  - **Processing Logic**:
+    - If hotel is not found, returns a BatchResult with `failureCount = 1` and the hotel ID in `failedHotelIds`
+    - If hotel is found, processes it using the same batch processing logic as full/incremental sync
+    - The hotel is wrapped in a list and passed to `batchService.processBatch()`
+    - Returns the BatchResult with detailed processing statistics
+  - **Response Details**:
+    - `totalCount`: Always 1 for single hotel sync (or 0 if hotel not found)
+    - `successCount`: 1 if hotel was successfully processed, 0 otherwise
+    - `failureCount`: 1 if hotel failed or was not found, 0 otherwise
+    - `failedHotelIds`: Contains the hotel ID if processing failed or hotel was not found, empty array if successful
+    - `startTime` and `endTime`: Timestamps for batch processing (may be null if hotel not found before processing starts)
+    - `durationMillis`: Processing duration in milliseconds (0 if hotel not found)
+  - **Error Handling**: If the hotel is found but processing fails (e.g., DTO generation error, file upload error), the error is logged and the BatchResult reflects the failure with `failureCount = 1` and the hotel ID in `failedHotelIds`.
+  - **Logging**: Check application logs for:
+    - INFO level: Hotel sync triggered, completion with success/failure counts
+    - WARN level: Hotel not found
+    - ERROR level: Processing failures
+  - **Use Cases**:
+    - Testing Knowledge Base generation for a specific hotel
+    - Debugging issues with a particular hotel's data
+    - Verifying sync functionality after code changes
+    - Manual sync for hotels that failed in batch processing
+    - Validating hotel data structure before full sync
 
 ### Notes on Knowledge Base Sync
 
-- **Scheduled Jobs**: The system automatically runs:
-  - Full sync: Every Sunday at 2:00 AM (processes all active hotels)
-  - Incremental sync: Every hour at minute 0 (processes only modified hotels)
-- **Error Handling**: If a hotel fails during processing, it is logged and the batch continues with other hotels. Failed hotel IDs are tracked in the result.
-- **Asynchronous Processing**: Full and incremental sync endpoints run asynchronously to avoid blocking HTTP requests.
-- **State Management**: The system tracks the last incremental run time to determine which hotels have been modified.
+- **Scheduled Jobs**: The system automatically runs scheduled sync jobs:
+  - **Full Sync**: Every Sunday at 2:00 AM (configured in `KnowledgeBaseScheduler`) - Processes all active hotels to ensure complete data freshness
+  - **Incremental Sync**: Every hour at minute 0 (configured in `KnowledgeBaseScheduler`) - Processes only modified hotels for efficient updates
+- **Query Optimization**: All sync operations use optimized JPQL queries with LEFT JOIN FETCH to:
+  - Avoid N+1 query problems by eagerly loading relationships
+  - Prevent LazyInitializationException during batch processing
+  - Separate collection fetches to avoid cartesian product issues (when one hotel has many rooms, amenities, etc., joining all collections would create a massive result set)
+- **Error Isolation**: Each hotel is processed in a try-catch block. If one hotel fails:
+  - The error is logged at ERROR level with full stack trace
+  - The hotel ID is added to `failedHotelIds` in the BatchResult
+  - Processing continues with the next hotel
+  - The batch does not stop due to individual hotel failures
+- **Asynchronous Processing**: Full and incremental sync endpoints use Spring's `@Async` annotation for asynchronous execution:
+  - The HTTP request returns immediately with a confirmation message
+  - Actual processing happens in a separate thread
+  - Uses ApplicationContext proxy pattern to enable `@Async` on self-invoked methods
+  - Check application logs for actual processing results
+- **Synchronous Processing**: Single hotel sync endpoint processes synchronously:
+  - HTTP request waits for processing to complete
+  - Returns detailed BatchResult immediately
+  - Useful for debugging and testing
+- **State Management**: 
+  - The system tracks the last incremental sync run time using `KnowledgeBaseScheduler`
+  - This timestamp is used to determine which hotels have been modified
+  - The timestamp is updated after successful incremental sync completion
+  - Even if no hotels were modified, the timestamp is updated to prevent re-processing
+- **Data Completeness**: All sync operations fetch complete hotel data including:
+  - Basic hotel information (name, description, star rating, status, slug)
+  - Complete location hierarchy (country → province → city → district → ward → street)
+  - Hotel policies (check-in/check-out times, payment options, required documents)
+  - Cancellation and reschedule policies with all rules
+  - Amenities grouped by category
+  - Entertainment venues with categories
+  - All active rooms with pricing, amenities, and policies
+  - Hotel and room photos
+  - Review statistics
+  - Active discounts
+- **Knowledge Base Output**: The synced data is used to generate:
+  - Structured Markdown files for each hotel
+  - AI-friendly data format for search and recommendation systems
+  - Comprehensive hotel metadata for external integrations
+- **Performance Considerations**:
+  - Full sync can take significant time for large hotel databases (minutes to hours depending on hotel count)
+  - Incremental sync is typically much faster as it only processes changed hotels
+  - Single hotel sync is very fast (typically under a second)
+  - Progress is logged every 50 hotels during batch processing
+  - Database queries are optimized with proper indexing on `status` and `updatedAt` fields
+- **Monitoring**: Monitor sync operations through:
+  - Application logs (INFO, WARN, ERROR levels)
+  - BatchResult statistics (success/failure counts, duration)
+  - Failed hotel IDs for troubleshooting
+  - Scheduled job execution logs
 
 ---
 
