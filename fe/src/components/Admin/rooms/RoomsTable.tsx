@@ -116,7 +116,6 @@ function StatusDropdown({
             if (newStatus === 'AVAILABLE') {
                 try {
                     const { createRoomInventory } = await import('@/lib/AdminAPI/roomInventoryService');
-                    console.log(`[StatusDropdown] Tự động tạo inventory cho room ${roomId} khi set status = ACTIVE`);
                     
                     // Tạo inventory cho 90 ngày (đủ để user đặt phòng)
                     await createRoomInventory({
@@ -124,14 +123,11 @@ function StatusDropdown({
                         days: 90
                     });
                     
-                    console.log(`[StatusDropdown] ✅ Đã tạo inventory thành công cho room ${roomId}`);
                 } catch (inventoryError: any) {
                     // Nếu inventory đã tồn tại (409 conflict), đó là OK - không cần tạo lại
                     if (inventoryError.response?.status === 409 || inventoryError.message?.includes('already exists')) {
-                        console.log(`[StatusDropdown] Inventory đã tồn tại cho room ${roomId} - OK`);
                     } else {
                         // Nếu là lỗi khác, log nhưng không block việc update status
-                        console.warn(`[StatusDropdown] ⚠️ Không thể tự động tạo inventory cho room ${roomId}:`, inventoryError.message);
                         const { toast } = await import('react-toastify');
                         toast.warning('Đã cập nhật trạng thái, nhưng không thể tạo inventory. Vui lòng tạo inventory thủ công để phòng có thể được đặt.', {
                             position: "top-right",
@@ -154,7 +150,6 @@ function StatusDropdown({
                 onStatusChange();
             }
         } catch (error: any) {
-            console.error('[StatusDropdown] Error updating status:', error);
             const { toast } = await import('react-toastify');
             toast.error('Không thể cập nhật trạng thái: ' + (error.message || 'Lỗi không xác định'), {
                 position: "top-right",
@@ -226,9 +221,7 @@ export default function RoomsTable({ rooms, hotelId, currentPage, totalPages, to
                 const roomIds = rooms.map(room => room.id);
                 const inventoryMap = await getTodayInventoriesForRooms(roomIds);
                 setInventories(inventoryMap);
-                console.log("[RoomsTable] Loaded inventories for", inventoryMap.size, "rooms");
             } catch (error) {
-                console.error("[RoomsTable] Error fetching inventories:", error);
             } finally {
                 setIsLoadingInventories(false);
             }
@@ -265,7 +258,6 @@ export default function RoomsTable({ rooms, hotelId, currentPage, totalPages, to
                     window.location.reload();
                 }
             } catch (error: any) {
-                console.error('[RoomsTable] Error deleting room:', error);
                 
                 // Hiển thị toast lỗi
                 const { toast } = await import('react-toastify');
@@ -356,7 +348,6 @@ export default function RoomsTable({ rooms, hotelId, currentPage, totalPages, to
                 window.location.reload();
             }
         } catch (error: any) {
-            console.error('[RoomsTable] Error creating inventory:', error);
             const { toast } = await import('react-toastify');
             
             let errorMessage = 'Không thể tạo inventory.';

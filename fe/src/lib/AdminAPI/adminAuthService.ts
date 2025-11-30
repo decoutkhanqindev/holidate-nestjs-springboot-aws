@@ -36,7 +36,6 @@ export interface AuthMeResponse {
  */
 export const loginAdmin = async (credentials: LoginRequest): Promise<LoginResponse> => {
     try {
-        console.log("[adminAuthService] Attempting login with email:", credentials.email);
 
         const response = await apiClient.post<ApiResponse<LoginResponse>>(
             '/auth/login',
@@ -78,10 +77,8 @@ export const loginAdmin = async (credentials: LoginRequest): Promise<LoginRespon
                 });
                 
                 if (!cookieSet) {
-                    console.error("[adminAuthService] WARNING: Cookie may not be set correctly. Check browser security settings.");
                 }
 
-                console.log("[adminAuthService] Login successful, token saved to localStorage and cookies. userId removed to avoid conflict with Client context.");
             }
 
             return loginData;
@@ -89,7 +86,6 @@ export const loginAdmin = async (credentials: LoginRequest): Promise<LoginRespon
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error("[adminAuthService] Login error:", error);
         const errorMessage = error.response?.data?.message
             || error.message
             || 'Đăng nhập thất bại. Vui lòng thử lại.';
@@ -110,7 +106,6 @@ export const getCurrentUserInfo = async (): Promise<AuthMeResponse> => {
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error("[adminAuthService] Get current user error:", error);
         const errorMessage = error.response?.data?.message
             || error.message
             || 'Không thể lấy thông tin user';
@@ -133,7 +128,6 @@ export const logoutAdmin = async (): Promise<void> => {
             });
         }
     } catch (error: any) {
-        console.error("[adminAuthService] Logout error:", error);
         // Không throw error, vẫn xóa token local dù API có lỗi
     } finally {
         // Xóa token khỏi localStorage
@@ -141,7 +135,6 @@ export const logoutAdmin = async (): Promise<void> => {
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
             localStorage.removeItem('adminUser');
-            console.log("[adminAuthService] Tokens removed from localStorage");
         }
     }
 };

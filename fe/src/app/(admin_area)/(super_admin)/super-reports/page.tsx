@@ -128,7 +128,6 @@ export default function SuperAdminReportsPage() {
                     const adminsResponse = await getHotelAdmins({ page: 1, limit: 1000 });
                     const admins = adminsResponse.data || [];
                     
-                    console.log('[SuperAdminReports] Loaded hotel admins:', admins.length);
                     
                     // Tạo map userId -> {name, email} cho partners
                     const partnerMap = new Map<string, { name: string; email: string }>();
@@ -145,7 +144,6 @@ export default function SuperAdminReportsPage() {
                         const hotelsResponse = await getHotels(0, 1000, undefined, undefined, undefined, undefined);
                         const hotels = hotelsResponse.hotels || [];
                         
-                        console.log('[SuperAdminReports] Loaded hotels:', hotels.length);
                         
                         // Map hotels với partner info
                         for (const hotel of hotels) {
@@ -188,15 +186,12 @@ export default function SuperAdminReportsPage() {
                                     }
                                 } catch (detailErr) {
                                     // Ignore error khi fetch detail
-                                    console.warn(`[SuperAdminReports] Could not fetch detail for hotel ${hotel.id}:`, detailErr);
                                 }
                             }
                         }
                     } catch (err) {
-                        console.warn('[SuperAdminReports] Error loading hotels:', err);
                     }
                 } catch (err) {
-                    console.warn('[SuperAdminReports] Error loading hotel admins:', err);
                     
                     // Fallback: thử lấy từ hotels trực tiếp
                     try {
@@ -212,14 +207,11 @@ export default function SuperAdminReportsPage() {
                             }
                         });
                     } catch (fallbackErr) {
-                        console.warn('[SuperAdminReports] Error in fallback loading:', fallbackErr);
                     }
                 }
                 
-                console.log('[SuperAdminReports] Hotel-partner map loaded:', map.size, 'hotels');
                 setHotelPartnerMap(map);
             } catch (err) {
-                console.warn('[SuperAdminReports] Error loading hotel-partner map:', err);
             }
         };
         
@@ -295,7 +287,6 @@ export default function SuperAdminReportsPage() {
                             
                             // Nếu data completeness < 30%, thử tính tổng từ Hotel Performance report
                             if (dataCompleteness < 0.3 && (summary?.totalRevenue || 0) < 10000000) {
-                                console.log('[SuperAdminReports] SystemDailyReport data incomplete, fetching from Hotel Performance as fallback...');
                                 try {
                                     const hotelPerformanceData = await getAdminHotelPerformanceReport(
                                         dateRange.from,
@@ -334,10 +325,8 @@ export default function SuperAdminReportsPage() {
                                         } else if (data?.summary) {
                                             data.summary.totalRevenue = totalFromHotels;
                                         }
-                                        console.log('[SuperAdminReports] Updated total revenue from Hotel Performance:', totalFromHotels);
                                     }
                                 } catch (fallbackErr) {
-                                    console.warn('[SuperAdminReports] Error fetching Hotel Performance fallback:', fallbackErr);
                                 }
                             }
                         } catch (revenueErr) {
@@ -462,7 +451,6 @@ export default function SuperAdminReportsPage() {
 
                 setReportData(data);
             } catch (err: any) {
-                console.error('[SuperAdminReportsPage] Error loading report:', err);
                 setError(err.response?.data?.message || 'Không thể tải báo cáo');
             } finally {
                 setIsLoading(false);

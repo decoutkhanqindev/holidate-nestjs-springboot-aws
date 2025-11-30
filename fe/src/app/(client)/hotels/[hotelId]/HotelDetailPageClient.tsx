@@ -557,7 +557,7 @@
 //             setPage(response.page);
 //             setHasMore(!response.last);
 //         } catch (error) {
-//             console.error("Lỗi khi tải thêm phòng:", error);
+//             
 //         } finally {
 //             setIsFetchingMore(false);
 //         }
@@ -605,7 +605,7 @@
 //                     }, 500);
 //                 })
 //                 .catch((err) => {
-//                     console.error('[HotelDetailPage] Error fetching booking:', err);
+//                     
 //                     alert('Không thể tải thông tin đơn hàng. Vui lòng thử lại.');
 //                 })
 //                 .finally(() => {
@@ -634,12 +634,12 @@
 //             setIsHotelLoading(true);
 //             setHotelError(null);
 //             try {
-//                 console.log('[HotelDetailPage] 🏨 Bước 1: Fetching hotel details...');
+//                 
 //                 const hotelData = await hotelService.getHotelById(hotelIdStr);
 //                 setHotel(hotelData);
-//                 console.log('[HotelDetailPage] ✅ Bước 1: Hotel details loaded');
+//                 
 //             } catch (err) {
-//                 console.error("LỖI: Không thể tải thông tin khách sạn.", err);
+//                 
 //                 setHotelError("Không thể tải thông tin chi tiết khách sạn.");
 //             } finally {
 //                 setIsHotelLoading(false);
@@ -665,14 +665,14 @@
 //             setInitialRoomsLoading(true);
 //             setRoomsError(null);
 //             try {
-//                 console.log('[HotelDetailPage] 🛏️ Bước 2: Fetching rooms...');
+//                 
 //                 const initialRoomsData = await hotelService.getRoomsByHotelId(hotelIdStr, 0, 10);
 //                 setRooms(initialRoomsData.content);
 //                 setPage(initialRoomsData.page);
 //                 setHasMore(!initialRoomsData.last);
-//                 console.log('[HotelDetailPage] ✅ Bước 2: Rooms loaded');
+//                 
 //             } catch (err) {
-//                 console.error("Lỗi khi tải danh sách phòng:", err);
+//                 
 //                 setRoomsError("Có lỗi xảy ra khi tải danh sách phòng.");
 //             } finally {
 //                 setInitialRoomsLoading(false);
@@ -690,7 +690,7 @@
 //             setIsReviewsLoading(true);
 //             setReviewsError(null);
 //             try {
-//                 console.log('[HotelDetailPage] ⭐ Bước 3: Fetching reviews...');
+//                 
 //                 const params: GetReviewsParams = {
 //                     hotelId: hotelIdStr,
 //                     page: 0,
@@ -702,9 +702,9 @@
 //                 setReviews(result.data);
 //                 setReviewsPage(result.currentPage);
 //                 setReviewsHasMore(result.hasNext);
-//                 console.log('[HotelDetailPage] ✅ Bước 3: Reviews loaded');
+//                 
 //             } catch (err: any) {
-//                 console.error("Lỗi khi tải đánh giá:", err);
+//                 
 //                 setReviewsError(err.message || "Có lỗi xảy ra khi tải đánh giá.");
 //             } finally {
 //                 setIsReviewsLoading(false);
@@ -731,7 +731,7 @@
 //             setReviewsPage(result.currentPage);
 //             setReviewsHasMore(result.hasNext);
 //         } catch (err: any) {
-//             console.error("Lỗi khi tải thêm đánh giá:", err);
+//             
 //             setReviewsError(err.message || "Có lỗi xảy ra khi tải thêm đánh giá.");
 //         } finally {
 //             setIsReviewsLoading(false);
@@ -814,7 +814,7 @@
 //             const roomDetailData = await hotelService.getRoomById(room.id.toString());
 //             setRoomDetail(roomDetailData);
 //         } catch (error) {
-//             console.error('Error fetching room detail:', error);
+//             
 //             // Fallback: sử dụng room data hiện có
 //             setRoomDetail(room as RoomDetailResponse);
 //         } finally {
@@ -1298,7 +1298,7 @@
 //                                             setReviewsHasMore(result.hasNext);
 //                                         })
 //                                         .catch((err) => {
-//                                             console.error('[HotelDetailPage] Error reloading reviews:', err);
+//                                             
 //                                             setReviewsError('Không thể tải lại đánh giá.');
 //                                         })
 //                                         .finally(() => {
@@ -1811,7 +1811,6 @@ export default function HotelDetailPageClient({
                 const hotelData = await hotelService.getHotelById(hotelIdStr);
                 setHotel(hotelData);
             } catch (err) {
-                console.error("Lỗi khi tải thông tin khách sạn:", err);
                 setHotelError("Không thể tải thông tin chi tiết khách sạn. Vui lòng thử lại sau.");
             } finally {
                 setIsHotelLoading(false); // Cho phép hiển thị UI ngay khi hotel load xong
@@ -1841,7 +1840,6 @@ export default function HotelDetailPageClient({
                 setHasMore(!roomsData.last);
                 roomsFetchedForHotelId.current = hotelIdStr; // Đánh dấu đã fetch cho hotel này
             } catch (err) {
-                console.error("Lỗi khi tải danh sách phòng:", err);
                 setRoomsError("Có lỗi xảy ra khi tải danh sách phòng.");
             } finally {
                 setIsRoomsLoading(false);
@@ -1861,13 +1859,11 @@ export default function HotelDetailPageClient({
         
         // Nếu hotelId không khớp với hotel.id, không fetch
         if (hotelIdStr !== currentHotelId) {
-            console.warn("[HotelDetailPage] hotelId mismatch:", { hotelIdStr, currentHotelId });
             return;
         }
 
         // Kiểm tra nếu đã fetch reviews cho hotel này rồi thì không fetch lại
         if (reviewsFetchedForHotelId.current === hotelIdStr) {
-            console.log('[HotelDetailPage] Reviews already fetched for hotel:', hotelIdStr);
             return;
         }
 
@@ -1880,14 +1876,12 @@ export default function HotelDetailPageClient({
             
             // Validate hotelId trước khi fetch
             if (!hotelIdStr || hotelIdStr.trim() === '') {
-                console.error('[HotelDetailPage] Invalid hotelId, cannot fetch reviews:', hotelIdStr);
                 setReviewsError('Không thể tải đánh giá: ID khách sạn không hợp lệ.');
                 setIsReviewsLoading(false);
                 return;
             }
             
             try {
-                console.log('[HotelDetailPage] Fetching reviews for hotel:', hotelIdStr, 'currentHotelId:', currentHotelId);
                 
                 // Đảm bảo luôn truyền hotelId khi fetch reviews (phải là string hợp lệ, không rỗng)
                 const reviewsResult = await getReviews({
@@ -1953,7 +1947,6 @@ export default function HotelDetailPageClient({
                                     // Nếu không có hotelId trong detail, trust backend
                                     return { review, verified: true, hotelId: null };
                                 } catch (err) {
-                                    console.error('[HotelDetailPage] Error verifying review:', review.id, err);
                                     // Nếu lỗi khi verify, trust backend
                                     return { review, verified: true, hotelId: null };
                                 }
@@ -1985,14 +1978,11 @@ export default function HotelDetailPageClient({
                             
                             // Nếu tất cả reviews đều sai → verifiedReviews = [] → sẽ hiển thị "Chưa có đánh giá"
                             // Điều này đúng vì backend filter sai, không thể trust được
-                            console.warn('[HotelDetailPage] Backend filter issue detected. Only showing verified reviews:', verifiedReviews.length);
                         } else {
                             // Tất cả reviews đã verify đều đúng, trust backend cho các reviews còn lại
-                            console.log('[HotelDetailPage] ✅ Verified reviews are correct, trusting backend for all reviews');
                             verifiedReviews = reviewsResult.data;
                         }
                     } catch (err) {
-                        console.error('[HotelDetailPage] Error during verification, trusting backend:', err);
                         // Nếu lỗi khi verify, trust backend
                         verifiedReviews = reviewsResult.data;
                     }
@@ -2014,10 +2004,8 @@ export default function HotelDetailPageClient({
                     setReviewsHasMore(reviewsResult.hasNext);
                     reviewsFetchedForHotelId.current = hotelIdStr; // Đánh dấu đã fetch cho hotel này
                 } else {
-                    console.warn('[HotelDetailPage] Hotel changed during fetch, discarding results');
                 }
             } catch (err: any) {
-                console.error("Lỗi khi tải đánh giá:", err);
                 setReviewsError(err.message || "Có lỗi xảy ra khi tải đánh giá.");
                 // Đảm bảo set empty array khi có lỗi
                 setReviews([]);
@@ -2057,7 +2045,6 @@ export default function HotelDetailPageClient({
                     }, 500);
                 })
                 .catch((err) => {
-                    console.error('[HotelDetailPage] Error fetching booking:', err);
                     alert('Không thể tải thông tin đơn hàng. Vui lòng thử lại.');
                 })
                 .finally(() => setIsLoadingBooking(false));
@@ -2074,7 +2061,6 @@ export default function HotelDetailPageClient({
             setPage(response.page);
             setHasMore(!response.last);
         } catch (error) {
-            console.error("Lỗi khi tải thêm phòng:", error);
         } finally {
             setIsFetchingMore(false);
         }
@@ -2099,7 +2085,6 @@ export default function HotelDetailPageClient({
         
         // Validate hotelId
         if (!hotelIdStr || hotelIdStr === '') {
-            console.error('[HotelDetailPage] Invalid hotelId for loadMore:', hotelIdStr);
             return;
         }
         
@@ -2116,7 +2101,6 @@ export default function HotelDetailPageClient({
         try {
             const nextPage = reviewsPage + 1;
             
-            console.log('[HotelDetailPage] Loading more reviews for hotel:', hotelIdStr, 'page:', nextPage);
             
             // Đảm bảo luôn truyền hotelId khi fetch reviews (trim để đảm bảo không có spaces)
             const result = await getReviews({ 
@@ -2151,10 +2135,8 @@ export default function HotelDetailPageClient({
                 setReviewsPage(result.currentPage);
                 setReviewsHasMore(result.hasNext);
             } else {
-                console.warn('[HotelDetailPage] Hotel changed during loadMore, discarding results');
             }
         } catch (err: any) {
-            console.error("Lỗi khi tải thêm đánh giá:", err);
             setReviewsError(err.message || "Có lỗi xảy ra khi tải thêm đánh giá.");
         } finally {
             setIsReviewsLoading(false);
@@ -2222,7 +2204,6 @@ export default function HotelDetailPageClient({
             const roomDetailData = await hotelService.getRoomById(room.id.toString());
             setRoomDetail(roomDetailData);
         } catch (error) {
-            console.error('Error fetching room detail:', error);
             setRoomDetail(room as RoomDetailResponse);
         } finally {
             setIsLoadingRoomDetail(false);
@@ -2557,7 +2538,6 @@ export default function HotelDetailPageClient({
                                     
                                     // Validate hotelId
                                     if (!hotelIdStr || hotelIdStr === '') {
-                                        console.error('[HotelDetailPage] Invalid hotelId for reload:', hotelIdStr);
                                         setIsReviewsLoading(false);
                                         return;
                                     }
@@ -2572,7 +2552,6 @@ export default function HotelDetailPageClient({
                                         return;
                                     }
                                     
-                                    console.log('[HotelDetailPage] Reloading reviews for hotel:', hotelIdStr);
                                     
                                     getReviews({ 
                                         hotelId: hotelIdStr.trim(), 
@@ -2607,11 +2586,9 @@ export default function HotelDetailPageClient({
                                                 setReviewsHasMore(result.hasNext);
                                                 reviewsFetchedForHotelId.current = hotelIdStr; // Cập nhật lại
                                             } else {
-                                                console.warn('[HotelDetailPage] Hotel changed during reload, discarding results');
                                             }
                                         })
                                         .catch((err) => {
-                                            console.error('[HotelDetailPage] Error reloading reviews:', err);
                                             setReviewsError('Không thể tải lại đánh giá.');
                                             setReviews([]); // Reset reviews khi có lỗi
                                         })

@@ -112,9 +112,7 @@ export default function SettingsPage() {
                     setSelectedStreetId(profile.street.id);
                 }
 
-                console.log('[SettingsPage] ✅ User profile loaded:', profile);
             } catch (error: any) {
-                console.error('[SettingsPage] Error loading profile:', error);
                 setMessage('Không thể tải thông tin hồ sơ: ' + (error.message || 'Lỗi không xác định'));
             } finally {
                 setIsLoadingProfile(false);
@@ -281,29 +279,23 @@ export default function SettingsPage() {
                 payload.avatarFile = avatarFile;
             }
 
-            console.log('[SettingsPage] Updating profile with payload:', payload);
             console.log('[SettingsPage] Payload keys:', Object.keys(payload));
 
             const updatedProfile = await updateUserProfile(user.id, payload);
-            console.log('[SettingsPage] ✅ Profile updated, response:', updatedProfile);
 
             // Cập nhật avatarUrl sau khi upload thành công
             if (updatedProfile.avatarUrl) {
                 setAvatarUrl(updatedProfile.avatarUrl);
                 setAvatarFile(null); // Reset file sau khi upload thành công
                 setAvatarPreview(null); // Reset preview
-                console.log('[SettingsPage] ✅ Avatar URL updated:', updatedProfile.avatarUrl);
             }
 
             // Refresh user profile trong AuthContext để cập nhật avatar ở navbar và sidebar
-            console.log('[SettingsPage] Calling refreshUserProfile...');
             await refreshUserProfile();
-            console.log('[SettingsPage] ✅ refreshUserProfile completed');
 
             setMessage('Cập nhật thành công!');
             setTimeout(() => setMessage(''), 3000);
         } catch (error: any) {
-            console.error('Lỗi cập nhật hồ sơ:', error);
             setMessage('Cập nhật thất bại: ' + (error.message || 'Vui lòng thử lại.'));
         } finally {
             setIsLoading(false);

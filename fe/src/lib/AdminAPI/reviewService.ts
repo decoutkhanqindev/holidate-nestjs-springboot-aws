@@ -179,7 +179,6 @@ export async function getReviews(params: GetReviewsParams = {}): Promise<Paginat
         if (response.data?.statusCode === 200 && response.data?.data) {
             let reviews = response.data.data.content.map(mapReviewResponseToReview);
             
-            console.log("[reviewService] Mapped reviews:", reviews.length);
             
             // Nếu review thiếu thông tin user/hotel/room, fetch chi tiết
             // Chỉ fetch những review thiếu thông tin quan trọng (giới hạn 5 reviews để tránh quá nhiều requests)
@@ -191,7 +190,6 @@ export async function getReviews(params: GetReviewsParams = {}): Promise<Paginat
             ).slice(0, 5); // Giới hạn tối đa 5 reviews
             
             if (reviewsNeedingDetails.length > 0) {
-                console.log("[reviewService] Fetching details for", reviewsNeedingDetails.length, "reviews that need full info");
                 try {
                     const detailedReviews = await Promise.allSettled(
                         reviewsNeedingDetails.map(r => getReviewById(r.id))
@@ -204,14 +202,11 @@ export async function getReviews(params: GetReviewsParams = {}): Promise<Paginat
                             const originalIndex = reviews.findIndex(r => r.id === detailedReview.id);
                             if (originalIndex !== -1) {
                                 reviews[originalIndex] = detailedReview;
-                                console.log(`[reviewService] ✅ Updated review ${detailedReview.id} with full details`);
                             }
                         } else {
-                            console.warn(`[reviewService] ⚠️ Failed to fetch details for review ${reviewsNeedingDetails[idx].id}:`, result.reason);
                         }
                     });
                 } catch (error) {
-                    console.error("[reviewService] Error fetching review details:", error);
                     // Không throw error, tiếp tục với simplified data
                 }
             }
@@ -225,7 +220,6 @@ export async function getReviews(params: GetReviewsParams = {}): Promise<Paginat
         }
 
         // Nếu response không có data hoặc statusCode không phải 200
-        console.warn("[reviewService] Unexpected response structure:", response.data);
         return {
             data: [],
             totalPages: 0,
@@ -233,9 +227,6 @@ export async function getReviews(params: GetReviewsParams = {}): Promise<Paginat
             totalItems: 0,
         };
     } catch (error: any) {
-        console.error("[reviewService] Error fetching reviews:", error);
-        console.error("[reviewService] Error response status:", error.response?.status);
-        console.error("[reviewService] Error response data:", error.response?.data);
         
         // Nếu là lỗi 401 hoặc 403, có thể do authentication
         if (error.response?.status === 401 || error.response?.status === 403) {
@@ -256,19 +247,16 @@ export async function getReviews(params: GetReviewsParams = {}): Promise<Paginat
  */
 export async function getReviewById(reviewId: string): Promise<Review> {
     try {
-        console.log("[reviewService] Fetching review details:", reviewId);
 
         const response = await apiClient.get<ApiResponse<ReviewResponse>>(`/reviews/${reviewId}`);
 
         if (response.data?.statusCode === 200 && response.data?.data) {
             const review = mapReviewResponseToReview(response.data.data);
-            console.log("[reviewService] Review details fetched:", review);
             return review;
         }
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error("[reviewService] Error fetching review details:", error);
         const errorMessage = error.response?.data?.message 
             || error.message 
             || 'Không thể tải chi tiết đánh giá';

@@ -31,7 +31,6 @@ const dashboardData = {
 
 // Hàm lấy dữ liệu dashboard
 export async function getSuperAdminDashboardData() {
-    console.log("Fetching Super Admin dashboard data...");
     await new Promise(resolve => setTimeout(resolve, 500)); // Giả lập độ trễ
     return dashboardData;
 }

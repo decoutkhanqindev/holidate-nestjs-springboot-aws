@@ -33,7 +33,6 @@ export default function EditHotelPage() {
 
                 setHotel(hotelData);
             } catch (err: any) {
-                console.error('[EditHotelPage] Error loading hotel:', err);
                 
                 // Nếu là lỗi authentication (401/403), redirect về login
                 if (err.response?.status === 401 || err.response?.status === 403) {
@@ -46,7 +45,6 @@ export default function EditHotelPage() {
                 if (err.message?.includes('Token') || 
                     err.message?.includes('đăng nhập') || 
                     err.message?.includes('authentication')) {
-                    console.error('[EditHotelPage] Authentication error detected, redirecting to login');
                     router.push('/admin-login');
                     return;
                 }

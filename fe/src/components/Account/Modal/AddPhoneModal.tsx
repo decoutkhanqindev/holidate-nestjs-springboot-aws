@@ -35,7 +35,6 @@ export default function AddPhoneModal({ isOpen, onClose, onSave, initialPhoneNum
             onSave(phoneNumber);
             onClose(); // Đóng modal 
         } catch (error) {
-            console.error("Lỗi khi lưu số điện thoại:", error);
             alert("Đã xảy ra lỗi, vui lòng thử lại.");
         } finally {
             setIsLoading(false);

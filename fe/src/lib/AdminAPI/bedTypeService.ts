@@ -67,7 +67,6 @@ function bedTypeNamesMatch(name1: string, name2: string): boolean {
  */
 export const findBedTypeIdByName = async (bedTypeName: string, hotelId?: string): Promise<string | null> => {
     try {
-        console.log(`[bedTypeService] Finding bedType ID by name: "${bedTypeName}"`);
 
         // Bước 1: Thử tìm trong rooms của hotel hiện tại trước
         if (hotelId) {
@@ -91,12 +90,10 @@ export const findBedTypeIdByName = async (bedTypeName: string, hotelId?: string)
                     }
                 }
             } catch (error) {
-                console.warn(`[bedTypeService] Could not query rooms from hotel ${hotelId}`);
             }
         }
 
         // Bước 2: Nếu không tìm thấy, query từ tất cả hotels
-        console.log(`[bedTypeService] Searching in all hotels...`);
         const { getHotels } = await import('./hotelService');
 
         // Query một số hotels đầu tiên để tìm bedTypes
@@ -127,10 +124,8 @@ export const findBedTypeIdByName = async (bedTypeName: string, hotelId?: string)
             }
         }
 
-        console.warn(`[bedTypeService] BedType "${bedTypeName}" not found in any rooms`);
         return null;
     } catch (error: any) {
-        console.error("[bedTypeService] Error finding bedType ID:", error);
         return null;
     }
 };
@@ -143,7 +138,6 @@ export const findBedTypeIdByName = async (bedTypeName: string, hotelId?: string)
  */
 export const getAvailableBedTypes = async (hotelId?: string): Promise<BedType[]> => {
     try {
-        console.log('[bedTypeService] Fetching all bed types from rooms...');
         const bedTypesMap = new Map<string, BedType>(); // Map id -> BedType để tránh duplicate
 
         // Query từ nhiều hotels để lấy được tất cả bed types có sẵn
@@ -198,7 +192,6 @@ export const getAvailableBedTypes = async (hotelId?: string): Promise<BedType[]>
                         
                         // Log tiến độ mỗi 50 hotels
                         if (processedHotels % 50 === 0) {
-                            console.log(`[bedTypeService] Processed ${processedHotels}/${hotelsResult.hotels.length} hotels, found ${bedTypesMap.size} unique bed types so far...`);
                         }
                     } catch (error) {
                         // Ignore errors for individual hotels
@@ -208,19 +201,16 @@ export const getAvailableBedTypes = async (hotelId?: string): Promise<BedType[]>
             );
         }
 
-        console.log(`[bedTypeService] ✅ Completed: Processed ${processedHotels} hotels and ${processedRooms} rooms, found ${bedTypesMap.size} unique bed types`);
 
         // Sắp xếp theo tên (tiếng Việt)
         const bedTypes = Array.from(bedTypesMap.values()).sort((a, b) => 
             a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' })
         );
 
-        console.log(`[bedTypeService] Found ${bedTypes.length} unique bed types from all rooms`);
         console.log(`[bedTypeService] Bed types (${bedTypes.length} total):`, bedTypes.map(bt => bt.name).join(', '));
         
         return bedTypes;
     } catch (error: any) {
-        console.error("[bedTypeService] Error getting available bedTypes:", error);
         return [];
     }
 };
@@ -233,7 +223,6 @@ export const getAvailableBedTypes = async (hotelId?: string): Promise<BedType[]>
  */
 async function createBedTypeByName(bedTypeName: string): Promise<string | null> {
     try {
-        console.log(`[bedTypeService] Attempting to create bedType: "${bedTypeName}"`);
         
         // Backend không có API tạo bedType trực tiếp
         // Nhưng có thể tạo bedType thông qua việc tạo room với bedTypeName mới
@@ -242,10 +231,8 @@ async function createBedTypeByName(bedTypeName: string): Promise<string | null> 
         // Vì không có API tạo bedType, không thể tạo từ frontend
         // Cần backend hỗ trợ API tạo bedType hoặc tự động tạo khi không tìm thấy
         
-        console.warn(`[bedTypeService] Cannot create bedType "${bedTypeName}" - no API endpoint available`);
         return null;
     } catch (error: any) {
-        console.error("[bedTypeService] Error creating bedType:", error);
         return null;
     }
 }
@@ -267,14 +254,12 @@ export const findOrCreateBedTypeByName = async (bedTypeName: string, hotelId: st
         const bedTypeId = await findBedTypeIdByName(trimmedName, hotelId);
 
         if (bedTypeId) {
-            console.log(`[bedTypeService] ✅ Found existing bedType: "${trimmedName}" -> ${bedTypeId}`);
             return bedTypeId;
         }
 
         // Bước 2: Nếu không tìm thấy, thử tạo bedType mới
         // Lưu ý: Backend không có API tạo bedType, nên không thể tạo từ frontend
         // Nhưng có thể thử tìm lại với các biến thể của tên
-        console.log(`[bedTypeService] BedType "${trimmedName}" not found, checking for similar names...`);
 
         // Bước 3: Tìm các bedType tương tự để gợi ý
         const availableBedTypes = await getAvailableBedTypes(hotelId);
@@ -321,7 +306,6 @@ export const findOrCreateBedTypeByName = async (bedTypeName: string, hotelId: st
 
         throw new Error(errorMessage);
     } catch (error: any) {
-        console.error("[bedTypeService] Error finding bedType:", error);
         throw error;
     }
 };

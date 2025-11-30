@@ -122,7 +122,7 @@
 //                 return new Map(prev).set(activeLocation.id, updatedData);
 //             });
 //         } catch (err) {
-//             console.error("Lỗi tải thêm khách sạn:", err);
+//             
 //         } finally {
 //             setIsLoadingMore(false);
 //         }
@@ -373,7 +373,6 @@ export default function HotelSelection() {
                 const cities = await locationService.getCities();
 
                 // DEBUG 1: KIỂM TRA DANH SÁCH THÀNH PHỐ TỪ API
-                console.log('DEBUG 1: Tất cả thành phố đã tải:', cities);
 
                 if (cities && cities.length > 0) {
                     setFeaturedLocations(cities);
@@ -406,7 +405,6 @@ export default function HotelSelection() {
                 const response = await hotelService.searchHotels({ 'city-id': activeLocation.id, page: 0, size: 6 });
 
                 // DEBUG 3: XEM KẾT QUẢ TRẢ VỀ TỪ BACKEND
-                console.log(`DEBUG 3: Phản hồi từ API cho "${activeLocation.name}":`, response);
 
                 // Cập nhật state ngay cả khi content rỗng để UI biết là đã tải xong
                 setLocationData(prev => new Map(prev).set(activeLocation.id, {
@@ -451,7 +449,6 @@ export default function HotelSelection() {
                 return new Map(prev).set(activeLocation.id, updatedData);
             });
         } catch (err) {
-            console.error("Lỗi tải thêm khách sạn:", err);
         } finally {
             setIsLoadingMore(false);
         }
@@ -678,7 +675,7 @@ export default function HotelSelection() {
 //                 setActiveLocation(finalLocations[0]);
 
 //             } catch (err: any) {
-//                 console.error("Lỗi khi xử lý địa điểm:", err);
+//                 
 //                 setError(err.message || "Lỗi tải danh sách địa điểm.");
 //             } finally {
 //                 setIsLoadingInitial(false);
@@ -738,7 +735,7 @@ export default function HotelSelection() {
 //                 return new Map(prev).set(activeLocation.id, updatedData);
 //             });
 //         } catch (err) {
-//             console.error("Lỗi tải thêm khách sạn:", err);
+//             
 //         } finally {
 //             setIsLoadingMore(false);
 //         }

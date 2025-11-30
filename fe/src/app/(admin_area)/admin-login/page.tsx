@@ -34,7 +34,6 @@ export default function AdminLoginPage() {
             // Gọi API login thật
             const loginResponse = await loginAdmin({ email, password });
 
-            console.log('[AdminLoginPage] Login successful:', loginResponse);
 
             // Lưu user vào context - giữ nguyên role từ API (admin, partner, user)
             auth.login({
@@ -49,7 +48,6 @@ export default function AdminLoginPage() {
             });
 
         } catch (error: any) {
-            console.error('[AdminLoginPage] Login error:', error);
             setError(error.message || 'Email hoặc mật khẩu không chính xác. Vui lòng thử lại.');
             setIsSubmitting(false);
         }

@@ -21,7 +21,6 @@ export async function getCountries(): Promise<LocationOption[]> {
         }
         return [];
     } catch (error) {
-        console.error('[locationService] Error fetching countries:', error);
         return [];
     }
 }
@@ -39,7 +38,6 @@ export async function getProvinces(countryId?: string): Promise<LocationOption[]
         }
         return [];
     } catch (error) {
-        console.error('[locationService] Error fetching provinces:', error);
         return [];
     }
 }
@@ -57,7 +55,6 @@ export async function getCities(provinceId?: string): Promise<LocationOption[]> 
         }
         return [];
     } catch (error) {
-        console.error('[locationService] Error fetching cities:', error);
         return [];
     }
 }
@@ -75,7 +72,6 @@ export async function getDistricts(cityId?: string): Promise<LocationOption[]> {
         }
         return [];
     } catch (error) {
-        console.error('[locationService] Error fetching districts:', error);
         return [];
     }
 }
@@ -93,7 +89,6 @@ export async function getWards(districtId?: string): Promise<LocationOption[]> {
         }
         return [];
     } catch (error) {
-        console.error('[locationService] Error fetching wards:', error);
         return [];
     }
 }
@@ -111,10 +106,11 @@ export async function getStreets(wardId?: string): Promise<LocationOption[]> {
         }
         return [];
     } catch (error) {
-        console.error('[locationService] Error fetching streets:', error);
         return [];
     }
 }
+
+
 
 
 

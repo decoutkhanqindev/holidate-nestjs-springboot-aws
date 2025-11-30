@@ -34,7 +34,6 @@ export default function SuperDiscountsPage() {
             setTotalPages(response.totalPages);
             setTotalItems(response.totalItems);
         } catch (error: any) {
-            console.error('[SuperDiscountsPage] Error loading discounts:', error);
             toast.error(error.message || 'Không thể tải danh sách mã giảm giá', {
                 position: "top-right",
                 autoClose: 3000,
@@ -95,7 +94,6 @@ export default function SuperDiscountsPage() {
             setTotalPages(response.totalPages);
             setTotalItems(response.totalItems);
         } catch (error: any) {
-            console.error('[SuperDiscountsPage] Error deleting discount:', error);
             toast.error(error.message || 'Không thể xóa mã giảm giá. Vui lòng thử lại.', {
                 position: "top-right",
                 autoClose: 3000,
@@ -151,7 +149,6 @@ export default function SuperDiscountsPage() {
             setTotalPages(response.totalPages);
             setTotalItems(response.totalItems);
         } catch (error: any) {
-            console.error('[SuperDiscountsPage] Error saving discount:', error);
             toast.error(error.message || 'Có lỗi xảy ra. Vui lòng thử lại.', {
                 position: "top-right",
                 autoClose: 3000,

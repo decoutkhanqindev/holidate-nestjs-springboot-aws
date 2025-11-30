@@ -57,7 +57,6 @@ async function getPublicDiscountsOnServer(page: number = 0, size: number = 12): 
             hasPrevious: false,
         };
     } catch (error) {
-        console.error('[DiscountsPage] Error fetching discounts:', error);
         return {
             content: [],
             page: 0,

@@ -30,7 +30,6 @@ export default function EditRoomPage() {
             setIsLoading(true);
             setError(null);
             try {
-                console.log("[EditRoomPage] Loading room:", roomId);
                 const roomData = await getRoomById(roomId);
 
                 if (!roomData) {
@@ -38,7 +37,6 @@ export default function EditRoomPage() {
                     return;
                 }
 
-                console.log("[EditRoomPage] Room data loaded:", roomData);
                 console.log("[EditRoomPage] Room data keys:", Object.keys(roomData));
                 console.log("[EditRoomPage] Room data values:", {
                     id: roomData.id,
@@ -58,7 +56,6 @@ export default function EditRoomPage() {
                 // Map RoomResponse sang format mà RoomForm cần
                 // Lấy hotelId từ hotel.id hoặc hotelId (backward compatibility)
                 const hotelId = roomData.hotel?.id || roomData.hotelId || '';
-                console.log("[EditRoomPage] Extracted hotelId:", hotelId, "from hotel:", roomData.hotel);
 
                 const mappedRoom = {
                     id: roomData.id,
@@ -110,10 +107,8 @@ export default function EditRoomPage() {
                     ) || [],
                 };
 
-                console.log("[EditRoomPage] Mapped room:", mappedRoom);
                 setRoom(mappedRoom);
             } catch (err: any) {
-                console.error("[EditRoomPage] Error loading room:", err);
                 setError(err.message || 'Không thể tải thông tin phòng.');
             } finally {
                 setIsLoading(false);

@@ -43,7 +43,6 @@ export default function DiscountsPage() {
                 setDiscounts(response.data);
                 setTotalPages(response.totalPages);
             } catch (error: any) {
-                console.error('[DiscountsPage] Error loading discounts:', error);
                 // Hiển thị lỗi cho user (có thể thêm toast notification)
                 alert('Không thể tải danh sách mã giảm giá: ' + (error.message || 'Lỗi không xác định'));
                 setDiscounts([]);

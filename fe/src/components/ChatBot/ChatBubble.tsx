@@ -96,7 +96,6 @@ export default function ChatBubble() {
             ]);
 
         } catch (error) {
-            console.error("Chat Error:", error);
             setMessages((msgs) => [
                 ...msgs,
                 { from: "ai", text: "⚠️ Lỗi kết nối, vui lòng thử lại sau!", html: false }

@@ -64,7 +64,6 @@ export async function createHotelAction(formData: FormData, noRedirect: boolean 
         const images = formData.getAll('images') as File[];
         const validImages = images.filter((img) => img instanceof File && img.size > 0);
 
-        console.log('[createHotelAction] Images to upload:', validImages.length);
 
         // Dùng createHotelServer với images (dành cho server actions - lấy token từ cookies)
         const createdHotel = await createHotelServer(payload, validImages);
@@ -75,7 +74,6 @@ export async function createHotelAction(formData: FormData, noRedirect: boolean 
                          formData.has('entertainmentVenuesToAdd[0].name');
         
         if (amenityIdsToAdd.length > 0 || hasVenues) {
-            console.log('[createHotelAction] Updating hotel with amenities and venues after creation');
             // Tạo FormData mới chỉ với amenities và venues
             const updateFormData = new FormData();
             
@@ -126,7 +124,6 @@ export async function createHotelAction(formData: FormData, noRedirect: boolean 
 
             // Update hotel với amenities và venues
             await updateHotelServer(createdHotel.id, updateFormData);
-            console.log('[createHotelAction] Hotel updated with amenities and venues');
         }
 
         revalidatePath("/admin-hotels");
@@ -139,7 +136,6 @@ export async function createHotelAction(formData: FormData, noRedirect: boolean 
         
         redirect("/admin-hotels");
     } catch (error: any) {
-        console.error("[createHotelAction] Error:", error);
         // NEXT_REDIRECT không phải là error thực sự, chỉ là cách Next.js redirect
         if (error.message === 'NEXT_REDIRECT' || error.digest?.includes('NEXT_REDIRECT')) {
             // Nếu là redirect và noRedirect = true, thì coi như success
@@ -183,7 +179,6 @@ export async function updateHotelAction(id: string, formData: FormData) {
         // Không redirect ở đây - để client component tự xử lý redirect sau khi hiển thị toast
         return { success: true };
     } catch (error: any) {
-        console.error("[updateHotelAction] Error:", error);
         // NEXT_REDIRECT không phải là error thực sự
         if (error?.digest?.startsWith('NEXT_REDIRECT') || error.message === 'NEXT_REDIRECT') {
             return { success: true };
@@ -247,7 +242,6 @@ export async function createHotelActionSuperAdmin(formData: FormData) {
         const images = formData.getAll('images') as File[];
         const validImages = images.filter((img) => img instanceof File && img.size > 0);
 
-        console.log('[createHotelActionSuperAdmin] Images to upload:', validImages.length);
 
         // Dùng createHotelServer với images (dành cho server actions - lấy token từ cookies)
         const createdHotel = await createHotelServer(payload, validImages);
@@ -258,7 +252,6 @@ export async function createHotelActionSuperAdmin(formData: FormData) {
                          formData.has('entertainmentVenuesToAdd[0].name');
         
         if (amenityIdsToAdd.length > 0 || hasVenues) {
-            console.log('[createHotelActionSuperAdmin] Updating hotel with amenities and venues after creation');
             // Tạo FormData mới chỉ với amenities và venues
             const updateFormData = new FormData();
             
@@ -309,7 +302,6 @@ export async function createHotelActionSuperAdmin(formData: FormData) {
 
             // Update hotel với amenities và venues
             await updateHotelServer(createdHotel.id, updateFormData);
-            console.log('[createHotelActionSuperAdmin] Hotel updated with amenities and venues');
         }
 
         // CHỈ revalidate super-hotels (không revalidate admin-hotels)
@@ -318,7 +310,6 @@ export async function createHotelActionSuperAdmin(formData: FormData) {
         // KHÔNG redirect - để SuperHotelFormModal tự xử lý refresh
         return { success: true };
     } catch (error: any) {
-        console.error("[createHotelActionSuperAdmin] Error:", error);
         // NEXT_REDIRECT không phải là error thực sự
         if (error.message === 'NEXT_REDIRECT' || error.digest?.includes('NEXT_REDIRECT')) {
             return { success: true };
@@ -349,7 +340,6 @@ export async function updateHotelActionSuperAdmin(id: string, formData: FormData
         // Không redirect ở đây - để client component tự xử lý redirect sau khi hiển thị toast
         return { success: true };
     } catch (error: any) {
-        console.error("[updateHotelActionSuperAdmin] Error:", error);
         // NEXT_REDIRECT không phải là error thực sự
         if (error?.digest?.startsWith('NEXT_REDIRECT') || error.message === 'NEXT_REDIRECT') {
             return { success: true };
@@ -367,7 +357,6 @@ export async function deleteHotelAction(id: string) {
         revalidatePath("/super-hotels");
         return { success: true };
     } catch (error: any) {
-        console.error("[deleteHotelAction] Error:", error);
         return { success: false, error: error.message || "Xóa khách sạn thất bại." };
     }
 }

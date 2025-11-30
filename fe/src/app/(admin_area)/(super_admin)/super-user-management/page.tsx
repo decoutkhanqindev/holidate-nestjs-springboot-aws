@@ -61,7 +61,6 @@ export default function SuperAdminsPage() {
             setAdmins(response.data);
             setTotalPages(response.totalPages);
         } catch (error: any) {
-            console.error('[SuperAdminsPage] Error deleting admin:', error);
             toast.error(error.message || 'Không thể xóa admin khách sạn. Vui lòng thử lại.', {
                 position: "top-right",
                 autoClose: 3000,
@@ -107,7 +106,6 @@ export default function SuperAdminsPage() {
             setAdmins(response.data);
             setTotalPages(response.totalPages);
         } catch (error: any) {
-            console.error('[SuperAdminsPage] Error saving admin:', error);
             toast.error(error.message || 'Có lỗi xảy ra. Vui lòng thử lại.', {
                 position: "top-right",
                 autoClose: 3000,

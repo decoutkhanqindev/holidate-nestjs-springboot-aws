@@ -57,7 +57,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const roleName = loginData.role?.name?.toLowerCase();
 
         if (roleName === 'admin' || roleName === 'partner') {
-            console.warn("⚠️ [Login] Admin/Partner đăng nhập qua trang client login. Redirect về trang admin...");
             // Lưu token tạm thời để admin context có thể sử dụng
             localStorage.setItem('accessToken', loginData.accessToken);
             localStorage.setItem('refreshToken', loginData.refreshToken);
@@ -69,7 +68,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         // Chỉ cho phép USER role đăng nhập qua trang client
         if (roleName && roleName !== 'user') {
-            console.error("❌ [Login] Role không hợp lệ cho trang client login:", roleName);
             throw new Error('Vui lòng đăng nhập qua trang quản trị dành cho ' + roleName);
         }
 
@@ -104,7 +102,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const roleName = tokenData.role?.name?.toLowerCase();
 
         if (roleName === 'admin' || roleName === 'partner') {
-            console.warn("⚠️ [Login] Admin/Partner đăng nhập. Redirect về trang admin...");
             localStorage.setItem('accessToken', tokenData.accessToken);
             localStorage.setItem('refreshToken', tokenData.refreshToken);
             router.push('/admin-login?message=admin_redirect');
@@ -112,7 +109,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
 
         if (roleName && roleName !== 'user') {
-            console.error("❌ [Login] Role không hợp lệ:", roleName);
             throw new Error('Vui lòng đăng nhập qua trang quản trị dành cho ' + roleName);
         }
 
@@ -139,7 +135,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const isOAuthLogin = oauthLoginInProgress === 'true';
             
             if (isOAuthLogin) {
-                console.log("[Client AuthContext] 🔵 Phát hiện OAuth login, force check cookie và sync token");
                 // Xóa các flag có thể block OAuth check
                 sessionStorage.removeItem('skipOAuthCheck');
                 sessionStorage.removeItem('justLoggedOut');
@@ -152,7 +147,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             // NHƯNG: Nếu vừa login bằng OAuth (isOAuthLogin), thì bỏ qua check này
             const justLoggedOut = sessionStorage.getItem('justLoggedOut');
             if (justLoggedOut === 'true' && !isOAuthLogin) {
-                console.log("[Client AuthContext] ⚠️ Phát hiện vừa logout, không tự động login lại");
                 sessionStorage.removeItem('justLoggedOut');
                 setIsLoading(false);
                 return; // Không kiểm tra session nữa
@@ -176,14 +170,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
                     // Nếu token hết hạn, xóa và check cookie
                     if (isTokenExpired) {
-                        console.warn("[Client AuthContext] Token đã hết hạn, sẽ check OAuth cookie");
                         localStorage.removeItem('accessToken');
                         localStorage.removeItem('refreshToken');
                         localStorage.removeItem('userId');
                         // Tiếp tục check OAuth cookie bên dưới
                     } else if (tokenRole === 'admin' || tokenRole === 'partner') {
                         // Token của Admin/Partner, không khôi phục session cho client
-                        console.warn("[Client AuthContext] Phát hiện token của Admin/Partner. Không khôi phục session.");
                         localStorage.removeItem('accessToken');
                         localStorage.removeItem('refreshToken');
                         localStorage.removeItem('userId');
@@ -213,14 +205,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                         setIsLoading(false);
                         return; // QUAN TRỌNG: Return ngay khi đã restore session từ localStorage
                     } else {
-                        console.warn("[Client AuthContext] Role không hợp lệ cho client:", tokenRole);
                         localStorage.removeItem('accessToken');
                         localStorage.removeItem('refreshToken');
                         localStorage.removeItem('userId');
                         // Tiếp tục check OAuth cookie bên dưới
                     }
                 } catch (error) {
-                    console.error("[Client AuthContext] Token không hợp lệ, sẽ check OAuth cookie:", error);
                     // Token không hợp lệ, xóa và check cookie
                     localStorage.removeItem('accessToken');
                     localStorage.removeItem('refreshToken');
@@ -230,7 +220,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             } else if (isOAuthLogin) {
                 // QUAN TRỌNG: Nếu đang OAuth login, KHÔNG check localStorage
                 // Chỉ check cookie OAuth để sync token vào localStorage
-                console.log("[Client AuthContext] 🔵 Đang OAuth login, bỏ qua localStorage và check cookie OAuth trực tiếp");
             }
 
             // BƯỚC 2: Kiểm tra cookie-based session (OAuth)
@@ -298,7 +287,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
 
             // Nếu không có token hợp lệ và không vừa logout, check OAuth cookie
-            console.log("[Client AuthContext] 🔍 Sẽ check OAuth cookie để sync token...");
 
             try {
                 // QUAN TRỌNG: Gọi getMyProfile() để lấy token từ cookie (OAuth)
@@ -317,18 +305,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 // 4. Set cookie với accessToken
                 // 5. Xử lý CustomCookieAuthenticationFilter khi gọi /auth/me
                 if (isOAuthLogin) {
-                    console.log("[Client AuthContext] 🔵 OAuth login detected, waiting 3000ms for backend to fully process OAuth flow...");
-                    console.log("[Client AuthContext] - Lưu ý: Cookie HttpOnly không hiển thị trong document.cookie, nhưng browser vẫn gửi nó");
-                    console.log("[Client AuthContext] - Backend cần thời gian để:");
-                    console.log("[Client AuthContext]   • Xử lý OAuth callback");
-                    console.log("[Client AuthContext]   • Tạo/tìm user trong database");
-                    console.log("[Client AuthContext]   • Lưu authInfo và refreshToken");
-                    console.log("[Client AuthContext]   • Set cookie với accessToken");
-                    console.log("[Client AuthContext]   • Sẵn sàng xử lý /auth/me request");
                     await new Promise(resolve => setTimeout(resolve, 3000));
                 } else {
                     // Nếu không phải OAuth login nhưng check cookie, đợi một chút
-                    console.log("[Client AuthContext] 🔍 Không có token hợp lệ trong localStorage, check OAuth cookie...");
                     await new Promise(resolve => setTimeout(resolve, 500));
                 }
                 
@@ -345,14 +324,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
                         // Kiểm tra token có hết hạn không
                         if (decodedToken.exp && decodedToken.exp * 1000 < Date.now()) {
-                            console.warn("[Client AuthContext] ⚠️ Token từ cookie đã hết hạn, không tự động login lại");
                             setIsLoading(false);
                             return;
                         }
 
                         // QUAN TRỌNG: Lưu token vào localStorage ngay lập tức
                         // Điều này đảm bảo apiClient có thể thêm Authorization header cho các request sau
-                        console.log("[Client AuthContext] ✅ Lưu token từ OAuth cookie vào localStorage");
                         localStorage.setItem('accessToken', meData.accessToken);
 
                         if (meData.refreshToken) {
@@ -363,7 +340,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                         // Xóa flag OAuth login sau khi đã sync token thành công
                         if (isOAuthLogin) {
                             sessionStorage.removeItem('oauthLoginInProgress');
-                            console.log("[Client AuthContext] ✅ Xóa flag oauthLoginInProgress sau khi sync token thành công");
                         }
 
                         const hasRedirected = processTokenResponse({
@@ -400,7 +376,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                         setIsLoading(false);
                         return;
                     } catch (decodeError: any) {
-                        console.error("[Client AuthContext] ❌ Token từ cookie không hợp lệ:", decodeError);
                         // Xóa flag OAuth login nếu có lỗi
                         if (isOAuthLogin) {
                             sessionStorage.removeItem('oauthLoginInProgress');
@@ -418,21 +393,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             } catch (error: any) {
                 // Log lỗi chi tiết để debug
                 console.error("[Client AuthContext] ❌ Lỗi khi gọi getMyProfile():", error);
-                console.error("[Client AuthContext] - Error status:", error?.response?.status);
-                console.error("[Client AuthContext] - Error data:", error?.response?.data);
-                console.error("[Client AuthContext] - Error message:", error?.message);
                 // LƯU Ý: Cookie HttpOnly không thể đọc từ document.cookie (bảo mật)
                 // Nếu cookie rỗng ở đây là bình thường - browser vẫn gửi HttpOnly cookie tự động
                 
                 if (error?.response?.status === 401) {
-                    console.log("[Client AuthContext] - 401 Unauthorized: Không có session hợp lệ");
                 } else if (error?.response?.status === 500) {
-                    console.error("[Client AuthContext] - 500 Internal Server Error: Backend có lỗi xử lý");
-                    console.error("[Client AuthContext] - Có thể là:");
-                    console.error("[Client AuthContext]   1. Cookie chưa được set đầy đủ sau OAuth redirect");
-                    console.error("[Client AuthContext]   2. Backend không thể đọc cookie");
-                    console.error("[Client AuthContext]   3. User không tồn tại trong database");
-                    console.error("[Client AuthContext]   4. CustomAuthenticationToken không được tạo đúng");
                     
                     // QUAN TRỌNG: Chỉ retry nếu đang OAuth login VÀ không có token hợp lệ trong localStorage
                     // Nếu đã có token hợp lệ trong localStorage, không cần retry OAuth cookie
@@ -445,7 +410,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                             // Nếu token hợp lệ và chưa hết hạn, không cần retry OAuth cookie
                             if (decodedToken.exp && decodedToken.exp * 1000 >= Date.now()) {
                                 shouldRetryOAuth = false;
-                                console.log("[Client AuthContext] ℹ️ Đã có token hợp lệ trong localStorage, không cần retry OAuth cookie");
                                 // Xóa flag OAuth nếu có
                                 if (isOAuthLogin) {
                                     sessionStorage.removeItem('oauthLoginInProgress');
@@ -467,7 +431,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     // Vì lỗi 500 sau OAuth redirect thường là do cookie chưa được set đầy đủ hoặc backend chưa xử lý xong
                     if (shouldRetryOAuth && isOAuthLogin) {
                         console.log("[Client AuthContext] 🔄 Retry getMyProfile() với multiple attempts vì OAuth login...");
-                        console.log("[Client AuthContext] - Lỗi 500 có thể do: cookie chưa set đầy đủ, backend chưa xử lý xong, hoặc backend có lỗi");
                         
                         // Retry với nhiều attempts hơn và delay dài hơn cho OAuth
                         let retryAttempts = 5; // Tăng số lần retry
@@ -475,19 +438,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                         
                         for (let attempt = 1; attempt <= retryAttempts; attempt++) {
                             try {
-                                console.log(`[Client AuthContext] 🔄 Retry attempt ${attempt}/${retryAttempts} sau ${retryDelay}ms...`);
-                                console.log(`[Client AuthContext] - Đợi backend xử lý cookie và tạo session...`);
                                 await new Promise(resolve => setTimeout(resolve, retryDelay));
                                 
                                 const retryResponse = await getMyProfile();
                                 const retryData = retryResponse.data.data;
                             
                                 if (retryData && retryData.id && retryData.accessToken) {
-                                    console.log(`[Client AuthContext] ✅ Retry attempt ${attempt} thành công!`);
                                     
                                     const decodedToken = jwtDecode<any>(retryData.accessToken);
                                     if (decodedToken.exp && decodedToken.exp * 1000 < Date.now()) {
-                                        console.warn("[Client AuthContext] ⚠️ Token từ retry đã hết hạn");
                                         sessionStorage.removeItem('oauthLoginInProgress');
                                         setIsLoading(false);
                                         return;
@@ -502,7 +461,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                                     
                                     // Xóa flag OAuth sau khi sync token thành công
                                     sessionStorage.removeItem('oauthLoginInProgress');
-                                    console.log("[Client AuthContext] ✅ Đã sync token từ cookie, xóa flag oauthLoginInProgress");
                                     
                                     const hasRedirected = processTokenResponse({
                                         id: retryData.id,
@@ -533,7 +491,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                                 
                                 // Nếu không phải lỗi 500, không retry nữa (có thể là lỗi khác)
                                 if (errorStatus !== 500 && errorStatus !== undefined) {
-                                    console.warn(`[Client AuthContext] ⚠️ Lỗi ${errorStatus} không phải 500, dừng retry`);
                                     break;
                                 }
                                 
@@ -541,21 +498,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                                 if (attempt < retryAttempts) {
                                     // Tăng delay với exponential backoff, nhưng max là 5s
                                     retryDelay = Math.min(retryDelay * 1.3, 5000);
-                                    console.log(`[Client AuthContext] 🔄 Sẽ retry lại sau ${retryDelay}ms...`);
                                 } else {
-                                    console.error("[Client AuthContext] ❌ Tất cả retry attempts đều thất bại");
                                     console.error("[Client AuthContext] ⚠️ ĐÂY LÀ LỖI BACKEND (500 Internal Server Error)");
-                                    console.error("[Client AuthContext] - Nguyên nhân có thể:");
                                     console.error("[Client AuthContext]   1. Backend có lỗi khi xử lý OAuth callback (NullPointerException, v.v.)");
-                                    console.error("[Client AuthContext]   2. Backend không tìm thấy user hoặc role trong database");
-                                    console.error("[Client AuthContext]   3. Backend có lỗi khi tạo/set cookie");
-                                    console.error("[Client AuthContext]   4. Backend có lỗi khi gọi /auth/me endpoint");
-                                    console.error("[Client AuthContext] - Giải pháp:");
-                                    console.error("[Client AuthContext]   • Vui lòng kiểm tra logs backend để xem lỗi cụ thể");
-                                    console.error("[Client AuthContext]   • Kiểm tra xem user đã được tạo trong database chưa");
-                                    console.error("[Client AuthContext]   • Kiểm tra xem role của user có null không");
-                                    console.error("[Client AuthContext]   • Thử refresh trang hoặc login lại sau vài giây");
-                                    console.error("[Client AuthContext] - Frontend đã retry 5 lần nhưng backend vẫn trả về 500");
                                     
                                     // Hiển thị thông báo cho user
                                     if (typeof window !== 'undefined') {
@@ -566,16 +511,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                         }
                     } else if (error?.response?.status === 500 && isOAuthLogin) {
                         // Nếu không retry được nhưng đang OAuth login, log warning
-                        console.warn("[Client AuthContext] ⚠️ Lỗi 500 khi check OAuth cookie");
-                        console.warn("[Client AuthContext] - Không thể retry hoặc retry đã thất bại");
-                        console.warn("[Client AuthContext] - Vui lòng refresh trang hoặc thử login lại");
                     }
                 }
                 
                 // Xóa flag OAuth login nếu có lỗi
                 if (isOAuthLogin) {
                     sessionStorage.removeItem('oauthLoginInProgress');
-                    console.warn("[Client AuthContext] ⚠️ Xóa flag oauthLoginInProgress do lỗi");
                 }
             }
 
@@ -615,7 +556,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 }
             }
         } catch (error: any) {
-            console.error("Lỗi đăng nhập:", error);
             throw error;
         } finally {
             setIsLoading(false);
@@ -646,7 +586,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 await logoutUser({ token: tokenToSend });
             }
         } catch (error: any) {
-            console.error("[LOGOUT] Lỗi khi gửi request đến backend:", error);
         } finally {
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');

@@ -41,7 +41,6 @@ export default function SuperHotelsPage() {
                     ? selectedPartnerId.trim() 
                     : undefined;
                 
-                console.log('[SuperHotelsPage] Loading hotels with partner filter:', partnerIdToFilter);
                 
                 const response = await getHotels(
                     currentPage, 
@@ -57,7 +56,6 @@ export default function SuperHotelsPage() {
                 
                 console.log(`[SuperHotelsPage] Loaded ${response.hotels.length} hotels (filter by partner: ${partnerIdToFilter || 'none'})`);
             } catch (error: any) {
-                console.error("[SuperHotelsPage] Error loading hotels:", error);
                 toast.error(error.message || "Không thể tải danh sách khách sạn", {
                     position: "top-right",
                     autoClose: 3000,
@@ -92,7 +90,6 @@ export default function SuperHotelsPage() {
                 setTotalPages(response.totalPages);
                 setTotalItems(response.totalItems);
             } catch (error: any) {
-                console.error("[SuperHotelsPage] Error reloading hotels:", error);
             }
         };
         loadHotels();

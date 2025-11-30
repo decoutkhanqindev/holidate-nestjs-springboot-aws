@@ -13,7 +13,6 @@ export const getCountries = async (): Promise<LocationOption[]> => {
         const response = await apiClient.get<ApiResponse<LocationOption[]>>('/location/countries');
         return response.data.data || [];
     } catch (error) {
-        console.error('[locationService] Error fetching countries:', error);
         return [];
     }
 };
@@ -37,11 +36,9 @@ export const getProvinces = async (countryId?: string, name?: string): Promise<L
             url = '/location/provinces';
         }
 
-        console.log('[locationService] Fetching provinces:', url);
         const response = await apiClient.get<ApiResponse<LocationOption[]>>(url);
         return response.data.data || [];
     } catch (error) {
-        console.error('[locationService] Error fetching provinces:', error);
         return [];
     }
 };
@@ -66,11 +63,9 @@ export const getCities = async (provinceId?: string, name?: string): Promise<Loc
             url = '/location/cities';
         }
 
-        console.log('[locationService] Fetching cities:', url);
         const response = await apiClient.get<ApiResponse<LocationOption[]>>(url);
         return response.data.data || [];
     } catch (error) {
-        console.error('[locationService] Error fetching cities:', error);
         return [];
     }
 };
@@ -99,7 +94,6 @@ export const getCitiesServer = async (provinceId?: string, name?: string): Promi
         }
 
         const fullUrl = `${API_BASE_URL}${url}`;
-        console.log('[locationService] [SERVER] Fetching cities:', fullUrl);
         
         const response = await axios.get<ApiResponse<LocationOption[]>>(fullUrl, {
             timeout: 10000, // 10 seconds timeout
@@ -112,7 +106,6 @@ export const getCitiesServer = async (provinceId?: string, name?: string): Promi
     } catch (error: any) {
         // Chỉ log lỗi nếu không phải ECONNREFUSED (backend không chạy là expected trong dev)
         if (error.code !== 'ECONNREFUSED' && error.code !== 'ETIMEDOUT') {
-            console.error('[locationService] [SERVER] Error fetching cities:', error.message || error);
         } else {
             // Backend không chạy hoặc không accessible từ server - đây là expected behavior
             // Client component sẽ tự fetch lại từ browser
@@ -143,15 +136,11 @@ export const getDistricts = async (cityId?: string, provinceId?: string, name?: 
             url = '/location/districts';
         }
 
-        console.log(`[locationService] Fetching districts:`, url);
         const response = await apiClient.get<ApiResponse<LocationOption[]>>(url);
         const districts = response.data.data || [];
-        console.log(`[locationService] Received ${districts.length} districts`);
 
         return districts;
     } catch (error: any) {
-        console.error('[locationService] Error fetching districts:', error);
-        console.error('[locationService] Error details:', error.response?.data || error.message);
         return [];
     }
 };
@@ -177,15 +166,11 @@ export const getWards = async (districtId?: string, cityId?: string, provinceId?
             url = '/location/wards';
         }
 
-        console.log(`[locationService] Fetching wards:`, url);
         const response = await apiClient.get<ApiResponse<LocationOption[]>>(url);
         const wards = response.data.data || [];
-        console.log(`[locationService] Received ${wards.length} wards`);
 
         return wards;
     } catch (error: any) {
-        console.error('[locationService] Error fetching wards:', error);
-        console.error('[locationService] Error details:', error.response?.data || error.message);
         return [];
     }
 };
@@ -211,15 +196,11 @@ export const getStreets = async (wardId?: string, districtId?: string, cityId?: 
             url = '/location/streets';
         }
 
-        console.log(`[locationService] Fetching streets:`, url);
         const response = await apiClient.get<ApiResponse<LocationOption[]>>(url);
         const streets = response.data.data || [];
-        console.log(`[locationService] Received ${streets.length} streets`);
 
         return streets;
     } catch (error: any) {
-        console.error('[locationService] Error fetching streets:', error);
-        console.error('[locationService] Error details:', error.response?.data || error.message);
         return [];
     }
 };
@@ -242,7 +223,6 @@ export const createStreet = async (name: string, wardId: string, code: string): 
     };
 
     try {
-        console.log(`[locationService] Creating street: ${name} for wardId: ${wardId}`);
         const response = await apiClient.post<ApiResponse<any>>('/location/streets', requestBody);
 
         if (response.data.statusCode === 200 && response.data.data) {
@@ -252,14 +232,10 @@ export const createStreet = async (name: string, wardId: string, code: string): 
                 name: data.name,
                 code: data.code,
             };
-            console.log(`[locationService] Street created successfully: ${result.id}`);
             return result;
         }
-        console.error('[locationService] Invalid response structure:', response.data);
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error('[locationService] Error creating street:', error);
-        console.error('[locationService] Error response:', error.response?.data);
         const errorMessage = error.response?.data?.message || error.message || 'Không thể tạo đường mới';
         throw new Error(errorMessage);
     }
@@ -281,10 +257,7 @@ export const createWard = async (name: string, districtId: string, code: string)
     };
 
     try {
-        console.log(`[locationService] ===== CREATING WARD =====`);
-        console.log(`[locationService] Request URL: POST /location/wards`);
         console.log(`[locationService] Request Body:`, JSON.stringify(requestBody, null, 2));
-        console.log(`[locationService] ===== END REQUEST =====`);
 
         const response = await apiClient.post<ApiResponse<any>>('/location/wards', requestBody);
 
@@ -333,10 +306,8 @@ export const createWard = async (name: string, districtId: string, code: string)
             }
 
             if (result) {
-                console.log(`[locationService] ✅ Ward created successfully: ${result.id}`);
                 return result;
             } else {
-                console.warn('[locationService] ⚠️ HTTP 200 but cannot parse response. Backend may have saved the data.');
                 console.warn('[locationService] Full response:', JSON.stringify(response.data, null, 2));
                 throw new Error('Tạo thành công nhưng không nhận được thông tin phản hồi. Vui lòng kiểm tra lại danh sách.');
             }
@@ -345,18 +316,10 @@ export const createWard = async (name: string, districtId: string, code: string)
         console.error('[locationService] ❌ Invalid response structure:', JSON.stringify(response.data, null, 2));
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error('[locationService] ===== ERROR CREATING WARD =====');
-        console.error('[locationService] Error type:', error.constructor?.name);
-        console.error('[locationService] Error message:', error.message);
-        console.error('[locationService] Has response:', !!error.response);
-        console.error('[locationService] Error response status:', error.response?.status);
         console.error('[locationService] Error response data (full):', JSON.stringify(error.response?.data, null, 2));
         console.error('[locationService] Request Body:', JSON.stringify(requestBody, null, 2));
-        console.error('[locationService] ===== COPY FOR BACKEND TEAM =====');
         console.error('[locationService] REQUEST:', JSON.stringify(requestBody, null, 2));
-        console.error('[locationService] RESPONSE STATUS:', error.response?.status || 'NO RESPONSE');
         console.error('[locationService] RESPONSE DATA:', JSON.stringify(error.response?.data || { message: error.message }, null, 2));
-        console.error('[locationService] ===== END ERROR =====');
 
         let errorMessage = 'Không thể tạo phường/xã mới';
         if (error.response?.data?.message) {
@@ -368,7 +331,6 @@ export const createWard = async (name: string, districtId: string, code: string)
         }
 
         if (errorMessage === 'Không thể tạo phường/xã mới' && (error.response?.status === 200 || error.response?.status === 201)) {
-            console.warn('[locationService] ⚠️ HTTP 200/201 nhưng không parse được. Backend có thể đã lưu.');
             errorMessage = 'Tạo thành công nhưng không nhận được phản hồi. Vui lòng kiểm tra lại danh sách.';
         }
 
@@ -392,17 +354,12 @@ export const createDistrict = async (name: string, cityId: string, code: string)
     };
 
     try {
-        console.log(`[locationService] ===== CREATING DISTRICT =====`);
-        console.log(`[locationService] Request URL: POST /location/districts`);
         console.log(`[locationService] Request Body:`, JSON.stringify(requestBody, null, 2));
-        console.log(`[locationService] ===== END REQUEST =====`);
 
         let response;
         try {
             response = await apiClient.post<ApiResponse<any>>('/location/districts', requestBody);
-            console.log(`[locationService] ✅ API call successful, HTTP status: ${response.status}`);
         } catch (apiError: any) {
-            console.error('[locationService] ❌ API call failed:', apiError);
             console.error('[locationService] Error details:', {
                 hasResponse: !!apiError.response,
                 status: apiError.response?.status,
@@ -456,10 +413,8 @@ export const createDistrict = async (name: string, cityId: string, code: string)
             }
 
             if (result) {
-                console.log(`[locationService] ✅ District created successfully: ${result.id}`);
                 return result;
             } else {
-                console.warn('[locationService] ⚠️ HTTP 200 but cannot parse response. Backend may have saved the data.');
                 console.warn('[locationService] Full response:', JSON.stringify(response.data, null, 2));
                 throw new Error('Tạo thành công nhưng không nhận được thông tin phản hồi. Vui lòng kiểm tra lại danh sách.');
             }
@@ -468,13 +423,6 @@ export const createDistrict = async (name: string, cityId: string, code: string)
         console.error('[locationService] ❌ Invalid response structure:', JSON.stringify(response.data, null, 2));
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error('[locationService] ===== ERROR CREATING DISTRICT =====');
-        console.error('[locationService] Error type:', error.constructor?.name);
-        console.error('[locationService] Error message:', error.message);
-        console.error('[locationService] Error stack:', error.stack);
-        console.error('[locationService] Has response:', !!error.response);
-        console.error('[locationService] Error response status:', error.response?.status);
-        console.error('[locationService] Error response statusText:', error.response?.statusText);
         console.error('[locationService] Error response data (full):', JSON.stringify(error.response?.data, null, 2));
         console.error('[locationService] Error response data (raw):', error.response?.data);
         console.error('[locationService] Error config:', {
@@ -484,16 +432,10 @@ export const createDistrict = async (name: string, cityId: string, code: string)
             data: error.config?.data,
         });
         console.error('[locationService] Request Body:', JSON.stringify(requestBody, null, 2));
-        console.error('[locationService] ===== END ERROR =====');
 
         // Log riêng để copy cho backend
-        console.error('[locationService] ===== COPY FOR BACKEND TEAM =====');
-        console.error('[locationService] REQUEST:');
         console.error(JSON.stringify(requestBody, null, 2));
-        console.error('[locationService] RESPONSE STATUS:', error.response?.status || 'NO RESPONSE');
-        console.error('[locationService] RESPONSE DATA:');
         console.error(JSON.stringify(error.response?.data || { message: error.message }, null, 2));
-        console.error('[locationService] ===== END COPY =====');
 
         // Xử lý error message - kiểm tra nhiều nguồn
         let errorMessage = 'Không thể tạo quận/huyện mới';
@@ -517,7 +459,6 @@ export const createDistrict = async (name: string, cityId: string, code: string)
 
         // Nếu errorMessage vẫn là default và có response 200/201, có thể là parse error
         if (errorMessage === 'Không thể tạo quận/huyện mới' && (error.response?.status === 200 || error.response?.status === 201)) {
-            console.warn('[locationService] ⚠️ HTTP 200/201 nhưng không parse được. Backend có thể đã lưu.');
             errorMessage = 'Tạo thành công nhưng không nhận được phản hồi. Vui lòng kiểm tra lại danh sách.';
         }
 
@@ -536,10 +477,7 @@ export const createCity = async (name: string, code: string, provinceId: string)
     };
 
     try {
-        console.log(`[locationService] ===== CREATING CITY =====`);
-        console.log(`[locationService] Request URL: POST /location/cities`);
         console.log(`[locationService] Request Body:`, JSON.stringify(requestBody, null, 2));
-        console.log(`[locationService] ===== END REQUEST =====`);
 
         const response = await apiClient.post<ApiResponse<any>>('/location/cities', requestBody);
 
@@ -589,11 +527,9 @@ export const createCity = async (name: string, code: string, provinceId: string)
             }
 
             if (result) {
-                console.log(`[locationService] ✅ City created successfully: ${result.id}`);
                 return result;
             } else {
                 // HTTP 200 nhưng không parse được - có thể backend đã lưu nhưng response khác
-                console.warn('[locationService] ⚠️ HTTP 200 but cannot parse response. Backend may have saved the data.');
                 console.warn('[locationService] Full response:', JSON.stringify(response.data, null, 2));
                 // Vẫn throw error để user biết, nhưng có thể data đã được lưu
                 throw new Error('Tạo thành công nhưng không nhận được thông tin phản hồi. Vui lòng kiểm tra lại danh sách.');
@@ -603,18 +539,10 @@ export const createCity = async (name: string, code: string, provinceId: string)
         console.error('[locationService] ❌ Invalid response structure:', JSON.stringify(response.data, null, 2));
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error('[locationService] ===== ERROR CREATING CITY =====');
-        console.error('[locationService] Error type:', error.constructor?.name);
-        console.error('[locationService] Error message:', error.message);
-        console.error('[locationService] Has response:', !!error.response);
-        console.error('[locationService] Error response status:', error.response?.status);
         console.error('[locationService] Error response data (full):', JSON.stringify(error.response?.data, null, 2));
         console.error('[locationService] Request Body:', JSON.stringify(requestBody, null, 2));
-        console.error('[locationService] ===== COPY FOR BACKEND TEAM =====');
         console.error('[locationService] REQUEST:', JSON.stringify(requestBody, null, 2));
-        console.error('[locationService] RESPONSE STATUS:', error.response?.status || 'NO RESPONSE');
         console.error('[locationService] RESPONSE DATA:', JSON.stringify(error.response?.data || { message: error.message }, null, 2));
-        console.error('[locationService] ===== END ERROR =====');
 
         let errorMessage = 'Không thể tạo thành phố/quận mới';
         if (error.response?.data?.message) {
@@ -626,7 +554,6 @@ export const createCity = async (name: string, code: string, provinceId: string)
         }
 
         if (errorMessage === 'Không thể tạo thành phố/quận mới' && (error.response?.status === 200 || error.response?.status === 201)) {
-            console.warn('[locationService] ⚠️ HTTP 200/201 nhưng không parse được. Backend có thể đã lưu.');
             errorMessage = 'Tạo thành công nhưng không nhận được phản hồi. Vui lòng kiểm tra lại danh sách.';
         }
 
@@ -646,14 +573,10 @@ export const createProvince = async (name: string, code: string, countryId: stri
     };
 
     try {
-        console.log(`[locationService] ===== CREATING PROVINCE =====`);
-        console.log(`[locationService] Request URL: POST /location/provinces`);
         console.log(`[locationService] Request Body (JSON):`, JSON.stringify(requestBody, null, 2));
         console.log(`[locationService] Request Body (raw):`, requestBody);
         console.log(`[locationService] - name: "${requestBody.name}" (length: ${requestBody.name.length})`);
         console.log(`[locationService] - code: "${requestBody.code}" (length: ${requestBody.code.length})`);
-        console.log(`[locationService] - countryId: "${requestBody.countryId}"`);
-        console.log(`[locationService] ===== END REQUEST =====`);
 
         const response = await apiClient.post<ApiResponse<any>>('/location/provinces', requestBody);
 
@@ -664,17 +587,11 @@ export const createProvince = async (name: string, code: string, countryId: stri
                 name: data.name,
                 code: data.code,
             };
-            console.log(`[locationService] Province created successfully: ${result.id}`);
             return result;
         }
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error('[locationService] ===== ERROR CREATING PROVINCE =====');
-        console.error('[locationService] Error object:', error);
-        console.error('[locationService] Error message:', error.message);
-        console.error('[locationService] Error response status:', error.response?.status);
         console.error('[locationService] Error response data (full):', JSON.stringify(error.response?.data, null, 2));
-        console.error('[locationService] Error response headers:', error.response?.headers);
         console.error('[locationService] Request config:', {
             url: error.config?.url,
             method: error.config?.method,
@@ -682,16 +599,10 @@ export const createProvince = async (name: string, code: string, countryId: stri
         });
         console.error('[locationService] Request Body (đã gửi lên backend):', error.config?.data ? JSON.parse(error.config.data) : requestBody);
         console.error('[locationService] Request Body (JSON string):', error.config?.data || JSON.stringify(requestBody, null, 2));
-        console.error('[locationService] ===== END ERROR DETAILS =====');
 
         // Log riêng để dễ copy-paste cho backend team
-        console.error('[locationService] ===== COPY THIS FOR BACKEND TEAM =====');
-        console.error('[locationService] REQUEST BODY:');
         console.error(JSON.stringify(requestBody, null, 2));
-        console.error('[locationService] BACKEND RESPONSE:');
         console.error(JSON.stringify(error.response?.data || { message: error.message }, null, 2));
-        console.error('[locationService] HTTP STATUS:', error.response?.status || 'N/A');
-        console.error('[locationService] ===== END COPY =====');
 
         // Xử lý error message chi tiết hơn
         let errorMessage = 'Không thể tạo tỉnh/thành phố mới';
@@ -702,9 +613,6 @@ export const createProvince = async (name: string, code: string, countryId: stri
         if (error.response?.data) {
             isFromBackend = true;
             backendMessage = error.response.data.message || JSON.stringify(error.response.data);
-            console.log('[locationService] ✅ ERROR TỪ BACKEND:', backendMessage);
-            console.log('[locationService] Backend statusCode:', error.response.data.statusCode);
-            console.log('[locationService] Backend error type:', error.response.data.errorType || 'N/A');
 
             if (error.response.data.message) {
                 const msg = error.response.data.message;
@@ -724,8 +632,6 @@ export const createProvince = async (name: string, code: string, countryId: stri
             errorMessage = error.message;
         }
 
-        console.log('[locationService] Final error message:', errorMessage);
-        console.log('[locationService] Error source:', isFromBackend ? 'BACKEND' : 'FRONTEND/NETWORK');
 
         throw new Error(errorMessage);
     }

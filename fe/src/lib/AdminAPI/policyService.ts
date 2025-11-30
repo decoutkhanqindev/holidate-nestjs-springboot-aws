@@ -49,7 +49,6 @@ export const getAllCancellationPolicies = async (): Promise<CancellationPolicy[]
         if (error?.response?.status === 404) {
             console.warn("[policyService] Cancellation policies API không tồn tại (404)");
         } else {
-            console.error("[policyService] Error fetching cancellation policies:", error);
         }
         return [];
     }
@@ -74,7 +73,6 @@ export const getAllReschedulePolicies = async (): Promise<ReschedulePolicy[]> =>
         if (error?.response?.status === 404) {
             console.warn("[policyService] Reschedule policies API không tồn tại (404)");
         } else {
-            console.error("[policyService] Error fetching reschedule policies:", error);
         }
         return [];
     }
@@ -95,7 +93,6 @@ export const getAllIdentificationDocuments = async (): Promise<IdentificationDoc
 
         return [];
     } catch (error: any) {
-        console.error("[policyService] Error fetching identification documents:", error);
         return [];
     }
 };

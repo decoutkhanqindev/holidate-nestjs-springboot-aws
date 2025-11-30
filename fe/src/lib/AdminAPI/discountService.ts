@@ -79,7 +79,6 @@ export async function getDiscounts(params: GetDiscountsParams = {}): Promise<Pag
             sortDir = 'ASC',
         } = params;
 
-        console.log(`[discountService] Fetching discounts:`, params);
 
         // Backend sử dụng kebab-case cho query params
         const queryParams: any = {
@@ -100,7 +99,6 @@ export async function getDiscounts(params: GetDiscountsParams = {}): Promise<Pag
         if (response.data.statusCode === 200 && response.data.data) {
             const discounts = response.data.data.content.map(mapDiscountResponseToDiscount);
 
-            console.log(`[discountService] Fetched ${discounts.length} discounts`);
 
             return {
                 data: discounts,
@@ -117,7 +115,6 @@ export async function getDiscounts(params: GetDiscountsParams = {}): Promise<Pag
             totalItems: 0,
         };
     } catch (error: any) {
-        console.error(`[discountService] Error fetching discounts:`, error);
         throw new Error(error.response?.data?.message || 'Không thể tải danh sách mã giảm giá');
     }
 }
@@ -127,7 +124,6 @@ export async function getDiscounts(params: GetDiscountsParams = {}): Promise<Pag
  */
 export async function getDiscountById(id: string): Promise<Discount | null> {
     try {
-        console.log(`[discountService] Fetching discount with id: ${id}`);
 
         const response = await apiClient.get<ApiResponse<DiscountResponse>>(
             `${baseURL}/${id}`
@@ -139,7 +135,6 @@ export async function getDiscountById(id: string): Promise<Discount | null> {
 
         return null;
     } catch (error: any) {
-        console.error(`[discountService] Error fetching discount ${id}:`, error);
         if (error.response?.status === 404) {
             return null;
         }

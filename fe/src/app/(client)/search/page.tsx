@@ -52,7 +52,6 @@ async function searchHotelsOnServer(searchParams: URLSearchParams): Promise<Pagi
 
         return response.data.data;
     } catch (error) {
-        console.error('[SearchPage] Error fetching hotels:', error);
         // Return empty result
         return {
             content: [],
@@ -137,7 +136,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             getAmenityCategories(),
         ]);
     } catch (error) {
-        console.error('[SearchPage] Error fetching data:', error);
         // Nếu lỗi, vẫn render với empty data - client sẽ tự fetch lại
     }
 

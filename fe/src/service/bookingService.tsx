@@ -103,7 +103,6 @@ class BookingService {
 
     async getBookingPricePreview(payload: BookingPricePreviewPayload): Promise<BookingPriceDetailsResponse> {
         try {
-            console.log("debug payload", payload);
             const response = await this.api.post<ApiResponse<BookingPriceDetailsResponse>>('/bookings/price-preview', payload);
             if (response.data && response.data.data) { return response.data.data; }
             throw new Error("Cấu trúc phản hồi không hợp lệ.");

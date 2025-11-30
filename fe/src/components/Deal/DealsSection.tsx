@@ -36,7 +36,6 @@ export default function DealsSection() {
                 });
                 setDiscounts(response.content);
             } catch (error) {
-                console.error('[DealsSection] Error loading discounts:', error);
                 setDiscounts([]);
             } finally {
                 setIsLoading(false);

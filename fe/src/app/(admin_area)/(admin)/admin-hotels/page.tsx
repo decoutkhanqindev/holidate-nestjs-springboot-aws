@@ -46,7 +46,6 @@ export default function HotelsPage() {
 
             // Kiểm tra user
             if (!effectiveUser) {
-                console.warn('[HotelsPage] No user found');
                 setIsLoading(false);
                 return;
             }
@@ -58,7 +57,6 @@ export default function HotelsPage() {
                 const userId = effectiveUser.id?.toString();
                 const roleName = effectiveUser.role?.name;
 
-                console.log('[HotelsPage] Loading hotels for user:', { userId, roleName });
 
                 const size = 10; // 10 khách sạn mỗi trang
 
@@ -84,7 +82,6 @@ export default function HotelsPage() {
                 setTotalPages(paginatedData.totalPages);
                 setTotalItems(paginatedData.totalItems);
             } catch (error: any) {
-                console.error('[HotelsPage] Error loading hotels:', error);
                 setHotels([]);
                 setTotalPages(0);
                 setTotalItems(0);

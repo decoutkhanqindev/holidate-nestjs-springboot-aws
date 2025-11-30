@@ -24,7 +24,6 @@ export async function createUserAction(formData: FormData) {
             return { error: 'Mật khẩu phải có ít nhất 8 ký tự.' };
         }
 
-        console.log('[createUserAction] Creating user:', { email, fullName, roleId });
 
         const payload: CreateUserPayload = {
             email: email.trim(),
@@ -40,7 +39,6 @@ export async function createUserAction(formData: FormData) {
         revalidatePath('/admin-users');
         return { success: true };
     } catch (error: any) {
-        console.error('[createUserAction] Error:', error);
         return { error: error.message || 'Không thể tạo người dùng. Vui lòng thử lại.' };
     }
 }
@@ -64,7 +62,6 @@ export async function updateUserAction(userId: string, formData: FormData) {
             return { error: 'Mật khẩu phải có ít nhất 8 ký tự.' };
         }
 
-        console.log(`[updateUserAction] Updating user ${userId}...`);
 
         const payload: UpdateUserPayload = {
             fullName: fullName.trim(),
@@ -78,7 +75,6 @@ export async function updateUserAction(userId: string, formData: FormData) {
         revalidatePath('/admin-users');
         return { success: true };
     } catch (error: any) {
-        console.error('[updateUserAction] Error:', error);
         return { error: error.message || 'Không thể cập nhật người dùng. Vui lòng thử lại.' };
     }
 }
@@ -88,14 +84,12 @@ export async function updateUserAction(userId: string, formData: FormData) {
  */
 export async function deleteUserAction(userId: string) {
     try {
-        console.log(`[deleteUserAction] Deleting user ${userId}...`);
 
         await deleteUserServer(userId);
 
         revalidatePath('/admin-users');
         return { success: true };
     } catch (error: any) {
-        console.error('[deleteUserAction] Error:', error);
         const errorMessage = error.message || 'Không thể xóa người dùng. Vui lòng thử lại.';
         throw new Error(errorMessage);
     }

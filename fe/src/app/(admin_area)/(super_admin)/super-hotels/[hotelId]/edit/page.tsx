@@ -27,7 +27,6 @@ export default async function SuperEditHotelPage({ params }: EditHotelPageProps)
             </>
         );
     } catch (error: any) {
-        console.error('[SuperEditHotelPage] Error loading hotel:', error);
         
         // Nếu là lỗi authentication (401/403), redirect về login
         if (error.response?.status === 401 || error.response?.status === 403) {
@@ -42,7 +41,6 @@ export default async function SuperEditHotelPage({ params }: EditHotelPageProps)
             !error.code &&
             !error.message?.includes('ECONNREFUSED') &&
             !error.message?.includes('ETIMEDOUT')) {
-            console.error('[SuperEditHotelPage] Authentication error detected, redirecting to login');
             redirect('/admin-login');
         }
         

@@ -155,7 +155,6 @@ export async function getPartnerRevenueReport(
         params['compare-to'] = compareTo;
     }
     
-    console.log('[partnerReportsService] Calling getPartnerRevenueReport with params:', params);
     
     try {
         const response = await apiClient.get<ApiResponse<RevenueReportData | RevenueReportWithComparison>>(
@@ -172,7 +171,6 @@ export async function getPartnerRevenueReport(
         });
         
         if (!response.data?.data) {
-            console.warn('[partnerReportsService] No data in response:', response.data);
             throw new Error('API không trả về dữ liệu');
         }
         

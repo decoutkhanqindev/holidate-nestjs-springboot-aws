@@ -84,7 +84,6 @@ export default function SupportRequestForm({ currentUserInfo, onSubmit }: Suppor
             setAddress("");
             setIsHotelCreationRequest(false);
         } catch (error) {
-            console.error("[SupportRequestForm] Error:", error);
         } finally {
             setIsSubmitting(false);
         }
@@ -210,6 +209,8 @@ export default function SupportRequestForm({ currentUserInfo, onSubmit }: Suppor
         </form>
     );
 }
+
+
 
 
 

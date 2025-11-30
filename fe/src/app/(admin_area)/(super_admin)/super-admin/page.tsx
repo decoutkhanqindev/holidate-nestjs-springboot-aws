@@ -24,7 +24,6 @@ export default function SuperAdminHomePage() {
             try {
                 // Fetch dashboard summary
                 const dashboardData = await getAdminDashboardSummary();
-                console.log('[SuperAdminDashboard] Data received:', dashboardData);
                 setData(dashboardData);
 
                 // Fetch revenue trend for last 7 days
@@ -35,7 +34,6 @@ export default function SuperAdminHomePage() {
                 try {
                     const fromDate = sevenDaysAgo.toISOString().split('T')[0];
                     const toDate = today.toISOString().split('T')[0];
-                    console.log('[SuperAdminDashboard] Fetching revenue data from', fromDate, 'to', toDate);
 
                     const revenueReport = await getAdminRevenueReport(
                         fromDate,
@@ -72,14 +70,11 @@ export default function SuperAdminHomePage() {
                         firstDayThisMonth.toISOString().split('T')[0],
                         today.toISOString().split('T')[0]
                     );
-                    console.log('[SuperAdminDashboard] Users data received:', usersSummary);
                     const totalPartners = ('currentPeriod' in usersSummary && usersSummary.currentPeriod?.platformTotals?.totalPartners)
                         ? usersSummary.currentPeriod.platformTotals.totalPartners
                         : ('platformTotals' in usersSummary ? usersSummary.platformTotals?.totalPartners : 0);
-                    console.log('[SuperAdminDashboard] Total partners:', totalPartners);
                     setUsersData(usersSummary);
                 } catch (usersErr: any) {
-                    console.warn('[SuperAdminDashboard] Error fetching users data:', usersErr);
                     // Không set error vì đây là dữ liệu bổ sung
                 }
 
@@ -113,11 +108,9 @@ export default function SuperAdminHomePage() {
                         month: monthFinancials
                     });
                 } catch (financialsErr: any) {
-                    console.warn('[SuperAdminDashboard] Error fetching financials data:', financialsErr);
                     // Không set error vì đây là dữ liệu bổ sung
                 }
             } catch (err: any) {
-                console.error('[SuperAdminDashboard] Error:', err);
                 setError(err.response?.data?.message || 'Không thể tải dữ liệu dashboard');
             } finally {
                 setIsLoading(false);
@@ -162,7 +155,6 @@ export default function SuperAdminHomePage() {
 
     // Chart options cho top hotels với cả doanh thu và số lượng bookings
     const topHotels = data.topPerformingHotels || [];
-    console.log('[SuperAdminDashboard] Top hotels:', topHotels);
     // Chuẩn bị dữ liệu cho biểu đồ grouped bar
     const topHotelsRevenueData = topHotels.length > 0
         ? topHotels.map((hotel: any) => hotel?.totalRevenue || 0)

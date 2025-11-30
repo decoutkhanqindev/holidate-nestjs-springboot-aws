@@ -41,8 +41,6 @@ export default async function SuperHotelDetailPage({ params }: HotelDetailPagePr
         const policy = hotelDetail?.policy;
         
         // Debug: Log để kiểm tra
-        console.log('[SuperHotelDetailPage] Policy data:', policy);
-        console.log('[SuperHotelDetailPage] HotelDetail:', hotelDetail);
 
         return (
             <>
@@ -242,7 +240,6 @@ export default async function SuperHotelDetailPage({ params }: HotelDetailPagePr
         </>
     );
     } catch (error: any) {
-        console.error('[SuperHotelDetailPage] Error loading hotel:', error);
         if (error.response?.status === 404) {
             notFound();
         }

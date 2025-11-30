@@ -41,7 +41,6 @@ export default function PartnerReportsPage() {
         groupBy: 'day' | 'week' | 'month' | 'quarter' | 'year'
     ) => {
         try {
-            console.log('[PartnerReportsPage] Calculating revenue from bookings...', { hotelId, from, to, groupBy });
             
             // Lấy tất cả bookings của hotel này
             const allBookings: any[] = [];
@@ -64,7 +63,6 @@ export default function PartnerReportsPage() {
                 currentPage++;
             }
 
-            console.log('[PartnerReportsPage] Loaded bookings for hotel:', allBookings.length);
 
             // Filter bookings trong khoảng thời gian (theo checkOutDate - khi khách đã checkout và thanh toán)
             const fromDate = new Date(from);
@@ -74,7 +72,6 @@ export default function PartnerReportsPage() {
 
             const bookingsInRange = allBookings.filter((booking: any) => {
                 if (!booking.checkOutDate) {
-                    console.warn('[PartnerReportsPage] Booking missing checkOutDate:', booking.id);
                     return false;
                 }
                 const checkOutDate = new Date(booking.checkOutDate);
@@ -109,8 +106,6 @@ export default function PartnerReportsPage() {
                 return status === 'confirmed' || status === 'completed' || status === 'checked_in';
             });
 
-            console.log('[PartnerReportsPage] Paid bookings:', paidBookings.length);
-            console.log('[PartnerReportsPage] Sample booking:', paidBookings[0]);
 
             // Nhóm theo period và tính tổng revenue
             const revenueMap: { [key: string]: number } = {};
@@ -120,7 +115,6 @@ export default function PartnerReportsPage() {
                 const revenue = booking.totalAmount || 0;
                 
                 if (revenue <= 0) {
-                    console.warn('[PartnerReportsPage] Booking has zero revenue:', booking.id, booking.bookingStatus, booking.totalAmount);
                     return;
                 }
                 
@@ -224,7 +218,6 @@ export default function PartnerReportsPage() {
                 },
             };
         } catch (err: any) {
-            console.error('[PartnerReportsPage] Error calculating revenue from bookings:', err);
             throw err;
         }
     };
@@ -237,7 +230,6 @@ export default function PartnerReportsPage() {
         groupBy: 'day' | 'week' | 'month' | 'quarter' | 'year'
     ) => {
         try {
-            console.log('[PartnerReportsPage] Calculating bookings summary by group...', { hotelId, from, to, groupBy });
             
             // Lấy tất cả bookings của hotel này
             const allBookings: any[] = [];
@@ -256,13 +248,11 @@ export default function PartnerReportsPage() {
                     currentUserId: effectiveUser?.id,
                 });
 
-                console.log(`[PartnerReportsPage] Loaded page ${currentPage + 1}/${response.totalPages}: ${response.data.length} bookings`);
                 allBookings.push(...response.data);
                 hasMore = response.totalPages > currentPage + 1;
                 currentPage++;
             }
 
-            console.log('[PartnerReportsPage] Total bookings loaded for summary:', allBookings.length);
             console.log('[PartnerReportsPage] Sample bookings:', allBookings.slice(0, 3).map((b: any) => ({
                 id: b.id,
                 createdAt: b.createdAt,
@@ -285,9 +275,7 @@ export default function PartnerReportsPage() {
                 } else if (booking.checkInDate) {
                     // Fallback: dùng checkInDate nếu không có createdAt
                     bookingDate = new Date(booking.checkInDate);
-                    console.log('[PartnerReportsPage] Booking missing createdAt, using checkInDate:', booking.id, booking.checkInDate);
                 } else {
-                    console.warn('[PartnerReportsPage] Booking missing both createdAt and checkInDate:', booking.id);
                     return false;
                 }
                 
@@ -295,7 +283,6 @@ export default function PartnerReportsPage() {
                 return bookingDate >= fromDate && bookingDate <= toDate;
             });
 
-            console.log('[PartnerReportsPage] Bookings in date range for summary:', bookingsInRange.length);
 
             // Nhóm theo period và tính tổng các trạng thái
             const summaryMap: { [key: string]: {
@@ -316,7 +303,6 @@ export default function PartnerReportsPage() {
                 } else if (booking.checkInDate) {
                     bookingDate = new Date(booking.checkInDate);
                 } else {
-                    console.warn('[PartnerReportsPage] Booking missing both createdAt and checkInDate for grouping:', booking.id);
                     return; // Skip booking này
                 }
                 
@@ -357,7 +343,6 @@ export default function PartnerReportsPage() {
 
                     // Map status (có thể có nhiều format: 'CONFIRMED', 'Confirmed', 'confirmed', etc.)
                     const status = (booking.bookingStatus || '').toLowerCase().replace(/_/g, '');
-                    console.log('[PartnerReportsPage] Booking status:', booking.bookingStatus, '→ normalized:', status);
                     
                     if (status === 'completed' || status === 'hoàn thành') {
                         summaryMap[periodKey].totalCompleted += 1;
@@ -371,7 +356,6 @@ export default function PartnerReportsPage() {
                         summaryMap[periodKey].totalCheckedIn += 1;
                     } else {
                         // Log status không match để debug
-                        console.warn('[PartnerReportsPage] Unknown booking status:', booking.bookingStatus, 'for booking:', booking.id);
                     }
                 }
             });
@@ -455,7 +439,6 @@ export default function PartnerReportsPage() {
                 },
             };
         } catch (err: any) {
-            console.error('[PartnerReportsPage] Error calculating bookings summary by group:', err);
             throw err;
         }
     };
@@ -508,7 +491,6 @@ export default function PartnerReportsPage() {
                         setSelectedHotelId(hotelsData.hotels[0].id);
                     }
                 } catch (err: any) {
-                    console.error('[PartnerReportsPage] Error loading hotels:', err);
                 }
             }
         };
@@ -528,7 +510,6 @@ export default function PartnerReportsPage() {
         });
 
         if (!selectedHotelId || !dateRange.from || !dateRange.to) {
-            console.log('[PartnerReportsPage] Missing required data, skipping load');
             return;
         }
 
@@ -553,7 +534,6 @@ export default function PartnerReportsPage() {
 
                 switch (activeTab) {
                     case 'revenue':
-                        console.log('[PartnerReportsPage] Calling getPartnerRevenueReport...');
                         try {
                             data = await getPartnerRevenueReport(
                                 selectedHotelId,
@@ -563,7 +543,6 @@ export default function PartnerReportsPage() {
                                 compareParams.compareFrom,
                                 compareParams.compareTo
                             );
-                            console.log('[PartnerReportsPage] Revenue report data received:', data);
                             
                             // Kiểm tra nếu revenue = 0 hoặc không có data, tính từ bookings như fallback
                             const dataArray = ('currentPeriod' in data && data.currentPeriod?.data) 
@@ -573,7 +552,6 @@ export default function PartnerReportsPage() {
                             const hasZeroRevenue = dataArray.length === 0 || dataArray.every((item: any) => (item?.revenue || 0) === 0);
                             
                             if (hasZeroRevenue) {
-                                console.log('[PartnerReportsPage] Revenue is 0 or empty, calculating from bookings as fallback...');
                                 const calculatedData = await calculateRevenueFromBookings(
                                     selectedHotelId,
                                     dateRange.from,
@@ -582,12 +560,10 @@ export default function PartnerReportsPage() {
                                 );
                                 
                                 if (calculatedData && calculatedData.data.length > 0 && calculatedData.summary.totalRevenue > 0) {
-                                    console.log('[PartnerReportsPage] Using calculated revenue from bookings:', calculatedData);
                                     data = calculatedData;
                                 }
                             }
                         } catch (err: any) {
-                            console.warn('[PartnerReportsPage] API reports failed, calculating from bookings:', err);
                             // Fallback: tính từ bookings
                             data = await calculateRevenueFromBookings(
                                 selectedHotelId,
@@ -599,7 +575,6 @@ export default function PartnerReportsPage() {
                         break;
                     case 'bookings':
                         // Tính bookings summary theo groupBy từ raw bookings data
-                        console.log('[PartnerReportsPage] Calculating bookings summary with groupBy:', groupBy);
                         data = await calculateBookingsSummaryByGroup(
                             selectedHotelId,
                             dateRange.from,
@@ -735,9 +710,7 @@ export default function PartnerReportsPage() {
 
                             const customerList = Object.values(customerMap).sort((a, b) => b.totalAmount - a.totalAmount);
                             setCustomerDetails(customerList);
-                            console.log('[PartnerReportsPage] Customer details loaded:', customerList.length);
                         } catch (err: any) {
-                            console.error('[PartnerReportsPage] Error loading customer details:', err);
                             setCustomerDetails([]);
                         }
                         break;
@@ -887,7 +860,6 @@ export default function PartnerReportsPage() {
 
     const renderChart = () => {
         if (!reportData) {
-            console.log('[PartnerReportsPage] renderChart: No reportData');
             return null;
         }
 
@@ -973,7 +945,6 @@ export default function PartnerReportsPage() {
                                 return date.getFullYear().toString();
                             }
                         } catch (e) {
-                            console.warn('[PartnerReportsPage] Error formatting period:', period, e);
                         }
                         return period;
                     };
@@ -981,13 +952,11 @@ export default function PartnerReportsPage() {
                     const categories = data.map((item: any) => {
                         const period = item?.period || '';
                         const formatted = formatPeriodLabel(period);
-                        console.log('[PartnerReportsPage] Period:', period, '→ Formatted:', formatted);
                         return formatted;
                     });
                     
                     const revenueData = data.map((item: any) => {
                         const revenue = item?.revenue || 0;
-                        console.log('[PartnerReportsPage] Revenue value:', revenue, 'Type:', typeof revenue);
                         return typeof revenue === 'number' ? revenue : parseFloat(revenue) || 0;
                     });
                     
@@ -1035,7 +1004,6 @@ export default function PartnerReportsPage() {
                         data: revenueData,
                     }];
                 } else {
-                    console.warn('[PartnerReportsPage] renderChart: No data found in reportData', reportData);
                 }
                 break;
             case 'bookings':
@@ -1076,7 +1044,6 @@ export default function PartnerReportsPage() {
                                 return date.getFullYear().toString();
                             }
                         } catch (e) {
-                            console.warn('[PartnerReportsPage] Error formatting period:', period, e);
                         }
                         return period;
                     };
@@ -1315,7 +1282,6 @@ export default function PartnerReportsPage() {
                         },
                     ];
                 } else {
-                    console.warn('[PartnerReportsPage] renderChart: No rooms data found', reportData);
                 }
                 break;
             case 'occupancy':
@@ -1509,7 +1475,6 @@ export default function PartnerReportsPage() {
                         returningCustomerPercentage,
                     ];
                 } else {
-                    console.warn('[PartnerReportsPage] renderChart: No customers data found', reportData);
                 }
                 break;
         }
@@ -1786,7 +1751,6 @@ export default function PartnerReportsPage() {
                                                     return date.getFullYear().toString();
                                                 }
                                             } catch (e) {
-                                                console.warn('[PartnerReportsPage] Error formatting period:', period, e);
                                             }
                                             return period;
                                         };
@@ -1932,7 +1896,6 @@ export default function PartnerReportsPage() {
                                 value={dateRange.from}
                                 onChange={(e) => {
                                     const newFrom = e.target.value;
-                                    console.log('[PartnerReportsPage] Date range FROM changed:', { old: dateRange.from, new: newFrom });
                                     setDateRange({ ...dateRange, from: newFrom });
                                     setReloadKey(prev => prev + 1); // Force reload
                                 }}
@@ -1946,7 +1909,6 @@ export default function PartnerReportsPage() {
                                 value={dateRange.to}
                                 onChange={(e) => {
                                     const newTo = e.target.value;
-                                    console.log('[PartnerReportsPage] Date range TO changed:', { old: dateRange.to, new: newTo });
                                     setDateRange({ ...dateRange, to: newTo });
                                     setReloadKey(prev => prev + 1); // Force reload
                                 }}
@@ -1960,7 +1922,6 @@ export default function PartnerReportsPage() {
                                     value={groupBy}
                                     onChange={(e) => {
                                         const newGroupBy = e.target.value as 'day' | 'week' | 'month' | 'quarter' | 'year';
-                                        console.log('[PartnerReportsPage] GroupBy changed:', { old: groupBy, new: newGroupBy, dateRange });
                                         setGroupBy(newGroupBy);
                                         setReloadKey(prev => prev + 1); // Force reload
                                     }}

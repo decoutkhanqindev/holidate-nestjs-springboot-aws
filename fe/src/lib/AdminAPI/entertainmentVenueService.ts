@@ -28,20 +28,17 @@ export interface EntertainmentVenueByCategory {
  */
 export const getEntertainmentVenuesByCity = async (cityId: string): Promise<EntertainmentVenueByCategory[]> => {
     try {
-        console.log(`[entertainmentVenueService] Fetching entertainment venues for city: ${cityId}`);
         
         const response = await apiClient.get<ApiResponse<EntertainmentVenueByCategory[]>>(
             `${baseURL}/city/${cityId}`
         );
 
         if (response.data.statusCode === 200 && response.data.data) {
-            console.log(`[entertainmentVenueService] Found ${response.data.data.length} categories with venues`);
             return response.data.data;
         }
 
         return [];
     } catch (error: any) {
-        console.error("[entertainmentVenueService] Error fetching entertainment venues by city:", error);
         return [];
     }
 };

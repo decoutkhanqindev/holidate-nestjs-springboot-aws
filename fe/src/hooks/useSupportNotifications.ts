@@ -27,7 +27,6 @@ export function useSupportNotifications() {
                     localStorage.setItem("supportPendingCount", mockPendingCount.toString());
                 }
             } catch (error) {
-                console.error("[useSupportNotifications] Error loading count:", error);
                 setPendingCount(0);
             } finally {
                 setIsLoading(false);

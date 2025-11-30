@@ -33,7 +33,6 @@ export default function HotelAdminForm({ admin, onSave, onCancel }: FormProps) {
                     setSelectedHotelId(admin.managedHotel.id);
                 }
             } catch (error) {
-                console.error('[HotelAdminForm] Error loading hotels:', error);
             } finally {
                 setIsLoadingHotels(false);
             }

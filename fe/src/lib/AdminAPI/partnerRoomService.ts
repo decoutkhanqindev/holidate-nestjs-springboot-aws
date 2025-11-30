@@ -30,7 +30,6 @@ interface PartnerRoomsResult {
  */
 export async function getAllRoomsByPartnerEmail(partnerEmail: string): Promise<PartnerRoomsResult> {
     try {
-        console.log(`[partnerRoomService] Fetching all rooms for partner: ${partnerEmail}`);
 
         // Bước 1: Tìm partner theo email từ getHotelAdmins (không cần quyền ADMIN)
         let partner: { id: string; email: string; fullName: string } | null = null;
@@ -49,7 +48,6 @@ export async function getAllRoomsByPartnerEmail(partnerEmail: string): Promise<P
                     email: foundAdmin.email || partnerEmail,
                     fullName: foundAdmin.username || foundAdmin.fullName || foundAdmin.name || 'N/A'
                 };
-                console.log(`[partnerRoomService] Found partner from getHotelAdmins:`, partner);
             }
         } catch (error: any) {
             console.warn(`[partnerRoomService] getHotelAdmins failed (${error.response?.status}), trying alternative method...`, error);
@@ -57,7 +55,6 @@ export async function getAllRoomsByPartnerEmail(partnerEmail: string): Promise<P
 
         // Nếu không tìm thấy từ getHotelAdmins, thử lấy tất cả hotels và tìm partner từ hotel detail
         if (!partner) {
-            console.log(`[partnerRoomService] Trying to find partner from hotels...`);
             
             // Lấy tất cả hotels (không filter)
             let allHotelsTemp: any[] = [];
@@ -80,7 +77,6 @@ export async function getAllRoomsByPartnerEmail(partnerEmail: string): Promise<P
                     hasMore = hotelsResponse.hasNext || false;
                     currentPage++;
                 } catch (error: any) {
-                    console.warn(`[partnerRoomService] Error fetching hotels page ${currentPage}:`, error);
                     hasMore = false;
                 }
             }
@@ -98,7 +94,6 @@ export async function getAllRoomsByPartnerEmail(partnerEmail: string): Promise<P
                             email: detailData.partner.email || partnerEmail,
                             fullName: detailData.partner.fullName || detailData.partner.name || 'N/A'
                         };
-                        console.log(`[partnerRoomService] Found partner from hotel detail:`, partner);
                         break;
                     }
                 } catch (error: any) {
@@ -133,10 +128,8 @@ export async function getAllRoomsByPartnerEmail(partnerEmail: string): Promise<P
                 hasMore = hotelsResponse.hasNext || false;
                 currentPage++;
                 
-                console.log(`[partnerRoomService] Loaded ${allHotels.length} hotels so far...`);
             } catch (error: any) {
                 if (error.response?.status === 403) {
-                    console.warn(`[partnerRoomService] 403 Forbidden when fetching hotels. Trying without partner filter...`);
                     // Thử lấy tất cả hotels và filter ở frontend
                     hasMore = false;
                     try {
@@ -154,7 +147,6 @@ export async function getAllRoomsByPartnerEmail(partnerEmail: string): Promise<P
             }
         }
 
-        console.log(`[partnerRoomService] Total hotels found: ${allHotels.length}`);
 
         // Bước 3: Lấy tất cả rooms của từng hotel
         const hotelsWithRooms = await Promise.all(
@@ -171,14 +163,12 @@ export async function getAllRoomsByPartnerEmail(partnerEmail: string): Promise<P
                         hasMore = roomsResponse.hasNext || false;
                         currentPage++;
                     } catch (error: any) {
-                        console.warn(`[partnerRoomService] Error fetching rooms for hotel ${hotel.id}:`, error);
                         hasMore = false; // Dừng nếu có lỗi
                     }
                 }
 
                 const totalRooms = allRooms.reduce((sum, room) => sum + (room.quantity || 0), 0);
 
-                console.log(`[partnerRoomService] Hotel "${hotel.name}": ${allRooms.length} room types, ${totalRooms} total rooms`);
 
                 return {
                     id: hotel.id,
@@ -203,11 +193,9 @@ export async function getAllRoomsByPartnerEmail(partnerEmail: string): Promise<P
             totalRooms: totalRooms
         };
 
-        console.log(`[partnerRoomService] ✅ Complete! Partner has ${result.totalHotels} hotels with ${result.totalRooms} total rooms`);
 
         return result;
     } catch (error: any) {
-        console.error(`[partnerRoomService] Error fetching rooms for partner ${partnerEmail}:`, error);
         
         // Xử lý lỗi 403 một cách rõ ràng
         if (error.response?.status === 403) {
@@ -227,31 +215,17 @@ export async function logAllRoomsByPartnerEmail(partnerEmail: string): Promise<v
     try {
         const result = await getAllRoomsByPartnerEmail(partnerEmail);
         
-        console.log('\n========================================');
-        console.log(`📊 TẤT CẢ PHÒNG CỦA PARTNER: ${result.partner.email}`);
-        console.log('========================================');
         console.log(`Partner: ${result.partner.fullName} (${result.partner.email})`);
-        console.log(`Tổng số khách sạn: ${result.totalHotels}`);
-        console.log(`Tổng số phòng: ${result.totalRooms}`);
-        console.log('\n--- Chi tiết từng khách sạn ---\n');
 
         result.hotels.forEach((hotel, index) => {
             console.log(`${index + 1}. ${hotel.name} (ID: ${hotel.id})`);
-            console.log(`   Tổng số phòng: ${hotel.totalRooms}`);
-            console.log(`   Số loại phòng: ${hotel.rooms.length}`);
             
             hotel.rooms.forEach((room, roomIndex) => {
-                console.log(`   ${roomIndex + 1}. ${room.name}`);
-                console.log(`      - Số lượng: ${room.quantity || 0}`);
-                console.log(`      - Trạng thái: ${room.status || 'N/A'}`);
                 console.log(`      - Giá: ${room.basePricePerNight?.toLocaleString('vi-VN') || 'N/A'} VND/đêm`);
             });
-            console.log('');
         });
 
-        console.log('========================================\n');
     } catch (error: any) {
-        console.error(`[partnerRoomService] Error logging rooms:`, error);
         throw error;
     }
 }

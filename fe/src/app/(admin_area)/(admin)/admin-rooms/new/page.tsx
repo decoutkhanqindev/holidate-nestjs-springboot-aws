@@ -35,7 +35,6 @@ export default function NewRoomPage() {
                 }
                 setHotel(hotelData);
             } catch (err: any) {
-                console.error("[NewRoomPage] Error loading hotel:", err);
                 setError(err.message || 'Không thể tải thông tin khách sạn.');
             } finally {
                 setIsLoading(false);
