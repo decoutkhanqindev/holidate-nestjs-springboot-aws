@@ -107,6 +107,65 @@ function BookingComponent() {
                 ...(codeToApply && { discountCode: codeToApply })
             };
             const data = await bookingService.getBookingPricePreview(payload);
+
+            // Tính giá bữa sáng ở frontend nếu có
+            if (includesBreakfast && data) {
+                const breakfastPricePerNight = 100000; // 100,000 VND per night
+                const numNights = parseInt(nights, 10);
+                const totalBreakfastPrice = breakfastPricePerNight * numNights;
+
+                // Lưu giá cũ để tính tỷ lệ thuế/phí
+                const oldNetPrice = data.netPriceAfterDiscount || data.originalPrice || 0;
+
+                // Cộng giá bữa sáng vào originalPrice
+                data.originalPrice = (data.originalPrice || 0) + totalBreakfastPrice;
+
+                // Tính lại netPriceAfterDiscount nếu có discount
+                if (data.appliedDiscount && data.discountAmount) {
+                    data.netPriceAfterDiscount = data.originalPrice - data.discountAmount;
+                } else {
+                    data.netPriceAfterDiscount = data.originalPrice;
+                }
+
+                // Tính tỷ lệ thuế và phí từ giá cũ (nếu có)
+                let taxRate = 0;
+                let serviceFeeRate = 0;
+
+                if (oldNetPrice > 0) {
+                    taxRate = (data.tax?.amount || 0) / oldNetPrice;
+                    serviceFeeRate = (data.serviceFee?.amount || 0) / oldNetPrice;
+                } else if (data.tax?.percentage && data.serviceFee?.percentage) {
+                    // Sử dụng percentage nếu có
+                    taxRate = (data.tax.percentage || 0) / 100;
+                    serviceFeeRate = (data.serviceFee.percentage || 0) / 100;
+                } else {
+                    // Mặc định: VAT 10% và Service Fee 3%
+                    taxRate = 0.1;
+                    serviceFeeRate = 0.03;
+                }
+
+                // Tính lại thuế và phí dựa trên netPriceAfterDiscount mới
+                const taxAmount = data.netPriceAfterDiscount * taxRate;
+                const serviceFeeAmount = data.netPriceAfterDiscount * serviceFeeRate;
+
+                // Cập nhật tax và serviceFee
+                if (data.tax) {
+                    data.tax.amount = taxAmount;
+                    if (!data.tax.percentage) {
+                        data.tax.percentage = taxRate * 100;
+                    }
+                }
+                if (data.serviceFee) {
+                    data.serviceFee.amount = serviceFeeAmount;
+                    if (!data.serviceFee.percentage) {
+                        data.serviceFee.percentage = serviceFeeRate * 100;
+                    }
+                }
+
+                // Tính lại finalPrice
+                data.finalPrice = data.netPriceAfterDiscount + taxAmount + serviceFeeAmount;
+            }
+
             setPriceDetails(data);
 
             if (codeToApply && data.appliedDiscount) {
@@ -131,7 +190,7 @@ function BookingComponent() {
         } finally {
             setIsPriceLoading(false);
         }
-    }, [roomDetails, checkin, nights, isLoggedIn, isAuthLoading]);
+    }, [roomDetails, checkin, nights, isLoggedIn, isAuthLoading, includesBreakfast]);
 
     useEffect(() => {
         // Chỉ fetch price preview khi đã login và có roomDetails
