@@ -4,13 +4,21 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.webapp.holidate.constants.api.param.CommonParams;
+import com.webapp.holidate.constants.api.param.SortingParams;
+import com.webapp.holidate.constants.api.param.UserParams;
 import com.webapp.holidate.dto.request.user.UserCreationRequest;
 import com.webapp.holidate.dto.request.user.UserUpdateRequest;
+import com.webapp.holidate.dto.response.base.PagedResponse;
 import com.webapp.holidate.dto.response.user.UserResponse;
 import com.webapp.holidate.entity.location.City;
 import com.webapp.holidate.entity.location.Country;
@@ -22,6 +30,7 @@ import com.webapp.holidate.entity.user.Role;
 import com.webapp.holidate.entity.user.User;
 import com.webapp.holidate.entity.user.UserAuthInfo;
 import com.webapp.holidate.exception.AppException;
+import com.webapp.holidate.mapper.PagedMapper;
 import com.webapp.holidate.mapper.user.UserMapper;
 import com.webapp.holidate.repository.accommodation.HotelRepository;
 import com.webapp.holidate.repository.booking.BookingRepository;
@@ -60,6 +69,7 @@ public class UserService {
   FileService fileService;
 
   UserMapper userMapper;
+  PagedMapper pagedMapper;
 
   public UserResponse create(UserCreationRequest request) {
     String email = request.getEmail();
@@ -136,13 +146,93 @@ public class UserService {
   }
 
   @Transactional(readOnly = true)
-  public List<UserResponse> getAll() {
-    return userRepository.findAll().stream().map(userMapper::toUserResponse).toList();
+  public PagedResponse<UserResponse> getAll(
+    String email, String fullName, String phoneNumber, String roleId, String gender,
+    String countryId, String provinceId, String cityId, String districtId, String wardId, String streetId,
+    Boolean active, String authProvider,
+    LocalDateTime createdFrom, LocalDateTime createdTo,
+    int page, int size, String sortBy, String sortDir) {
+    // Clean up page and size values
+    page = Math.max(0, page);
+    size = Math.min(Math.max(1, size), 100);
+
+    // Check if sort direction is valid
+    boolean hasSortDir = sortDir != null && !sortDir.isEmpty()
+      && (SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir) ||
+      SortingParams.SORT_DIR_DESC.equalsIgnoreCase(sortDir));
+    if (!hasSortDir) {
+      sortDir = SortingParams.SORT_DIR_DESC;
+    }
+
+    // Check if sort field is valid
+    boolean hasSortBy = sortBy != null && !sortBy.isEmpty()
+      && (UserParams.EMAIL_SORT.equals(sortBy) ||
+      UserParams.FULL_NAME_SORT.equals(sortBy) ||
+      CommonParams.CREATED_AT.equals(sortBy) ||
+      UserParams.UPDATED_AT.equals(sortBy));
+    if (!hasSortBy) {
+      sortBy = null;
+    }
+
+    // Create Pageable with sorting
+    Pageable pageable = createPageable(page, size, sortBy, sortDir);
+
+    // Get users from database with pagination
+    Page<User> userPage = userRepository.findAllWithFiltersPaged(
+      email, fullName, phoneNumber, roleId, gender,
+      countryId, provinceId, cityId, districtId, wardId, streetId,
+      active, authProvider, createdFrom, createdTo,
+      pageable);
+
+    // Check if we have any users
+    if (userPage.isEmpty()) {
+      return pagedMapper.createEmptyPagedResponse(page, size);
+    }
+
+    // Convert entities to response DTOs
+    List<UserResponse> userResponses = userPage.getContent().stream()
+      .map(userMapper::toUserResponse)
+      .toList();
+
+    // Create and return paged response with database pagination metadata
+    return pagedMapper.createPagedResponse(
+      userResponses,
+      page,
+      size,
+      userPage.getTotalElements(),
+      userPage.getTotalPages());
+  }
+
+  // Create Pageable object with sorting
+  private Pageable createPageable(int page, int size, String sortBy, String sortDir) {
+    if (sortBy == null) {
+      return PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+    }
+
+    // Map sort field to entity field
+    String entitySortField = mapSortFieldToEntity(sortBy);
+    Sort.Direction direction = SortingParams.SORT_DIR_ASC.equalsIgnoreCase(sortDir)
+      ? Sort.Direction.ASC
+      : Sort.Direction.DESC;
+
+    Sort sort = Sort.by(direction, entitySortField);
+    return PageRequest.of(page, size, sort);
+  }
+
+  // Map API sort field to entity field name
+  private String mapSortFieldToEntity(String sortBy) {
+    return switch (sortBy) {
+      case UserParams.EMAIL_SORT -> "email";
+      case UserParams.FULL_NAME_SORT -> "fullName";
+      case CommonParams.CREATED_AT -> "createdAt";
+      case UserParams.UPDATED_AT -> "updatedAt";
+      default -> "createdAt"; // Default sorting
+    };
   }
 
   @Transactional(readOnly = true)
   public UserResponse getById(String id) {
-    User user = userRepository.findById(id)
+    User user = userRepository.findByIdWithDetails(id)
       .orElseThrow(() -> new AppException(ErrorType.USER_NOT_FOUND));
     return userMapper.toUserResponse(user);
   }

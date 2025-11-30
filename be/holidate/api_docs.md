@@ -505,31 +505,38 @@ Base URL: `http://localhost:8080`
 
 ## Users
 
+User management endpoints allow administrators to create, view, update, and delete user accounts. Users can also view and update their own profile information.
+
+**Role Required**: ADMIN (for create, get all, delete), USER/PARTNER/ADMIN (for get by ID and update - users can only access/update their own profile)
+
 ### 1. Create User
 
 **POST** `/users`
 
+- **Content-Type**: `application/json`
 - **Role Required**: ADMIN
+- **Description**: Creates a new user account in the system. The user is created with the specified role and authentication provider. The password is hashed using BCrypt before storage. Location information is optional and can be set during creation or updated later. The user's authentication info is automatically created with the specified provider and initially set to inactive (requires email verification).
+
 - **Request Body**:
 
 ```json
 {
-  "email": "string (required, valid email)",
-  "password": "string (required, min 8 characters)",
-  "fullName": "string (required, 3-100 characters)",
-  "phoneNumber": "string (valid phone pattern)",
-  "address": "string",
-  "countryId": "string",
-  "provinceId": "string",
-  "cityId": "string",
-  "districtId": "string",
-  "wardId": "string",
-  "streetId": "string",
-  "gender": "string (MALE/FEMALE/OTHER)",
-  "dateOfBirth": "datetime",
-  "avatarUrl": "string",
-  "roleId": "string (required)",
-  "authProvider": "string (required, LOCAL/GOOGLE)"
+  "email": "string (required, not blank, valid email format, unique) - User's email address (must be unique across all users)",
+  "password": "string (required, not blank, min 8 characters) - User's password (will be hashed using BCrypt before storage)",
+  "fullName": "string (required, not blank, 3-100 characters) - User's full name",
+  "phoneNumber": "string (optional, valid phone pattern, unique if provided) - User's phone number (must be unique if provided)",
+  "address": "string (optional) - User's detailed address",
+  "countryId": "string (optional, UUID format) - ID of the country",
+  "provinceId": "string (optional, UUID format) - ID of the province",
+  "cityId": "string (optional, UUID format) - ID of the city",
+  "districtId": "string (optional, UUID format) - ID of the district",
+  "wardId": "string (optional, UUID format) - ID of the ward",
+  "streetId": "string (optional, UUID format) - ID of the street",
+  "gender": "string (optional, enum: MALE/FEMALE/OTHER) - User's gender",
+  "dateOfBirth": "datetime (optional, ISO 8601 format: YYYY-MM-DDTHH:mm:ss) - User's date of birth",
+  "avatarUrl": "string (optional) - URL of user's avatar image",
+  "roleId": "string (required, not blank, UUID format) - ID of the role to assign to the user (must exist in the system)",
+  "authProvider": "string (required, not blank, enum: LOCAL/GOOGLE) - Authentication provider type (LOCAL for email/password, GOOGLE for OAuth)"
 }
 ```
 
@@ -540,81 +547,445 @@ Base URL: `http://localhost:8080`
   "statusCode": 200,
   "message": "",
   "data": {
-    "id": "string",
-    "email": "string",
-    "fullName": "string",
-    "phoneNumber": "string",
-    "address": "string",
-    "country": { "id": "string", "name": "string" },
-    "province": { "id": "string", "name": "string" },
-    "city": { "id": "string", "name": "string" },
-    "district": { "id": "string", "name": "string" },
-    "ward": { "id": "string", "name": "string" },
-    "street": { "id": "string", "name": "string" },
-    "gender": "string",
-    "dateOfBirth": "datetime",
-    "avatarUrl": "string",
-    "role": { "id": "string", "name": "string", "description": "string" },
-    "authInfo": { "provider": "string", "verified": boolean },
-    "createdAt": "datetime",
-    "updatedAt": "datetime"
+    "id": "string (UUID) - Unique identifier of the created user",
+    "email": "string - User's email address",
+    "fullName": "string - User's full name",
+    "phoneNumber": "string (nullable) - User's phone number",
+    "address": "string (nullable) - User's detailed address",
+    "country": {
+      "id": "string (UUID, nullable)",
+      "name": "string (nullable)",
+      "code": "string (nullable)"
+    },
+    "province": {
+      "id": "string (UUID, nullable)",
+      "name": "string (nullable)",
+      "code": "string (nullable)"
+    },
+    "city": {
+      "id": "string (UUID, nullable)",
+      "name": "string (nullable)",
+      "code": "string (nullable)"
+    },
+    "district": {
+      "id": "string (UUID, nullable)",
+      "name": "string (nullable)",
+      "code": "string (nullable)"
+    },
+    "ward": {
+      "id": "string (UUID, nullable)",
+      "name": "string (nullable)",
+      "code": "string (nullable)"
+    },
+    "street": {
+      "id": "string (UUID, nullable)",
+      "name": "string (nullable)",
+      "code": "string (nullable)"
+    },
+    "gender": "string (nullable, MALE/FEMALE/OTHER) - User's gender",
+    "dateOfBirth": "datetime (nullable, ISO 8601 format) - User's date of birth",
+    "avatarUrl": "string (nullable) - URL of user's avatar image",
+    "role": {
+      "id": "string (UUID) - Role ID",
+      "name": "string - Role name (user/partner/admin)",
+      "description": "string - Role description"
+    },
+    "authInfo": {
+      "id": "string (UUID) - Authentication info ID",
+      "authProvider": "string - Authentication provider (LOCAL/GOOGLE)",
+      "active": "boolean (default: false) - Whether the user account is active (initially false, requires email verification)"
+    },
+    "createdAt": "datetime (ISO 8601 format) - Timestamp when the user was created",
+    "updatedAt": "datetime (nullable, ISO 8601 format) - Timestamp when the user was last updated"
   }
 }
 ```
+
+- **Error Responses**:
+  - **400 Bad Request**: Invalid email format, password too short, validation errors, or invalid role ID
+  - **404 Not Found**: Role, country, province, city, district, ward, or street not found (if IDs are provided)
+  - **409 Conflict**: Email already exists (`USER_EXISTS` error) or phone number already exists (if provided)
+
+- **Notes**:
+  - The email must be unique across all users. If an account with the same email already exists, creation will fail
+  - The password is securely hashed using BCrypt before being stored in the database
+  - The role must exist in the system. If the role ID is invalid, creation will fail
+  - Location fields (country, province, city, etc.) are optional. If provided, they must exist in the system
+  - The user's authentication info is automatically created with `active = false`. Users must verify their email to activate their account
+  - Phone number is optional but must be unique if provided
+  - After creation, users should verify their email using the email verification OTP endpoints
+  - Users with LOCAL auth provider can log in with email/password. Users with GOOGLE auth provider must use OAuth flow
 
 ### 2. Get All Users
 
 **GET** `/users`
 
+- **Content-Type**: `application/json`
 - **Role Required**: ADMIN
+- **Description**: Retrieves a paginated list of all users in the system with optional filtering and sorting. This endpoint supports comprehensive filtering by user attributes (email, name, phone, role, location, etc.) and authentication status. Results are paginated and can be sorted by various fields. Useful for user management, search, and reporting purposes.
+
+- **Query Parameters**:
+  - `email`: string (optional) - Filter by email (case-insensitive partial match using LIKE)
+  - `full-name`: string (optional) - Filter by full name (case-insensitive partial match using LIKE)
+  - `phone-number`: string (optional) - Filter by phone number (partial match using LIKE)
+  - `role-id`: string (optional, UUID format) - Filter by role ID (exact match)
+  - `gender`: string (optional, enum: MALE/FEMALE/OTHER) - Filter by gender (exact match)
+  - `country-id`: string (optional, UUID format) - Filter by country ID (exact match)
+  - `province-id`: string (optional, UUID format) - Filter by province ID (exact match)
+  - `city-id`: string (optional, UUID format) - Filter by city ID (exact match)
+  - `district-id`: string (optional, UUID format) - Filter by district ID (exact match)
+  - `ward-id`: string (optional, UUID format) - Filter by ward ID (exact match)
+  - `street-id`: string (optional, UUID format) - Filter by street ID (exact match)
+  - `active`: boolean (optional) - Filter by user active status (exact match on authInfo.active)
+  - `auth-provider`: string (optional, enum: LOCAL/GOOGLE) - Filter by authentication provider (exact match)
+  - `created-from`: datetime (optional, ISO 8601 format: YYYY-MM-DDTHH:mm:ss) - Filter users created on or after this timestamp (inclusive)
+  - `created-to`: datetime (optional, ISO 8601 format: YYYY-MM-DDTHH:mm:ss) - Filter users created on or before this timestamp (inclusive)
+  - `page`: integer (optional, default: 0) - Page number (0-indexed). Must be >= 0
+  - `size`: integer (optional, default: 10) - Page size. Must be between 1 and 100 (automatically clamped)
+  - `sort-by`: string (optional, default: "created-at") - Field to sort by. Valid values: `email`, `full-name`, `created-at`, `updated-at`
+  - `sort-dir`: string (optional, default: "desc") - Sort direction. Valid values: `asc`, `desc`
+
 - **Response**:
 
 ```json
 {
   "statusCode": 200,
   "message": "",
-  "data": [
-    {
-      "id": "string",
-      "email": "string",
-      "fullName": "string"
-      // ... (same structure as Create User response)
-    }
-  ]
+  "data": {
+    "content": [
+      {
+        "id": "string (UUID)",
+        "email": "string",
+        "fullName": "string",
+        "phoneNumber": "string (nullable)",
+        "address": "string (nullable)",
+        "country": {
+          "id": "string (UUID, nullable)",
+          "name": "string (nullable)",
+          "code": "string (nullable)"
+        },
+        "province": {
+          "id": "string (UUID, nullable)",
+          "name": "string (nullable)",
+          "code": "string (nullable)"
+        },
+        "city": {
+          "id": "string (UUID, nullable)",
+          "name": "string (nullable)",
+          "code": "string (nullable)"
+        },
+        "district": {
+          "id": "string (UUID, nullable)",
+          "name": "string (nullable)",
+          "code": "string (nullable)"
+        },
+        "ward": {
+          "id": "string (UUID, nullable)",
+          "name": "string (nullable)",
+          "code": "string (nullable)"
+        },
+        "street": {
+          "id": "string (UUID, nullable)",
+          "name": "string (nullable)",
+          "code": "string (nullable)"
+        },
+        "gender": "string (nullable, MALE/FEMALE/OTHER)",
+        "dateOfBirth": "datetime (nullable, ISO 8601 format)",
+        "avatarUrl": "string (nullable)",
+        "role": {
+          "id": "string (UUID)",
+          "name": "string",
+          "description": "string"
+        },
+        "authInfo": {
+          "id": "string (UUID)",
+          "authProvider": "string (LOCAL/GOOGLE)",
+          "active": "boolean"
+        },
+        "createdAt": "datetime (ISO 8601 format)",
+        "updatedAt": "datetime (nullable, ISO 8601 format)"
+      }
+    ],
+    "page": "integer (0-indexed) - Current page number",
+    "size": "integer - Page size",
+    "totalItems": "long - Total number of users matching the filters",
+    "totalPages": "integer - Total number of pages",
+    "first": "boolean - Whether this is the first page",
+    "last": "boolean - Whether this is the last page",
+    "hasNext": "boolean - Whether there is a next page",
+    "hasPrevious": "boolean - Whether there is a previous page"
+  }
 }
 ```
+
+- **Error Responses**:
+  - **401 Unauthorized**: Missing or invalid JWT token
+  - **403 Forbidden**: User does not have ADMIN role
+
+- **Notes**:
+  - **Filtering**: All filter parameters are optional. Multiple filters can be combined using AND logic. Text filters (email, full-name, phone-number) use case-insensitive partial matching (LIKE with %pattern%)
+  - **Pagination**: 
+    - Page numbers are 0-indexed (first page is 0)
+    - Page size is automatically clamped between 1 and 100 (values outside this range are adjusted)
+    - If no users match the filters, an empty content array is returned with pagination metadata
+  - **Sorting**:
+    - Default sort is by `created-at` in descending order (newest first)
+    - Valid sort fields: `email`, `full-name`, `created-at`, `updated-at`
+    - Sort direction can be `asc` (ascending) or `desc` (descending)
+    - Invalid sort fields or directions are ignored and default sorting is used
+  - **Query Optimization**: The endpoint uses optimized JPQL queries with LEFT JOIN FETCH to eagerly load all relationships (role, location hierarchy, authInfo) in a single query, avoiding N+1 query problems
+  - **Data Completeness**: All user data including role, location hierarchy, and authentication info is included in the response
+  - **Performance**: For large user databases, use appropriate page sizes and filters to optimize query performance
+  - **Use Cases**:
+    - User search and management
+    - Filtering users by role, location, or status
+    - Finding users created within a date range
+    - Listing active/inactive users
+    - Finding users by authentication provider
 
 ### 3. Get User By ID
 
 **GET** `/users/{id}`
 
-- **Role Required**: USER, PARTNER, ADMIN (USER and PARTNER can only access their own profile)
+- **Content-Type**: `application/json`
+- **Role Required**: USER, PARTNER, ADMIN
+  - **USER/PARTNER**: Can only access their own profile (validated by comparing authenticated user's ID with the requested ID)
+  - **ADMIN**: Can access any user's profile
+- **Description**: Retrieves detailed information about a specific user by ID. Users and partners can only view their own profile, while administrators can view any user's profile. The endpoint uses an optimized query to fetch all user relationships in a single database call.
+
 - **Path Parameters**:
-  - `id`: string (UUID format)
-- **Response**: Same as Create User response
+  - `id`: string (required, UUID format, pattern: `{id:[a-fA-F0-9\\-]{36}}`) - Unique identifier of the user to retrieve
+
+- **Query Parameters**: None
+
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "id": "string (UUID)",
+    "email": "string",
+    "fullName": "string",
+    "phoneNumber": "string (nullable)",
+    "address": "string (nullable)",
+    "country": {
+      "id": "string (UUID, nullable)",
+      "name": "string (nullable)",
+      "code": "string (nullable)"
+    },
+    "province": {
+      "id": "string (UUID, nullable)",
+      "name": "string (nullable)",
+      "code": "string (nullable)"
+    },
+    "city": {
+      "id": "string (UUID, nullable)",
+      "name": "string (nullable)",
+      "code": "string (nullable)"
+    },
+    "district": {
+      "id": "string (UUID, nullable)",
+      "name": "string (nullable)",
+      "code": "string (nullable)"
+    },
+    "ward": {
+      "id": "string (UUID, nullable)",
+      "name": "string (nullable)",
+      "code": "string (nullable)"
+    },
+    "street": {
+      "id": "string (UUID, nullable)",
+      "name": "string (nullable)",
+      "code": "string (nullable)"
+    },
+    "gender": "string (nullable, MALE/FEMALE/OTHER)",
+    "dateOfBirth": "datetime (nullable, ISO 8601 format)",
+    "avatarUrl": "string (nullable)",
+    "role": {
+      "id": "string (UUID)",
+      "name": "string",
+      "description": "string"
+    },
+    "authInfo": {
+      "id": "string (UUID)",
+      "authProvider": "string (LOCAL/GOOGLE)",
+      "active": "boolean"
+    },
+    "createdAt": "datetime (ISO 8601 format)",
+    "updatedAt": "datetime (nullable, ISO 8601 format)"
+  }
+}
+```
+
+- **Error Responses**:
+  - **400 Bad Request**: Invalid user ID format (not a valid UUID)
+  - **401 Unauthorized**: Missing or invalid JWT token
+  - **403 Forbidden**: 
+    - User does not have required role, OR
+    - USER/PARTNER trying to access another user's profile (access denied)
+  - **404 Not Found**: User with the specified ID does not exist (`USER_NOT_FOUND` error)
+
+- **Notes**:
+  - **Access Control**: 
+    - Regular users (USER role) can only access their own profile
+    - Partners (PARTNER role) can only access their own profile
+    - Administrators (ADMIN role) can access any user's profile
+    - The system validates access by comparing the authenticated user's ID with the requested user ID
+  - **Query Optimization**: Uses optimized JPQL query with LEFT JOIN FETCH to eagerly load all relationships (role, location hierarchy, authInfo) in a single query
+  - **Data Completeness**: All user information including role, complete location hierarchy, and authentication info is included in the response
+  - **Use Cases**:
+    - Users viewing their own profile
+    - Administrators viewing user details for management
+    - Profile page display
+    - User information verification
 
 ### 4. Update User
 
 **PUT** `/users/{id}`
 
 - **Content-Type**: `multipart/form-data`
-- **Role Required**: USER, PARTNER, ADMIN (USER and PARTNER can only update their own profile)
+- **Role Required**: USER, PARTNER, ADMIN
+  - **USER/PARTNER**: Can only update their own profile (validated by comparing authenticated user's ID with the requested ID)
+  - **ADMIN**: Can update any user's profile
+- **Description**: Updates an existing user's information. Supports partial updates - only provided fields will be updated. Users and partners can only update their own profile, while administrators can update any user's profile. The endpoint supports updating user information, location, avatar image, and authentication status. If an avatar file is provided, the old avatar is deleted and replaced with the new one.
+
 - **Path Parameters**:
-  - `id`: string (UUID format)
-- **Request Body** (form-data):
-  - All fields from Create User (optional)
-  - `active`: boolean (optional) - User active status
-  - `avatar`: File (image file)
-- **Response**: Same as Create User response
+  - `id`: string (required, UUID format, pattern: `{id:[a-fA-F0-9\\-]{36}}`) - Unique identifier of the user to update
+
+- **Request Body** (form-data, all fields optional):
+  - `fullName`: string (optional, not blank if provided, 3-100 characters) - New full name
+  - `phoneNumber`: string (optional, valid phone pattern, unique if provided) - New phone number (must be unique if provided)
+  - `address`: string (optional) - New detailed address
+  - `countryId`: string (optional, UUID format) - New country ID (must exist in the system)
+  - `provinceId`: string (optional, UUID format) - New province ID (must exist in the system)
+  - `cityId`: string (optional, UUID format) - New city ID (must exist in the system)
+  - `districtId`: string (optional, UUID format) - New district ID (must exist in the system)
+  - `wardId`: string (optional, UUID format) - New ward ID (must exist in the system)
+  - `streetId`: string (optional, UUID format) - New street ID (must exist in the system)
+  - `gender`: string (optional, enum: MALE/FEMALE/OTHER) - New gender
+  - `dateOfBirth`: datetime (optional, ISO 8601 format: YYYY-MM-DDTHH:mm:ss) - New date of birth
+  - `active`: boolean (optional) - New user active status (only admins can change this)
+  - `avatar`: File (optional, image file) - New avatar image file
+
+- **Response**: Same structure as Create User response - returns the updated user data
+
+- **Error Responses**:
+  - **400 Bad Request**: Invalid user ID format, validation errors, or invalid location IDs
+  - **401 Unauthorized**: Missing or invalid JWT token
+  - **403 Forbidden**: 
+    - User does not have required role, OR
+    - USER/PARTNER trying to update another user's profile (access denied)
+  - **404 Not Found**: User, country, province, city, district, ward, or street not found (if IDs are provided)
+  - **409 Conflict**: Phone number already exists (if provided and conflicts with another user)
+
+- **Notes**:
+  - **Access Control**: 
+    - Regular users (USER role) can only update their own profile
+    - Partners (PARTNER role) can only update their own profile
+    - Administrators (ADMIN role) can update any user's profile
+    - The system validates access by comparing the authenticated user's ID with the requested user ID
+  - **Partial Updates**: Only fields provided in the request will be updated. Fields not provided will remain unchanged
+  - **Avatar Handling**: 
+    - If an avatar file is provided, the old avatar is automatically deleted from storage
+    - The new avatar is uploaded and the avatarUrl is updated
+    - If no avatar file is provided, the existing avatarUrl remains unchanged
+  - **Location Updates**: 
+    - Location fields can be updated independently
+    - If a location ID is provided, it must exist in the system
+    - Location hierarchy is not validated (e.g., you can set a city without setting province, though this may not be recommended)
+  - **Active Status**: 
+    - Only administrators can change the `active` status
+    - Regular users and partners cannot change their own active status
+    - If a non-admin tries to update `active`, the field is ignored
+  - **Validation**: 
+    - Phone number must be unique if provided and changed
+    - Full name cannot be blank if provided
+    - Date of birth must be a valid datetime if provided
+  - **Updated Timestamp**: The `updatedAt` field is automatically set to the current timestamp when any field is updated
+  - **Use Cases**:
+    - Users updating their profile information
+    - Users changing their avatar
+    - Users updating their location
+    - Administrators activating/deactivating user accounts
+    - Administrators updating user information
 
 ### 5. Delete User
 
 **DELETE** `/users/{id}`
 
+- **Content-Type**: `application/json`
 - **Role Required**: ADMIN
+- **Description**: Permanently deletes a user account from the system. A user can only be deleted if they do not own any hotels and do not have any bookings. This is a safety measure to prevent data integrity issues. If the user has associated hotels or bookings, the deletion will fail with an error indicating what must be removed first.
+
 - **Path Parameters**:
-  - `id`: string (UUID format)
-- **Response**: Same as Create User response
+  - `id`: string (required, UUID format, pattern: `{id:[a-fA-F0-9\\-]{36}}`) - Unique identifier of the user to delete
+
+- **Query Parameters**: None
+
+- **Request Body**: None
+
+- **Response**:
+
+```json
+{
+  "statusCode": 200,
+  "message": "",
+  "data": {
+    "id": "string (UUID) - Unique identifier of the deleted user",
+    "email": "string - Email of the deleted user",
+    "fullName": "string - Full name of the deleted user",
+    "phoneNumber": "string (nullable)",
+    "address": "string (nullable)",
+    "country": { "id": "string (UUID, nullable)", "name": "string (nullable)" },
+    "province": { "id": "string (UUID, nullable)", "name": "string (nullable)" },
+    "city": { "id": "string (UUID, nullable)", "name": "string (nullable)" },
+    "district": { "id": "string (UUID, nullable)", "name": "string (nullable)" },
+    "ward": { "id": "string (UUID, nullable)", "name": "string (nullable)" },
+    "street": { "id": "string (UUID, nullable)", "name": "string (nullable)" },
+    "gender": "string (nullable)",
+    "dateOfBirth": "datetime (nullable, ISO 8601 format)",
+    "avatarUrl": "string (nullable)",
+    "role": {
+      "id": "string (UUID)",
+      "name": "string",
+      "description": "string"
+    },
+    "authInfo": {
+      "id": "string (UUID)",
+      "authProvider": "string",
+      "active": "boolean"
+    },
+    "createdAt": "datetime (ISO 8601 format)",
+    "updatedAt": "datetime (nullable, ISO 8601 format)"
+  }
+}
+```
+
+- **Error Responses**:
+  - **400 Bad Request**: Invalid user ID format (not a valid UUID)
+  - **401 Unauthorized**: Missing or invalid JWT token
+  - **403 Forbidden**: User does not have ADMIN role
+  - **404 Not Found**: User with the specified ID does not exist (`USER_NOT_FOUND` error)
+  - **409 Conflict**: 
+    - Cannot delete user because they own hotels (`CANNOT_DELETE_USER_HAS_HOTELS` error)
+    - Cannot delete user because they have bookings (`CANNOT_DELETE_USER_HAS_BOOKINGS` error)
+
+- **Notes**:
+  - **Deletion Constraints**: A user cannot be deleted if:
+    - They own any hotels (count > 0)
+    - They have any bookings (count > 0)
+  - **Cascade Behavior**: The deletion does not cascade to associated hotels or bookings. All hotels and bookings must be handled separately before the user can be deleted
+  - **Response**: Returns the deleted user data before deletion, allowing the client to confirm what was deleted
+  - **Destructive Operation**: This is a destructive operation and cannot be undone. Once deleted, the user account and all associated data (except hotels and bookings which prevent deletion) are permanently removed
+  - **Check Before Deletion**: The system automatically checks if the user has associated hotels or bookings and prevents deletion if any exist
+  - **Use Case**: Consider deactivating the user account (setting `active = false`) instead of deleting if you want to preserve historical data
+  - **Avatar Cleanup**: If the user has an avatar, it should be deleted from storage (this may be handled automatically by the service layer)
+  - **Before Deletion**: 
+    - Transfer or delete all hotels owned by the user
+    - Handle or cancel all bookings made by the user
+    - Then proceed with user deletion
 
 ---
 
