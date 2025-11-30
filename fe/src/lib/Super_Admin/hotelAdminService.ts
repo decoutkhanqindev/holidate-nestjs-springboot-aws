@@ -235,11 +235,9 @@ export async function createHotelAdminServer(payload: {
         let partnerRoleId: string | null = null;
         const serverClient = await createServerApiClient();
         
-        console.log('[createHotelAdminServer] Starting to find PARTNER roleId...');
         
         // Thử 1: Lấy từ API /roles (yêu cầu ADMIN role)
         try {
-            console.log('[createHotelAdminServer] Attempting to fetch roles from /roles API...');
             const rolesResponse = await serverClient.get<ApiResponse<Array<{ id: string; name: string; description?: string }>>>(`/roles`);
             console.log('[createHotelAdminServer] /roles API response:', {
                 statusCode: rolesResponse.data?.statusCode,
@@ -256,12 +254,10 @@ export async function createHotelAdminServer(payload: {
                 
                 if (partnerRole && partnerRole.id) {
                     partnerRoleId = partnerRole.id;
-                    console.log('[createHotelAdminServer] ✅ Found PARTNER roleId from /roles API:', partnerRoleId);
                 } else {
                     console.warn('[createHotelAdminServer] ⚠️ PARTNER role not found in /roles API response. Available roles:', rolesResponse.data.data.map(r => r.name));
                 }
             } else {
-                console.warn('[createHotelAdminServer] ⚠️ /roles API response invalid:', rolesResponse.data);
             }
         } catch (error: any) {
             console.error('[createHotelAdminServer] ❌ Error fetching roles from /roles API:', {
@@ -275,7 +271,6 @@ export async function createHotelAdminServer(payload: {
         // Thử 2: Nếu không tìm thấy, lấy từ danh sách users PARTNER có sẵn
         if (!partnerRoleId) {
             try {
-                console.log('[createHotelAdminServer] Attempting to find PARTNER roleId from existing users...');
                 const usersResponse = await serverClient.get<ApiResponse<UserResponse[]>>(baseURL);
                 console.log('[createHotelAdminServer] Users API response:', {
                     statusCode: usersResponse.data?.statusCode,
@@ -286,13 +281,10 @@ export async function createHotelAdminServer(payload: {
                     const partnerUsers = usersResponse.data.data.filter(
                         user => user.role && (user.role.name || '').trim().toLowerCase() === 'partner'
                     );
-                    console.log('[createHotelAdminServer] Found', partnerUsers.length, 'partner users');
                     
                     if (partnerUsers.length > 0 && partnerUsers[0].role?.id) {
                         partnerRoleId = partnerUsers[0].role.id;
-                        console.log('[createHotelAdminServer] ✅ Found PARTNER roleId from existing users:', partnerRoleId);
                     } else {
-                        console.warn('[createHotelAdminServer] ⚠️ No partner users found or users without role');
                     }
                 }
             } catch (error: any) {
@@ -308,11 +300,9 @@ export async function createHotelAdminServer(payload: {
         // Nếu vẫn không tìm thấy
         if (!partnerRoleId) {
             const errorMsg = 'Không tìm thấy role PARTNER. Vui lòng đảm bảo role PARTNER đã được tạo trong hệ thống và bạn có quyền ADMIN để truy cập API /roles.';
-            console.error('[createHotelAdminServer] ❌', errorMsg);
             throw new Error(errorMsg);
         }
         
-        console.log('[createHotelAdminServer] ✅ Final PARTNER roleId:', partnerRoleId);
 
         // Bước 2: Tạo user với role PARTNER (serverClient đã được tạo ở trên)
         // Chỉ gửi phoneNumber nếu có giá trị và không rỗng, đúng format
@@ -333,7 +323,6 @@ export async function createHotelAdminServer(payload: {
             if (phoneRegex.test(trimmedPhone)) {
                 userPayload.phoneNumber = trimmedPhone;
             } else {
-                console.warn('[createHotelAdminServer] PhoneNumber không đúng format, bỏ qua:', trimmedPhone);
                 // Không thêm phoneNumber vào payload (để null như Postman)
             }
         }
@@ -348,7 +337,6 @@ export async function createHotelAdminServer(payload: {
             phoneNumber: userPayload.phoneNumber || 'N/A'
         });
 
-        console.log('[createHotelAdminServer] Sending POST request to:', baseURL);
         const userResponse = await serverClient.post<ApiResponse<UserResponse>>(baseURL, userPayload);
         console.log('[createHotelAdminServer] User creation response:', {
             statusCode: userResponse.data?.statusCode,
@@ -371,7 +359,6 @@ export async function createHotelAdminServer(payload: {
             // QUAN TRỌNG: User mới tạo có active = false, cần activate để có thể login
             // Gọi API Update User với active = true để activate account
             try {
-                console.log('[createHotelAdminServer] Attempting to activate user by calling update API with active=true...');
                 
                 const { updateUserServer } = await import('@/lib/AdminAPI/userService');
                 
@@ -380,7 +367,6 @@ export async function createHotelAdminServer(payload: {
                     active: true
                 });
                 
-                console.log('[createHotelAdminServer] ✅ User activated successfully via update API');
             } catch (updateError: any) {
                 console.error('[createHotelAdminServer] ⚠️ Error activating user via update API:', {
                     message: updateError.message,
@@ -389,7 +375,6 @@ export async function createHotelAdminServer(payload: {
                 });
                 // Không throw error vì user đã được tạo thành công
                 // Chỉ log warning
-                console.warn('[createHotelAdminServer] ⚠️ User created but activation failed. User may need manual activation.');
             }
 
             // Note: HotelUpdateRequest không có partnerId field
@@ -405,7 +390,6 @@ export async function createHotelAdminServer(payload: {
             return newUser;
         }
 
-        console.error('[createHotelAdminServer] ❌ Invalid response from server:', userResponse.data);
         throw new Error('Invalid response from server');
     } catch (error: any) {
         // Log chi tiết toàn bộ error response
@@ -485,7 +469,6 @@ export async function createHotelAdminServer(payload: {
             errorMessage = error.message;
         }
         
-        console.error('[createHotelAdminServer] Final error message:', errorMessage);
         throw new Error(errorMessage);
     }
 }

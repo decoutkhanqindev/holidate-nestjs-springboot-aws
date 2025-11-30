@@ -19,8 +19,6 @@ export default function AccountSidebar() {
     // Debug: Log khi user hoặc avatarUrl thay đổi
     useEffect(() => {
         if (user) {
-            console.log('[AccountSidebar] User state:', user);
-            console.log('[AccountSidebar] avatarUrl:', user.avatarUrl);
         }
     }, [user, user?.avatarUrl]);
 
@@ -47,11 +45,7 @@ export default function AccountSidebar() {
                             }}
                             onError={(e) => {
                                 // Fallback nếu ảnh không load được
-                                console.error('[AccountSidebar] Error loading avatar:', user.avatarUrl);
                                 e.currentTarget.style.display = 'none';
-                            }}
-                            onLoad={() => {
-                                console.log('[AccountSidebar] ✅ Avatar loaded successfully:', user.avatarUrl);
                             }}
                         />
                     ) : (

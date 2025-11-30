@@ -106,17 +106,14 @@ function mapUserResponseToUser(response: UserResponse): User {
  */
 export async function getRoles(): Promise<RoleResponse[]> {
     try {
-        console.log('[userService] Fetching roles...');
         const response = await apiClient.get<ApiResponse<RoleResponse[]>>(rolesURL);
 
         if (response.data?.statusCode === 200 && response.data?.data) {
-            console.log('[userService] Roles fetched:', response.data.data.length);
             return response.data.data;
         }
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error('[userService] Error fetching roles:', error);
         const errorMessage = error.response?.data?.message
             || error.message
             || 'Không thể tải danh sách quyền';
@@ -137,7 +134,6 @@ export async function getUsers({ page = 1, limit = 10 }: { page?: number; limit?
     currentPage: number;
 }> {
     try {
-        console.log(`[userService] Fetching users - page: ${page}, limit: ${limit}`);
 
         // Backend API GET /users không hỗ trợ phân trang, trả về tất cả users
         const response = await apiClient.get<ApiResponse<UserResponse[]>>(baseURL);
@@ -158,7 +154,6 @@ export async function getUsers({ page = 1, limit = 10 }: { page?: number; limit?
             const end = start + limit;
             const paginatedData = viewableUsers.slice(start, end);
 
-            console.log(`[userService] Users fetched: ${paginatedData.length} of ${viewableUsers.length} total`);
             return {
                 data: paginatedData,
                 totalPages,
@@ -168,12 +163,10 @@ export async function getUsers({ page = 1, limit = 10 }: { page?: number; limit?
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error('[userService] Error fetching users:', error);
 
         // Nếu là lỗi 403 (Forbidden), có thể do role không có quyền
         // Trả về mảng rỗng thay vì throw error để page vẫn có thể hiển thị
         if (error.response?.status === 403) {
-            console.warn('[userService] 403 Forbidden - User may not have permission to view all users');
             return {
                 data: [],
                 totalPages: 0,
@@ -215,7 +208,6 @@ export async function getCurrentUser(): Promise<User | null> {
             status: 'ACTIVE',
         };
     } catch (error: any) {
-        console.error('[userService] Error getting current user:', error);
         // Trả về null thay vì throw error để page vẫn có thể hiển thị
         return null;
     }
@@ -226,7 +218,6 @@ export async function getCurrentUser(): Promise<User | null> {
  */
 export async function getUserById(userId: string): Promise<User> {
     try {
-        console.log(`[userService] Fetching user: ${userId}`);
         const response = await apiClient.get<ApiResponse<UserResponse>>(`${baseURL}/${userId}`);
 
         if (response.data?.statusCode === 200 && response.data?.data) {
@@ -235,7 +226,6 @@ export async function getUserById(userId: string): Promise<User> {
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error(`[userService] Error fetching user ${userId}:`, error);
         const errorMessage = error.response?.data?.message
             || error.message
             || 'Không thể tải thông tin người dùng';
@@ -248,18 +238,15 @@ export async function getUserById(userId: string): Promise<User> {
  */
 export async function createUser(payload: CreateUserPayload): Promise<UserResponse> {
     try {
-        console.log('[userService] Creating user:', { email: payload.email, roleId: payload.roleId });
 
         const response = await apiClient.post<ApiResponse<UserResponse>>(baseURL, payload);
 
         if (response.data?.statusCode === 200 && response.data?.data) {
-            console.log('[userService] ✅ User created successfully');
             return response.data.data;
         }
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error('[userService] Error creating user:', error);
         const errorMessage = error.response?.data?.message
             || error.message
             || 'Không thể tạo người dùng';
@@ -297,7 +284,6 @@ export async function createUserServer(payload: CreateUserPayload): Promise<User
  */
 export async function updateUser(userId: string, payload: UpdateUserPayload): Promise<UserResponse> {
     try {
-        console.log(`[userService] Updating user ${userId}...`);
 
         const formData = new FormData();
         if (payload.fullName) formData.append('fullName', payload.fullName);
@@ -325,13 +311,11 @@ export async function updateUser(userId: string, payload: UpdateUserPayload): Pr
         );
 
         if (response.data?.statusCode === 200 && response.data?.data) {
-            console.log('[userService] ✅ User updated successfully');
             return response.data.data;
         }
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error(`[userService] Error updating user ${userId}:`, error);
         const errorMessage = error.response?.data?.message
             || error.message
             || 'Không thể cập nhật người dùng';

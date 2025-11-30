@@ -38,7 +38,6 @@ export async function createHotelAdminAction(formData: FormData) {
             }
         }
 
-        console.log('[createHotelAdminAction] Creating hotel admin:', { email, fullName, hotelId: hotelId || 'N/A' });
 
         const payload = {
             email: email.trim(),
@@ -54,7 +53,6 @@ export async function createHotelAdminAction(formData: FormData) {
         revalidatePath('/super-user-management');
         return { success: true };
     } catch (error: any) {
-        console.error('[createHotelAdminAction] Error:', error);
         return { error: error.message || 'Không thể tạo admin khách sạn. Vui lòng thử lại.' };
     }
 }
@@ -64,14 +62,12 @@ export async function createHotelAdminAction(formData: FormData) {
  */
 export async function deleteHotelAdminAction(userId: string) {
     try {
-        console.log(`[deleteHotelAdminAction] Deleting hotel admin ${userId}...`);
 
         await deleteHotelAdminServer(userId);
 
         revalidatePath('/super-user-management');
         return { success: true };
     } catch (error: any) {
-        console.error('[deleteHotelAdminAction] Error:', error);
         const errorMessage = error.message || 'Không thể xóa admin khách sạn. Vui lòng thử lại.';
         throw new Error(errorMessage);
     }

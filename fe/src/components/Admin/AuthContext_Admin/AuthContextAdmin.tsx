@@ -46,7 +46,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setImpersonatedUser(JSON.parse(storedImpersonatedUser));
             }
         } catch (error) {
-            console.error("Lỗi khi đọc dữ liệu từ localStorage", error);
             localStorage.clear();
         } finally {
             setIsLoading(false);
@@ -76,7 +75,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const { logoutAdmin } = await import('@/lib/AdminAPI/adminAuthService');
             await logoutAdmin();
         } catch (error) {
-            console.error('[AuthContext] Logout API error:', error);
         }
 
         localStorage.removeItem('adminUser');

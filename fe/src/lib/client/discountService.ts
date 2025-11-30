@@ -54,7 +54,6 @@ export async function getPublicDiscounts({
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error('[client/discountService] Error fetching public discounts:', error);
         // Trả về empty response nếu lỗi
         return {
             content: [],
@@ -111,7 +110,6 @@ export async function getTop3ExpiringDiscounts(): Promise<SuperDiscount[]> {
         // Nếu không đủ 3 mã trong tháng, lấy từ tất cả mã còn hiệu lực
         return validDiscounts.slice(0, 3);
     } catch (error: any) {
-        console.error('[client/discountService] Error fetching top 3 expiring discounts:', error);
         return [];
     }
 }

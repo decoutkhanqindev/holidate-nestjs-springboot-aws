@@ -40,11 +40,9 @@ export default function AdminTicketsPage() {
                             });
                         }
                     } catch (error) {
-                        console.warn("[AdminTicketsPage] Could not load full user info:", error);
                     }
                 }
             } catch (error) {
-                console.error("[AdminTicketsPage] Error loading user info:", error);
             }
         };
 
@@ -80,7 +78,6 @@ export default function AdminTicketsPage() {
                     setMyRequests([]);
                 }
             } catch (error) {
-                console.error("[AdminTicketsPage] Error loading my requests:", error);
                 setMyRequests([]);
             } finally {
                 setIsLoading(false);
@@ -134,7 +131,6 @@ export default function AdminTicketsPage() {
                 try {
                     allRequests = JSON.parse(existingRequests);
                 } catch (e) {
-                    console.error("[AdminTicketsPage] Error parsing existing requests:", e);
                 }
             }
 
@@ -159,7 +155,6 @@ export default function AdminTicketsPage() {
                 autoClose: 3000,
             });
         } catch (error) {
-            console.error("[AdminTicketsPage] Error submitting request:", error);
             toast.error("Không thể gửi yêu cầu. Vui lòng thử lại.", {
                 position: "top-right",
                 autoClose: 3000,
@@ -207,6 +202,8 @@ export default function AdminTicketsPage() {
         </div>
     );
 }
+
+
 
 
 

@@ -47,7 +47,6 @@ export default function UsersPage() {
                 if (userData.status === 'fulfilled' && userData.value) {
                     setCurrentUser(userData.value);
                 } else {
-                    console.warn('[UsersPage] Could not load current user, using fallback');
                     // Fallback: tạo một user tạm để page vẫn hoạt động
                     setCurrentUser({
                         id: 0,
@@ -64,12 +63,10 @@ export default function UsersPage() {
                     setUsers(usersData.value.data);
                     setTotalPages(usersData.value.totalPages);
                 } else {
-                    console.error('[UsersPage] Error loading users:', usersData.reason);
                     setUsers([]);
                     setTotalPages(0);
                 }
             } catch (error) {
-                console.error('[UsersPage] Error loading data:', error);
                 setUsers([]);
                 setTotalPages(0);
             } finally {
@@ -118,7 +115,6 @@ export default function UsersPage() {
                 const roleName = formData.get('roleName') as string;
                 if (roleName) {
                     localStorage.setItem(`user_role_${id}`, roleName);
-                    console.log(`[UsersPage] Updated roleName "${roleName}" for user ${id}`);
                 }
                 
                 toast.success('Cập nhật nhân viên thành công!', {
@@ -150,7 +146,6 @@ export default function UsersPage() {
                 if (newUser && roleName) {
                     // Lưu roleName vào localStorage với key là userId
                     localStorage.setItem(`user_role_${newUser.id}`, roleName);
-                    console.log(`[UsersPage] Saved roleName "${roleName}" for user ${newUser.id}`);
                 }
                 
                 toast.success('Tạo nhân viên thành công!', {
@@ -165,7 +160,6 @@ export default function UsersPage() {
             // Đóng modal
             handleCloseModal();
         } catch (error: any) {
-            console.error('[UsersPage] Error saving user:', error);
             toast.error(error.message || 'Có lỗi xảy ra. Vui lòng thử lại.', {
                 position: "top-right",
                 autoClose: 3000,
@@ -191,7 +185,6 @@ export default function UsersPage() {
             setUsers(response.data);
             setTotalPages(response.totalPages);
         } catch (error: any) {
-            console.error('[UsersPage] Error deleting user:', error);
             toast.error(error.message || 'Không thể xóa người dùng. Vui lòng thử lại.', {
                 position: "top-right",
                 autoClose: 3000,

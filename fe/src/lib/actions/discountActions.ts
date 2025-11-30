@@ -60,7 +60,6 @@ export async function createDiscountAction(formData: FormData) {
             return { error: 'Số lần đã sử dụng phải là số không âm.' };
         }
 
-        console.log('[createDiscountAction] Creating discount:', { code, description });
 
         const payload = {
             code: code.trim(),
@@ -81,7 +80,6 @@ export async function createDiscountAction(formData: FormData) {
         revalidatePath('/super-discounts');
         return { success: true };
     } catch (error: any) {
-        console.error('[createDiscountAction] Error:', error);
         return { error: error.message || 'Không thể tạo mã giảm giá. Vui lòng thử lại.' };
     }
 }
@@ -106,10 +104,8 @@ export async function updateDiscountAction(formData: FormData) {
             const response = await serverClient.get<typeof ApiResponse<any>>(`/discounts/${id}`);
             if (response.data?.statusCode === 200 && response.data?.data) {
                 currentDiscount = response.data.data;
-                console.log(`[updateDiscountAction] Current discount loaded successfully`);
             }
         } catch (error) {
-            console.error(`[updateDiscountAction] Error fetching current discount:`, error);
             // Tiếp tục với update nếu không lấy được
         }
 
@@ -304,14 +300,12 @@ export async function updateDiscountAction(formData: FormData) {
         console.log(`[updateDiscountAction] Payload fields count:`, Object.keys(payload).length);
         console.log(`[updateDiscountAction] Payload fields:`, Object.keys(payload));
 
-        console.log(`[updateDiscountAction] Updating discount ${id}:`, payload);
 
         await updateDiscountServer(id, payload);
 
         revalidatePath('/super-discounts');
         return { success: true };
     } catch (error: any) {
-        console.error('[updateDiscountAction] Error:', error);
         return { error: error.message || 'Không thể cập nhật mã giảm giá. Vui lòng thử lại.' };
     }
 }
@@ -321,14 +315,12 @@ export async function updateDiscountAction(formData: FormData) {
  */
 export async function deleteDiscountAction(id: string) {
     try {
-        console.log(`[deleteDiscountAction] Deleting discount ${id}...`);
 
         await deleteDiscountServer(id);
 
         revalidatePath('/super-discounts');
         return { success: true };
     } catch (error: any) {
-        console.error('[deleteDiscountAction] Error:', error);
         const errorMessage = error.message || 'Không thể xóa mã giảm giá. Vui lòng thử lại.';
         throw new Error(errorMessage);
     }

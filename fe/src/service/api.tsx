@@ -19,25 +19,14 @@ apiClient.interceptors.request.use(
     (config) => {
         // Log request cho logout
         if (config.url?.includes('/auth/logout')) {
-            console.log("[apiClient] 🔴 LOGOUT REQUEST INTERCEPTOR");
-            console.log("[apiClient] - URL:", config.url);
-            console.log("[apiClient] - Method:", config.method);
-            console.log("[apiClient] - Data:", config.data);
-            console.log("[apiClient] - withCredentials:", config.withCredentials);
         }
         
         // Log request cho /auth/me
         if (config.url?.includes('/auth/me')) {
-            console.log("[apiClient] 📋 /auth/me REQUEST INTERCEPTOR");
-            console.log("[apiClient] - URL:", config.url);
-            console.log("[apiClient] - withCredentials:", config.withCredentials);
             const token = localStorage.getItem('accessToken');
             const isOAuthLogin = typeof window !== 'undefined' && sessionStorage.getItem('oauthLoginInProgress') === 'true';
-            console.log("[apiClient] - Token trong localStorage:", token ? "CÓ" : "KHÔNG CÓ");
-            console.log("[apiClient] - Đang OAuth login:", isOAuthLogin ? "CÓ" : "KHÔNG");
             console.log("[apiClient] - Lưu ý: /auth/me có thể dùng cookie (OAuth), không cần Authorization header");
             if (isOAuthLogin) {
-                console.log("[apiClient] ⚠️ ĐANG OAUTH LOGIN - KHÔNG gửi Authorization header, chỉ dùng cookie");
             }
         }
         

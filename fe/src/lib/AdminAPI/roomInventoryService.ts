@@ -55,7 +55,6 @@ export const getRoomInventories = async (
     params: GetRoomInventoriesParams
 ): Promise<PaginatedRoomInventoriesResult> => {
     try {
-        console.log(`[roomInventoryService] Fetching inventories for roomId: ${params.roomId}, from ${params.startDate} to ${params.endDate}`);
 
         // Backend sử dụng kebab-case query params
         const queryParams: any = {
@@ -84,7 +83,6 @@ export const getRoomInventories = async (
         );
 
         if (response.data.statusCode === 200 && response.data.data) {
-            console.log(`[roomInventoryService] Received ${response.data.data.content.length} inventories`);
             return {
                 inventories: response.data.data.content,
                 page: response.data.data.page,
@@ -100,7 +98,6 @@ export const getRoomInventories = async (
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error(`[roomInventoryService] Error fetching inventories:`, error);
         const errorMessage = error.response?.data?.message || error.message || 'Không thể tải thông tin tồn phòng';
         throw new Error(errorMessage);
     }
@@ -128,7 +125,6 @@ export const getTodayRoomInventory = async (
 
         return null;
     } catch (error: any) {
-        console.error(`[roomInventoryService] Error fetching today inventory:`, error);
         return null;
     }
 };
@@ -150,7 +146,6 @@ export const getTodayInventoriesForRooms = async (
                 inventoryMap.set(roomId, inventory);
             }
         } catch (error) {
-            console.error(`[roomInventoryService] Error fetching inventory for room ${roomId}:`, error);
         }
     });
 
@@ -170,7 +165,6 @@ export const createRoomInventory = async (
     request: CreateRoomInventoryRequest
 ): Promise<PaginatedRoomInventoriesResult> => {
     try {
-        console.log(`[roomInventoryService] Creating inventory for roomId: ${request.roomId}, days: ${request.days}`);
 
         const response = await apiClient.post<ApiResponse<PaginatedRoomInventoryResponse>>(
             baseURL,
@@ -181,7 +175,6 @@ export const createRoomInventory = async (
         );
 
         if (response.data.statusCode === 200 && response.data.data) {
-            console.log(`[roomInventoryService] Created inventory successfully`);
             return {
                 inventories: response.data.data.content,
                 page: response.data.data.page,
@@ -197,7 +190,6 @@ export const createRoomInventory = async (
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error(`[roomInventoryService] Error creating inventory:`, error);
         const errorMessage = error.response?.data?.message || error.message || 'Không thể tạo tồn phòng';
         throw new Error(errorMessage);
     }

@@ -6,7 +6,6 @@ import { createRoomServer, type CreateRoomPayload } from '@/lib/AdminAPI/roomSer
 export async function createRoomAction(formData: FormData) {
     // Log ở client-side để thấy trong browser console
     console.log("=".repeat(80));
-    console.log("[createRoomAction] ===== CLIENT-SIDE: Starting room creation =====");
     console.log("[createRoomAction] FormData entries (client-side):");
 
     const clientFormDataEntries: Array<{ key: string; value: string }> = [];
@@ -24,7 +23,6 @@ export async function createRoomAction(formData: FormData) {
         }
     }
     clientFormDataEntries.forEach((entry, index) => {
-        console.log(`  [${index + 1}] ${entry.key} = ${entry.value}`);
     });
     console.log("=".repeat(80));
 
@@ -66,14 +64,12 @@ export async function createRoomAction(formData: FormData) {
         }
 
         // Tìm bedType ID từ tên (tìm trong tất cả hotels)
-        console.log('[createRoomAction] Finding bedType ID for name:', bedTypeName);
         const { findOrCreateBedTypeByName } = await import('@/lib/AdminAPI/bedTypeService');
         let bedTypeId: string;
 
         try {
             bedTypeId = await findOrCreateBedTypeByName(bedTypeName.trim(), hotelId.trim());
         } catch (bedTypeError: any) {
-            console.error('[createRoomAction] Error finding bedType:', bedTypeError);
             return { error: bedTypeError.message || `Không tìm thấy loại giường "${bedTypeName}". Vui lòng sử dụng loại giường có sẵn.` };
         }
 
@@ -128,7 +124,6 @@ export async function createRoomAction(formData: FormData) {
         };
 
         // Log payload trước khi gọi server
-        console.log("[createRoomAction] ===== CLIENT-SIDE: Payload before calling server =====");
         console.log("[createRoomAction] Payload:", {
             hotelId,
             name,
@@ -143,13 +138,11 @@ export async function createRoomAction(formData: FormData) {
             amenityIdsCount: validAmenityIds.length,
         });
         console.log("=".repeat(80));
-        console.log("[createRoomAction] NOTE: Server-side logs will appear in TERMINAL, not browser console!");
         console.log("=".repeat(80));
 
         // Gọi API (server-side)
         await createRoomServer(payload);
 
-        console.log("[createRoomAction] ===== CLIENT-SIDE: Room created successfully =====");
         revalidatePath("/admin-rooms");
 
         // Trả về success thay vì redirect ngay - để client có thể hiển thị toast trước
@@ -162,10 +155,6 @@ export async function createRoomAction(formData: FormData) {
         }
 
         console.error("=".repeat(80));
-        console.error("[createRoomAction] ===== CLIENT-SIDE ERROR =====");
-        console.error("[createRoomAction] Error:", error);
-        console.error("[createRoomAction] Error message:", error.message);
-        console.error("[createRoomAction] NOTE: Detailed server-side logs are in TERMINAL!");
         console.error("=".repeat(80));
         return { error: error.message || "Không thể tạo phòng. Vui lòng thử lại." };
     }
@@ -173,8 +162,6 @@ export async function createRoomAction(formData: FormData) {
 
 export async function updateRoomAction(roomId: string, formData: FormData) {
     console.log("=".repeat(80));
-    console.log("[updateRoomAction] ===== CLIENT-SIDE: Starting room update =====");
-    console.log("[updateRoomAction] Room ID:", roomId);
     console.log("[updateRoomAction] FormData entries (client-side):");
 
     const clientFormDataEntries: Array<{ key: string; value: string }> = [];
@@ -192,7 +179,6 @@ export async function updateRoomAction(roomId: string, formData: FormData) {
         }
     }
     clientFormDataEntries.forEach((entry, index) => {
-        console.log(`  [${index + 1}] ${entry.key} = ${entry.value}`);
     });
     console.log("=".repeat(80));
 
@@ -276,16 +262,13 @@ export async function updateRoomAction(roomId: string, formData: FormData) {
             // Cần hotelId để resolve bedTypeId
             // Nếu không có hotelId trong form, có thể lấy từ room data đã load
             if (!hotelId || !hotelId.trim()) {
-                console.warn('[updateRoomAction] No hotelId in form, cannot resolve bedTypeId');
                 // Có thể bỏ qua bedTypeId nếu không có hotelId
                 // Hoặc lấy từ room data nếu có
             } else {
-                console.log('[updateRoomAction] Finding bedType ID for name:', bedTypeName);
                 const { findOrCreateBedTypeByName } = await import('@/lib/AdminAPI/bedTypeService');
                 try {
                     bedTypeId = await findOrCreateBedTypeByName(bedTypeName.trim(), hotelId.trim());
                 } catch (bedTypeError: any) {
-                    console.error('[updateRoomAction] Error finding bedType:', bedTypeError);
                     return { error: bedTypeError.message || `Không tìm thấy loại giường "${bedTypeName}". Vui lòng sử dụng loại giường có sẵn.` };
                 }
             }
@@ -388,7 +371,6 @@ export async function updateRoomAction(roomId: string, formData: FormData) {
         }
 
         // Log payload trước khi gọi server
-        console.log("[updateRoomAction] ===== CLIENT-SIDE: Payload before calling server =====");
         console.log("[updateRoomAction] Payload:", {
             roomId,
             hotelId,
@@ -409,7 +391,6 @@ export async function updateRoomAction(roomId: string, formData: FormData) {
         const { updateRoomServer } = await import('@/lib/AdminAPI/roomService');
         await updateRoomServer(roomId, payload);
 
-        console.log("[updateRoomAction] ===== CLIENT-SIDE: Room updated successfully =====");
         revalidatePath("/admin-rooms");
         revalidatePath(`/admin-rooms/${roomId}`);
 
@@ -424,9 +405,6 @@ export async function updateRoomAction(roomId: string, formData: FormData) {
         }
 
         console.error("=".repeat(80));
-        console.error("[updateRoomAction] ===== CLIENT-SIDE ERROR =====");
-        console.error("[updateRoomAction] Error:", error);
-        console.error("[updateRoomAction] Error message:", error.message);
         console.error("=".repeat(80));
         return { error: error.message || "Không thể cập nhật phòng. Vui lòng thử lại." };
     }
@@ -434,15 +412,12 @@ export async function updateRoomAction(roomId: string, formData: FormData) {
 
 export async function deleteRoomAction(roomId: string) {
     try {
-        console.log("[deleteRoomAction] Deleting room:", roomId);
         const { deleteRoomServer } = await import('@/lib/AdminAPI/roomService');
         await deleteRoomServer(roomId);
 
-        console.log("[deleteRoomAction] Room deleted successfully");
         revalidatePath("/admin-rooms");
         // Không redirect, để component tự refresh
     } catch (error: any) {
-        console.error("[deleteRoomAction] Error:", error);
         throw new Error(error.message || "Không thể xóa phòng. Vui lòng thử lại.");
     }
 }

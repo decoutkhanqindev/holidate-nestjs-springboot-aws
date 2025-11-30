@@ -75,7 +75,6 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
                 const bedTypes = await getAvailableBedTypes();
                 setAvailableBedTypes(bedTypes);
             } catch (error) {
-                console.error('[RoomForm] Error loading bedTypes:', error);
             } finally {
                 setIsLoadingBedTypes(false);
             }
@@ -155,7 +154,6 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
                 setAmenities(amenitiesData);
                 setAmenityCategories(categoriesData);
 
-                console.log(`[RoomForm] Loaded ${amenitiesData.length} amenities and ${categoriesData.length} categories`);
 
                 // Tự động chọn các tiện ích phổ biến (miễn phí) nếu có trong database
                 if (!isEditing && amenitiesData.length > 0) {
@@ -171,11 +169,9 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
 
                     if (commonAmenityIds.length > 0) {
                         setSelectedAmenityIds(commonAmenityIds);
-                        console.log(`[RoomForm] Auto-selected ${commonAmenityIds.length} common amenities:`, commonAmenityIds);
                     }
                 }
             } catch (error) {
-                console.error("[RoomForm] Error loading data:", error);
             } finally {
                 setIsLoadingAmenities(false);
             }
@@ -291,7 +287,6 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
             setSelectedCategoryId('');
             setShowCreateAmenityModal(false);
         } catch (error: any) {
-            console.error("[RoomForm] Error creating amenity:", error);
             setCreateAmenityError(error.message || 'Không thể tạo tiện ích mới');
         } finally {
             setIsCreatingAmenity(false);
@@ -326,7 +321,6 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
             setNewCategoryDescription('');
             setShowCreateCategoryModal(false);
         } catch (error: any) {
-            console.error("[RoomForm] Error creating category:", error);
             setCreateCategoryError(error.message || 'Không thể tạo danh mục mới');
         } finally {
             setIsCreatingCategory(false);
@@ -339,7 +333,6 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
 
         // Log ra browser console
         console.log("=".repeat(80));
-        console.log("[RoomForm] ===== CLIENT-SIDE: Form submitted =====");
 
         const formData = new FormData(event.currentTarget);
 
@@ -348,7 +341,6 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
         if (priceInput && priceDisplay) {
             const parsedPrice = parseNumber(priceDisplay);
             formData.set('basePricePerNight', parsedPrice);
-            console.log("[RoomForm] Price formatted:", priceDisplay, "-> parsed:", parsedPrice);
         }
 
         const formDataEntries: Array<{ key: string; value: string }> = [];
@@ -369,12 +361,8 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
 
         console.log("[RoomForm] FormData entries (client-side):");
         formDataEntries.forEach((entry, index) => {
-            console.log(`  [${index + 1}] ${entry.key} = ${entry.value}`);
         });
-        console.log("[RoomForm] Total fields:", formDataEntries.length);
         console.log("=".repeat(80));
-        console.log("[RoomForm] NOTE: Server-side logs will appear in TERMINAL, not browser console!");
-        console.log("[RoomForm] Calling server action now...");
 
         // Gọi server action
         await formAction(formData);

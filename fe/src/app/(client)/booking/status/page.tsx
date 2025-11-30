@@ -62,7 +62,6 @@ function ConfirmationComponent() {
                     } else {
                         // Trường hợp "race condition": thanh toán thành công nhưng DB chưa cập nhật
                         // Ta vẫn hiển thị thành công nhưng có thể thông báo cho người dùng
-                        console.warn("Thanh toán thành công nhưng trạng thái DB là:", data.status);
                         setBookingDetails(data); // Vẫn hiển thị thông tin
                     }
                 } catch (err: any) {

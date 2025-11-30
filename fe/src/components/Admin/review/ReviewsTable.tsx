@@ -127,7 +127,6 @@ function RoomImageDisplay({ roomId, roomName }: { roomId: string; roomName: stri
                     }
                 }
             } catch (error) {
-                console.error('[RoomImageDisplay] Error fetching room image:', error);
             } finally {
                 setIsLoading(false);
             }

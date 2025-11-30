@@ -83,7 +83,6 @@ export default function SuperAdminHeader({ onToggleSidebar }: SuperAdminHeaderPr
                     localStorage.setItem("supportRequests", JSON.stringify(mockRequests));
                 }
             } catch (error) {
-                console.error("[SuperAdminHeader] Error loading support requests:", error);
             }
         };
 

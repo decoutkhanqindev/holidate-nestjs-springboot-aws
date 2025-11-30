@@ -76,7 +76,6 @@ export function useHotelReviews(hotelId: string | null | undefined): HotelReview
                 });
             } catch (error: any) {
                 if (cancelled) return;
-                console.error('[useHotelReviews] Error fetching reviews:', error);
                 // Không hiển thị lỗi, chỉ trả về stats rỗng
                 setStats({
                     averageScore: 0,

@@ -27,9 +27,7 @@ export default function UserForm({ user, onSave, onCancel }: UserFormProps) {
         const loadRoles = async () => {
             try {
                 setIsLoadingRoles(true);
-                console.log('[UserForm] Loading roles...');
                 const rolesData = await getRoles();
-                console.log('[UserForm] Roles loaded:', rolesData);
 
                 // Filter: Admin khách sạn chỉ có thể tạo nhân viên
                 // Tìm role HOTEL_STAFF hoặc các biến thể, nếu không có thì lấy role đầu tiên (trừ ADMIN và SUPER_ADMIN)
@@ -53,7 +51,6 @@ export default function UserForm({ user, onSave, onCancel }: UserFormProps) {
                 }
                 
                 if (selectedRole) {
-                    console.log('[UserForm] ✅ Selected role:', selectedRole);
                     setRoles([selectedRole]);
                     setUserRoleId(selectedRole.id);
                 } else {
@@ -77,13 +74,11 @@ export default function UserForm({ user, onSave, onCancel }: UserFormProps) {
                     }
                 }
             } catch (error) {
-                console.error('[UserForm] ❌ Error loading roles:', error);
                 // Nếu lỗi, vẫn set isLoadingRoles = false để không bị disable button mãi
                 // Nhưng không set userRoleId, button sẽ bị disable vì không có roleId
                 setUserRoleId('');
             } finally {
                 setIsLoadingRoles(false);
-                console.log('[UserForm] isLoadingRoles set to false, userRoleId:', userRoleId);
             }
         };
 
@@ -186,7 +181,6 @@ export default function UserForm({ user, onSave, onCancel }: UserFormProps) {
                     value={roleName}
                     onChange={(e) => {
                         const value = e.target.value;
-                        console.log('[UserForm] roleName changed:', value);
                         setRoleName(value);
                     }}
                     placeholder="VD: Nhân viên lễ tân, Bảo trì, Nhân viên vệ sinh..."
@@ -240,7 +234,6 @@ export default function UserForm({ user, onSave, onCancel }: UserFormProps) {
                             }
                             return false;
                         }
-                        console.log('[UserForm] ✅ Button clicked, submitting form');
                     }}
                 >
                     {isLoadingRoles ? 'Đang tải...' : (isEditing ? 'Cập nhật' : 'Thêm mới')}

@@ -52,7 +52,6 @@ export default function ManageRoomsPage() {
                 const provincesData = await getProvinces();
                 setProvinces(provincesData);
             } catch (error) {
-                console.error("[ManageRoomsPage] Error loading locations:", error);
             }
         };
         loadLocations();
@@ -72,7 +71,6 @@ export default function ManageRoomsPage() {
                 setCities(citiesData);
                 setSelectedCityId(''); // Reset city khi đổi province
             } catch (error) {
-                console.error("[ManageRoomsPage] Error loading cities:", error);
             }
         };
         loadCities();
@@ -98,7 +96,6 @@ export default function ManageRoomsPage() {
         
         if (!filterChanged && hotels.length > 0) {
             // Filter không đổi và đã có data, không cần fetch lại
-            console.log("[ManageRoomsPage] Filter không đổi, bỏ qua fetch hotels");
             return;
         }
         
@@ -131,7 +128,6 @@ export default function ManageRoomsPage() {
                     roleName // Truyền roleName để xác định có cần filter không
                 );
                 
-                console.log("[ManageRoomsPage] Received hotels:", paginatedData.hotels.length);
                 console.log("[ManageRoomsPage] Hotel names:", paginatedData.hotels.map(h => h.name).slice(0, 5));
                 
                 // Update filter tracking
@@ -155,7 +151,6 @@ export default function ManageRoomsPage() {
                     }
                 }
             } catch (error) {
-                console.error("[ManageRoomsPage] Error fetching hotels:", error);
             } finally {
                 setIsLoadingHotels(false);
             }
@@ -174,13 +169,11 @@ export default function ManageRoomsPage() {
         
         // Nếu có refresh param hoặc đã quá 5 giây từ lần fetch cuối, force refresh
         if (shouldRefresh || (now - lastFetchTimestamp.current) > 5000) {
-            console.log("[ManageRoomsPage] Force refreshing rooms data", { shouldRefresh, timeSinceLastFetch: now - lastFetchTimestamp.current });
         }
 
         const fetchRooms = async () => {
             try {
                 setIsLoadingRooms(true);
-                console.log("[ManageRoomsPage] Fetching rooms for hotel:", selectedHotelId, "page:", currentPage, "refresh:", shouldRefresh);
                 const data = await getRoomsByHotelId(selectedHotelId, currentPage, 10);
                 console.log("[ManageRoomsPage] Received rooms data:", {
                     totalRooms: data.rooms.length,
@@ -201,7 +194,6 @@ export default function ManageRoomsPage() {
                     window.history.replaceState({}, '', url.toString());
                 }
             } catch (error) {
-                console.error("[ManageRoomsPage] Error fetching rooms:", error);
             } finally {
                 setIsLoadingRooms(false);
             }
@@ -346,7 +338,6 @@ export default function ManageRoomsPage() {
                                             setRoomsData(data);
                                             lastFetchTimestamp.current = Date.now();
                                         } catch (error) {
-                                            console.error("[ManageRoomsPage] Error refreshing rooms:", error);
                                         } finally {
                                             setIsLoadingRooms(false);
                                         }

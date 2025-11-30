@@ -90,32 +90,25 @@ function mapHotelResponseToHotel(response: HotelResponse): Hotel {
     // Lấy ảnh đầu tiên làm imageUrl
     let imageUrl: string | undefined = undefined;
 
-    console.log("[mapHotelResponseToHotel] Checking photos:", response.photos);
 
     if (response.photos && Array.isArray(response.photos) && response.photos.length > 0) {
         const firstPhoto = response.photos[0];
-        console.log("[mapHotelResponseToHotel] First photo:", firstPhoto);
 
         // Kiểm tra nếu photos có cấu trúc { id, url }
         if (typeof firstPhoto === 'object' && firstPhoto !== null && 'url' in firstPhoto) {
             imageUrl = (firstPhoto as any).url;
-            console.log("[mapHotelResponseToHotel] Extracted imageUrl from photo.url:", imageUrl);
         }
         // Nếu photos có cấu trúc nested như { id, name, photos: [{ id, url }] }
         else if (typeof firstPhoto === 'object' && firstPhoto !== null && 'photos' in firstPhoto && Array.isArray((firstPhoto as any).photos)) {
             const nestedPhotos = (firstPhoto as any).photos as Array<{ id: string; url: string }>;
             if (nestedPhotos.length > 0 && nestedPhotos[0].url) {
                 imageUrl = nestedPhotos[0].url;
-                console.log("[mapHotelResponseToHotel] Extracted imageUrl from nested photos:", imageUrl);
             }
         } else {
-            console.warn("[mapHotelResponseToHotel] Unexpected photo structure:", firstPhoto);
         }
     } else {
-        console.log("[mapHotelResponseToHotel] No photos found or empty photos array");
     }
 
-    console.log("[mapHotelResponseToHotel] Final imageUrl:", imageUrl);
 
     // Build địa chỉ đầy đủ từ location (KHÔNG dùng response.address để tránh lặp)
     // Backend có thể đã tự động ghép address từ location, nên chỉ dùng location fields
@@ -241,7 +234,6 @@ export const getHotels = async (
     roleName?: string // Thêm roleName để biết có cần filter theo owner không
 ): Promise<PaginatedHotelData> => {
     try {
-        console.log(`[hotelService] Fetching hotels - page: ${page}, size: ${size}, cityId: ${cityId}, provinceId: ${provinceId}, userId: ${userId}, role: ${roleName}`);
 
         const params: any = {
             page,
@@ -316,7 +308,6 @@ export const getHotels = async (
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error("[hotelService] Error fetching hotels:", error);
         throw new Error(error.response?.data?.message || 'Không thể tải danh sách khách sạn');
     }
 };
@@ -349,7 +340,6 @@ export type { HotelPolicyResponse };
  */
 export const getHotelByIdServer = async (id: string): Promise<Hotel | null> => {
     try {
-        console.log(`[hotelService] [SERVER] Fetching hotel detail with id: ${id}`);
 
         const serverClient = await createServerApiClient();
         const response = await serverClient.get<ApiResponse<HotelDetailsResponse>>(
@@ -370,14 +360,12 @@ export const getHotelByIdServer = async (id: string): Promise<Hotel | null> => {
             // Map hotel với partner info
             const mappedHotel = mapHotelResponseToHotel(detailData);
             
-            console.log(`[hotelService] [SERVER] Mapped hotel with ownerId: ${mappedHotel.ownerId}`);
             
             return mappedHotel;
         }
 
         return null;
     } catch (error: any) {
-        console.error(`[hotelService] [SERVER] Error fetching hotel ${id}:`, error);
         if (error.response?.status === 404) {
             return null;
         }
@@ -395,7 +383,6 @@ export const getHotelByIdServer = async (id: string): Promise<Hotel | null> => {
  */
 export const getHotelById = async (id: string): Promise<Hotel | null> => {
     try {
-        console.log(`[hotelService] [CLIENT] Fetching hotel detail with id: ${id}`);
 
         const response = await apiClient.get<ApiResponse<HotelDetailsResponse>>(
             `${baseURL}/${id}`
@@ -417,14 +404,12 @@ export const getHotelById = async (id: string): Promise<Hotel | null> => {
             
             // Nếu có partner trong detail response, lưu vào hotel object (tạm thời dùng ownerId để lưu)
             // Hoặc có thể extend Hotel type để có partnerInfo
-            console.log(`[hotelService] [CLIENT] Mapped hotel with ownerId: ${mappedHotel.ownerId}`);
             
             return mappedHotel;
         }
 
         return null;
     } catch (error: any) {
-        console.error(`[hotelService] [CLIENT] Error fetching hotel ${id}:`, error);
         if (error.response?.status === 404) {
             return null;
         }
@@ -437,7 +422,6 @@ export const getHotelById = async (id: string): Promise<Hotel | null> => {
  */
 export const getHotelDetailById = async (id: string): Promise<HotelDetailsResponse | null> => {
     try {
-        console.log(`[hotelService] Fetching hotel detail with policy and amenities for id: ${id}`);
 
         const response = await apiClient.get<ApiResponse<HotelDetailsResponse>>(
             `${baseURL}/${id}`
@@ -449,7 +433,6 @@ export const getHotelDetailById = async (id: string): Promise<HotelDetailsRespon
 
         return null;
     } catch (error: any) {
-        console.error(`[hotelService] Error fetching hotel detail ${id}:`, error);
         if (error.response?.status === 404) {
             return null;
         }
@@ -481,8 +464,6 @@ interface CreateHotelPayload {
 export const createHotel = async (payload: CreateHotelPayload): Promise<Hotel> => {
     try {
         console.log("[hotelService] Creating new hotel with payload:", JSON.stringify(payload, null, 2));
-        console.log("[hotelService] API URL:", baseURL);
-        console.log("[hotelService] Full URL:", `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}${baseURL}`);
 
         const response = await apiClient.post<ApiResponse<HotelResponse>>(
             baseURL,
@@ -499,7 +480,6 @@ export const createHotel = async (payload: CreateHotelPayload): Promise<Hotel> =
         });
 
         if (response.data.statusCode === 200 && response.data.data) {
-            console.log("[hotelService] Hotel created successfully:", response.data.data.id);
             return mapHotelResponseToHotel(response.data.data);
         }
 
@@ -513,13 +493,6 @@ export const createHotel = async (payload: CreateHotelPayload): Promise<Hotel> =
 
         throw new Error(response.data?.message || 'Invalid response from server');
     } catch (error: any) {
-        console.error("[hotelService] Error creating hotel - Full error:", error);
-        console.error("[hotelService] Error type:", error.constructor?.name);
-        console.error("[hotelService] Error response:", error.response);
-        console.error("[hotelService] Error response data:", error.response?.data);
-        console.error("[hotelService] Error response status:", error.response?.status);
-        console.error("[hotelService] Error response headers:", error.response?.headers);
-        console.error("[hotelService] Error config:", error.config);
 
         // Extract detailed error message
         const errorMessage = error.response?.data?.message
@@ -528,7 +501,6 @@ export const createHotel = async (payload: CreateHotelPayload): Promise<Hotel> =
             || error.message
             || 'Không thể tạo khách sạn';
 
-        console.error("[hotelService] Final error message:", errorMessage);
 
         throw new Error(errorMessage);
     }
@@ -543,12 +515,10 @@ export const createHotel = async (payload: CreateHotelPayload): Promise<Hotel> =
 export const createHotelServer = async (payload: CreateHotelPayload, images: File[] = []): Promise<Hotel> => {
     try {
         console.log("[hotelService] Creating new hotel (server) with payload:", JSON.stringify(payload, null, 2));
-        console.log("[hotelService] Images to upload:", images.length);
 
         const serverClient = await createServerApiClient();
 
         const url = baseURL;
-        console.log("[hotelService] Making POST request to:", url);
 
         let response;
         try {
@@ -561,7 +531,6 @@ export const createHotelServer = async (payload: CreateHotelPayload, images: Fil
             // Nếu có ảnh, update hotel với ảnh sau khi tạo thành công
             if (images.length > 0 && response.data?.data?.id) {
                 const hotelId = response.data.data.id;
-                console.log(`[hotelService] Hotel created with ID: ${hotelId}, now updating with ${images.length} images`);
                 
                 try {
                     // Tạo FormData cho update
@@ -591,15 +560,11 @@ export const createHotelServer = async (payload: CreateHotelPayload, images: Fil
                         );
                         if (hotelCategory) {
                             photoCategoryId = hotelCategory.id;
-                            console.log(`[hotelService] Found photo category "Khách sạn": ${photoCategoryId}`);
                         } else if (categories.length > 0) {
                             // Fallback: dùng category đầu tiên
                             photoCategoryId = categories[0].id;
-                            console.warn(`[hotelService] Could not find "Khách sạn" category, using first category: ${categories[0].name}`);
                         }
                     } catch (error) {
-                        console.error('[hotelService] Error fetching photo categories:', error);
-                        console.warn('[hotelService] Will proceed without photoCategoryId - backend may reject with validation error');
                     }
 
                     // Append các ảnh - Backend yêu cầu format: photosToAdd[0].files[0], photosToAdd[0].files[1], ...
@@ -611,20 +576,15 @@ export const createHotelServer = async (payload: CreateHotelPayload, images: Fil
                     // Backend yêu cầu categoryId (@NotBlank trong PhotoCreationRequest)
                     if (photoCategoryId) {
                         updateFormData.append('photosToAdd[0].categoryId', photoCategoryId);
-                        console.log(`[hotelService] Using photo category ID: ${photoCategoryId}`);
                     } else {
-                        console.error('[hotelService] WARNING: No photoCategoryId - backend will reject with validation error');
                     }
 
                     // Update hotel với ảnh
-                    console.log(`[hotelService] Updating hotel ${hotelId} with ${images.length} images`);
                     const updateResponse = await serverClient.put(`${url}/${hotelId}`, updateFormData);
-                    console.log(`[hotelService] Hotel updated successfully with images`);
                     
                     // Cập nhật response với data từ update (có ảnh)
                     response = updateResponse;
                 } catch (updateError: any) {
-                    console.error('[hotelService] Error updating hotel with images:', updateError);
                     console.error('[hotelService] Update error details:', {
                         status: updateError.response?.status,
                         statusText: updateError.response?.statusText,
@@ -673,20 +633,15 @@ export const createHotelServer = async (payload: CreateHotelPayload, images: Fil
         }
 
         // Log toàn bộ response để debug (không dùng JSON.stringify vì có circular reference)
-        console.log("[hotelService] response.data:", response.data);
-        console.log("[hotelService] response.data type:", typeof response.data);
 
         // Chỉ stringify response.data (không stringify toàn bộ response object)
         try {
             console.log("[hotelService] response.data stringified:", JSON.stringify(response.data, null, 2));
         } catch (e) {
-            console.log("[hotelService] Cannot stringify response.data:", e);
         }
 
         // Kiểm tra response structure
         if (!response || !response.data) {
-            console.error("[hotelService] Response or response.data is missing");
-            console.error("[hotelService] Full response object:", response);
             throw new Error('API response không có dữ liệu');
         }
 
@@ -694,13 +649,10 @@ export const createHotelServer = async (payload: CreateHotelPayload, images: Fil
         const responseData = response.data as any;
 
         if (responseData.statusCode !== 200) {
-            console.error("[hotelService] API returned non-200 statusCode:", responseData.statusCode);
-            console.error("[hotelService] Response message:", responseData.message);
             throw new Error(responseData.message || `API trả về statusCode ${responseData.statusCode}`);
         }
 
         if (!responseData.data) {
-            console.error("[hotelService] Response data.data is null/undefined");
             console.error("[hotelService] Full response data:", JSON.stringify(responseData, null, 2));
             throw new Error(responseData.message || 'API trả về data null');
         }
@@ -710,7 +662,6 @@ export const createHotelServer = async (payload: CreateHotelPayload, images: Fil
         return mapHotelResponseToHotel(responseData.data);
     } catch (error: any) {
         console.error("[hotelService] Error creating hotel (server):", error);
-        console.error("[hotelService] Error stack:", error.stack);
         console.error("[hotelService] Error details:", {
             message: error.message,
             responseStatus: error.response?.status,
@@ -743,9 +694,6 @@ export const createHotelServer = async (payload: CreateHotelPayload, images: Fil
             errorMessage = error.message;
         }
         
-        console.error("[hotelService] Final error message:", errorMessage);
-        console.error("[hotelService] Response status:", error.response?.status);
-        console.error("[hotelService] Response data:", error.response?.data);
         
         throw new Error(errorMessage);
     }
@@ -757,7 +705,6 @@ export const createHotelServer = async (payload: CreateHotelPayload, images: Fil
  */
 export const updateHotel = async (id: string, formData: FormData): Promise<Hotel> => {
     try {
-        console.log(`[hotelService] Updating hotel ${id}...`);
 
         // KHÔNG set Content-Type header - axios sẽ tự động set với boundary cho FormData
         const response = await apiClient.put<ApiResponse<HotelResponse>>(
@@ -766,13 +713,11 @@ export const updateHotel = async (id: string, formData: FormData): Promise<Hotel
         );
 
         if (response.data.statusCode === 200 && response.data.data) {
-            console.log("[hotelService] Hotel updated successfully:", response.data.data.id);
             return mapHotelResponseToHotel(response.data.data);
         }
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error(`[hotelService] Error updating hotel ${id}:`, error);
         throw new Error(error.response?.data?.message || 'Không thể cập nhật khách sạn');
     }
 };
@@ -834,9 +779,7 @@ export const updateHotelServer = async (id: string, formData: FormData): Promise
             const validStatuses = ['active', 'inactive', 'maintenance', 'closed'];
             if (validStatuses.includes(mappedStatus)) {
                 updateFormData.append('status', mappedStatus);
-                console.log(`[hotelService] Status: ${statusStr} -> ${mappedStatus}`);
             } else {
-                console.warn(`[hotelService] Invalid status: ${statusStr}, using 'active' as default`);
                 updateFormData.append('status', 'active');
             }
         }
@@ -846,7 +789,6 @@ export const updateHotelServer = async (id: string, formData: FormData): Promise
         const validImages = images.filter((img) => img instanceof File && img.size > 0);
 
         if (validImages.length > 0) {
-            console.log(`[hotelService] Updating hotel with ${validImages.length} images`);
 
             // Fetch photo category ID cho "Khách sạn"
             let photoCategoryId: string | null = null;
@@ -860,15 +802,11 @@ export const updateHotelServer = async (id: string, formData: FormData): Promise
                 );
                 if (hotelCategory) {
                     photoCategoryId = hotelCategory.id;
-                    console.log(`[hotelService] Found photo category "Khách sạn": ${photoCategoryId}`);
                 } else if (categories.length > 0) {
                     // Fallback: dùng category đầu tiên
                     photoCategoryId = categories[0].id;
-                    console.warn(`[hotelService] Could not find "Khách sạn" category, using first category: ${categories[0].name}`);
                 }
             } catch (error) {
-                console.error('[hotelService] Error fetching photo categories:', error);
-                console.warn('[hotelService] Will proceed without photoCategoryId - backend may reject with validation error');
             }
 
             // Append các ảnh theo format backend yêu cầu: photosToAdd[0].files[0], photosToAdd[0].files[1], ...
@@ -880,16 +818,13 @@ export const updateHotelServer = async (id: string, formData: FormData): Promise
             // Backend yêu cầu categoryId (@NotBlank trong PhotoCreationRequest)
             if (photoCategoryId) {
                 updateFormData.append('photosToAdd[0].categoryId', photoCategoryId);
-                console.log(`[hotelService] Using photo category ID: ${photoCategoryId}`);
             } else {
-                console.error('[hotelService] WARNING: No photoCategoryId - backend will reject with validation error');
             }
         }
 
         // Xử lý amenities (amenityIdsToAdd)
         const amenityIdsToAdd = formData.getAll('amenityIdsToAdd[]');
         if (amenityIdsToAdd.length > 0) {
-            console.log(`[hotelService] Adding ${amenityIdsToAdd.length} amenities`);
             amenityIdsToAdd.forEach((amenityId) => {
                 if (amenityId && amenityId.toString().trim() !== '') {
                     updateFormData.append('amenityIdsToAdd[]', amenityId.toString().trim());
@@ -909,14 +844,12 @@ export const updateHotelServer = async (id: string, formData: FormData): Promise
         });
         
         if (venueUpdateIndices.size > 0) {
-            console.log(`[hotelService] Updating ${venueUpdateIndices.size} existing entertainment venues with new distance`);
             // Sắp xếp indices để đảm bảo thứ tự đúng
             const sortedIndices = Array.from(venueUpdateIndices).sort((a, b) => a - b);
             sortedIndices.forEach((index) => {
                 const venueId = formData.get(`entertainmentVenuesWithDistanceToUpdate[${index}].entertainmentVenueId`);
                 const distance = formData.get(`entertainmentVenuesWithDistanceToUpdate[${index}].distance`);
                 if (venueId && distance) {
-                    console.log(`[hotelService] UPDATE[${index}]: venueId=${venueId}, distance=${distance}`);
                     // Append theo đúng thứ tự: venueId trước, distance sau (giống Postman)
                     updateFormData.append(`entertainmentVenuesWithDistanceToUpdate[${index}].entertainmentVenueId`, venueId.toString().trim());
                     updateFormData.append(`entertainmentVenuesWithDistanceToUpdate[${index}].distance`, distance.toString().trim());
@@ -935,14 +868,12 @@ export const updateHotelServer = async (id: string, formData: FormData): Promise
         });
         
         if (venueAddIndices.size > 0) {
-            console.log(`[hotelService] Adding ${venueAddIndices.size} new entertainment venues with distance`);
             // Sắp xếp indices để đảm bảo thứ tự đúng
             const sortedIndices = Array.from(venueAddIndices).sort((a, b) => a - b);
             sortedIndices.forEach((index) => {
                 const venueId = formData.get(`entertainmentVenuesWithDistanceToAdd[${index}].entertainmentVenueId`);
                 const distance = formData.get(`entertainmentVenuesWithDistanceToAdd[${index}].distance`);
                 if (venueId && distance) {
-                    console.log(`[hotelService] ADD[${index}]: venueId=${venueId}, distance=${distance}`);
                     // Append theo đúng thứ tự: venueId trước, distance sau
                     updateFormData.append(`entertainmentVenuesWithDistanceToAdd[${index}].entertainmentVenueId`, venueId.toString().trim());
                     updateFormData.append(`entertainmentVenuesWithDistanceToAdd[${index}].distance`, distance.toString().trim());
@@ -961,7 +892,6 @@ export const updateHotelServer = async (id: string, formData: FormData): Promise
         });
         
         if (newVenueIndices.size > 0) {
-            console.log(`[hotelService] Adding ${newVenueIndices.size} new entertainment venues`);
             newVenueIndices.forEach((index) => {
                 const name = formData.get(`entertainmentVenuesToAdd[${index}].name`);
                 const distance = formData.get(`entertainmentVenuesToAdd[${index}].distance`);
@@ -981,7 +911,6 @@ export const updateHotelServer = async (id: string, formData: FormData): Promise
         // Spring Boot với multipart/form-data: nhiều entries cùng key để tạo List
         const venueIdsToRemove = formData.getAll('entertainmentVenueIdsToRemove');
         if (venueIdsToRemove.length > 0) {
-            console.log(`[hotelService] Removing ${venueIdsToRemove.length} entertainment venues`);
             venueIdsToRemove.forEach((venueId) => {
                 if (venueId && venueId.toString().trim() !== '') {
                     // Backend mong đợi: List<String> entertainmentVenueIdsToRemove (không có [])
@@ -996,39 +925,33 @@ export const updateHotelServer = async (id: string, formData: FormData): Promise
         const policyCheckInTime = formData.get('policy.checkInTime');
         if (policyCheckInTime) {
             updateFormData.append('policy.checkInTime', policyCheckInTime.toString());
-            console.log(`[hotelService] Policy checkInTime: ${policyCheckInTime}`);
         }
 
         const policyCheckOutTime = formData.get('policy.checkOutTime');
         if (policyCheckOutTime) {
             updateFormData.append('policy.checkOutTime', policyCheckOutTime.toString());
-            console.log(`[hotelService] Policy checkOutTime: ${policyCheckOutTime}`);
         }
 
         const policyAllowsPayAtHotel = formData.get('policy.allowsPayAtHotel');
         if (policyAllowsPayAtHotel !== null && policyAllowsPayAtHotel !== undefined) {
             updateFormData.append('policy.allowsPayAtHotel', policyAllowsPayAtHotel.toString());
-            console.log(`[hotelService] Policy allowsPayAtHotel: ${policyAllowsPayAtHotel}`);
         }
 
         // Cancellation Policy ID
         const cancellationPolicyId = formData.get('policy.cancellationPolicyId');
         if (cancellationPolicyId && cancellationPolicyId.toString().trim() !== '') {
             updateFormData.append('policy.cancellationPolicyId', cancellationPolicyId.toString().trim());
-            console.log(`[hotelService] Policy cancellationPolicyId: ${cancellationPolicyId}`);
         }
 
         // Reschedule Policy ID
         const reschedulePolicyId = formData.get('policy.reschedulePolicyId');
         if (reschedulePolicyId && reschedulePolicyId.toString().trim() !== '') {
             updateFormData.append('policy.reschedulePolicyId', reschedulePolicyId.toString().trim());
-            console.log(`[hotelService] Policy reschedulePolicyId: ${reschedulePolicyId}`);
         }
 
         // Required Identification Documents
         const requiredDocumentIds = formData.getAll('policy.requiredIdentificationDocumentIdsToAdd[]');
         if (requiredDocumentIds.length > 0) {
-            console.log(`[hotelService] Adding ${requiredDocumentIds.length} required identification documents`);
             requiredDocumentIds.forEach((docId) => {
                 if (docId && docId.toString().trim() !== '') {
                     updateFormData.append('policy.requiredIdentificationDocumentIdsToAdd[]', docId.toString().trim());
@@ -1037,15 +960,12 @@ export const updateHotelServer = async (id: string, formData: FormData): Promise
         }
 
         // Debug: Log tất cả entries trong updateFormData trước khi gửi
-        console.log('[hotelService] === FINAL FormData trước khi gửi lên backend ===');
         for (const [key, value] of updateFormData.entries()) {
             if (value instanceof File) {
                 console.log(`${key}: [File] ${value.name} (${value.size} bytes)`);
             } else {
-                console.log(`${key}: ${value}`);
             }
         }
-        console.log('[hotelService] ============================================');
 
         // KHÔNG set Content-Type header - axios sẽ tự động set với boundary cho FormData
         const response = await serverClient.put<ApiResponse<HotelResponse>>(
@@ -1070,20 +990,17 @@ export const updateHotelServer = async (id: string, formData: FormData): Promise
  */
 export const deleteHotel = async (id: string): Promise<{ success: boolean }> => {
     try {
-        console.log(`[hotelService] Deleting hotel with id: ${id}`);
 
         const response = await apiClient.delete<ApiResponse<HotelResponse>>(
             `${baseURL}/${id}`
         );
 
         if (response.data.statusCode === 200) {
-            console.log("[hotelService] Hotel deleted successfully");
             return { success: true };
         }
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error(`[hotelService] Error deleting hotel ${id}:`, error);
         throw new Error(error.response?.data?.message || 'Không thể xóa khách sạn');
     }
 };
@@ -1093,7 +1010,6 @@ export const deleteHotel = async (id: string): Promise<{ success: boolean }> => 
  */
 export const deleteHotelServer = async (id: string): Promise<{ success: boolean }> => {
     try {
-        console.log(`[hotelService] [SERVER] Deleting hotel with id: ${id}`);
 
         const serverClient = await createServerApiClient();
         const response = await serverClient.delete<ApiResponse<HotelResponse>>(
@@ -1101,13 +1017,11 @@ export const deleteHotelServer = async (id: string): Promise<{ success: boolean 
         );
 
         if (response.data.statusCode === 200) {
-            console.log("[hotelService] [SERVER] Hotel deleted successfully");
             return { success: true };
         }
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error(`[hotelService] [SERVER] Error deleting hotel ${id}:`, error);
         if (error.response?.status === 401 || error.response?.status === 403) {
             throw new Error('Không có quyền xóa khách sạn. Vui lòng đăng nhập lại.');
         }

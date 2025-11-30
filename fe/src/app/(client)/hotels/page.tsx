@@ -39,7 +39,7 @@
 //             try {
 //                 const results = await locationService.searchLocations({ query: value });
 //                 setSuggestions(results);
-//             } catch (error) { console.error("Lỗi khi tìm kiếm địa điểm:", error); }
+//             }
 //             finally { setIsLoading(false); }
 //         }, 350);
 //         return () => clearTimeout(debounceTimer);
@@ -174,7 +174,7 @@
 //                 });
 //             });
 //         } catch (err) {
-//             console.error("Lỗi tải thêm khách sạn:", err);
+//             
 //         } finally {
 //             setIsLoadingMore(false);
 //         }
@@ -613,7 +613,6 @@ export default function HotelsCard() {
                 });
             });
         } catch (err) {
-            console.error("Lỗi tải thêm khách sạn:", err);
         } finally {
             setIsLoadingMore(false);
         }

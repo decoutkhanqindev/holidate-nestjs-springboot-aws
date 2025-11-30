@@ -87,7 +87,6 @@ export default function DashboardPage() {
                         totalRooms: totalRoomsFromAPI
                     });
                 } catch (roomsErr: any) {
-                    console.warn('[DashboardPage] Error fetching rooms from API:', roomsErr);
                     // Không throw error, vẫn tiếp tục với Dashboard API
                 }
 
@@ -123,7 +122,6 @@ export default function DashboardPage() {
                 setError('Vui lòng chọn khách sạn để xem dashboard.');
             }
         } catch (err: any) {
-            console.error('[DashboardPage] Error:', err);
             setError(err.response?.data?.message || 'Không thể tải dữ liệu dashboard');
         } finally {
             setIsLoading(false);
@@ -137,7 +135,6 @@ export default function DashboardPage() {
     // Refresh data khi trang được focus lại (sau khi thêm phòng ở tab khác)
     useEffect(() => {
         const handleFocus = () => {
-            console.log('[DashboardPage] Page focused, refreshing data...');
             setReloadKey(prev => prev + 1);
         };
 
@@ -291,7 +288,6 @@ export default function DashboardPage() {
                             className="form-select"
                             value={selectedHotelId}
                             onChange={(e) => {
-                                console.log('[DashboardPage] Hotel changed:', e.target.value);
                                 setSelectedHotelId(e.target.value);
                                 setReloadKey(prev => prev + 1); // Trigger reload
                             }}
@@ -314,7 +310,6 @@ export default function DashboardPage() {
                     <button
                         className="btn btn-outline-primary"
                         onClick={() => {
-                            console.log('[DashboardPage] Manual refresh triggered');
                             setReloadKey(prev => prev + 1);
                         }}
                         disabled={isLoading}
@@ -396,7 +391,6 @@ export default function DashboardPage() {
                     <button
                         className="btn btn-sm btn-light"
                         onClick={() => {
-                            console.log('[DashboardPage] Refreshing room data...');
                             setReloadKey(prev => prev + 1);
                         }}
                         title="Làm mới dữ liệu phòng"

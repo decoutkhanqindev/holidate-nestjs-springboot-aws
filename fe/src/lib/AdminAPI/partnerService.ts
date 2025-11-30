@@ -21,7 +21,6 @@ export interface Partner {
  */
 export const getPartners = async (): Promise<Partner[]> => {
     try {
-        console.log("[partnerService] Fetching all users...");
 
         const response = await apiClient.get<ApiResponse<Partner[]>>('/users');
 
@@ -31,13 +30,11 @@ export const getPartners = async (): Promise<Partner[]> => {
                 (user) => user.role?.name?.toLowerCase() === 'partner'
             );
 
-            console.log(`[partnerService] Found ${partners.length} partners`);
             return partners;
         }
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error("[partnerService] Error fetching partners:", error);
         const errorMessage = error.response?.data?.message
             || error.message
             || 'Không thể lấy danh sách đối tác';
@@ -63,7 +60,6 @@ export const getPartnerById = async (partnerId: string): Promise<Partner | null>
 
         return null;
     } catch (error: any) {
-        console.error("[partnerService] Error fetching partner by ID:", error);
         return null;
     }
 };
@@ -82,7 +78,6 @@ export interface CreatePartnerRequest {
 
 export const createPartner = async (request: CreatePartnerRequest): Promise<Partner> => {
     try {
-        console.log("[partnerService] Creating new partner:", request.email);
 
         const payload = {
             email: request.email.trim(),
@@ -96,13 +91,11 @@ export const createPartner = async (request: CreatePartnerRequest): Promise<Part
         const response = await apiClient.post<ApiResponse<Partner>>('/users', payload);
 
         if (response.data.statusCode === 200 && response.data.data) {
-            console.log(`[partnerService] Partner created successfully: ${response.data.data.id}`);
             return response.data.data;
         }
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error("[partnerService] Error creating partner:", error);
         const errorMessage = error.response?.data?.message
             || error.message
             || 'Không thể tạo đối tác mới';

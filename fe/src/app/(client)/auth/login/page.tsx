@@ -23,7 +23,6 @@ export default function ClientLoginPage() {
             // Nếu là USER -> redirect về trang chủ
             // Nếu là ADMIN/PARTNER -> redirect về trang admin login
         } catch (error: any) {
-            console.error('[ClientLoginPage] Login error:', error);
             setError(error?.message || 'Email hoặc mật khẩu không chính xác. Vui lòng thử lại.');
         }
     };

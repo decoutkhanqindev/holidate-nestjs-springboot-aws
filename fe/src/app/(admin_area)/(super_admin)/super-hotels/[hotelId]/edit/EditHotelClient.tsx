@@ -63,7 +63,6 @@ export default function EditHotelClient({ hotel }: EditHotelClientProps) {
                 return;
             }
             
-            console.error('[EditHotelClient] Error updating hotel:', error);
             toast.error(error.message || 'Có lỗi xảy ra khi cập nhật khách sạn', {
                 position: "top-right",
                 autoClose: 3000,

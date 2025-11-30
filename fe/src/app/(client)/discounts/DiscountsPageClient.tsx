@@ -59,7 +59,6 @@ export default function DiscountsPageClient({
                 setDiscounts(response.content);
                 setTotalPages(response.totalPages);
             } catch (error) {
-                console.error('[DiscountsPageClient] Error loading discounts:', error);
                 setDiscounts([]);
             } finally {
                 setIsLoading(false);
@@ -272,6 +271,8 @@ export default function DiscountsPageClient({
         </div>
     );
 }
+
+
 
 
 

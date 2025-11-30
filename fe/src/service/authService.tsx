@@ -14,7 +14,6 @@ export const loginUser = (data: any) => {
 // 3 Đăng xuất
 export const logoutUser = (data: any) => {
 
-    console.log("[authService] Request URL: POST /auth/logout");
     return apiClient.post('/auth/logout', data);
 };
 // export const logoutUser = () => {
@@ -64,19 +63,16 @@ export const getMyProfile = () => {
 
 // 8 Gửi OTP để đặt lại mật khẩu
 export const sendPasswordResetOtp = (data: any) => {
-    console.log("DEMO: Gửi OTP đặt lại mật khẩu đến:", data.email);
     return apiClient.post('/auth/email/send-password-reset-otp', data);
 };
 
 // 9 Xác thực OTP đặt lại mật khẩu
 export const verifyPasswordResetOtp = (data: any) => {
-    console.log("DEMO: Xác thực OTP:", data.otp, "cho email:", data.email);
     return apiClient.post('/auth/email/verify-password-reset-otp', data);
 };
 
 // 10 Đặt lại mật khẩu mới sau khi đã xác thực OTP
 export const resetPassword = (data: any) => {
-    console.log("DEMO: Đặt lại mật khẩu cho email:", data.email);
 
     // API này thường yêu cầu email, otp, và newPassword
     return apiClient.post('/auth/email/verify-password-reset-otp', data);

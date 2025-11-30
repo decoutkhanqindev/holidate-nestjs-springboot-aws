@@ -52,10 +52,7 @@ export default function HotelDetailPage() {
                 setHotelDetail(detailData);
 
                 // Debug: Log để kiểm tra
-                console.log('[HotelDetailPage] Policy data:', detailData?.policy);
-                console.log('[HotelDetailPage] HotelDetail:', detailData);
             } catch (err: any) {
-                console.error('[HotelDetailPage] Error loading hotel:', err);
                 setError(err.message || 'Không thể tải thông tin khách sạn');
             } finally {
                 setIsLoading(false);

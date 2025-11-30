@@ -227,7 +227,6 @@ function MyBookingsComponent() {
                             const hotel = await hotelService.getHotelById(hotelId);
                             return { hotelId, policy: hotel.policy || null };
                         } catch (error) {
-                            console.error(`[MyBookings] Lỗi khi fetch policy cho hotel ${hotelId}:`, error);
                             return { hotelId, policy: null };
                         }
                     });

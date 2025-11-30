@@ -34,7 +34,6 @@ export default function ReviewsPage() {
                 const userId = effectiveUser?.id;
                 const roleName = effectiveUser?.role?.name;
 
-                console.log("[ReviewsPage] Loading reviews for user:", { userId, roleName });
 
                 // Nếu role là PARTNER, lấy danh sách hotels của họ trước
                 // Sau đó filter reviews theo hotelId của các hotels đó
@@ -42,14 +41,11 @@ export default function ReviewsPage() {
 
                 if (roleName?.toLowerCase() === 'partner' && userId) {
                     try {
-                        console.log("[ReviewsPage] User is PARTNER, fetching hotels first...");
                         const hotelsData = await getHotels(0, 1000, undefined, undefined, userId, roleName);
                         hotelIds = hotelsData.hotels.map(h => h.id);
-                        console.log("[ReviewsPage] Found hotels for PARTNER:", hotelIds.length, hotelIds);
 
                         // Nếu PARTNER không có hotels, không có reviews
                         if (hotelIds.length === 0) {
-                            console.log("[ReviewsPage] PARTNER has no hotels, no reviews available");
                             setReviews([]);
                             setTotalPages(0);
                             setTotalItems(0);
@@ -57,7 +53,6 @@ export default function ReviewsPage() {
                             return;
                         }
                     } catch (hotelError: any) {
-                        console.error('[ReviewsPage] Error fetching hotels for PARTNER:', hotelError);
                     }
                 }
 
@@ -78,7 +73,6 @@ export default function ReviewsPage() {
                     
                     // Tạm thời: Gọi API với hotelId đầu tiên
                     // TODO: Nếu có nhiều hotels, có thể cần gọi nhiều lần hoặc backend hỗ trợ array hotelIds
-                    console.log("[ReviewsPage] PARTNER: Fetching reviews for hotels:", hotelIds);
                     
                     // Thử gọi với hotelId đầu tiên
                     reviewsResponse = await getReviews({
@@ -93,7 +87,6 @@ export default function ReviewsPage() {
                     
                     // Nếu có nhiều hotels, có thể cần merge kết quả từ nhiều API calls
                     // Nhưng do pagination, tạm thời chỉ lấy reviews của hotel đầu tiên
-                    console.log("[ReviewsPage] ✅ Successfully fetched reviews for PARTNER hotel");
                 } else {
                     // ADMIN hoặc không có hotels: Lấy tất cả reviews
                     reviewsResponse = await getReviews({
@@ -110,12 +103,7 @@ export default function ReviewsPage() {
                 setTotalPages(reviewsResponse.totalPages);
                 setTotalItems(reviewsResponse.totalItems);
 
-                console.log("[ReviewsPage] Received reviews:", reviewsResponse.data.length);
-                console.log("[ReviewsPage] Total items:", reviewsResponse.totalItems);
             } catch (error: any) {
-                console.error('[ReviewsPage] Error loading reviews:', error);
-                console.error('[ReviewsPage] Error message:', error.message);
-                console.error('[ReviewsPage] Error response:', error.response?.data);
 
                 const errorMessage = error.message || 'Lỗi không xác định';
                 alert('Không thể tải danh sách đánh giá: ' + errorMessage);

@@ -24,7 +24,6 @@ export async function getDiscounts({
     sortDir?: string;
 }): Promise<PagedResponse<SuperDiscount>> {
     try {
-        console.log(`[discountService] Fetching discounts - page: ${page}, size: ${size}`);
 
         const params: any = {
             page,
@@ -60,7 +59,6 @@ export async function getDiscounts({
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error('[discountService] Error fetching discounts:', error);
         const errorMessage = error.response?.data?.message
             || error.message
             || 'Không thể tải danh sách mã giảm giá';
@@ -73,7 +71,6 @@ export async function getDiscounts({
  */
 export async function getDiscountById(id: string): Promise<SuperDiscount> {
     try {
-        console.log(`[discountService] Fetching discount ${id}`);
 
         const response = await apiClient.get<ApiResponse<SuperDiscount>>(`${baseURL}/${id}`);
 
@@ -92,7 +89,6 @@ export async function getDiscountById(id: string): Promise<SuperDiscount> {
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error(`[discountService] Error fetching discount ${id}:`, error);
         const errorMessage = error.response?.data?.message
             || error.message
             || 'Không thể tải thông tin mã giảm giá';
@@ -233,7 +229,6 @@ export async function updateDiscountServer(
         }
 
         console.log(`[discountService] Update request payload:`, JSON.stringify(requestPayload, null, 2));
-        console.log(`[discountService] Update request URL:`, `${baseURL}/${id}`);
         console.log(`[discountService] Payload keys:`, Object.keys(requestPayload));
         console.log(`[discountService] Payload size:`, Object.keys(requestPayload).length);
 
@@ -266,8 +261,6 @@ export async function updateDiscountServer(
         
         // Log chi tiết error response từ backend
         if (error.response) {
-            console.error(`[discountService] Error response status:`, error.response.status);
-            console.error(`[discountService] Error response headers:`, error.response.headers);
             console.error(`[discountService] Error response data (full):`, JSON.stringify(error.response.data, null, 2));
             
             // Cố gắng extract message từ nhiều nguồn
@@ -299,7 +292,6 @@ export async function updateDiscountServer(
                 }
             }
             
-            console.error(`[discountService] Extracted error message:`, errorMessage);
             throw new Error(errorMessage);
         }
         

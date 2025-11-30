@@ -27,7 +27,7 @@
 //         clearTimeout(timeoutId);
 //         return response.data.data;
 //     } catch (error) {
-//         console.error('[HotelDetailPage] Lỗi khi tải khách sạn cho metadata:', error);
+//         
 //         return null;
 //     }
 // }
@@ -116,7 +116,6 @@ async function getHotelForMetadata(hotelId: string): Promise<HotelResponse | nul
         const response = await apiClient.get<ApiResponse<HotelResponse>>(`/accommodation/hotels/${hotelId}`);
         return response.data.data;
     } catch (error) {
-        console.error("Lỗi khi tải metadata cho khách sạn:", error);
         return null;
     }
 }

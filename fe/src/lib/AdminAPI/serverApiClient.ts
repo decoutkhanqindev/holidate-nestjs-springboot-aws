@@ -25,7 +25,6 @@ export async function createServerApiClient(): Promise<AxiosInstance> {
 
     // Kiểm tra token trước khi tạo client
     if (!token) {
-        console.error("[serverApiClient] ERROR: No accessToken found in cookies. Requests will fail with authentication error.");
         console.error("[serverApiClient] Available cookie names:", Array.from(cookieStore.getAll()).map(c => c.name));
         throw new Error('Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.');
     }
@@ -40,10 +39,8 @@ export async function createServerApiClient(): Promise<AxiosInstance> {
             isExpired: jwtPayload.exp ? Date.now() > jwtPayload.exp * 1000 : 'N/A'
         });
     } catch (e) {
-        console.warn("[serverApiClient] Cannot decode token:", e);
     }
 
-    console.log("[serverApiClient] Creating axios instance with baseURL:", API_BASE_URL);
 
     const instance = axios.create({
         baseURL: API_BASE_URL,
@@ -87,19 +84,12 @@ export async function createServerApiClient(): Promise<AxiosInstance> {
                 dataPreview = formDataEntries;
             }
 
-            console.log("[serverApiClient] ===== REQUEST CONFIG =====");
             console.log("[serverApiClient] Method:", config.method?.toUpperCase());
-            console.log("[serverApiClient] URL:", config.url);
-            console.log("[serverApiClient] BaseURL:", config.baseURL);
-            console.log("[serverApiClient] Full URL:", `${config.baseURL}${config.url}`);
-            console.log("[serverApiClient] Has Authorization:", !!config.headers.Authorization);
             console.log("[serverApiClient] Auth Header:", config.headers.Authorization ? `Bearer ${(config.headers.Authorization as string).substring(7, 20)}...` : 'NO TOKEN');
             console.log("[serverApiClient] Content-Type:", config.headers['Content-Type'] || '(will be set by Axios for FormData)');
-            console.log("[serverApiClient] Is FormData:", isFormData);
 
             // Log FormData chi tiết hơn
             if (isFormData && config.data instanceof FormData) {
-                console.log("[serverApiClient] FormData entries:");
                 const formDataEntries: Array<{ key: string; value: string }> = [];
                 for (const [key, value] of (config.data as FormData).entries()) {
                     if (value instanceof File) {
@@ -115,19 +105,16 @@ export async function createServerApiClient(): Promise<AxiosInstance> {
                     }
                 }
                 formDataEntries.forEach((entry, index) => {
-                    console.log(`  [${index + 1}] ${entry.key} = ${entry.value}`);
                 });
             } else {
                 console.log("[serverApiClient] Data preview:", typeof dataPreview === 'object' ? Object.keys(dataPreview).slice(0, 10) : dataPreview);
             }
 
             console.log("[serverApiClient] All headers:", Object.keys(config.headers || {}));
-            console.log("[serverApiClient] ===== END REQUEST CONFIG =====");
 
             // Đảm bảo method không bị override
             if (config.method) {
                 config.method = config.method.toUpperCase();
-                console.log("[serverApiClient] Method confirmed:", config.method);
             }
 
             // Nếu là FormData, đảm bảo không set Content-Type (để axios tự set với boundary)
@@ -138,7 +125,6 @@ export async function createServerApiClient(): Promise<AxiosInstance> {
             return config;
         },
         (error) => {
-            console.error("[serverApiClient] Request error:", error);
             return Promise.reject(error);
         }
     );
@@ -165,7 +151,6 @@ export async function createServerApiClient(): Promise<AxiosInstance> {
 
             // Nếu là HTML response, có thể là redirect từ authentication error
             if (isHtml) {
-                console.error("[serverApiClient] WARNING: Received HTML response instead of JSON - likely authentication/redirect issue");
                 // Không throw ở đây, để code phía trên xử lý
             }
 

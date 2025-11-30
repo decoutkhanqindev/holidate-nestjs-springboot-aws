@@ -59,7 +59,6 @@ export default function PaymentsPage() {
                 const userId = effectiveUser?.id;
                 const roleName = effectiveUser?.role?.name;
 
-                console.log("[PaymentsPage] Loading payment statistics...");
 
                 // Lấy hotels của PARTNER nếu cần
                 let hotelIds: string[] = [];
@@ -67,9 +66,7 @@ export default function PaymentsPage() {
                     try {
                         const hotelsData = await getHotels(0, 1000, undefined, undefined, userId, roleName);
                         hotelIds = hotelsData.hotels.map(h => h.id);
-                        console.log("[PaymentsPage] Found hotels for PARTNER:", hotelIds.length);
                     } catch (hotelError: any) {
-                        console.error('[PaymentsPage] Error fetching hotels:', hotelError);
                     }
                 }
 
@@ -107,12 +104,10 @@ export default function PaymentsPage() {
                         hasMore = response.totalPages > currentPage + 1;
                         currentPage++;
                     } catch (error: any) {
-                        console.error('[PaymentsPage] Error fetching bookings page:', currentPage, error);
                         hasMore = false;
                     }
                 }
 
-                console.log(`[PaymentsPage] Loaded ${allBookings.length} bookings for statistics`);
 
                 // Tính toán thống kê
                 // Logic: 
@@ -180,9 +175,7 @@ export default function PaymentsPage() {
 
                 setStats(newStats);
                 setTotalBookingsCount(totalBookings); // Lưu tổng số bookings thực tế
-                console.log("[PaymentsPage] Payment statistics:", newStats);
             } catch (error: any) {
-                console.error('[PaymentsPage] Error loading payment statistics:', error);
                 alert('Không thể tải thống kê thanh toán: ' + (error.message || 'Lỗi không xác định'));
             } finally {
                 setIsLoading(false);

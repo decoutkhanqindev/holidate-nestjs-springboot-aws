@@ -64,7 +64,6 @@ export default async function HomePage() {
     // Không log lỗi ECONNREFUSED vì đây là expected behavior khi backend không chạy
     // Client component sẽ tự fetch lại từ browser
     if (error.code !== 'ECONNREFUSED' && error.code !== 'ETIMEDOUT') {
-      console.error('[HomePage] Error fetching cities:', error);
     }
   }
 

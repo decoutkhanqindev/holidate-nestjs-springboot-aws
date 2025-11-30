@@ -54,17 +54,14 @@ export interface UpdateUserProfilePayload {
  */
 export async function getUserProfile(userId: string): Promise<UserProfileResponse> {
     try {
-        console.log(`[userService] Fetching user profile: ${userId}`);
         const response = await apiClient.get<ApiResponse<UserProfileResponse>>(`${baseURL}/${userId}`);
 
         if (response.data?.statusCode === 200 && response.data?.data) {
-            console.log('[userService] ✅ User profile loaded successfully');
             return response.data.data;
         }
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error(`[userService] Error fetching user profile ${userId}:`, error);
         const errorMessage = error.response?.data?.message
             || error.message
             || 'Không thể tải thông tin người dùng';
@@ -78,7 +75,6 @@ export async function getUserProfile(userId: string): Promise<UserProfileRespons
  */
 export async function updateUserProfile(userId: string, payload: UpdateUserProfilePayload): Promise<UserProfileResponse> {
     try {
-        console.log(`[userService] Updating user profile ${userId}...`);
 
         const formData = new FormData();
         // Chỉ append các field có giá trị (không phải undefined, null, hoặc empty string)
@@ -96,9 +92,7 @@ export async function updateUserProfile(userId: string, payload: UpdateUserProfi
         if (payload.avatarFile) formData.append('avatarFile', payload.avatarFile); // Backend dùng "avatarFile"
 
         // Log formData để debug
-        console.log('[userService] FormData entries:');
         for (const [key, value] of formData.entries()) {
-            console.log(`  ${key}:`, value);
         }
 
         const response = await apiClient.put<ApiResponse<UserProfileResponse>>(
@@ -112,13 +106,11 @@ export async function updateUserProfile(userId: string, payload: UpdateUserProfi
         );
 
         if (response.data?.statusCode === 200 && response.data?.data) {
-            console.log('[userService] ✅ User profile updated successfully');
             return response.data.data;
         }
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error(`[userService] Error updating user profile ${userId}:`, error);
         const errorMessage = error.response?.data?.message
             || error.message
             || 'Không thể cập nhật thông tin người dùng';
