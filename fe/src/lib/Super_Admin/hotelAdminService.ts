@@ -13,6 +13,7 @@ interface UserResponse {
     email: string;
     fullName: string;
     phoneNumber?: string;
+    active?: boolean; // Trạng thái active/inactive
     role: {
         id: string;
         name: string;
@@ -44,30 +45,33 @@ interface PaginatedHotelResponse {
     hasPrevious: boolean;
 }
 
+interface PaginatedUserResponse {
+    content: UserResponse[];
+    page: number;
+    size: number;
+    totalItems: number;
+    totalPages: number;
+    first: boolean;
+    last: boolean;
+    hasNext: boolean;
+    hasPrevious: boolean;
+}
+
 /**
  * Map UserResponse (PARTNER role) sang HotelAdmin type
+ * Không cần fetch hotels nữa để tăng tốc độ
  */
-function mapUserResponseToHotelAdmin(user: UserResponse, hotels: HotelResponse[]): HotelAdmin {
-    // Tìm hotels của partner này (hotels có partner.id === user.id)
-    const partnerHotels = hotels.filter(hotel => {
-        return hotel.partner?.id === user.id;
-    });
-
-    // Lấy hotel đầu tiên làm managedHotel (hoặc có thể hiển thị tất cả)
-    const managedHotel = partnerHotels.length > 0
-        ? partnerHotels[0]
-        : { id: '', name: 'Chưa có khách sạn' };
-
+function mapUserResponseToHotelAdmin(user: UserResponse): HotelAdmin {
     return {
         id: parseInt(user.id) || 0, // For display/compatibility (parsed from UUID, may be 0 if not a valid number)
         userId: user.id, // UUID string from backend - use this for API calls
         username: user.fullName, // Frontend dùng username, backend dùng fullName
         email: user.email,
         managedHotel: {
-            id: managedHotel.id,
-            name: managedHotel.name,
+            id: '',
+            name: '', // Không hiển thị khách sạn quản lý nữa
         },
-        status: 'ACTIVE', // Backend không có status field trong UserResponse, mặc định ACTIVE
+        status: user.active !== false ? 'ACTIVE' : 'INACTIVE', // Dùng trường active từ backend
         createdAt: user.createdAt ? new Date(user.createdAt) : new Date(),
     };
 }
@@ -87,105 +91,50 @@ export async function getHotelAdmins({
     currentPage: number;
 }> {
     try {
-        // Lấy tất cả users (chỉ ADMIN mới có quyền)
-        const usersResponse = await apiClient.get<ApiResponse<UserResponse[]>>(baseURL);
+        // Fetch TẤT CẢ users từ backend (không dùng pagination params)
+        // Frontend sẽ tự phân trang để hiển thị 10 items mỗi trang
+        const usersResponse = await apiClient.get<ApiResponse<UserResponse[] | PaginatedUserResponse>>(
+            baseURL
+        );
 
-        if (usersResponse.data?.statusCode === 200 && usersResponse.data?.data) {
-            // Filter users với role PARTNER
-            const partnerUsers = usersResponse.data.data.filter(
-                user => user.role.name.toUpperCase() === 'PARTNER'
-            );
+        let allUsers: UserResponse[] = [];
 
-            // Lấy tất cả hotels để map với partners
-            // GET /accommodation/hotels có thể không trả về partner trong response
-            // Cần fetch từng hotel detail để lấy partner info
-            let allHotels: HotelResponse[] = [];
-            try {
-                // Bước 1: Lấy danh sách hotels (có thể không có partner info)
-                const hotelsApiResponse = await apiClient.get<ApiResponse<PaginatedHotelResponse>>(
-                    '/accommodation/hotels',
-                    {
-                        params: {
-                            page: 0,
-                            size: 1000,
-                        }
-                    }
-                );
-
-                if (hotelsApiResponse.data?.statusCode === 200 && hotelsApiResponse.data?.data) {
-                    const rawHotels = hotelsApiResponse.data.data.content;
-
-                    // Bước 2: Fetch partner info từ hotel detail nếu không có trong list response
-                    // Hoặc nếu có partner trong response thì dùng luôn
-                    const hotelsWithPartner = await Promise.all(
-                        rawHotels.map(async (hotel: any) => {
-                            // Kiểm tra xem có partner trong response không
-                            let partnerId: string | undefined = undefined;
-
-                            if (hotel.partner?.id) {
-                                // Response đã có partner
-                                partnerId = hotel.partner.id;
-                            } else if (hotel.partnerId) {
-                                // Response có partnerId trực tiếp
-                                partnerId = hotel.partnerId;
-                            } else {
-                                // Không có partner trong response, fetch từ detail
-                                try {
-                                    const detailResponse = await apiClient.get<ApiResponse<any>>(
-                                        `/accommodation/hotels/${hotel.id}`
-                                    );
-                                    if (detailResponse.data?.statusCode === 200 && detailResponse.data?.data?.partner?.id) {
-                                        partnerId = detailResponse.data.data.partner.id;
-                                    }
-                                } catch (detailError) {
-                                    // Ignore error when fetching hotel detail
-                                }
-                            }
-
-                            return {
-                                id: hotel.id,
-                                name: hotel.name,
-                                partner: partnerId ? { id: partnerId } : undefined,
-                            };
-                        })
-                    );
-
-                    allHotels = hotelsWithPartner;
-                }
-            } catch (error) {
-                // Fallback: thử dùng getHotels nếu API trực tiếp fail
-                try {
-                    const hotelsResponse = await getHotels(0, 1000);
-                    allHotels = hotelsResponse.hotels.map(hotel => ({
-                        id: hotel.id,
-                        name: hotel.name,
-                        partner: hotel.ownerId ? { id: hotel.ownerId } : undefined,
-                    }));
-                } catch (fallbackError) {
-                    // Ignore fallback error
-                }
+        // Kiểm tra xem response có phải là paginated không
+        if (usersResponse.data?.statusCode === 200) {
+            const responseData = usersResponse.data.data;
+            
+            // Kiểm tra xem có phải là paginated response không
+            if (Array.isArray(responseData)) {
+                // Không phải paginated, trả về array trực tiếp
+                allUsers = responseData;
+            } else if (responseData && typeof responseData === 'object' && 'content' in responseData) {
+                // Là paginated response từ backend - lấy tất cả content
+                const paginatedData = responseData as PaginatedUserResponse;
+                allUsers = paginatedData.content;
             }
-
-            // Map sang HotelAdmin
-            const hotelAdmins = partnerUsers.map(user =>
-                mapUserResponseToHotelAdmin(user, allHotels)
-            );
-
-            // Phân trang ở frontend
-            const totalItems = hotelAdmins.length;
-            const totalPages = Math.ceil(totalItems / limit);
-            const start = (page - 1) * limit;
-            const end = start + limit;
-            const paginatedData = hotelAdmins.slice(start, end);
-
-            return {
-                data: paginatedData,
-                totalPages,
-                currentPage: page,
-            };
         }
 
-        throw new Error('Invalid response from server');
+        // Filter users với role PARTNER
+        const partnerUsers = allUsers.filter(
+            user => user.role?.name?.toUpperCase() === 'PARTNER'
+        );
+
+        // Phân trang ở frontend: chỉ lấy 10 items cho trang hiện tại
+        const start = (page - 1) * limit;
+        const end = start + limit;
+        const paginatedPartnerUsers = partnerUsers.slice(start, end);
+
+        // Map sang HotelAdmin (không cần fetch hotels nữa để tăng tốc độ)
+        const hotelAdmins = paginatedPartnerUsers.map(user => mapUserResponseToHotelAdmin(user));
+
+        // Tính totalPages từ tổng số PARTNER users
+        const totalPages = Math.max(1, Math.ceil(partnerUsers.length / limit));
+
+        return {
+            data: hotelAdmins,
+            totalPages,
+            currentPage: page,
+        };
     } catch (error: any) {
         // Nếu là lỗi 403, trả về mảng rỗng
         if (error.response?.status === 403) {

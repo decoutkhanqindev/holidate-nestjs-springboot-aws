@@ -7,7 +7,7 @@ import type { HotelAdmin } from '@/types';
 interface ModalProps { isOpen: boolean; onClose: () => void; admin: HotelAdmin | null; onSave: (fd: FormData) => void; }
 
 export default function HotelAdminFormModal({ isOpen, onClose, admin, onSave }: ModalProps) {
-    const title = admin ? 'Chỉnh sửa Admin Khách sạn' : 'Thêm Admin Khách sạn mới';
+    const title = admin ? 'Chỉnh sửa Đối tác Khách sạn' : 'Thêm Đối tác Khách sạn mới';
     return (
         <Modal show={isOpen} onHide={onClose} centered>
             <Modal.Header closeButton><Modal.Title as="h5">{title}</Modal.Title></Modal.Header>

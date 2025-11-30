@@ -31,7 +31,6 @@ export default function HotelAdminsTable({ admins, onEdit, onDelete }: HotelAdmi
                                 <th scope="col" className="p-3">ID</th>
                                 <th scope="col" className="p-3">Tên tài khoản</th>
                                 <th scope="col" className="p-3">Email</th>
-                                <th scope="col" className="p-3">Khách sạn quản lý</th>
                                 <th scope="col" className="p-3">Trạng thái</th>
                                 <th scope="col" className="p-3 text-end">Hành động</th>
                             </tr>
@@ -42,7 +41,6 @@ export default function HotelAdminsTable({ admins, onEdit, onDelete }: HotelAdmi
                                     <td className="p-3">{admin.id}</td>
                                     <td className="p-3 fw-medium text-dark">{admin.username}</td>
                                     <td className="p-3">{admin.email}</td>
-                                    <td className="p-3 text-muted">{admin.managedHotel.name}</td>
                                     <td className="p-3"><StatusBadge status={admin.status} /></td>
                                     <td className="p-3 text-end">
                                         <button onClick={() => onEdit(admin)} className="btn btn-sm btn-outline-primary me-2" title="Chỉnh sửa">

@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import styles from "./ChatBubble.module.css";
 
 // Webhook URL từ backend
-const N8N_WEBHOOK_URL = 'http://18.138.100.51:5678/webhook/9c4bdf4a-4fbc-485b-b3bc-e09647d8d450';
+const N8N_WEBHOOK_URL = 'https://n8n.holidate.site/webhook/9c4bdf4a-4fbc-485b-b3bc-e09647d8d450';
 // Hàm lấy Session ID (dùng để định danh người chat)
 function getSessionId(): string {
     if (typeof window === 'undefined') return 'user_' + Math.random().toString(36).substring(2, 11);

@@ -46,7 +46,8 @@ export default function HotelAdminForm({ admin, onSave, onCancel }: FormProps) {
         const formData = new FormData(e.currentTarget);
 
         if (admin) {
-            formData.append('id', admin.id.toString());
+            // Khi edit, gửi userId (UUID string) thay vì id (number)
+            formData.append('userId', admin.userId);
         } else {
             // Khi tạo mới, cần authProvider
             formData.append('authProvider', 'LOCAL');
@@ -131,9 +132,24 @@ export default function HotelAdminForm({ admin, onSave, onCancel }: FormProps) {
                     className="form-control"
                     id="phoneNumber"
                     name="phoneNumber"
+                    defaultValue={admin?.email ? '' : ''} // Phone number không có trong HotelAdmin type
                     placeholder="VD: 0123456789"
                 />
             </div>
+            {isEditing && (
+                <div className="mb-3">
+                    <label htmlFor="active" className="form-label">Trạng thái</label>
+                    <select
+                        id="active"
+                        name="active"
+                        className="form-select"
+                        defaultValue={admin?.status === 'ACTIVE' ? 'true' : 'false'}
+                    >
+                        <option value="true">Đang hoạt động</option>
+                        <option value="false">Vô hiệu hóa</option>
+                    </select>
+                </div>
+            )}
             {!isEditing && (
                 <div className="mb-3">
                     <label htmlFor="password" className="form-label">
