@@ -403,15 +403,17 @@ export default function HomePageClient({ initialCities }: HomePageClientProps) {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex w-12 h-12 items-center justify-center rounded-full bg-orange-500 font-bold text-white shadow-md text-2xl hover:bg-orange-600 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="flex w-12 h-12 items-center justify-center rounded-full bg-transparent shadow-none transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed group"
+                  style={{ boxShadow: 'none' }}
                 >
                   {isLoading ? (
                     <div className="loading-spinner"></div>
                   ) : (
-                    <CiSearch />
+                    <CiSearch className="text-orange-600 text-2xl transition-all duration-200 group-hover:text-orange-700 group-hover:scale-110 group-active:scale-95" />
                   )}
                 </button>
               </div>
+
             </form>
             {/* Thông báo lỗi địa điểm */}
             {locationError && (

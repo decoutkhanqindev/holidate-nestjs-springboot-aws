@@ -1644,7 +1644,7 @@ function RoomCard({ room, handleSelectRoom, onViewDetail, innerRef }: {
     const basePrice = room.basePricePerNight ?? 0;
     const currentPrice = room.currentPricePerNight ?? basePrice;
     const originalPrice = basePrice * 1.25;
-    const priceWithBreakfast = basePrice + 100000;
+    // const priceWithBreakfast = basePrice + 100000; // Comment lại vì backend chưa xử lý
     const availableRooms = room.availableRooms ?? room.quantity ?? 0;
     const hasAvailableRooms = availableRooms > 0;
     const isLowStock = availableRooms > 0 && availableRooms <= 3;
@@ -1672,7 +1672,9 @@ function RoomCard({ room, handleSelectRoom, onViewDetail, innerRef }: {
                     <div className="border rounded p-2 mb-2 bg-white">
                         <div className="row g-0 align-items-center">
                             <div className="col-12 col-md-4 mb-2 mb-md-0 d-flex flex-column justify-content-center">
-                                <div className="fw-bold mb-1" style={{ fontSize: '14px' }}>Không bao gồm bữa sáng</div>
+                                {/* <div className="fw-bold mb-1" style={{ fontSize: '14px' }}>Không bao gồm bữa sáng</div> */}
+                                <div className="fw-bold mb-1" style={{ fontSize: '14px' }}>{room.name}</div>
+                                {room.area > 0 && <div className="d-flex align-items-center gap-1 text-muted mb-1" style={{ fontSize: '13px' }}><i className="bi bi-rulers text-primary" style={{ fontSize: '16px' }}></i><span>{room.area} m²</span></div>}
                                 <div className="d-flex align-items-center gap-1 text-muted mb-1" style={{ fontSize: '13px' }}><i className="bi bi-bed text-primary" style={{ fontSize: '16px' }}></i><span>{room.bedType?.name || 'Giường phù hợp'}</span></div>
                                 <div className="text-success" style={{ fontSize: '12px' }}><i className="bi bi-check-circle-fill me-1" style={{ fontSize: '11px' }}></i> Không cần thanh toán ngay hôm nay</div>
                             </div>
@@ -1692,7 +1694,8 @@ function RoomCard({ room, handleSelectRoom, onViewDetail, innerRef }: {
                             </div>
                         </div>
                     </div>
-                    {room.breakfastIncluded && (
+                    {/* Comment lại phần "Bao gồm bữa sáng" vì backend chưa xử lý */}
+                    {/* {room.breakfastIncluded && (
                         <div className="border rounded p-2 bg-white">
                             <div className="row g-0 align-items-center">
                                 <div className="col-12 col-md-4 mb-2 mb-md-0 d-flex flex-column justify-content-center">
@@ -1716,7 +1719,7 @@ function RoomCard({ room, handleSelectRoom, onViewDetail, innerRef }: {
                                 </div>
                             </div>
                         </div>
-                    )}
+                    )} */}
                 </div>
             </div>
         </div>
