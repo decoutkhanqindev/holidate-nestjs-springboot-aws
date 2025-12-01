@@ -6,6 +6,7 @@ import { getHotels } from '@/lib/AdminAPI/hotelService';
 import HotelsTable from '@/components/Admin/hotels/HotelsTable';
 import AddHotelButton from '@/components/Admin/hotels/AddHotelButton';
 import { useAuth } from '@/components/Admin/AuthContext_Admin/AuthContextAdmin';
+import LoadingSpinner from '@/components/Admin/common/LoadingSpinner';
 import type { Hotel } from '@/types';
 
 // Component PageHeader để code gọn hơn
@@ -103,9 +104,7 @@ export default function HotelsPage() {
     if (authLoading || isLoading) {
         return (
             <div className="p-6 md:p-8">
-                <div className="flex items-center justify-center h-64">
-                    <div className="text-gray-500">Đang tải dữ liệu...</div>
-                </div>
+                <LoadingSpinner message="Đang tải danh sách khách sạn..." />
             </div>
         );
     }

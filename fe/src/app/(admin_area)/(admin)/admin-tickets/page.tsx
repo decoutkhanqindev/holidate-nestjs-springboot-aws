@@ -5,6 +5,7 @@ import { useAuth } from "@/components/Admin/AuthContext_Admin/AuthContextAdmin";
 import { getCurrentUser } from "@/lib/AdminAPI/userService";
 import SupportRequestForm from "@/components/Admin/Support/SupportRequestForm";
 import MySupportRequestsTable from "@/components/Admin/Support/MySupportRequestsTable";
+import LoadingSpinner from "@/components/Admin/common/LoadingSpinner";
 import type { SupportRequest } from "@/types";
 import { toast } from "react-toastify";
 
@@ -192,7 +193,7 @@ export default function AdminTicketsPage() {
                             Yêu cầu của tôi
                         </h2>
                         {isLoading ? (
-                            <p className="text-gray-500">Đang tải...</p>
+                            <LoadingSpinner message="Đang tải danh sách yêu cầu hỗ trợ..." />
                         ) : (
                             <MySupportRequestsTable requests={myRequests} />
                         )}
@@ -202,6 +203,7 @@ export default function AdminTicketsPage() {
         </div>
     );
 }
+
 
 
 

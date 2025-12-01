@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation';
 import {
     ChartBarIcon, BuildingOffice2Icon, KeyIcon, CalendarDaysIcon,
     CreditCardIcon, TicketIcon, MegaphoneIcon, UserGroupIcon,
-    ChatBubbleLeftRightIcon, DocumentChartBarIcon,
+    ChatBubbleLeftRightIcon, DocumentChartBarIcon, DocumentTextIcon,
 } from '@heroicons/react/24/outline';
 
 const navLinks = [
@@ -20,6 +20,7 @@ const navLinks = [
     { href: '/admin-discounts', label: 'Mã giảm giá', icon: TicketIcon },
     { href: '/admin-users', label: 'Người dùng', icon: UserGroupIcon },
     { href: '/admin-reviews', label: 'Đánh giá', icon: ChatBubbleLeftRightIcon },
+    { href: '/admin-policies', label: 'Chính sách', icon: DocumentTextIcon },
     { href: '/admin-tickets', label: 'Trợ giúp', icon: MegaphoneIcon },
 ];
 
@@ -41,7 +42,7 @@ export default function AdminSidebar({ isCollapsed }: AdminSidebarProps) {
         >
             <div className="h-[70px] flex items-center justify-center border-b border-gray-200">
                 <Link href="/admin-dashboard" className="text-2xl font-bold text-blue-600 no-underline transition-all">
-                    {isCollapsed ? 'A' : 'AdminPanel'}
+                    {isCollapsed ? 'A' : 'Đối tác khách sạn'}
                 </Link>
             </div>
 

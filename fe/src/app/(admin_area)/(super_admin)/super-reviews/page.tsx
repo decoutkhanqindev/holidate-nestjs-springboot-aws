@@ -6,6 +6,7 @@ import { getBookingById } from "@/lib/AdminAPI/bookingService";
 import type { Review } from "@/types";
 import Pagination from "@/components/Admin/pagination/Pagination";
 import { FaStar, FaEye, FaTrash, FaEdit, FaUser, FaHotel, FaCalendarAlt } from "react-icons/fa";
+import LoadingSpinner from "@/components/AdminSuper/common/LoadingSpinner";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -169,12 +170,7 @@ export default function SuperReviewsPage() {
             </div>
 
             {isLoading ? (
-                <div className="text-center py-5">
-                    <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
-                        <span className="visually-hidden">Đang tải...</span>
-                    </div>
-                    <p className="mt-3 text-muted">Đang tải danh sách đánh giá...</p>
-                </div>
+                <LoadingSpinner message="Đang tải danh sách đánh giá..." />
             ) : error ? (
                 <div className="alert alert-danger border-0 shadow-sm" role="alert">
                     <strong>Lỗi:</strong> {error}
@@ -284,7 +280,7 @@ export default function SuperReviewsPage() {
                     </div>
 
                     {/* Table Section */}
-                    <div className="card border-0 shadow-sm">
+                    <div className="card shadow-sm">
                         <div className="card-body p-0">
                             <div className="table-responsive" style={{ 
                                 overflowX: 'auto',
@@ -298,57 +294,35 @@ export default function SuperReviewsPage() {
                                     width: 'max-content',
                                     marginBottom: 0
                                 }}>
-                                    <thead>
-                                        <tr style={{
-                                            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-                                            borderBottom: '2px solid #dee2e6'
-                                        }}>
-                                            <th scope="col" className="fw-bold text-dark" style={{ width: '1cm', minWidth: '1cm', whiteSpace: 'nowrap', padding: '12px 8px', textAlign: 'left' }}>STT</th>
-                                            <th scope="col" className="fw-bold text-dark" style={{ width: '4cm', minWidth: '4cm', whiteSpace: 'nowrap', padding: '12px 8px', textAlign: 'left' }}>Người đánh giá</th>
-                                            <th scope="col" className="fw-bold text-dark" style={{ width: '4cm', minWidth: '4cm', whiteSpace: 'nowrap', padding: '12px 8px', textAlign: 'left' }}>Khách sạn</th>
-                                            <th scope="col" className="fw-bold text-dark" style={{ width: '3.5cm', minWidth: '3.5cm', whiteSpace: 'nowrap', padding: '12px 8px', textAlign: 'left' }}>Phòng</th>
-                                            <th scope="col" className="fw-bold text-dark" style={{ width: '3cm', minWidth: '3cm', whiteSpace: 'nowrap', padding: '12px 8px', textAlign: 'left' }}>Điểm đánh giá</th>
-                                            <th scope="col" className="fw-bold text-dark" style={{ width: '5cm', minWidth: '5cm', whiteSpace: 'nowrap', padding: '12px 8px', textAlign: 'left' }}>Bình luận</th>
-                                            <th scope="col" className="fw-bold text-dark" style={{ width: '3cm', minWidth: '3cm', whiteSpace: 'nowrap', padding: '12px 8px', textAlign: 'left' }}>Ảnh</th>
-                                            <th scope="col" className="fw-bold text-dark" style={{ width: '3cm', minWidth: '3cm', whiteSpace: 'nowrap', padding: '12px 8px', textAlign: 'left' }}>Ngày tạo</th>
-                                            <th scope="col" className="fw-bold text-dark" style={{ width: '3cm', minWidth: '3cm', whiteSpace: 'nowrap', padding: '12px 8px', textAlign: 'left' }}>Hành động</th>
+                                    <thead className="table-light">
+                                        <tr>
+                                            <th scope="col" className="p-3">STT</th>
+                                            <th scope="col" className="p-3">Người đánh giá</th>
+                                            <th scope="col" className="p-3">Khách sạn</th>
+                                            <th scope="col" className="p-3">Phòng</th>
+                                            <th scope="col" className="p-3">Điểm đánh giá</th>
+                                            <th scope="col" className="p-3">Bình luận</th>
+                                            <th scope="col" className="p-3">Ảnh</th>
+                                            <th scope="col" className="p-3">Ngày tạo</th>
+                                            <th scope="col" className="p-3 text-end">Hành động</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {reviews.length === 0 ? (
                                             <tr>
-                                                <td colSpan={9} className="text-center py-5">
-                                                    <div className="text-muted">
-                                                        <FaStar className="mb-3" style={{ fontSize: '3rem', opacity: 0.3 }} />
-                                                        <p className="mb-0 fs-5">Không có đánh giá nào</p>
-                                                        <p className="small mb-0 mt-2">Hiện tại chưa có đánh giá nào trong hệ thống</p>
-                                                    </div>
+                                                <td colSpan={9} className="text-center p-4 text-muted">
+                                                    Không có đánh giá nào
                                                 </td>
                                             </tr>
                                         ) : (
                                             reviews.map((review, index) => (
-                                                <tr
-                                                    key={review.id}
-                                                    className="border-bottom"
-                                                    style={{
-                                                        transition: 'all 0.2s ease',
-                                                        cursor: 'default'
-                                                    }}
-                                                    onMouseEnter={(e) => {
-                                                        e.currentTarget.style.backgroundColor = '#f8f9fa';
-                                                        e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
-                                                    }}
-                                                    onMouseLeave={(e) => {
-                                                        e.currentTarget.style.backgroundColor = '';
-                                                        e.currentTarget.style.boxShadow = '';
-                                                    }}
-                                                >
-                                                    <td className="align-middle" style={{ padding: '12px 8px', width: '1cm', textAlign: 'left' }}>
+                                                <tr key={review.id}>
+                                                    <td className="p-3">
                                                         <span className="text-muted fw-medium" style={{ fontSize: '0.9rem' }}>
                                                             {(currentPage * ITEMS_PER_PAGE) + index + 1}
                                                         </span>
                                                     </td>
-                                                    <td className="align-middle" style={{ padding: '12px 8px', width: '4cm', textAlign: 'left' }}>
+                                                    <td className="p-3">
                                                         <div className="d-flex align-items-center gap-2">
                                                             {review.userAvatar ? (
                                                                 <img
@@ -384,7 +358,7 @@ export default function SuperReviewsPage() {
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="align-middle" style={{ padding: '12px 8px', width: '4cm', textAlign: 'left' }}>
+                                                    <td className="p-3">
                                                         <div className="fw-semibold text-dark mb-1" style={{ fontSize: '0.9rem' }}>
                                                             {review.hotelName}
                                                         </div>
@@ -392,12 +366,12 @@ export default function SuperReviewsPage() {
                                                             {review.hotelId.substring(0, 8)}...
                                                         </div>
                                                     </td>
-                                                    <td className="align-middle" style={{ padding: '12px 8px', width: '3.5cm', textAlign: 'left' }}>
+                                                    <td className="p-3">
                                                         <div className="fw-medium text-dark" style={{ fontSize: '0.9rem' }}>
                                                             {review.roomName}
                                                         </div>
                                                     </td>
-                                                    <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
+                                                    <td className="p-3">
                                                         <div className="d-flex align-items-center gap-1 mb-1">
                                                             {renderStars(review.score)}
                                                         </div>
@@ -405,7 +379,7 @@ export default function SuperReviewsPage() {
                                                             {review.score}/10
                                                         </div>
                                                     </td>
-                                                    <td className="align-middle" style={{ padding: '12px 8px', width: '5cm', textAlign: 'left' }}>
+                                                    <td className="p-3">
                                                         <div
                                                             className="text-dark"
                                                             style={{
@@ -420,7 +394,7 @@ export default function SuperReviewsPage() {
                                                             {review.comment || <span className="text-muted">Không có bình luận</span>}
                                                         </div>
                                                     </td>
-                                                    <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
+                                                    <td className="p-3">
                                                         {review.photos && review.photos.length > 0 ? (
                                                             <div className="d-flex gap-1 flex-wrap">
                                                                 {review.photos.slice(0, 3).map((photo) => (
@@ -455,12 +429,12 @@ export default function SuperReviewsPage() {
                                                             <span className="text-muted small" style={{ fontSize: '0.85rem' }}>Không có</span>
                                                         )}
                                                     </td>
-                                                    <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
+                                                    <td className="p-3">
                                                         <div className="text-dark" style={{ fontSize: '0.9rem' }}>
                                                             {formatDateTime(review.createdAt)}
                                                         </div>
                                                     </td>
-                                                    <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
+                                                    <td className="p-3 text-end">
                                                         <div className="d-flex gap-2">
                                                             <button
                                                                 className="btn btn-sm btn-outline-primary d-inline-flex align-items-center justify-content-center rounded-circle"

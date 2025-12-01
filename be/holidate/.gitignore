@@ -36,4 +36,12 @@ out/
 ### VS Code ###
 .vscode/
 
+### Environment & Configuration Files ###
 .env
+
+### Deployment & n8n Configuration Files ###
+deploy/cmd.txt
+knowledge_base/holidate_chatbot_ai_agent_n8n.json
+knowledge_base/holidate_training_ai_agent_n8n_with_pinecone.json
+knowledge_base/holidate_training_ai_agent_n8n.json
+knowledge_base/depoy-n8n-cmd.txt

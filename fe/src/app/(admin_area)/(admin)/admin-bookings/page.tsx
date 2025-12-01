@@ -8,6 +8,7 @@ import BookingsTable from '@/components/Admin/booking/BookingsTable';
 import Pagination from '@/components/Admin/pagination/Pagination';
 import { PlusIcon } from '@heroicons/react/24/solid';
 import { useAuth } from '@/components/Admin/AuthContext_Admin/AuthContextAdmin';
+import LoadingSpinner from '@/components/Admin/common/LoadingSpinner';
 import type { Booking } from '@/types';
 
 function PageHeader({ title, children }: { title: React.ReactNode, children?: React.ReactNode }) {
@@ -55,96 +56,110 @@ export default function BookingsPage() {
                 } catch (e) {
                 }
 
-                // Lấy userId và roleName từ AuthContext để filter theo owner nếu role là PARTNER
+                // Lấy userId và roleName từ AuthContext
                 const userId = effectiveUser?.id;
                 const roleName = effectiveUser?.role?.name;
 
-                console.log("[BookingsPage] User info (effectiveUser):", { userId, roleName });
-
-                // Nếu role là PARTNER, lấy danh sách hotels của họ trước
-                // Sau đó lấy bookings của TẤT CẢ hotels đó
-                let hotelIds: string[] = [];
-
+                // Nếu là PARTNER, phải lấy bookings của TẤT CẢ hotels họ sở hữu
                 if (roleName?.toLowerCase() === 'partner' && userId) {
-                    try {
+                    console.log(`[BookingsPage] Partner ${userId} - Fetching hotels...`);
+                    
+                    // 1. Lấy TẤT CẢ hotels của partner (pagination)
+                    const allHotelIds: string[] = [];
+                    let hotelPage = 0;
+                    const hotelPageSize = 50;
+                    let hasMoreHotels = true;
 
-                        const hotelsData = await getHotels(0, 1000, undefined, undefined, userId, roleName);
-                        hotelIds = hotelsData.hotels.map(h => h.id);
-
-
-                        // Nếu PARTNER không có hotels, không có bookings
-                        if (hotelIds.length === 0) {
-                            setBookings([]);
-                            setTotalPages(0);
-                            setTotalItems(0);
-                            setIsLoading(false);
-                            return;
+                    while (hasMoreHotels) {
+                        try {
+                            const hotelsData = await getHotels(
+                                hotelPage,
+                                hotelPageSize,
+                                undefined,
+                                undefined,
+                                userId, // QUAN TRỌNG: Filter theo partner-id
+                                'PARTNER'
+                            );
+                            
+                            // Backend đã filter theo partner-id trong query params, nên tất cả hotels trả về đều thuộc partner này
+                            // Không cần verify ownerId vì backend đã filter đúng
+                            const pageHotelIds = hotelsData.hotels.map(h => h.id);
+                            allHotelIds.push(...pageHotelIds);
+                            
+                            console.log(`[BookingsPage] Page ${hotelPage}: Got ${hotelsData.hotels.length} hotels (filtered by partner-id: ${userId})`);
+                            
+                            hasMoreHotels = hotelsData.hasNext || false;
+                            hotelPage++;
+                        } catch (err: any) {
+                            console.error(`[BookingsPage] Error fetching hotels page ${hotelPage}:`, err);
+                            hasMoreHotels = false;
                         }
-                    } catch (hotelError: any) {
-                        // Nếu không lấy được hotels, không thể lấy bookings
+                    }
+
+                    console.log(`[BookingsPage] Partner ${userId} owns ${allHotelIds.length} hotels:`, allHotelIds);
+
+                    if (allHotelIds.length === 0) {
+                        // Partner không có hotels
+                        console.log(`[BookingsPage] Partner ${userId} has no hotels`);
                         setBookings([]);
                         setTotalPages(0);
                         setTotalItems(0);
-                        setIsLoading(false);
                         return;
                     }
-                }
 
-                // Gọi API bookings
-                let bookingsResponse;
+                    // 2. Lấy bookings của TẤT CẢ hotels (pagination cho mỗi hotel)
+                    const allBookings: Booking[] = [];
+                    for (const hotelId of allHotelIds) {
+                        try {
+                            console.log(`[BookingsPage] Fetching bookings for hotel ${hotelId}...`);
+                            let bookingPage = 0;
+                            const bookingPageSize = 50;
+                            let hasMoreBookings = true;
 
-                if (roleName?.toLowerCase() === 'partner') {
-
-                    // PARTNER: Lấy bookings của TẤT CẢ hotels
-                    // Vì API chỉ hỗ trợ 1 hotelId mỗi lần, ta sẽ:
-                    // 1. Gọi API cho từng hotel với size lớn để lấy tất cả bookings
-                    // 2. Merge tất cả bookings lại
-                    // 3. Sort theo createdAt DESC
-                    // 4. Paginate trên frontend
-                    try {
-                        const allBookings: Booking[] = [];
-
-                        // Gọi API cho từng hotel
-                        for (let i = 0; i < hotelIds.length; i++) {
-                            const hotelId = hotelIds[i];
-                            try {
+                            while (hasMoreBookings) {
                                 const hotelBookings = await getBookings({
-                                    page: 0,
-                                    size: 1000, // Lấy tất cả bookings của hotel này
+                                    page: bookingPage,
+                                    size: bookingPageSize,
                                     sortBy: 'createdAt',
                                     sortDir: 'DESC',
-                                    hotelId: hotelId, // Lấy bookings theo hotelId
+                                    hotelId: hotelId, // QUAN TRỌNG: Chỉ lấy bookings của hotel này
+                                    roleName: roleName,
+                                    currentUserId: userId,
                                 });
-                                allBookings.push(...hotelBookings.data);
-                            } catch (hotelBookingError: any) {
-                                // Tiếp tục với hotel tiếp theo nếu có lỗi
+                                
+                                // Verify: bookings phải thuộc hotel này (kiểm tra qua room.hotelId nếu có)
+                                const validBookings = hotelBookings.data.filter((booking: Booking) => {
+                                    // Booking type không có hotel.id trực tiếp, nhưng có thể verify qua room
+                                    // Nếu có cách verify khác thì thêm vào đây
+                                    return true; // Tạm thời trust backend filter
+                                });
+                                
+                                allBookings.push(...validBookings);
+                                console.log(`[BookingsPage] Hotel ${hotelId} page ${bookingPage}: Got ${validBookings.length} bookings`);
+                                
+                                hasMoreBookings = hotelBookings.totalPages > bookingPage + 1;
+                                bookingPage++;
                             }
+                        } catch (err: any) {
+                            console.error(`[BookingsPage] Error fetching bookings for hotel ${hotelId}:`, err);
                         }
-
-
-                        // Sort tất cả bookings theo createdAt DESC (mới nhất trước)
-                        allBookings.sort((a, b) => {
-                            const dateA = a.checkInDate.getTime();
-                            const dateB = b.checkInDate.getTime();
-                            return dateB - dateA; // DESC
-                        });
-
-
-                        // Paginate trên frontend
-                        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-                        const endIndex = startIndex + ITEMS_PER_PAGE;
-                        const paginatedBookings = allBookings.slice(startIndex, endIndex);
-                        const totalPages = Math.ceil(allBookings.length / ITEMS_PER_PAGE);
-
-                        setBookings(paginatedBookings);
-                        setTotalPages(totalPages);
-                        setTotalItems(allBookings.length);
-                    } catch (error: any) {
-                        throw error;
                     }
+                    
+                    console.log(`[BookingsPage] Total bookings from all partner hotels: ${allBookings.length}`);
+
+                    // 3. Sort và paginate
+                    allBookings.sort((a, b) => b.checkInDate.getTime() - a.checkInDate.getTime());
+                    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+                    const endIndex = startIndex + ITEMS_PER_PAGE;
+                    const paginatedBookings = allBookings.slice(startIndex, endIndex);
+                    const totalPages = Math.ceil(allBookings.length / ITEMS_PER_PAGE);
+
+                    setBookings(paginatedBookings);
+                    setTotalPages(totalPages);
+                    setTotalItems(allBookings.length);
                 } else {
-                    // ADMIN: Lấy tất cả bookings
-                    bookingsResponse = await getBookings({
+                    // ADMIN: Gọi API bình thường
+                    const bookingsResponse = await getBookings({
                         page: currentPage - 1,
                         size: ITEMS_PER_PAGE,
                         sortBy: 'createdAt',
@@ -156,7 +171,6 @@ export default function BookingsPage() {
                     setBookings(bookingsResponse.data);
                     setTotalPages(bookingsResponse.totalPages);
                     setTotalItems(bookingsResponse.totalItems);
-
                 }
             } catch (error: any) {
 
@@ -224,9 +238,7 @@ export default function BookingsPage() {
             </PageHeader>
 
             {isLoading ? (
-                <div className="text-center py-8 text-gray-500">
-                    Đang tải dữ liệu đặt phòng...
-                </div>
+                <LoadingSpinner message="Đang tải danh sách đơn hàng..." />
             ) : bookings.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                     <p>Không có đặt phòng nào.</p>
