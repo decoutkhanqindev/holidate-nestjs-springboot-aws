@@ -13,7 +13,12 @@ interface UserResponse {
     email: string;
     fullName: string;
     phoneNumber?: string;
-    active?: boolean; // Trạng thái active/inactive
+    active?: boolean; // Trạng thái active/inactive (có thể ở root hoặc trong authInfo)
+    authInfo?: {
+        id?: string;
+        authProvider?: string;
+        active?: boolean; // Trạng thái active/inactive - nằm trong authInfo!
+    };
     role: {
         id: string;
         name: string;
@@ -62,6 +67,27 @@ interface PaginatedUserResponse {
  * Không cần fetch hotels nữa để tăng tốc độ
  */
 function mapUserResponseToHotelAdmin(user: UserResponse): HotelAdmin {
+    // QUAN TRỌNG: active nằm trong authInfo.active, không phải user.active!
+    // Ưu tiên lấy từ authInfo.active, nếu không có thì lấy từ user.active (fallback)
+    const activeValue = user.authInfo?.active !== undefined 
+        ? user.authInfo.active 
+        : (user.active !== undefined ? user.active : true); // Default true nếu không có
+    
+    // Xử lý active: nếu active === true → ACTIVE, nếu active === false → INACTIVE
+    const status: 'ACTIVE' | 'INACTIVE' = activeValue === true ? 'ACTIVE' : 'INACTIVE';
+    
+    // Log để debug
+    if (user.id && user.email) {
+        console.log(`[mapUserResponseToHotelAdmin] Mapping user:`, {
+            userId: user.id,
+            email: user.email,
+            activeFromAuthInfo: user.authInfo?.active,
+            activeFromRoot: user.active,
+            finalActive: activeValue,
+            mappedStatus: status
+        });
+    }
+    
     return {
         id: parseInt(user.id) || 0, // For display/compatibility (parsed from UUID, may be 0 if not a valid number)
         userId: user.id, // UUID string from backend - use this for API calls
@@ -71,7 +97,7 @@ function mapUserResponseToHotelAdmin(user: UserResponse): HotelAdmin {
             id: '',
             name: '', // Không hiển thị khách sạn quản lý nữa
         },
-        status: user.active !== false ? 'ACTIVE' : 'INACTIVE', // Dùng trường active từ backend
+        status: status, // Dùng trường active từ authInfo.active hoặc user.active
         createdAt: user.createdAt ? new Date(user.createdAt) : new Date(),
     };
 }
@@ -88,13 +114,15 @@ export async function getHotelAdmins({
 }): Promise<{
     data: HotelAdmin[];
     totalPages: number;
+    totalItems: number;
     currentPage: number;
 }> {
     try {
         // Fetch TẤT CẢ users từ backend (không dùng pagination params)
         // Frontend sẽ tự phân trang để hiển thị 10 items mỗi trang
+        // Thêm timestamp để tránh cache
         const usersResponse = await apiClient.get<ApiResponse<UserResponse[] | PaginatedUserResponse>>(
-            baseURL
+            `${baseURL}?_t=${Date.now()}`
         );
 
         let allUsers: UserResponse[] = [];
@@ -129,10 +157,12 @@ export async function getHotelAdmins({
 
         // Tính totalPages từ tổng số PARTNER users
         const totalPages = Math.max(1, Math.ceil(partnerUsers.length / limit));
+        const totalItems = partnerUsers.length;
 
         return {
             data: hotelAdmins,
             totalPages,
+            totalItems,
             currentPage: page,
         };
     } catch (error: any) {
@@ -141,6 +171,7 @@ export async function getHotelAdmins({
             return {
                 data: [],
                 totalPages: 0,
+                totalItems: 0,
                 currentPage: page,
             };
         }
@@ -157,7 +188,9 @@ export async function getHotelAdmins({
  */
 export async function getHotelsForSelection(): Promise<Array<{ id: string; name: string }>> {
     try {
-        const response = await getHotels(0, 1000); // Lấy tất cả hotels
+        // Lấy tất cả hotels với pagination - tăng size lên để lấy nhiều hơn
+        // Nhưng vẫn giới hạn để tránh quá tải
+        const response = await getHotels(0, 100); // Giảm từ 1000 xuống 100 để tối ưu
         return response.hotels.map(hotel => ({
             id: hotel.id,
             name: hotel.name,

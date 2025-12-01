@@ -13,13 +13,43 @@ export async function getDiscounts({
     size = 10,
     code,
     active,
-    sortBy = 'createdAt',
-    sortDir = 'desc'
+    currentlyValid,
+    validFrom,
+    validTo,
+    minPercentage,
+    maxPercentage,
+    minBookingPrice,
+    maxBookingPrice,
+    minBookingCount,
+    maxBookingCount,
+    available,
+    exhausted,
+    minTimesUsed,
+    maxTimesUsed,
+    hotelId,
+    specialDayId,
+    sortBy = 'created-at',
+    sortDir = 'asc'
 }: {
     page?: number;
     size?: number;
     code?: string;
     active?: boolean;
+    currentlyValid?: boolean;
+    validFrom?: string; // ISO format date
+    validTo?: string; // ISO format date
+    minPercentage?: number;
+    maxPercentage?: number;
+    minBookingPrice?: number;
+    maxBookingPrice?: number;
+    minBookingCount?: number;
+    maxBookingCount?: number;
+    available?: boolean;
+    exhausted?: boolean;
+    minTimesUsed?: number;
+    maxTimesUsed?: number;
+    hotelId?: string;
+    specialDayId?: string;
     sortBy?: string;
     sortDir?: string;
 }): Promise<PagedResponse<SuperDiscount>> {
@@ -28,12 +58,28 @@ export async function getDiscounts({
         const params: any = {
             page,
             size,
-            sortBy,
-            sortDir,
+            'sort-by': sortBy || 'created-at', // Backend dùng kebab-case
+            'sort-dir': sortDir || 'asc',
         };
 
-        if (code) params.code = code;
+        // Thêm các filter parameters
+        if (code && code.trim() !== '') params.code = code.trim();
         if (active !== undefined) params.active = active;
+        if (currentlyValid !== undefined) params['currently-valid'] = currentlyValid;
+        if (validFrom) params['valid-from'] = validFrom;
+        if (validTo) params['valid-to'] = validTo;
+        if (minPercentage !== undefined && minPercentage !== null) params['min-percentage'] = minPercentage;
+        if (maxPercentage !== undefined && maxPercentage !== null) params['max-percentage'] = maxPercentage;
+        if (minBookingPrice !== undefined && minBookingPrice !== null) params['min-booking-price'] = minBookingPrice;
+        if (maxBookingPrice !== undefined && maxBookingPrice !== null) params['max-booking-price'] = maxBookingPrice;
+        if (minBookingCount !== undefined && minBookingCount !== null) params['min-booking-count'] = minBookingCount;
+        if (maxBookingCount !== undefined && maxBookingCount !== null) params['max-booking-count'] = maxBookingCount;
+        if (available !== undefined) params.available = available;
+        if (exhausted !== undefined) params.exhausted = exhausted;
+        if (minTimesUsed !== undefined && minTimesUsed !== null) params['min-times-used'] = minTimesUsed;
+        if (maxTimesUsed !== undefined && maxTimesUsed !== null) params['max-times-used'] = maxTimesUsed;
+        if (hotelId && hotelId.trim() !== '') params['hotel-id'] = hotelId.trim();
+        if (specialDayId && specialDayId.trim() !== '') params['special-day-id'] = specialDayId.trim();
 
         const response = await apiClient.get<ApiResponse<PagedResponse<SuperDiscount>>>(baseURL, {
             params,

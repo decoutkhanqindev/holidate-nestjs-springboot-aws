@@ -13,6 +13,8 @@ export interface Hotel {
     imageUrl?: string;
     stt?: number;
     description?: string;
+    createdAt?: string; // Ngày tạo (ISO format)
+    updatedAt?: string; // Ngày cập nhật (ISO format)
     entertainmentVenues?: Array<{
         id: string;
         name: string;
@@ -176,21 +178,29 @@ export interface PagedResponse<T> {
 }
 
 // Payment Transaction type for Super Admin
-export type PaymentTransactionStatus = 'PAID' | 'PENDING' | 'EXPIRED' | 'FAILED';
+export type PaymentTransactionStatus = 'pending' | 'success' | 'failed' | 'refunded';
 
 export interface PaymentTransaction {
-    id: string;
-    adminName: string;
-    adminEmail: string;
-    hotelName: string;
-    hotelId: string;
-    paymentDate: Date;
-    expiryDate: Date;
-    amount: number;
-    status: PaymentTransactionStatus;
-    paymentMethod: string; // 'VNPay', 'Bank Transfer', etc.
-    transactionId: string;
-    description?: string;
+    transaction_id: string; // Mã giao dịch
+    booking_id: string; // Mã đặt phòng liên quan
+    hotel_id: string; // ID khách sạn
+    user_id: string; // ID khách hàng
+    amount: number; // Tổng số tiền thanh toán
+    currency: string; // Loại tiền (VND, USD...)
+    payment_method: string; // Thẻ, Momo, VNPay, PayPal...
+    payment_gateway: string; // VNPay / Stripe / PayPal...
+    status: PaymentTransactionStatus; // pending / success / failed / refunded
+    gateway_transaction_code?: string | null; // Mã do cổng thanh toán trả về
+    bank_code?: string | null; // Ngân hàng
+    created_at: Date; // Thời điểm tạo giao dịch
+    paid_at?: Date | null; // Thời điểm thanh toán thành công
+    refunded_at?: Date | null; // Thời điểm hoàn tiền (nếu có)
+    discount_amount: number; // Số tiền giảm giá (voucher)
+    final_amount: number; // Số tiền cuối cùng cần thanh toán
+    // Additional fields for display
+    hotel_name?: string;
+    user_name?: string;
+    user_email?: string;
 }
 
 // Support Request type for Super Admin

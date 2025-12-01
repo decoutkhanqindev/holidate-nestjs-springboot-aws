@@ -48,11 +48,14 @@ function formatPrice(price: number): string {
 
 interface DiscountsTableProps {
     discounts: SuperDiscount[];
+    currentPage: number; // 0-based page number
     onEdit: (discount: SuperDiscount) => void;
     onDelete: (id: string, code: string) => void;
 }
 
-export default function DiscountsTable({ discounts, onEdit, onDelete }: DiscountsTableProps) {
+export default function DiscountsTable({ discounts, currentPage, onEdit, onDelete }: DiscountsTableProps) {
+    const ITEMS_PER_PAGE = 10;
+    
     return (
         <div className="card shadow-sm">
             <div className="card-body p-0">
@@ -60,6 +63,7 @@ export default function DiscountsTable({ discounts, onEdit, onDelete }: Discount
                     <table className="table table-hover align-middle mb-0">
                         <thead className="table-light">
                             <tr>
+                                <th scope="col" className="p-3">STT</th>
                                 <th scope="col" className="p-3">Mã giảm giá</th>
                                 <th scope="col" className="p-3">Mô tả</th>
                                 <th scope="col" className="p-3">Giảm giá</th>
@@ -73,59 +77,68 @@ export default function DiscountsTable({ discounts, onEdit, onDelete }: Discount
                         <tbody>
                             {discounts.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="text-center p-4 text-muted">
+                                    <td colSpan={9} className="text-center p-4 text-muted">
                                         Không có mã giảm giá nào
                                     </td>
                                 </tr>
                             ) : (
-                                discounts.map(discount => (
-                                    <tr key={discount.id}>
-                                        <td className="p-3">
-                                            <code className="bg-light px-2 py-1 rounded">{discount.code}</code>
-                                        </td>
-                                        <td className="p-3">
-                                            <div className="text-dark" style={{ maxWidth: '200px' }}>
-                                                {discount.description}
-                                            </div>
-                                        </td>
-                                        <td className="p-3">
-                                            <span className="fw-semibold text-primary">
-                                                {discount.percentage}%
-                                            </span>
-                                        </td>
-                                        <td className="p-3">
-                                            <UsageStatus timesUsed={discount.timesUsed} usageLimit={discount.usageLimit} />
-                                        </td>
-                                        <td className="p-3 text-muted">
-                                            {formatPrice(discount.minBookingPrice)}
-                                        </td>
-                                        <td className="p-3 text-muted">
-                                            <div className="small">
-                                                <div>Từ: {formatDate(discount.validFrom)}</div>
-                                                <div>Đến: {formatDate(discount.validTo)}</div>
-                                            </div>
-                                        </td>
-                                        <td className="p-3">
-                                            <StatusBadge active={discount.active} />
-                                        </td>
-                                        <td className="p-3 text-end">
-                                            <button 
-                                                onClick={() => onEdit(discount)} 
-                                                className="btn btn-sm btn-outline-primary me-2" 
-                                                title="Chỉnh sửa"
-                                            >
-                                                <FaPencilAlt />
-                                            </button>
-                                            <button 
-                                                onClick={() => onDelete(discount.id, discount.code)} 
-                                                className="btn btn-sm btn-outline-danger" 
-                                                title="Xóa"
-                                            >
-                                                <FaTrash />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
+                                discounts.map((discount, index) => {
+                                    // Tính STT: (currentPage * ITEMS_PER_PAGE) + index + 1
+                                    const stt = (currentPage * ITEMS_PER_PAGE) + index + 1;
+                                    return (
+                                        <tr key={discount.id}>
+                                            <td className="p-3">
+                                                <div className="text-sm font-medium text-gray-900">
+                                                    {stt}
+                                                </div>
+                                            </td>
+                                            <td className="p-3">
+                                                <code className="bg-light px-2 py-1 rounded">{discount.code}</code>
+                                            </td>
+                                            <td className="p-3">
+                                                <div className="text-dark" style={{ maxWidth: '200px' }}>
+                                                    {discount.description}
+                                                </div>
+                                            </td>
+                                            <td className="p-3">
+                                                <span className="fw-semibold text-primary">
+                                                    {discount.percentage}%
+                                                </span>
+                                            </td>
+                                            <td className="p-3">
+                                                <UsageStatus timesUsed={discount.timesUsed} usageLimit={discount.usageLimit} />
+                                            </td>
+                                            <td className="p-3 text-muted">
+                                                {formatPrice(discount.minBookingPrice)}
+                                            </td>
+                                            <td className="p-3 text-muted">
+                                                <div className="small">
+                                                    <div>Từ: {formatDate(discount.validFrom)}</div>
+                                                    <div>Đến: {formatDate(discount.validTo)}</div>
+                                                </div>
+                                            </td>
+                                            <td className="p-3">
+                                                <StatusBadge active={discount.active} />
+                                            </td>
+                                            <td className="p-3 text-end">
+                                                <button 
+                                                    onClick={() => onEdit(discount)} 
+                                                    className="btn btn-sm btn-outline-primary me-2" 
+                                                    title="Chỉnh sửa"
+                                                >
+                                                    <FaPencilAlt />
+                                                </button>
+                                                <button 
+                                                    onClick={() => onDelete(discount.id, discount.code)} 
+                                                    className="btn btn-sm btn-outline-danger" 
+                                                    title="Xóa"
+                                                >
+                                                    <FaTrash />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>

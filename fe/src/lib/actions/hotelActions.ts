@@ -322,20 +322,24 @@ export async function createHotelActionSuperAdmin(formData: FormData) {
 // Backend yêu cầu multipart/form-data, nên phải truyền FormData trực tiếp
 export async function updateHotelActionSuperAdmin(id: string, formData: FormData) {
     try {
-        // Validation - chỉ validate name (address có thể optional)
+        // Validation - chỉ validate name nếu có trong formData (cho phép update chỉ status)
         const name = formData.get('name') as string;
+        const status = formData.get('status') as string;
 
-        if (!name || name.trim() === '') {
+        // Nếu có name trong formData thì phải validate
+        if (formData.has('name') && (!name || name.trim() === '')) {
             return { error: "Tên khách sạn là bắt buộc." };
         }
 
+        // Nếu chỉ update status mà không có name, không cần validate name
         // Backend yêu cầu multipart/form-data, nên truyền FormData trực tiếp
         // Dùng updateHotelServer (server version) để lấy token từ cookies
         await updateHotelServer(id, formData);
 
-        revalidatePath("/super-hotels");
-        revalidatePath(`/super-hotels/${id}`);
-        revalidatePath("/admin-hotels"); // Cũng revalidate admin-hotels để đồng bộ
+        // Không revalidate để tránh reload page - client sẽ tự reload data
+        // revalidatePath("/super-hotels");
+        // revalidatePath(`/super-hotels/${id}`);
+        // revalidatePath("/admin-hotels");
         
         // Không redirect ở đây - để client component tự xử lý redirect sau khi hiển thị toast
         return { success: true };

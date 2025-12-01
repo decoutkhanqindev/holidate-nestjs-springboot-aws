@@ -3,17 +3,19 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import SuperHotelForm from './SuperHotelForm';
-import { createHotelActionSuperAdmin } from '@/lib/actions/hotelActions';
+import { createHotelActionSuperAdmin, updateHotelActionSuperAdmin } from '@/lib/actions/hotelActions';
 import { toast } from 'react-toastify';
 import { BuildingOfficeIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import type { Hotel } from '@/types';
 
 interface SuperHotelFormModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess?: () => void;
+    hotel?: Hotel | null;
 }
 
-export default function SuperHotelFormModal({ isOpen, onClose, onSuccess }: SuperHotelFormModalProps) {
+export default function SuperHotelFormModal({ isOpen, onClose, onSuccess, hotel }: SuperHotelFormModalProps) {
     const router = useRouter();
 
     // Tắt scroll của body khi modal mở
@@ -53,27 +55,47 @@ export default function SuperHotelFormModal({ isOpen, onClose, onSuccess }: Supe
 
     const handleSubmit = async (formData: FormData) => {
         try {
-            const result = await createHotelActionSuperAdmin(formData);
-            if (result?.success) {
-                toast.success('Tạo khách sạn thành công!', {
-                    position: "top-right",
-                    autoClose: 2000,
-                });
-                // Đóng modal trước, sau đó refresh
-                onClose();
-                // Delay refresh để tránh unmount component khi state đang update
-                setTimeout(() => {
-                    onSuccess?.();
-                    router.refresh();
-                }, 100);
+            let result;
+            if (hotel) {
+                // Cập nhật
+                result = await updateHotelActionSuperAdmin(hotel.id, formData);
+                if (result?.success) {
+                    toast.success('Cập nhật khách sạn thành công!', {
+                        position: "top-right",
+                        autoClose: 2000,
+                    });
+                } else {
+                    toast.error(result?.error || 'Không thể cập nhật khách sạn. Vui lòng thử lại.', {
+                        position: "top-right",
+                        autoClose: 3000,
+                    });
+                    return;
+                }
             } else {
-                toast.error(result?.error || 'Không thể tạo khách sạn. Vui lòng thử lại.', {
-                    position: "top-right",
-                    autoClose: 3000,
-                });
+                // Tạo mới
+                result = await createHotelActionSuperAdmin(formData);
+                if (result?.success) {
+                    toast.success('Tạo khách sạn thành công!', {
+                        position: "top-right",
+                        autoClose: 2000,
+                    });
+                } else {
+                    toast.error(result?.error || 'Không thể tạo khách sạn. Vui lòng thử lại.', {
+                        position: "top-right",
+                        autoClose: 3000,
+                    });
+                    return;
+                }
             }
+            // Đóng modal trước, sau đó refresh
+            onClose();
+            // Delay refresh để tránh unmount component khi state đang update
+            setTimeout(() => {
+                onSuccess?.();
+                // Không gọi router.refresh() để tránh reload toàn bộ page
+            }, 100);
         } catch (error: any) {
-            toast.error(error.message || 'Không thể tạo khách sạn. Vui lòng thử lại.', {
+            toast.error(error.message || `Không thể ${hotel ? 'cập nhật' : 'tạo'} khách sạn. Vui lòng thử lại.`, {
                 position: "top-right",
                 autoClose: 3000,
             });
@@ -113,8 +135,12 @@ export default function SuperHotelFormModal({ isOpen, onClose, onSuccess }: Supe
                                 <BuildingOfficeIcon className="h-5 w-5 text-white" />
                             </div>
                             <div>
-                                <h2 className="text-lg font-bold text-white leading-tight">Thêm khách sạn mới</h2>
-                                <p className="text-xs text-blue-100 mt-0.5">Điền thông tin để tạo khách sạn trong hệ thống</p>
+                                <h2 className="text-lg font-bold text-white leading-tight">
+                                    {hotel ? 'Chỉnh sửa khách sạn' : 'Thêm khách sạn mới'}
+                                </h2>
+                                <p className="text-xs text-blue-100 mt-0.5">
+                                    {hotel ? 'Cập nhật thông tin khách sạn trong hệ thống' : 'Điền thông tin để tạo khách sạn trong hệ thống'}
+                                </p>
                             </div>
                         </div>
                         <button
@@ -150,7 +176,7 @@ export default function SuperHotelFormModal({ isOpen, onClose, onSuccess }: Supe
                     `}</style>
                     <div id="modal-scroll-container" className="px-5 py-4">
                         <div id="super-hotel-form-wrapper">
-                            {isOpen && <SuperHotelForm formAction={handleSubmit} />}
+                            {isOpen && <SuperHotelForm formAction={handleSubmit} hotel={hotel} />}
                         </div>
                     </div>
                 </div>

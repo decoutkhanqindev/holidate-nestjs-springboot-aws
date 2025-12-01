@@ -119,22 +119,11 @@ export default function HotelAdminForm({ admin, onSave, onCancel }: FormProps) {
                     name="email"
                     defaultValue={admin?.email || ''}
                     required
-                    disabled={isEditing} // Email không thể đổi khi edit
+                    readOnly={isEditing} // Email không thể đổi khi edit, dùng readOnly thay vì disabled để vẫn gửi được giá trị
                 />
                 {isEditing && (
                     <small className="form-text text-muted">Email không thể thay đổi</small>
                 )}
-            </div>
-            <div className="mb-3">
-                <label htmlFor="phoneNumber" className="form-label">Số điện thoại</label>
-                <input
-                    type="tel"
-                    className="form-control"
-                    id="phoneNumber"
-                    name="phoneNumber"
-                    defaultValue={admin?.email ? '' : ''} // Phone number không có trong HotelAdmin type
-                    placeholder="VD: 0123456789"
-                />
             </div>
             {isEditing && (
                 <div className="mb-3">

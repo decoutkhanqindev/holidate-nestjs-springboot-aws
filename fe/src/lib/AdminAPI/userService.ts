@@ -22,14 +22,18 @@ interface UserResponse {
     gender?: string;
     dateOfBirth?: string;
     avatarUrl?: string;
+    active?: boolean; // User active status (có thể ở root hoặc trong authInfo)
     role: {
         id: string;
         name: string;
         description?: string;
     };
     authInfo?: {
-        provider: string;
-        verified: boolean;
+        id?: string;
+        provider?: string;
+        authProvider?: string; // Backend có thể dùng authProvider
+        verified?: boolean;
+        active?: boolean; // QUAN TRỌNG: active nằm trong authInfo!
     };
     createdAt?: string;
     updatedAt?: string;
@@ -343,7 +347,13 @@ export async function updateUserServer(userId: string, payload: UpdateUserPayloa
         if (payload.gender) formData.append('gender', payload.gender);
         if (payload.dateOfBirth) formData.append('dateOfBirth', payload.dateOfBirth);
         if (payload.avatarFile) formData.append('avatarFile', payload.avatarFile);
-        if (payload.active !== undefined) formData.append('active', String(payload.active));
+        // Backend yêu cầu active là boolean, nhưng FormData chỉ nhận string
+        // Spring Boot tự động parse string "true"/"false" thành boolean
+        // Gửi dưới dạng string "true" hoặc "false"
+        if (payload.active !== undefined) {
+            // Convert boolean thành string "true" hoặc "false"
+            formData.append('active', payload.active ? 'true' : 'false');
+        }
 
         const serverClient = await createServerApiClient();
         const response = await serverClient.put<ApiResponse<UserResponse>>(
@@ -357,8 +367,18 @@ export async function updateUserServer(userId: string, payload: UpdateUserPayloa
         );
 
         if (response.data?.statusCode === 200 && response.data?.data) {
-            console.log('[userService] ✅ User updated successfully (server)');
-            return response.data.data;
+            const updatedUser = response.data.data;
+            console.log('[userService] ✅ User updated successfully (server)', {
+                userId: updatedUser.id,
+                email: updatedUser.email,
+                fullName: updatedUser.fullName,
+                activeFromRoot: updatedUser.active,
+                activeFromAuthInfo: updatedUser.authInfo?.active,
+                authInfo: updatedUser.authInfo,
+                hasActiveField: 'active' in updatedUser,
+                hasAuthInfo: !!updatedUser.authInfo
+            });
+            return updatedUser;
         }
 
         throw new Error('Invalid response from server');

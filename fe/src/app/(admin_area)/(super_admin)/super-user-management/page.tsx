@@ -16,6 +16,7 @@ export default function SuperAdminsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
+    const [totalItems, setTotalItems] = useState(0);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingAdmin, setEditingAdmin] = useState<HotelAdmin | null>(null);
@@ -26,6 +27,7 @@ export default function SuperAdminsPage() {
             const response = await getHotelAdmins({ page: currentPage, limit: ITEMS_PER_PAGE });
             setAdmins(response.data);
             setTotalPages(response.totalPages);
+            setTotalItems(response.totalItems);
             setIsLoading(false);
         };
         loadAdmins();
@@ -60,6 +62,7 @@ export default function SuperAdminsPage() {
             const response = await getHotelAdmins({ page: currentPage, limit: ITEMS_PER_PAGE });
             setAdmins(response.data);
             setTotalPages(response.totalPages);
+            setTotalItems(response.totalItems);
         } catch (error: any) {
             toast.error(error.message || 'Không thể xóa đối tác khách sạn. Vui lòng thử lại.', {
                 position: "top-right",
@@ -105,10 +108,11 @@ export default function SuperAdminsPage() {
             // Đóng modal và refresh data
             setIsModalOpen(false);
 
-            // Reload data
+            // Force reload data ngay lập tức (không cần delay vì backend đã xử lý xong)
             const response = await getHotelAdmins({ page: currentPage, limit: ITEMS_PER_PAGE });
             setAdmins(response.data);
             setTotalPages(response.totalPages);
+            setTotalItems(response.totalItems);
         } catch (error: any) {
             toast.error(error.message || 'Có lỗi xảy ra. Vui lòng thử lại.', {
                 position: "top-right",
@@ -120,7 +124,14 @@ export default function SuperAdminsPage() {
     return (
         <div className="container-fluid">
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <h1 className="h3 text-dark mb-0">Quản lý Đối tác Khách sạn</h1>
+                <div>
+                    <h1 className="h3 text-dark mb-0">Quản lý Đối tác Khách sạn</h1>
+                    {!isLoading && (
+                        <p className="text-muted small mb-0 mt-1">
+                            Tổng số đối tác: <span className="fw-semibold text-primary">{totalItems}</span>
+                        </p>
+                    )}
+                </div>
                 <button className="btn btn-primary" onClick={handleAddNew}>
                     + Thêm Đối tác
                 </button>
@@ -134,6 +145,7 @@ export default function SuperAdminsPage() {
                         admins={admins}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
+                        currentPage={currentPage}
                     />
                     <div className="mt-4 d-flex justify-content-center">
                         <Pagination

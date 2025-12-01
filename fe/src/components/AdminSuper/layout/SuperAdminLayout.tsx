@@ -8,25 +8,26 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
     FaHome, FaUsersCog, FaBuilding, FaUserShield, FaUsers, FaLifeRing,
-    FaNewspaper, FaCreditCard, FaChartPie, FaChartBar, FaCog, FaFileContract, FaGlobe,
-    FaTicketAlt, FaFileAlt
+    FaNewspaper, FaCreditCard, FaChartBar, FaFileContract, FaGlobe,
+    FaTicketAlt, FaFileAlt, FaStar, FaCalendarDay
 } from "react-icons/fa";
 
 const superAdminMenu = [
     { href: "/super-admin", label: "Trang chủ", icon: FaHome },
     { href: "/super-reports", label: "Báo cáo", icon: FaFileAlt },
-    { href: "/super-user-management", label: "Quản lý  Admin Khách sạn", icon: FaUsersCog },
+    { href: "/super-user-management", label: "Quản lý Đối tác Khách sạn", icon: FaUsersCog },
     { href: "/super-hotels", label: "Quản lý khách sạn", icon: FaBuilding },
+    { href: "/super-users", label: "Quản lý người dùng", icon: FaUsers },
     //{ href: "/super-admins", label: "Quản lý Admin khách sạn", icon: FaUserShield },
     { href: "/super-discounts", label: "Quản lý mã giảm giá", icon: FaTicketAlt },
+    { href: "/super-booking", label: "Quản lý đơn hàng", icon: FaNewspaper },
+    { href: "/super-reviews", label: "Quản lý đánh giá", icon: FaStar },
 
-    { href: "/super-support", label: "Hỗ trợ / Báo cáo vi phạm", icon: FaLifeRing },
-    { href: "/super-news", label: "Tin tức & thông báo", icon: FaNewspaper },
     { href: "/super-payment", label: "Quản lý giao dịch", icon: FaCreditCard },
-    { href: "/super-revenue", label: "Báo cáo doanh thu", icon: FaChartPie },
     { href: "/super-booking-stat", label: "Thống kê đặt phòng", icon: FaChartBar },
-    { href: "/super-setting", label: "Cài đặt chung", icon: FaCog },
     { href: "/super-policy", label: "Chính sách & quy định", icon: FaFileContract },
+    { href: "/super-special-days", label: "Quản lý ngày đặc biệt", icon: FaCalendarDay },
+    { href: "/super-support", label: "Hỗ trợ / Báo cáo vi phạm", icon: FaLifeRing },
 ];
 
 

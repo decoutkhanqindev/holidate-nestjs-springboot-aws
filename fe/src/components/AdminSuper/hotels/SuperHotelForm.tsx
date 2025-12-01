@@ -14,6 +14,7 @@ import { getPartnerRole } from "@/lib/AdminAPI/roleService";
 import { useAuth } from "@/components/Admin/AuthContext_Admin/AuthContextAdmin";
 import { PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { getEntertainmentVenuesByCity, type EntertainmentVenueByCategory, type EntertainmentVenue } from "@/lib/AdminAPI/entertainmentVenueService";
+import { getHotelDetailById } from "@/lib/AdminAPI/hotelService";
 
 function SubmitButton({ isEditing }: { isEditing: boolean }) {
     const { pending } = useFormStatus();
@@ -72,6 +73,8 @@ export default function SuperHotelForm({ hotel, formAction }: SuperHotelFormProp
     const [partners, setPartners] = useState<Partner[]>([]);
     const [selectedPartnerId, setSelectedPartnerId] = useState<string>('');
     const [isLoadingPartners, setIsLoadingPartners] = useState(false);
+    const [hotelPartnerName, setHotelPartnerName] = useState<string>('');
+    const [hotelPartnerEmail, setHotelPartnerEmail] = useState<string>('');
 
     // Modal state cho "Thêm mới location"
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -139,6 +142,39 @@ export default function SuperHotelForm({ hotel, formAction }: SuperHotelFormProp
         };
         loadInitialData();
     }, []); // Super-admin không phụ thuộc vào user role
+
+    // Load hotel detail khi edit để lấy partner info
+    useEffect(() => {
+        const loadHotelDetail = async () => {
+            if (isEditing && hotel?.id) {
+                try {
+                    const hotelDetail = await getHotelDetailById(hotel.id);
+                    if (hotelDetail?.partner) {
+                        // Lưu tên và email của partner
+                        setHotelPartnerName(
+                            hotelDetail.partner.fullName || 
+                            hotelDetail.partner.email || 
+                            ''
+                        );
+                        setHotelPartnerEmail(hotelDetail.partner.email || '');
+                        
+                        // Set selectedPartnerId nếu có partner.id
+                        if (hotelDetail.partner.id) {
+                            setSelectedPartnerId(hotelDetail.partner.id);
+                        } else if (hotel?.ownerId) {
+                            setSelectedPartnerId(hotel.ownerId);
+                        }
+                    } else if (hotel?.ownerId) {
+                        // Fallback: dùng ownerId nếu không có partner trong detail
+                        setSelectedPartnerId(hotel.ownerId);
+                    }
+                } catch (error) {
+                    // Error loading hotel detail
+                }
+            }
+        };
+        loadHotelDetail();
+    }, [isEditing, hotel?.id]);
 
     const loadProvinces = async (countryId: string) => {
         // Reset tất cả state phía dưới
@@ -376,6 +412,19 @@ export default function SuperHotelForm({ hotel, formAction }: SuperHotelFormProp
             formData.append(`entertainmentVenuesToAdd[${index}].categoryId`, venue.categoryId);
         });
 
+        // Xử lý partnerId: nếu edit và không chọn partner mới, giữ partner hiện tại
+        if (isEditing && hotel?.id) {
+            const formPartnerId = formData.get('partnerId') as string;
+            if (!formPartnerId || formPartnerId.trim() === '') {
+                // Nếu không chọn partner mới, dùng partnerId hiện tại
+                if (selectedPartnerId && selectedPartnerId.trim() !== '') {
+                    formData.set('partnerId', selectedPartnerId);
+                } else if (hotel?.ownerId) {
+                    formData.set('partnerId', hotel.ownerId);
+                }
+            }
+        }
+
         // Gọi formAction với FormData đã có ảnh và venues
         formAction(formData);
     };
@@ -390,20 +439,22 @@ export default function SuperHotelForm({ hotel, formAction }: SuperHotelFormProp
                         <h3 className="text-base font-semibold text-gray-800">Thông tin cơ bản</h3>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="md:col-span-1">
-                            <label htmlFor="stt" className="block text-xs font-medium text-gray-700 mb-1.5">
-                                Số thứ tự (STT)
-                            </label>
-                            <input
-                                type="number"
-                                name="stt"
-                                id="stt"
-                                defaultValue={hotel?.stt || ''}
-                                placeholder="VD: 1"
-                                className="mt-1 block w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                            />
-                        </div>
-                        <div className="md:col-span-2">
+                        {!isEditing && (
+                            <div className="md:col-span-1">
+                                <label htmlFor="stt" className="block text-xs font-medium text-gray-700 mb-1.5">
+                                    Số thứ tự (STT)
+                                </label>
+                                <input
+                                    type="number"
+                                    name="stt"
+                                    id="stt"
+                                    defaultValue={hotel?.stt || ''}
+                                    placeholder="VD: 1"
+                                    className="mt-1 block w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                />
+                            </div>
+                        )}
+                        <div className={isEditing ? "md:col-span-3" : "md:col-span-2"}>
                             <label htmlFor="name" className="block text-xs font-medium text-gray-700 mb-1.5">
                                 Tên khách sạn <span className="text-red-500">*</span>
                             </label>
@@ -743,9 +794,20 @@ export default function SuperHotelForm({ hotel, formAction }: SuperHotelFormProp
                         <div className="w-1 h-5 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></div>
                         <h3 className="text-base font-semibold text-gray-800">Thông tin đối tác</h3>
                     </div>
+                    {isEditing && hotelPartnerName && (
+                        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                                Chủ khách sạn hiện tại
+                            </label>
+                            <p className="text-sm font-semibold text-gray-900">{hotelPartnerName}</p>
+                            {hotelPartnerEmail && (
+                                <p className="text-xs text-gray-600 mt-1">{hotelPartnerEmail}</p>
+                            )}
+                        </div>
+                    )}
                     <div className="space-y-1.5">
                         <label htmlFor="partnerId" className="block text-xs font-medium text-gray-700">
-                            Đối tác <span className="text-red-500">*</span>
+                            {isEditing ? 'Đổi đối tác (tùy chọn)' : 'Đối tác'} <span className="text-red-500">*</span>
                         </label>
 
                         {/* Super-admin luôn hiển thị dropdown để chọn partner */}
@@ -761,12 +823,12 @@ export default function SuperHotelForm({ hotel, formAction }: SuperHotelFormProp
                             <select
                                 id="partnerId"
                                 name="partnerId"
-                                required
+                                required={!isEditing}
                                 value={selectedPartnerId}
                                 onChange={(e) => setSelectedPartnerId(e.target.value)}
                                 className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all"
                             >
-                                <option value="">Chọn đối tác</option>
+                                <option value="">{isEditing ? 'Giữ nguyên đối tác hiện tại' : 'Chọn đối tác'}</option>
                                 {partners.filter(p => p.id && String(p.id).trim()).map((partner, index) => (
                                     <option key={`partner-${partner.id}-${index}`} value={partner.id}>
                                         {partner.fullName} ({partner.email})
