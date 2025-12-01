@@ -4,8 +4,10 @@ import com.webapp.holidate.constants.db.query.DiscountQueries;
 import com.webapp.holidate.entity.discount.HotelDiscount;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -14,4 +16,7 @@ public interface HotelDiscountRepository extends JpaRepository<HotelDiscount, St
   Optional<HotelDiscount> findByDiscountId(String discountId);
 
   long countByDiscountId(String discountId);
+  
+  @Query(DiscountQueries.FIND_ALL_BY_HOTEL_ID_WITH_DISCOUNT)
+  List<HotelDiscount> findAllByHotelIdWithDiscount(@Param("hotelId") String hotelId);
 }

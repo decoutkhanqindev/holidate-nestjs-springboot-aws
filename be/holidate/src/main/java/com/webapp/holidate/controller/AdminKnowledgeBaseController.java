@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -44,6 +45,12 @@ public class AdminKnowledgeBaseController {
     KnowledgeBaseRepository repository;
     KnowledgeBaseBatchService batchService;
     KnowledgeBaseScheduler scheduler;
+    ApplicationContext applicationContext;
+    
+    // Get self proxy from ApplicationContext to enable @Async
+    private AdminKnowledgeBaseController getSelf() {
+        return applicationContext.getBean(AdminKnowledgeBaseController.class);
+    }
     
     /**
      * Trigger full synchronization of all active hotels.
@@ -55,8 +62,8 @@ public class AdminKnowledgeBaseController {
     public ApiResponse<String> triggerFullSync() {
         log.info("Admin triggered full Knowledge Base sync");
         
-        // Run asynchronously to avoid blocking
-        triggerFullSyncAsync();
+        // Run asynchronously to avoid blocking - use proxy from ApplicationContext to enable @Async
+        getSelf().triggerFullSyncAsync();
         
         return ApiResponse.<String>builder()
                 .data("Full sync triggered successfully. Processing in background.")
@@ -68,7 +75,7 @@ public class AdminKnowledgeBaseController {
      * Asynchronous method to execute full sync.
      */
     @Async
-    private void triggerFullSyncAsync() {
+    public void triggerFullSyncAsync() {
         try {
             String activeStatus = AccommodationStatusType.ACTIVE.getValue();
             List<Hotel> hotels = repository.findAllActiveHotelsForKnowledgeBase(activeStatus);
@@ -101,8 +108,8 @@ public class AdminKnowledgeBaseController {
     public ApiResponse<String> triggerIncrementalSync() {
         log.info("Admin triggered incremental Knowledge Base sync");
         
-        // Run asynchronously to avoid blocking
-        triggerIncrementalSyncAsync();
+        // Run asynchronously to avoid blocking - use proxy from ApplicationContext to enable @Async
+        getSelf().triggerIncrementalSyncAsync();
         
         return ApiResponse.<String>builder()
                 .data("Incremental sync triggered successfully. Processing in background.")
@@ -114,7 +121,7 @@ public class AdminKnowledgeBaseController {
      * Asynchronous method to execute incremental sync.
      */
     @Async
-    private void triggerIncrementalSyncAsync() {
+    public void triggerIncrementalSyncAsync() {
         try {
             java.time.LocalDateTime lastRunTime = scheduler.getLastIncrementalRunTime();
             String activeStatus = AccommodationStatusType.ACTIVE.getValue();

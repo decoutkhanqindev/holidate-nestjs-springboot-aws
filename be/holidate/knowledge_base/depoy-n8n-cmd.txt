@@ -1,0 +1,24 @@
+mkdir -p ~/n8n-docker
+cd ~/n8n-docker
+
+cat <<EOF > docker-compose.yml
+version: "3"
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - GENERIC_TIMEZONE=Asia/Ho_Chi_Minh
+      - TZ=Asia/Ho_Chi_Minh
+      - WEBHOOK_URL=https://n8n.holidate.site/
+      - NODE_OPTIONS=--max-old-space-size=1536
+      - N8N_DEFAULT_BINARY_DATA_MODE=filesystem
+    volumes:
+      - ./n8n_data:/home/node/.n8n
+EOF
+
+sudo docker-compose up -d
+
+stop docker

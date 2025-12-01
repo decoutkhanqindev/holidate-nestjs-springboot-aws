@@ -8,7 +8,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.webapp.holidate.dto.knowledgebase.BatchResult;
 import com.webapp.holidate.dto.knowledgebase.HotelKnowledgeBaseDto;
@@ -53,10 +52,12 @@ public class KnowledgeBaseBatchService {
      * Error Isolation: Each hotel is wrapped in a try-catch block. If one hotel fails,
      * the error is logged (ERROR level) and processing continues with the next hotel.
      * 
+     * Note: This method does not use @Transactional to avoid connection leak warnings
+     * when processing large batches. Each database operation manages its own transaction.
+     * 
      * @param hotels List of hotels to process
      * @return BatchResult containing success/failure counts and failed hotel IDs
      */
-    @Transactional(readOnly = true)
     public BatchResult processBatch(List<Hotel> hotels) {
         if (hotels == null || hotels.isEmpty()) {
             log.info("Batch processing: Empty hotel list provided");

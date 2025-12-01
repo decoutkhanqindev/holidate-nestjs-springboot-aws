@@ -13,8 +13,12 @@ public class KnowledgeBaseQueries {
      * This query fetches:
      * - Hotel basic info
      * - Location hierarchy (country, province, city, district, ward, street)
-     * - Hotel policy with cancellation and reschedule policies
+     * - Hotel policy with cancellation and reschedule policies (and their rules)
      * - Required identification documents
+     * 
+     * IMPORTANT: Also fetches policy rules to prevent LazyInitializationException when
+     * buildPolicyDetail() accesses policy.getCancellationPolicy().getRules() and
+     * policy.getReschedulePolicy().getRules().
      * 
      * Note: Collections (rooms, amenities, entertainment venues, reviews) are NOT fetched here
      * to avoid cartesian product. They should be fetched separately using hotel IDs.
@@ -29,7 +33,9 @@ public class KnowledgeBaseQueries {
             "LEFT JOIN FETCH h.street st " +
             "LEFT JOIN FETCH h.policy pol " +
             "LEFT JOIN FETCH pol.cancellationPolicy cp " +
+            "LEFT JOIN FETCH cp.rules cpRules " +
             "LEFT JOIN FETCH pol.reschedulePolicy rp " +
+            "LEFT JOIN FETCH rp.rules rpRules " +
             "LEFT JOIN FETCH pol.requiredIdentificationDocuments rid " +
             "LEFT JOIN FETCH rid.identificationDocument " +
             "WHERE h.status = :status " +
@@ -60,11 +66,44 @@ public class KnowledgeBaseQueries {
     /**
      * Query to fetch rooms for specific hotels.
      * Separated from main query to avoid cartesian product.
+     * 
+     * IMPORTANT: Also fetches hotel location hierarchy (country, province, city, district, ward, street)
+     * to prevent LazyInitializationException when processing rooms, since buildRoomKB() needs
+     * to access hotel.getCountry(), hotel.getProvince(), etc.
+     * 
+     * IMPORTANT: Also fetches hotel policy with cancellation and reschedule policies (and their rules)
+     * to prevent LazyInitializationException when buildRoomKB() accesses hotel.getPolicy().getCancellationPolicy()
+     * and hotel.getPolicy().getReschedulePolicy(), and when buildCancellationPolicyDetail() accesses
+     * policy.getRules().
+     * 
+     * IMPORTANT: Also fetches room amenities (RoomAmenity -> Amenity) to prevent LazyInitializationException
+     * when buildRoomKB() accesses room.getAmenities() and then ra.getAmenity().getName().
+     * 
+     * IMPORTANT: Also fetches room cancellation and reschedule policies (and their rules) to prevent
+     * LazyInitializationException when buildRoomKB() accesses room.getCancellationPolicy() and
+     * room.getReschedulePolicy(), and when buildCancellationPolicyDetail() accesses policy.getRules().
      */
     public static final String FIND_ROOMS_BY_HOTEL_IDS =
             "SELECT DISTINCT r FROM Room r " +
             "LEFT JOIN FETCH r.hotel h " +
+            "LEFT JOIN FETCH h.country co " +
+            "LEFT JOIN FETCH h.province pr " +
+            "LEFT JOIN FETCH h.city ci " +
+            "LEFT JOIN FETCH h.district di " +
+            "LEFT JOIN FETCH h.ward wa " +
+            "LEFT JOIN FETCH h.street st " +
+            "LEFT JOIN FETCH h.policy pol " +
+            "LEFT JOIN FETCH pol.cancellationPolicy hcp " +
+            "LEFT JOIN FETCH hcp.rules hcpRules " +
+            "LEFT JOIN FETCH pol.reschedulePolicy hrp " +
+            "LEFT JOIN FETCH hrp.rules hrpRules " +
             "LEFT JOIN FETCH r.bedType bt " +
+            "LEFT JOIN FETCH r.amenities ra " +
+            "LEFT JOIN FETCH ra.amenity a " +
+            "LEFT JOIN FETCH r.cancellationPolicy cp " +
+            "LEFT JOIN FETCH cp.rules cpRules " +
+            "LEFT JOIN FETCH r.reschedulePolicy rp " +
+            "LEFT JOIN FETCH rp.rules rpRules " +
             "WHERE r.hotel.id IN :hotelIds " +
             "AND r.status = :activeStatus " +
             "ORDER BY r.hotel.id, r.name ASC";
@@ -129,8 +168,12 @@ public class KnowledgeBaseQueries {
      * This query fetches:
      * - Hotel basic info
      * - Location hierarchy (country, province, city, district, ward, street)
-     * - Hotel policy with cancellation and reschedule policies
+     * - Hotel policy with cancellation and reschedule policies (and their rules)
      * - Required identification documents
+     * 
+     * IMPORTANT: Also fetches policy rules to prevent LazyInitializationException when
+     * buildPolicyDetail() accesses policy.getCancellationPolicy().getRules() and
+     * policy.getReschedulePolicy().getRules().
      * 
      * Note: Collections (rooms, amenities, entertainment venues) are NOT fetched here
      * to avoid cartesian product. They should be fetched separately using hotel IDs.
@@ -145,7 +188,9 @@ public class KnowledgeBaseQueries {
             "LEFT JOIN FETCH h.street st " +
             "LEFT JOIN FETCH h.policy pol " +
             "LEFT JOIN FETCH pol.cancellationPolicy cp " +
+            "LEFT JOIN FETCH cp.rules cpRules " +
             "LEFT JOIN FETCH pol.reschedulePolicy rp " +
+            "LEFT JOIN FETCH rp.rules rpRules " +
             "LEFT JOIN FETCH pol.requiredIdentificationDocuments rid " +
             "LEFT JOIN FETCH rid.identificationDocument " +
             "WHERE h.status = :status " +
@@ -161,8 +206,12 @@ public class KnowledgeBaseQueries {
      * This query fetches:
      * - Hotel basic info
      * - Location hierarchy (country, province, city, district, ward, street)
-     * - Hotel policy with cancellation and reschedule policies
+     * - Hotel policy with cancellation and reschedule policies (and their rules)
      * - Required identification documents
+     * 
+     * IMPORTANT: Also fetches policy rules to prevent LazyInitializationException when
+     * buildPolicyDetail() accesses policy.getCancellationPolicy().getRules() and
+     * policy.getReschedulePolicy().getRules().
      * 
      * Note: Collections (rooms, amenities, entertainment venues) are NOT fetched here
      * to avoid cartesian product. They should be fetched separately using hotel IDs.
@@ -177,7 +226,9 @@ public class KnowledgeBaseQueries {
             "LEFT JOIN FETCH h.street st " +
             "LEFT JOIN FETCH h.policy pol " +
             "LEFT JOIN FETCH pol.cancellationPolicy cp " +
+            "LEFT JOIN FETCH cp.rules cpRules " +
             "LEFT JOIN FETCH pol.reschedulePolicy rp " +
+            "LEFT JOIN FETCH rp.rules rpRules " +
             "LEFT JOIN FETCH pol.requiredIdentificationDocuments rid " +
             "LEFT JOIN FETCH rid.identificationDocument " +
             "WHERE h.id = :id";
@@ -197,11 +248,39 @@ public class KnowledgeBaseQueries {
      * Query to fetch rooms with their photos.
      * Separated from main query to avoid cartesian product.
      * Fetches RoomPhoto -> Photo relationships.
+     * 
+     * IMPORTANT: Also fetches hotel location hierarchy to prevent LazyInitializationException
+     * if hotel reference is accessed (for consistency with FIND_ROOMS_BY_HOTEL_IDS).
+     * 
+     * IMPORTANT: Also fetches hotel policy with cancellation and reschedule policies (and their rules)
+     * to prevent LazyInitializationException when buildRoomKB() accesses hotel.getPolicy().getCancellationPolicy()
+     * and hotel.getPolicy().getReschedulePolicy(), and when buildCancellationPolicyDetail() accesses
+     * policy.getRules().
+     * 
+     * IMPORTANT: Also fetches room cancellation and reschedule policies (and their rules) to prevent
+     * LazyInitializationException when buildRoomKB() accesses room.getCancellationPolicy() and
+     * room.getReschedulePolicy(), and when buildCancellationPolicyDetail() accesses policy.getRules().
      */
     public static final String FIND_ROOMS_WITH_PHOTOS =
             "SELECT DISTINCT r FROM Room r " +
+            "LEFT JOIN FETCH r.hotel h " +
+            "LEFT JOIN FETCH h.country co " +
+            "LEFT JOIN FETCH h.province pr " +
+            "LEFT JOIN FETCH h.city ci " +
+            "LEFT JOIN FETCH h.district di " +
+            "LEFT JOIN FETCH h.ward wa " +
+            "LEFT JOIN FETCH h.street st " +
+            "LEFT JOIN FETCH h.policy pol " +
+            "LEFT JOIN FETCH pol.cancellationPolicy hcp " +
+            "LEFT JOIN FETCH hcp.rules hcpRules " +
+            "LEFT JOIN FETCH pol.reschedulePolicy hrp " +
+            "LEFT JOIN FETCH hrp.rules hrpRules " +
             "LEFT JOIN FETCH r.photos rp " +
             "LEFT JOIN FETCH rp.photo p " +
+            "LEFT JOIN FETCH r.cancellationPolicy cp " +
+            "LEFT JOIN FETCH cp.rules cpRules " +
+            "LEFT JOIN FETCH r.reschedulePolicy resp " +
+            "LEFT JOIN FETCH resp.rules respRules " +
             "WHERE r.hotel.id IN :hotelIds " +
             "AND r.status = :activeStatus";
 }

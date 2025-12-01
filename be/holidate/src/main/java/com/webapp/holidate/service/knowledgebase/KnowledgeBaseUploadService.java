@@ -1,21 +1,5 @@
 package com.webapp.holidate.service.knowledgebase;
 
-import com.github.mustachejava.DefaultMustacheFactory;
-import com.github.mustachejava.Mustache;
-import com.github.mustachejava.MustacheFactory;
-import com.webapp.holidate.dto.knowledgebase.HotelKnowledgeBaseDto;
-import com.webapp.holidate.dto.knowledgebase.LocationHierarchyDto;
-import com.webapp.holidate.dto.knowledgebase.NearbyVenueDto;
-import com.webapp.holidate.dto.knowledgebase.PriceReferenceDto;
-import com.webapp.holidate.dto.knowledgebase.RoomKnowledgeBaseDto;
-import com.webapp.holidate.dto.knowledgebase.RoomSummaryDto;
-import com.webapp.holidate.service.storage.S3KnowledgeBaseService;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
 import java.io.IOException;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
@@ -26,6 +10,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
+import com.github.mustachejava.DefaultMustacheFactory;
+import com.github.mustachejava.Mustache;
+import com.github.mustachejava.MustacheFactory;
+import com.webapp.holidate.dto.knowledgebase.HotelKnowledgeBaseDto;
+import com.webapp.holidate.dto.knowledgebase.LocationHierarchyDto;
+import com.webapp.holidate.dto.knowledgebase.NearbyVenueDto;
+import com.webapp.holidate.dto.knowledgebase.PriceReferenceDto;
+import com.webapp.holidate.dto.knowledgebase.RoomKnowledgeBaseDto;
+import com.webapp.holidate.dto.knowledgebase.RoomSummaryDto;
+import com.webapp.holidate.service.storage.S3KnowledgeBaseService;
+
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Knowledge Base Upload Service
@@ -64,10 +66,7 @@ public class KnowledgeBaseUploadService {
     public String generateAndUploadHotelProfile(HotelKnowledgeBaseDto dto) throws IOException {
         log.info("Generating hotel profile for: {} (ID: {}, Slug: {})", dto.getName(), dto.getHotelId(), dto.getSlug());
         
-        // CRITICAL VALIDATION: Verify DTO is not null and has required fields
-        if (dto == null) {
-            throw new IllegalArgumentException("DTO cannot be null");
-        }
+        // CRITICAL VALIDATION: Verify DTO has required fields
         if (dto.getHotelId() == null || dto.getHotelId().isEmpty()) {
             throw new IllegalArgumentException("DTO hotelId cannot be null or empty");
         }
@@ -127,9 +126,6 @@ public class KnowledgeBaseUploadService {
         StringWriter writer = new StringWriter();
         template.execute(writer, context);
         String markdownContent = writer.toString();
-        
-        // Clear writer reference to help GC
-        writer = null;
         
         // Clean HTML comments from markdown content before upload
         markdownContent = cleanMarkdownContent(markdownContent);
@@ -255,8 +251,9 @@ public class KnowledgeBaseUploadService {
             locationMap.put("street_name", loc.getStreetName() != null ? new String(loc.getStreetName()) : null);
             locationMap.put("address", loc.getAddress() != null ? new String(loc.getAddress()) : null);
             
-            // Coordinates - create fresh map
-            if (loc.getLatitude() != null && loc.getLongitude() != null) {
+            // Coordinates - Only include if valid (not null and not 0.0)
+            if (loc.getLatitude() != null && loc.getLongitude() != null 
+                && loc.getLatitude() != 0.0 && loc.getLongitude() != 0.0) {
                 Map<String, Object> coordinates = new HashMap<>();
                 coordinates.put("lat", loc.getLatitude());
                 coordinates.put("lng", loc.getLongitude());
@@ -413,25 +410,185 @@ public class KnowledgeBaseUploadService {
         // Combined tags for body - Create defensive copy to ensure thread safety
         ctx.put("tags", dto.getTags() != null ? new ArrayList<>(dto.getTags()) : List.of());
         
+        // === NEW FIELDS FOR AI OPTIMIZATION ===
+        
+        // Full address
+        ctx.put("full_address", dto.getFullAddress() != null ? new String(dto.getFullAddress()) : "");
+        
+        // Coordinates - Only include if valid (not null and not 0.0)
+        Double lat = dto.getCoordinates() != null ? dto.getCoordinates().getLatitude() : (loc != null ? loc.getLatitude() : null);
+        Double lng = dto.getCoordinates() != null ? dto.getCoordinates().getLongitude() : (loc != null ? loc.getLongitude() : null);
+        
+        // Only add coordinates if both are valid (not null and not 0.0)
+        if (lat != null && lng != null && lat != 0.0 && lng != 0.0) {
+            Map<String, Object> coordinatesMap = new HashMap<>();
+            coordinatesMap.put("latitude", lat);
+            coordinatesMap.put("longitude", lng);
+            ctx.put("coordinates", coordinatesMap);
+        } else {
+            // Set to null so template can check if coordinates exist
+            ctx.put("coordinates", null);
+        }
+        
+        // Distances
+        if (dto.getDistances() != null) {
+            Map<String, Object> distancesMap = new HashMap<>();
+            distancesMap.put("to_beach_meters", dto.getDistances().getToBeachMeters() != null ? dto.getDistances().getToBeachMeters() : 0);
+            distancesMap.put("to_city_center_meters", dto.getDistances().getToCityCenterMeters() != null ? dto.getDistances().getToCityCenterMeters() : 0);
+            distancesMap.put("to_airport_meters", dto.getDistances().getToAirportMeters() != null ? dto.getDistances().getToAirportMeters() : 0);
+            if (dto.getDistances().getToBeachMeters() != null) {
+                distancesMap.put("to_beach_km", String.format("%.1f", dto.getDistances().getToBeachMeters() / 1000.0));
+            }
+            ctx.put("distances", distancesMap);
+        } else {
+            Map<String, Object> distancesMap = new HashMap<>();
+            distancesMap.put("to_beach_meters", 0);
+            distancesMap.put("to_city_center_meters", 0);
+            distancesMap.put("to_airport_meters", 0);
+            distancesMap.put("to_beach_km", "0.0");
+            ctx.put("distances", distancesMap);
+        }
+        
+        // Check-in policy
+        if (dto.getCheckInPolicy() != null) {
+            Map<String, Object> checkInPolicyMap = new HashMap<>();
+            checkInPolicyMap.put("earliest_time", dto.getCheckInPolicy().getEarliestTime() != null ? new String(dto.getCheckInPolicy().getEarliestTime()) : "14:00");
+            checkInPolicyMap.put("latest_time", dto.getCheckInPolicy().getLatestTime() != null ? new String(dto.getCheckInPolicy().getLatestTime()) : "22:00");
+            ctx.put("check_in_policy", checkInPolicyMap);
+        } else {
+            Map<String, Object> checkInPolicyMap = new HashMap<>();
+            checkInPolicyMap.put("earliest_time", dto.getCheckInTime() != null ? dto.getCheckInTime().toString() : "14:00");
+            checkInPolicyMap.put("latest_time", dto.getCheckInTime() != null ? dto.getCheckInTime().toString() : "22:00");
+            ctx.put("check_in_policy", checkInPolicyMap);
+        }
+        
+        // Check-out policy
+        if (dto.getCheckOutPolicy() != null) {
+            Map<String, Object> checkOutPolicyMap = new HashMap<>();
+            checkOutPolicyMap.put("latest_time", dto.getCheckOutPolicy().getLatestTime() != null ? new String(dto.getCheckOutPolicy().getLatestTime()) : "12:00");
+            checkOutPolicyMap.put("late_checkout_available", dto.getCheckOutPolicy().getLateCheckoutAvailable() != null ? dto.getCheckOutPolicy().getLateCheckoutAvailable() : false);
+            checkOutPolicyMap.put("late_checkout_fee", dto.getCheckOutPolicy().getLateCheckoutFee() != null ? new String(dto.getCheckOutPolicy().getLateCheckoutFee()) : "50% giá phòng");
+            ctx.put("check_out_policy", checkOutPolicyMap);
+        } else {
+            Map<String, Object> checkOutPolicyMap = new HashMap<>();
+            checkOutPolicyMap.put("latest_time", dto.getCheckOutTime() != null ? dto.getCheckOutTime().toString() : "12:00");
+            checkOutPolicyMap.put("late_checkout_available", ctx.get("late_check_out_available"));
+            checkOutPolicyMap.put("late_checkout_fee", "50% giá phòng");
+            ctx.put("check_out_policy", checkOutPolicyMap);
+        }
+        
+        // Amenities by category
+        if (dto.getAmenitiesByCategory() != null && !dto.getAmenitiesByCategory().isEmpty()) {
+            List<Map<String, Object>> amenitiesByCategoryList = new ArrayList<>();
+            dto.getAmenitiesByCategory().forEach((category, amenities) -> {
+                Map<String, Object> categoryMap = new HashMap<>();
+                categoryMap.put("category", category);
+                categoryMap.put("category_name", capitalizeCategoryName(category));
+                List<Map<String, Object>> amenitiesList = amenities.stream()
+                    .map(amenity -> {
+                        Map<String, Object> amenityMap = new HashMap<>();
+                        amenityMap.put("name", amenity.getName() != null ? new String(amenity.getName()) : "");
+                        amenityMap.put("available", amenity.getAvailable() != null ? amenity.getAvailable() : false);
+                        return amenityMap;
+                    })
+                    .collect(Collectors.toList());
+                categoryMap.put("amenities", amenitiesList);
+                amenitiesByCategoryList.add(categoryMap);
+            });
+            ctx.put("amenities_by_category", amenitiesByCategoryList);
+        } else {
+            ctx.put("amenities_by_category", List.of());
+        }
+        
+        // Hotel policies
+        if (dto.getHotelPolicies() != null) {
+            Map<String, Object> policiesMap = new HashMap<>();
+            policiesMap.put("pets_allowed", dto.getHotelPolicies().getPetsAllowed() != null ? dto.getHotelPolicies().getPetsAllowed() : false);
+            policiesMap.put("smoking_allowed", dto.getHotelPolicies().getSmokingAllowed() != null ? dto.getHotelPolicies().getSmokingAllowed() : false);
+            policiesMap.put("children_policy", dto.getHotelPolicies().getChildrenPolicy() != null ? new String(dto.getHotelPolicies().getChildrenPolicy()) : "Trẻ em dưới 6 tuổi được ở miễn phí khi ngủ chung giường với bố mẹ");
+            ctx.put("policies", policiesMap);
+        } else {
+            Map<String, Object> policiesMap = new HashMap<>();
+            policiesMap.put("pets_allowed", false);
+            policiesMap.put("smoking_allowed", false);
+            policiesMap.put("children_policy", "Trẻ em dưới 6 tuổi được ở miễn phí khi ngủ chung giường với bố mẹ");
+            ctx.put("policies", policiesMap);
+        }
+        
         return ctx;
+    }
+    
+    /**
+     * Capitalize category name for display
+     */
+    private String capitalizeCategoryName(String category) {
+        if (category == null || category.isEmpty()) {
+            return "";
+        }
+        return category.substring(0, 1).toUpperCase() + category.substring(1);
     }
 
     /**
-     * Remove HTML comments from markdown content
-     * Strips out all content between <!-- and --> including multi-line comments
+     * Remove HTML comments and inline developer comments from markdown content.
      * 
-     * @param content Markdown content that may contain HTML comments
-     * @return Cleaned markdown content without HTML comments
+     * This method:
+     * 1. Removes HTML comments (<!-- ... -->)
+     * 2. Removes inline developer comments (# Source: ...) from markdown body (not YAML frontmatter)
+     * 3. Cleans up trailing whitespace
+     * 
+     * @param content Markdown content that may contain HTML comments and inline comments
+     * @return Cleaned markdown content without HTML comments and inline developer comments
      */
     private String cleanMarkdownContent(String content) {
         if (content == null) {
             return null;
         }
-        // Pattern matches HTML comments including multi-line comments
-        // (?s) enables DOTALL mode (dot matches newlines)
-        // .*? is non-greedy to match shortest possible comment
+        
+        // Step 1: Remove HTML comments (<!-- ... -->)
         Pattern htmlCommentPattern = Pattern.compile("<!--.*?-->", Pattern.DOTALL);
-        return htmlCommentPattern.matcher(content).replaceAll("");
+        String cleaned = htmlCommentPattern.matcher(content).replaceAll("");
+        
+        // Step 2: Split content into YAML frontmatter and markdown body
+        // YAML frontmatter is between first --- and second ---
+        String yamlFrontmatter = "";
+        String markdownBody = cleaned;
+        
+        int firstDashIndex = cleaned.indexOf("---\n");
+        if (firstDashIndex == 0) {
+            // Has YAML frontmatter starting at beginning
+            int secondDashIndex = cleaned.indexOf("\n---\n", 4);
+            if (secondDashIndex > 0) {
+                // Found second ---, split content
+                yamlFrontmatter = cleaned.substring(0, secondDashIndex + 5); // Include "---\n"
+                markdownBody = cleaned.substring(secondDashIndex + 5).trim(); // Content after second ---
+            }
+        }
+        
+        // Step 3: Remove inline developer comments from markdown body only
+        // Pattern matches lines that are standalone comments: "  # Source: ..." or "# Source: ..."
+        // This removes developer reference comments but keeps YAML comments in frontmatter
+        if (!markdownBody.isEmpty()) {
+            // Remove standalone comment lines (lines that only contain whitespace + # Source: or # Ví dụ:)
+            markdownBody = markdownBody.replaceAll("(?m)^[ \\t]*# (Source:|Ví dụ:).*$", "");
+            
+            // Remove inline comments at end of lines in markdown body (but preserve YAML structure)
+            // Pattern: "  # Source: ..." at end of line (with 2+ spaces before #)
+            markdownBody = markdownBody.replaceAll("(?m)[ \\t]{2,}# (Source:|Ví dụ:).*$", "");
+        }
+        
+        // Step 4: Reassemble content
+        if (!yamlFrontmatter.isEmpty()) {
+            cleaned = yamlFrontmatter + "\n\n" + markdownBody;
+        } else {
+            cleaned = markdownBody;
+        }
+        
+        // Step 5: Clean up trailing whitespace/newlines
+        cleaned = cleaned.replaceAll("(?m)[ \\t]+$", ""); // Remove trailing spaces/tabs on each line
+        cleaned = cleaned.replaceAll("\\n{3,}", "\n\n"); // Replace 3+ consecutive newlines with 2
+        cleaned = cleaned.trim(); // Remove leading/trailing whitespace
+        
+        return cleaned;
     }
 
     /**
@@ -580,8 +737,9 @@ public class KnowledgeBaseUploadService {
             locationMap.put("address", loc.getAddress() != null ? new String(loc.getAddress()) : null);
             locationMap.put("hotel_name", loc.getHotelName() != null ? new String(loc.getHotelName()) : null);
             
-            // Coordinates
-            if (loc.getLatitude() != null && loc.getLongitude() != null) {
+            // Coordinates - Only include if valid (not null and not 0.0)
+            if (loc.getLatitude() != null && loc.getLongitude() != null 
+                && loc.getLatitude() != 0.0 && loc.getLongitude() != 0.0) {
                 Map<String, Object> coordinates = new HashMap<>();
                 coordinates.put("lat", loc.getLatitude());
                 coordinates.put("lng", loc.getLongitude());
@@ -693,7 +851,337 @@ public class KnowledgeBaseUploadService {
         ctx.put("tool_call_get_room_price", 
             String.format("{{TOOL:get_room_price|room_id=%s|check_in={date}|check_out={date}}}", roomId));
         
+        // Nearby Entertainment - Map from DTO to context
+        if (dto.getNearbyEntertainment() != null && !dto.getNearbyEntertainment().isEmpty()) {
+            List<Map<String, Object>> nearbyEntertainmentList = dto.getNearbyEntertainment().stream()
+                .map(venue -> {
+                    Map<String, Object> venueMap = new HashMap<>();
+                    venueMap.put("name", venue.getName() != null ? new String(venue.getName()) : "");
+                    venueMap.put("category", venue.getCategory() != null ? new String(venue.getCategory()) : "");
+                    venueMap.put("distance", venue.getDistance() != null ? new String(venue.getDistance()) : "");
+                    venueMap.put("shortDescription", venue.getShortDescription() != null ? new String(venue.getShortDescription()) : "");
+                    return venueMap;
+                })
+                .collect(Collectors.toList());
+            ctx.put("nearbyEntertainment", nearbyEntertainmentList);
+        } else {
+            ctx.put("nearbyEntertainment", List.of());
+        }
+        
+        // === NEW FIELDS FOR AI OPTIMIZATION ===
+        
+        // Room specs
+        if (dto.getSpecs() != null) {
+            Map<String, Object> specsMap = new HashMap<>();
+            specsMap.put("area_sqm", dto.getSpecs().getAreaSqm() != null ? dto.getSpecs().getAreaSqm() : dto.getAreaSqm());
+            specsMap.put("has_balcony", dto.getSpecs().getHasBalcony() != null ? dto.getSpecs().getHasBalcony() : false);
+            specsMap.put("has_window", dto.getSpecs().getHasWindow() != null ? dto.getSpecs().getHasWindow() : true);
+            specsMap.put("view_type", dto.getSpecs().getViewType() != null ? new String(dto.getSpecs().getViewType()) : "no_view");
+            // View type flags for template conditionals
+            String viewType = dto.getSpecs().getViewType() != null ? dto.getSpecs().getViewType() : "no_view";
+            specsMap.put("view_type_ocean", "ocean".equals(viewType));
+            specsMap.put("view_type_city", "city".equals(viewType));
+            specsMap.put("view_type_mountain", "mountain".equals(viewType));
+            // Bed configuration - with fallback to bed_type if empty
+            if (dto.getSpecs().getBedConfiguration() != null && !dto.getSpecs().getBedConfiguration().isEmpty()) {
+                List<Map<String, Object>> bedConfigList = dto.getSpecs().getBedConfiguration().stream()
+                    .map(bed -> {
+                        Map<String, Object> bedMap = new HashMap<>();
+                        bedMap.put("type", bed.getType() != null ? new String(bed.getType()) : "double");
+                        bedMap.put("count", bed.getCount() != null ? bed.getCount() : 1);
+                        return bedMap;
+                    })
+                    .collect(Collectors.toList());
+                specsMap.put("bed_configuration", bedConfigList);
+            } else {
+                // Fallback: Create bed_configuration from bed_type if available
+                String bedType = dto.getBedType() != null ? dto.getBedType().toLowerCase() : "";
+                List<Map<String, Object>> bedConfigList = new ArrayList<>();
+                
+                if (!bedType.isEmpty()) {
+                    Map<String, Object> bedMap = new HashMap<>();
+                    // Infer type from bed_type string (e.g., "Giường đôi" -> "double")
+                    String inferredType = "double"; // default
+                    if (bedType.contains("đơn") || bedType.contains("single") || bedType.contains("twin")) {
+                        inferredType = "single";
+                    } else if (bedType.contains("đôi") || bedType.contains("double")) {
+                        inferredType = "double";
+                    } else if (bedType.contains("king") || bedType.contains("queen")) {
+                        inferredType = "king";
+                    }
+                    
+                    // Infer count from bed_type string (e.g., "2 giường đơn" -> count = 2)
+                    int count = 1; // default
+                    java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("(\\d+)\\s*(giường|bed)", java.util.regex.Pattern.CASE_INSENSITIVE);
+                    java.util.regex.Matcher matcher = pattern.matcher(bedType);
+                    if (matcher.find()) {
+                        try {
+                            count = Integer.parseInt(matcher.group(1));
+                        } catch (NumberFormatException e) {
+                            count = 1;
+                        }
+                    }
+                    
+                    bedMap.put("type", inferredType);
+                    bedMap.put("count", count);
+                    bedConfigList.add(bedMap);
+                }
+                
+                specsMap.put("bed_configuration", bedConfigList);
+            }
+            ctx.put("specs", specsMap);
+        } else {
+            Map<String, Object> specsMap = new HashMap<>();
+            specsMap.put("area_sqm", dto.getAreaSqm() != null ? dto.getAreaSqm() : 0.0);
+            specsMap.put("has_balcony", ctx.get("has_balcony"));
+            specsMap.put("has_window", true);
+            specsMap.put("view_type", "no_view");
+            specsMap.put("view_type_ocean", false);
+            specsMap.put("view_type_city", false);
+            specsMap.put("view_type_mountain", false);
+            
+            // Fallback bed_configuration from bed_type
+            String bedType = dto.getBedType() != null ? dto.getBedType().toLowerCase() : "";
+            List<Map<String, Object>> bedConfigList = new ArrayList<>();
+            if (!bedType.isEmpty()) {
+                Map<String, Object> bedMap = new HashMap<>();
+                String inferredType = "double";
+                if (bedType.contains("đơn") || bedType.contains("single") || bedType.contains("twin")) {
+                    inferredType = "single";
+                } else if (bedType.contains("đôi") || bedType.contains("double")) {
+                    inferredType = "double";
+                } else if (bedType.contains("king") || bedType.contains("queen")) {
+                    inferredType = "king";
+                }
+                int count = 1;
+                java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("(\\d+)\\s*(giường|bed)", java.util.regex.Pattern.CASE_INSENSITIVE);
+                java.util.regex.Matcher matcher = pattern.matcher(bedType);
+                if (matcher.find()) {
+                    try {
+                        count = Integer.parseInt(matcher.group(1));
+                    } catch (NumberFormatException e) {
+                        count = 1;
+                    }
+                }
+                bedMap.put("type", inferredType);
+                bedMap.put("count", count);
+                bedConfigList.add(bedMap);
+            }
+            specsMap.put("bed_configuration", bedConfigList);
+            
+            ctx.put("specs", specsMap);
+        }
+        
+        // Pricing info
+        if (dto.getPricing() != null) {
+            Map<String, Object> pricingMap = new HashMap<>();
+            pricingMap.put("base_price_vnd", dto.getPricing().getBasePriceVnd() != null ? dto.getPricing().getBasePriceVnd() : dto.getBasePrice());
+            pricingMap.put("weekend_surcharge_percent", dto.getPricing().getWeekendSurchargePercent() != null ? dto.getPricing().getWeekendSurchargePercent() : 0.0);
+            pricingMap.put("holiday_surcharge_percent", dto.getPricing().getHolidaySurchargePercent() != null ? dto.getPricing().getHolidaySurchargePercent() : 0.0);
+            ctx.put("pricing", pricingMap);
+        } else {
+            Map<String, Object> pricingMap = new HashMap<>();
+            pricingMap.put("base_price_vnd", dto.getBasePrice() != null ? dto.getBasePrice() : 0.0);
+            pricingMap.put("weekend_surcharge_percent", 0.0);
+            pricingMap.put("holiday_surcharge_percent", 0.0);
+            ctx.put("pricing", pricingMap);
+        }
+        
+        // Price Analytics - Map from DTO to context
+        if (dto.getPriceAnalytics() != null) {
+            Map<String, Object> priceAnalyticsMap = new HashMap<>();
+            priceAnalyticsMap.put("minPriceNext30Days", dto.getPriceAnalytics().getMinPriceNext30Days() != null ? dto.getPriceAnalytics().getMinPriceNext30Days() : 0.0);
+            priceAnalyticsMap.put("maxPriceNext30Days", dto.getPriceAnalytics().getMaxPriceNext30Days() != null ? dto.getPriceAnalytics().getMaxPriceNext30Days() : 0.0);
+            priceAnalyticsMap.put("avgPriceNext30Days", dto.getPriceAnalytics().getAvgPriceNext30Days() != null ? dto.getPriceAnalytics().getAvgPriceNext30Days() : 0.0);
+            priceAnalyticsMap.put("priceVolatility", dto.getPriceAnalytics().getPriceVolatility() != null ? new String(dto.getPriceAnalytics().getPriceVolatility()) : "low");
+            priceAnalyticsMap.put("weekendPriceMultiplier", dto.getPriceAnalytics().getWeekendPriceMultiplier() != null ? dto.getPriceAnalytics().getWeekendPriceMultiplier() : 1.0);
+            priceAnalyticsMap.put("isHighVolatility", dto.getPriceAnalytics().getIsHighVolatility() != null ? dto.getPriceAnalytics().getIsHighVolatility() : false);
+            priceAnalyticsMap.put("isMediumVolatility", dto.getPriceAnalytics().getIsMediumVolatility() != null ? dto.getPriceAnalytics().getIsMediumVolatility() : false);
+            priceAnalyticsMap.put("isLowVolatility", dto.getPriceAnalytics().getIsLowVolatility() != null ? dto.getPriceAnalytics().getIsLowVolatility() : true);
+            ctx.put("priceAnalytics", priceAnalyticsMap);
+        } else {
+            // Default empty price analytics
+            Map<String, Object> priceAnalyticsMap = new HashMap<>();
+            priceAnalyticsMap.put("minPriceNext30Days", 0.0);
+            priceAnalyticsMap.put("maxPriceNext30Days", 0.0);
+            priceAnalyticsMap.put("avgPriceNext30Days", 0.0);
+            priceAnalyticsMap.put("priceVolatility", "low");
+            priceAnalyticsMap.put("weekendPriceMultiplier", 1.0);
+            priceAnalyticsMap.put("isHighVolatility", false);
+            priceAnalyticsMap.put("isMediumVolatility", false);
+            priceAnalyticsMap.put("isLowVolatility", true);
+            ctx.put("priceAnalytics", priceAnalyticsMap);
+        }
+        
+        // Room policies
+        if (dto.getRoomPoliciesDetail() != null) {
+            Map<String, Object> roomPoliciesMap = new HashMap<>();
+            if (dto.getRoomPoliciesDetail().getMaxOccupancy() != null) {
+                Map<String, Object> maxOccupancyMap = new HashMap<>();
+                maxOccupancyMap.put("adults", dto.getRoomPoliciesDetail().getMaxOccupancy().getAdults() != null ? dto.getRoomPoliciesDetail().getMaxOccupancy().getAdults() : (dto.getMaxAdults() != null ? dto.getMaxAdults() : 0));
+                maxOccupancyMap.put("children", dto.getRoomPoliciesDetail().getMaxOccupancy().getChildren() != null ? dto.getRoomPoliciesDetail().getMaxOccupancy().getChildren() : (dto.getMaxChildren() != null ? dto.getMaxChildren() : 0));
+                roomPoliciesMap.put("max_occupancy", maxOccupancyMap);
+            } else {
+                Map<String, Object> maxOccupancyMap = new HashMap<>();
+                maxOccupancyMap.put("adults", dto.getMaxAdults() != null ? dto.getMaxAdults() : 0);
+                maxOccupancyMap.put("children", dto.getMaxChildren() != null ? dto.getMaxChildren() : 0);
+                roomPoliciesMap.put("max_occupancy", maxOccupancyMap);
+            }
+            roomPoliciesMap.put("extra_bed_available", dto.getRoomPoliciesDetail().getExtraBedAvailable() != null ? dto.getRoomPoliciesDetail().getExtraBedAvailable() : false);
+            roomPoliciesMap.put("extra_bed_price_vnd", dto.getRoomPoliciesDetail().getExtraBedPriceVnd() != null ? dto.getRoomPoliciesDetail().getExtraBedPriceVnd() : 0.0);
+            ctx.put("room_policies", roomPoliciesMap);
+        } else {
+            Map<String, Object> roomPoliciesMap = new HashMap<>();
+            Map<String, Object> maxOccupancyMap = new HashMap<>();
+            maxOccupancyMap.put("adults", dto.getMaxAdults() != null ? dto.getMaxAdults() : 0);
+            maxOccupancyMap.put("children", dto.getMaxChildren() != null ? dto.getMaxChildren() : 0);
+            roomPoliciesMap.put("max_occupancy", maxOccupancyMap);
+            roomPoliciesMap.put("extra_bed_available", false);
+            roomPoliciesMap.put("extra_bed_price_vnd", 0.0);
+            ctx.put("room_policies", roomPoliciesMap);
+        }
+        
+        // Room Policies Detail - Map PolicyDetailDto to context for template
+        ctx.put("policiesInherited", dto.getPoliciesInherited() != null ? dto.getPoliciesInherited() : false);
+        
+        if (dto.getRoomPolicies() != null) {
+            Map<String, Object> roomPoliciesDetailMap = new HashMap<>();
+            
+            // Check-in/out times
+            if (dto.getRoomPolicies().getCheckInTime() != null) {
+                roomPoliciesDetailMap.put("checkInTime", dto.getRoomPolicies().getCheckInTime().toString());
+            } else {
+                roomPoliciesDetailMap.put("checkInTime", "");
+            }
+            
+            if (dto.getRoomPolicies().getCheckOutTime() != null) {
+                roomPoliciesDetailMap.put("checkOutTime", dto.getRoomPolicies().getCheckOutTime().toString());
+            } else {
+                roomPoliciesDetailMap.put("checkOutTime", "");
+            }
+            
+            roomPoliciesDetailMap.put("allowsPayAtHotel", dto.getRoomPolicies().getAllowsPayAtHotel() != null ? dto.getRoomPolicies().getAllowsPayAtHotel() : false);
+            
+            // Cancellation Policy
+            if (dto.getRoomPolicies().getCancellationPolicy() != null) {
+                Map<String, Object> cancellationPolicyMap = new HashMap<>();
+                cancellationPolicyMap.put("name", dto.getRoomPolicies().getCancellationPolicy().getName() != null 
+                    ? new String(dto.getRoomPolicies().getCancellationPolicy().getName()) : "");
+                
+                if (dto.getRoomPolicies().getCancellationPolicy().getRules() != null) {
+                    List<Map<String, Object>> rulesList = dto.getRoomPolicies().getCancellationPolicy().getRules().stream()
+                        .map(rule -> {
+                            Map<String, Object> ruleMap = new HashMap<>();
+                            ruleMap.put("daysBeforeCheckin", rule.getDaysBeforeCheckin() != null ? rule.getDaysBeforeCheckin() : 0);
+                            ruleMap.put("penaltyPercentage", rule.getPenaltyPercentage() != null ? rule.getPenaltyPercentage() : 0);
+                            ruleMap.put("description", rule.getDescription() != null ? new String(rule.getDescription()) : "");
+                            return ruleMap;
+                        })
+                        .collect(Collectors.toList());
+                    cancellationPolicyMap.put("rules", rulesList);
+                } else {
+                    cancellationPolicyMap.put("rules", List.of());
+                }
+                
+                roomPoliciesDetailMap.put("cancellationPolicy", cancellationPolicyMap);
+            } else {
+                roomPoliciesDetailMap.put("cancellationPolicy", null);
+            }
+            
+            // Reschedule Policy
+            if (dto.getRoomPolicies().getReschedulePolicy() != null) {
+                Map<String, Object> reschedulePolicyMap = new HashMap<>();
+                reschedulePolicyMap.put("name", dto.getRoomPolicies().getReschedulePolicy().getName() != null 
+                    ? new String(dto.getRoomPolicies().getReschedulePolicy().getName()) : "");
+                
+                if (dto.getRoomPolicies().getReschedulePolicy().getRules() != null) {
+                    List<Map<String, Object>> rulesList = dto.getRoomPolicies().getReschedulePolicy().getRules().stream()
+                        .map(rule -> {
+                            Map<String, Object> ruleMap = new HashMap<>();
+                            ruleMap.put("daysBeforeCheckin", rule.getDaysBeforeCheckin() != null ? rule.getDaysBeforeCheckin() : 0);
+                            ruleMap.put("feePercentage", rule.getFeePercentage() != null ? rule.getFeePercentage() : 0);
+                            ruleMap.put("description", rule.getDescription() != null ? new String(rule.getDescription()) : "");
+                            return ruleMap;
+                        })
+                        .collect(Collectors.toList());
+                    reschedulePolicyMap.put("rules", rulesList);
+                } else {
+                    reschedulePolicyMap.put("rules", List.of());
+                }
+                
+                roomPoliciesDetailMap.put("reschedulePolicy", reschedulePolicyMap);
+            } else {
+                roomPoliciesDetailMap.put("reschedulePolicy", null);
+            }
+            
+            ctx.put("roomPolicies", roomPoliciesDetailMap);
+        } else {
+            // Empty room policies detail
+            ctx.put("roomPolicies", null);
+        }
+        
+        // Update inventory calendar with day_of_week and status flags
+        // Create helper method to map inventory to context map
+        java.util.function.Function<com.webapp.holidate.dto.knowledgebase.RoomInventoryCalendarDto, Map<String, Object>> mapInventory = inv -> {
+            Map<String, Object> invMap = new HashMap<>();
+            invMap.put("date", inv.getDate() != null ? inv.getDate().toString() : "");
+            invMap.put("day_of_week", inv.getDayOfWeek() != null ? new String(inv.getDayOfWeek()) : getDayOfWeekName(inv.getDate()));
+            invMap.put("price_vnd", inv.getPrice() != null ? inv.getPrice() : 0.0);
+            invMap.put("price", inv.getPrice() != null ? inv.getPrice() : 0.0); // Keep for backward compatibility
+            invMap.put("available_rooms", inv.getAvailableRooms() != null ? inv.getAvailableRooms() : 0);
+            invMap.put("availableRooms", inv.getAvailableRooms() != null ? inv.getAvailableRooms() : 0); // Keep for backward compatibility
+            invMap.put("status", inv.getStatus() != null ? new String(inv.getStatus()) : "available");
+            invMap.put("isWeekend", inv.getIsWeekend() != null ? inv.getIsWeekend() : false);
+            invMap.put("isHoliday", inv.getIsHoliday() != null ? inv.getIsHoliday() : false);
+            // Status flags for template conditionals
+            String status = inv.getStatus() != null ? inv.getStatus() : "available";
+            invMap.put("status_available", "available".equals(status));
+            invMap.put("status_limited", "limited".equals(status));
+            invMap.put("status_sold_out", "sold_out".equals(status));
+            // Helper flags for availability display
+            Integer availableRooms = inv.getAvailableRooms() != null ? inv.getAvailableRooms() : 0;
+            invMap.put("hasRooms", availableRooms > 0);
+            invMap.put("hasManyRooms", availableRooms >= 5);
+            invMap.put("hasLimitedRooms", availableRooms > 0 && availableRooms < 5);
+            invMap.put("isSoldOut", availableRooms == 0);
+            // Flag for limit_7 template logic
+            invMap.put("limit_7", false); // Will be set to true for first 7 items
+            return invMap;
+        };
+        
+        if (dto.getInventoryCalendar() != null && !dto.getInventoryCalendar().isEmpty()) {
+            // Full 30-day calendar
+            List<Map<String, Object>> inventoryList30Days = dto.getInventoryCalendar().stream()
+                .map(mapInventory)
+                .collect(Collectors.toList());
+            ctx.put("inventoryCalendar", inventoryList30Days);
+            
+            // First 7 days for the 7-day table - add limit_7 flag
+            List<Map<String, Object>> inventoryList7Days = dto.getInventoryCalendar().stream()
+                .limit(7)
+                .map(mapInventory)
+                .map(invMap -> {
+                    invMap.put("limit_7", true);
+                    return invMap;
+                })
+                .collect(Collectors.toList());
+            ctx.put("inventoryCalendar7Days", inventoryList7Days);
+        } else {
+            ctx.put("inventoryCalendar", List.of());
+            ctx.put("inventoryCalendar7Days", List.of());
+        }
+        
         return ctx;
+    }
+    
+    /**
+     * Get day of week name in lowercase (e.g., "monday", "tuesday")
+     */
+    private String getDayOfWeekName(java.time.LocalDate date) {
+        if (date == null) {
+            return "unknown";
+        }
+        return date.getDayOfWeek().name().toLowerCase();
     }
 }
 

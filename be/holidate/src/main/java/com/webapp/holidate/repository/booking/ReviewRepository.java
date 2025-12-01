@@ -1,17 +1,18 @@
 package com.webapp.holidate.repository.booking;
 
-import com.webapp.holidate.constants.db.query.booking.ReviewQueries;
-import com.webapp.holidate.constants.db.query.report.ReportQueries;
-import com.webapp.holidate.entity.booking.Review;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.lang.Nullable;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
+import com.webapp.holidate.constants.db.query.booking.ReviewQueries;
+import com.webapp.holidate.constants.db.query.report.ReportQueries;
+import com.webapp.holidate.entity.booking.Review;
 
 public interface ReviewRepository extends JpaRepository<Review, String> {
   @Query(ReviewQueries.FIND_ALL_WITH_FILTERS_PAGED)
@@ -44,4 +45,7 @@ public interface ReviewRepository extends JpaRepository<Review, String> {
       String hotelId,
       LocalDate fromDate,
       LocalDate toDate);
+  
+  // Find all reviews by hotel ID ordered by created date descending
+  List<Review> findAllByHotel_IdOrderByCreatedAtDesc(String hotelId);
 }

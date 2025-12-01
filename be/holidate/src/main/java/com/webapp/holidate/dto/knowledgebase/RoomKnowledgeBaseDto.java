@@ -57,7 +57,24 @@ public class RoomKnowledgeBaseDto {
     
     // Pricing Info
     Double basePrice; // VNĐ/night (BASE price, not dynamic)
+    Double currentPrice; // Current price (may differ from base due to discounts)
     String priceNote;
+    
+    // ENHANCED: Room inventory calendar (next 30 days)
+    List<RoomInventoryCalendarDto> inventoryCalendar;
+    
+    // ENHANCED: Price analytics
+    PriceAnalyticsDto priceAnalytics;
+    
+    // ENHANCED: Detailed room policies with rules
+    PolicyDetailDto roomPolicies;
+    Boolean policiesInherited; // True if room inherits hotel policies
+    
+    // ENHANCED: Room amenities with details and categories
+    List<AmenityCategoryDto> roomAmenitiesDetailed;
+    
+    // ENHANCED: Nearby entertainment venues (simplified for room view)
+    List<NearbyEntertainment> nearbyEntertainment;
     
     // Metadata
     List<String> vibeTags; // Room-specific vibe tags
@@ -66,5 +83,87 @@ public class RoomKnowledgeBaseDto {
     String mainImageUrl; // Main room image
     List<String> galleryImageUrls; // Gallery images
     LocalDateTime lastUpdated;
+    
+    // === NEW FIELDS FOR AI OPTIMIZATION ===
+    
+    // Room specifications
+    RoomSpecs specs;
+    
+    // Pricing information
+    PricingInfo pricing;
+    
+    // Room policies (max occupancy, extra bed)
+    RoomPolicies roomPoliciesDetail;
+    
+    // Nested classes
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class RoomSpecs {
+        Float areaSqm;
+        Boolean hasBalcony;
+        Boolean hasWindow;
+        String viewType; // "ocean", "city", "mountain", "no_view"
+        List<BedConfiguration> bedConfiguration;
+    }
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class BedConfiguration {
+        String type; // "single", "double", "king"
+        Integer count;
+    }
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class PricingInfo {
+        Double basePriceVnd;
+        Double weekendSurchargePercent;
+        Double holidaySurchargePercent;
+    }
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class MaxOccupancy {
+        Integer adults;
+        Integer children;
+    }
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class RoomPolicies {
+        MaxOccupancy maxOccupancy;
+        Boolean extraBedAvailable;
+        Double extraBedPriceVnd;
+    }
+    
+    /**
+     * Simplified entertainment venue for room template
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class NearbyEntertainment {
+        String name;
+        String category;
+        String distance; // Formatted distance (e.g., "500m", "2.5km")
+        String shortDescription;
+    }
 }
 

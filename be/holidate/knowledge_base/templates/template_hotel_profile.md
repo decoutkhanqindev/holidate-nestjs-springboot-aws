@@ -26,9 +26,25 @@ location:
   street: "{{location.street}}"  # Source: curl_step_2.1 -> data.street.name
   street_name: "{{location.street_name}}"  # Source: curl_step_2.1 -> data.street.name
   address: "{{location.address}}"  # Source: curl_step_2.1 -> data.address
+{{#location.coordinates}}
   coordinates:
     lat: {{location.coordinates.lat}}  # Source: curl_step_2.1 -> data.latitude
     lng: {{location.coordinates.lng}}  # Source: curl_step_2.1 -> data.longitude
+{{/location.coordinates}}
+
+# === ĐỊA CHỈ VÀ VỊ TRÍ CHI TIẾT ===
+full_address: "{{full_address}}"  # Ví dụ: "136, Đường Hùng Vương, Phường Lộc Thọ, Nha Trang"
+{{#coordinates}}
+coordinates:
+  latitude: {{coordinates.latitude}}  # Ví dụ: 12.2432
+  longitude: {{coordinates.longitude}}  # Ví dụ: 109.1942
+{{/coordinates}}
+
+# === KHOẢNG CÁCH ĐẾN ĐỊA ĐIỂM QUAN TRỌNG (TÍNH BẰNG MÉT) ===
+distances:
+  to_beach_meters: {{distances.to_beach_meters}}  # Integer, Ví dụ: 240
+  to_city_center_meters: {{distances.to_city_center_meters}}  # Integer
+  to_airport_meters: {{distances.to_airport_meters}}  # Integer
 
 # === SEARCH OPTIMIZATION TAGS ===
 # Source: Generated from location + entertainment venues
@@ -84,6 +100,20 @@ nearby_venues:
     description: "{{description}}"  # Optional: Generated from category + distance
 {{/nearby_venues}}
 
+# === ENHANCED: DETAILED ENTERTAINMENT VENUES BY CATEGORY ===
+# Source: /location/entertainment-venues/city/{cityId} endpoint with distance calculation
+entertainment_venues:
+{{#entertainmentVenues}}
+  - category: "{{categoryName}}"
+    venues:
+{{#venues}}
+      - name: "{{name}}"
+        address: "{{address}}"
+        distance_from_hotel: "{{distanceFromHotel}}m"
+        description: "{{description}}"
+{{/venues}}
+{{/entertainmentVenues}}
+
 # === POLICIES ===
 # Source: curl_step_2.1 -> data.policy
 check_in_time: "{{check_in_time}}"  # Source: curl_step_2.1 -> data.policy.checkInTime (format: "HH:mm:ss")
@@ -94,6 +124,97 @@ cancellation_policy: "{{cancellation_policy}}"  # Source: curl_step_2.1 -> data.
 reschedule_policy: "{{reschedule_policy}}"  # Source: curl_step_2.1 -> data.policy.reschedulePolicy.name
 allows_pay_at_hotel: {{allows_pay_at_hotel}}  # Source: curl_step_2.1 -> data.policy.allowsPayAtHotel
 smoking_policy: "{{smoking_policy}}"  # Source: Inferred from hotel-level amenities or default "Không hút thuốc"
+
+# === CHÍNH SÁCH NHẬN/TRẢ PHÒNG ===
+check_in_policy:
+  earliest_time: "{{check_in_policy.earliest_time}}"  # Ví dụ: "14:00"
+  latest_time: "{{check_in_policy.latest_time}}"  # Ví dụ: "22:00"
+check_out_policy:
+  latest_time: "{{check_out_policy.latest_time}}"  # Ví dụ: "12:00"
+  late_checkout_available: {{check_out_policy.late_checkout_available}}  # Boolean
+  late_checkout_fee: "{{check_out_policy.late_checkout_fee}}"  # Ví dụ: "50% giá phòng"
+
+# === TIỆN NGHI THEO DANH MỤC (CẤU TRÚC CHI TIẾT) ===
+amenities_by_category:
+{{#amenities_by_category}}
+  {{category}}:
+{{#amenities}}
+    - name: "{{name}}"
+      available: {{available}}
+{{/amenities}}
+{{/amenities_by_category}}
+
+# === CHÍNH SÁCH ĐẶC BIỆT ===
+policies:
+  pets_allowed: {{policies.pets_allowed}}  # Boolean
+  smoking_allowed: {{policies.smoking_allowed}}  # Boolean
+  children_policy: "{{policies.children_policy}}"
+
+# === ENHANCED: DETAILED POLICY RULES ===
+# Source: /policy/cancellation-policies and /policy/reschedule-policies endpoints
+policies_detail:
+{{#policies}}
+  check_in_time: "{{checkInTime}}"
+  check_out_time: "{{checkOutTime}}"
+  allows_pay_at_hotel: {{allowsPayAtHotel}}
+  cancellation_policy:
+{{#cancellationPolicy}}
+    name: "{{name}}"
+    rules:
+{{#rules}}
+      - days_before_checkin: {{daysBeforeCheckin}}
+        penalty_percentage: {{penaltyPercentage}}
+        description: "{{description}}"
+{{/rules}}
+{{/cancellationPolicy}}
+  reschedule_policy:
+{{#reschedulePolicy}}
+    name: "{{name}}"
+    rules:
+{{#rules}}
+      - days_before_checkin: {{daysBeforeCheckin}}
+        fee_percentage: {{feePercentage}}
+        description: "{{description}}"
+{{/rules}}
+{{/reschedulePolicy}}
+{{/policies}}
+
+# === ENHANCED: COMPREHENSIVE REVIEW STATISTICS ===
+# Source: /reviews?hotel-id={id} endpoint
+reviews_summary:
+{{#reviewsSummary}}
+  total_reviews: {{totalReviews}}
+  average_score: {{averageScore}}
+  score_distribution:
+{{#scoreDistribution}}
+    - bucket: "{{bucket}}"
+      count: {{count}}
+{{/scoreDistribution}}
+  recent_reviews:
+{{#recentReviews}}
+    - score: {{score}}
+      comment_snippet: "{{commentSnippet}}"
+      date: "{{date}}"
+{{/recentReviews}}
+{{/reviewsSummary}}
+
+# === ENHANCED: ACTIVE DISCOUNTS ===
+# Source: /discounts?hotel-id={id}&currently-valid=true endpoint
+active_discounts:
+{{#activeDiscounts}}
+  - code: "{{code}}"
+    description: "{{description}}"
+    percentage: {{percentage}}
+    min_booking_price: {{minBookingPrice}}
+    min_booking_count: {{minBookingCount}}
+    valid_from: "{{validFrom}}"
+    valid_to: "{{validTo}}"
+    usage_limit: {{usageLimit}}
+    times_used: {{timesUsed}}
+{{#specialDayName}}
+    special_day: "{{specialDayName}}"
+{{/specialDayName}}
+{{/activeDiscounts}}
 
 # === IMAGES ===
 mainImageUrl: "{{mainImageUrl}}"  # Source: curl_step_2.1 -> data.photos[].photos[0].url (first photo, or filter by category name="main")
@@ -127,18 +248,46 @@ keywords:
 
 ---
 
-## ⭐ Đặc Điểm Nổi Bật
+## 📍 Vị Trí & Liên Hệ
 
-### 🏖️ 1. Vị Trí
-- **{{location.address}}**, {{location.street_name}}, {{location.ward_name}}, {{location.district_name}}, {{location.city_name}}
+**Địa chỉ đầy đủ**: {{full_address}}
+
+{{#coordinates}}
+**Tọa độ**: {{coordinates.latitude}}, {{coordinates.longitude}}
+{{/coordinates}}
+
+**Cách biển Nha Trang**: {{distances.to_beach_meters}} mét (~{{distances.to_beach_km}} km)
+
 {{#nearby_venues}}
 - **{{name}}**: {{distance}}  # Source: curl_step_2.1 -> data.entertainmentVenues
 {{/nearby_venues}}
 
-### 💎 2. Tiện Nghi Khách Sạn
-{{#amenity_tags}}
-- {{.}}  # Source: curl_step_2.1 -> data.amenities (mapped to readable format)
-{{/amenity_tags}}
+## ⏰ Giờ Nhận/Trả Phòng
+
+- **Nhận phòng**: Từ {{check_in_policy.earliest_time}} đến {{check_in_policy.latest_time}}
+
+- **Trả phòng**: Trước {{check_out_policy.latest_time}}
+
+{{#check_out_policy.late_checkout_available}}
+- **Trả phòng muộn**: Có thể sắp xếp với phí {{check_out_policy.late_checkout_fee}}
+{{/check_out_policy.late_checkout_available}}
+
+## ⭐ Đặc Điểm Nổi Bật
+
+### 🏖️ 1. Vị Trí
+- **{{location.address}}**, {{location.street_name}}, {{location.ward_name}}, {{location.district_name}}, {{location.city_name}}
+
+### ✨ Tiện Nghi Nổi Bật
+{{#amenities_by_category}}
+### {{category_name}}
+
+{{#amenities}}
+{{#available}}
+✅ {{name}}
+{{/available}}
+{{/amenities}}
+
+{{/amenities_by_category}}
 
 ### 👨‍👩‍👧‍👦 3. Thân Thiện Với Gia Đình
 {{#has_family_friendly}}
@@ -181,7 +330,7 @@ Khách sạn cung cấp {{available_room_types}} loại phòng chính:
 > - Số người lớn và trẻ em
 > - Loại phòng ưa thích
 > 
-> Tôi sẽ kiểm tra ngay: {{TOOL:check_availability|hotel_id={{hotel_id}}}}
+> Tôi sẽ kiểm tra ngay: {{tool_call_check_availability}}
 
 ---
 
@@ -193,17 +342,103 @@ Khách sạn cung cấp {{available_room_types}} loại phòng chính:
 
 ---
 
-## 📋 Chính Sách Khách Sạn
+## 🎯 Địa Điểm Giải Trí Gần Đây
+
+{{#entertainmentVenues}}
+### 🌟 {{categoryName}}
+
+{{#venues}}
+• **{{name}}** ({{distanceFromHotel}}m): {{description}}  
+  📍 {{address}}
+
+{{/venues}}
+{{/entertainmentVenues}}
+
+{{^entertainmentVenues}}
+_Thông tin địa điểm giải trí sẽ được cập nhật sớm._
+{{/entertainmentVenues}}
+
+---
+
+## ⭐ Đánh Giá Khách Hàng
+
+{{#reviewsSummary}}
+{{#totalReviews}}
+### 📊 Tổng Quan Đánh Giá
+- **Tổng số đánh giá**: {{totalReviews}} đánh giá
+- **Điểm trung bình**: {{averageScore}}/10
+
+### 📈 Phân Bố Điểm Số
+{{#scoreDistribution}}
+- **{{bucket}} điểm**: {{count}} đánh giá
+{{/scoreDistribution}}
+
+### 💬 Đánh Giá Gần Đây
+{{#recentReviews}}
+- **{{score}}/10** - "{{commentSnippet}}" _({{date}})_
+{{/recentReviews}}
+{{/totalReviews}}
+{{^totalReviews}}
+_Chưa có đánh giá cho khách sạn này._
+{{/totalReviews}}
+{{/reviewsSummary}}
+
+---
+
+## 🎁 Khuyến Mãi Đang Có
+
+{{#activeDiscounts}}
+{{#.}}
+### 🏷️ {{code}} - {{description}}
+- **Giảm giá**: {{percentage}}%
+- **Áp dụng cho**: Đơn hàng từ {{minBookingPrice}} VNĐ
+- **Thời gian**: Từ {{validFrom}} đến {{validTo}}
+- **Số lần sử dụng**: {{timesUsed}}/{{usageLimit}}
+{{#specialDayName}}
+- **Dịp đặc biệt**: {{.}}
+{{/specialDayName}}
+
+{{/.}}
+{{/activeDiscounts}}
+{{^activeDiscounts}}
+_Hiện tại không có khuyến mãi nào._
+{{/activeDiscounts}}
+
+---
+
+## 📋 Chính Sách Khách Sạn Chi Tiết
 
 ### ⏰ Giờ Nhận/Trả Phòng
 - **Check-in**: Từ {{check_in_time}}{{#early_check_in_available}} (Hỗ trợ nhận phòng sớm tùy tình trạng phòng trống - có thể phát sinh phí){{/early_check_in_available}}
 - **Check-out**: Trước {{check_out_time}}{{#late_check_out_available}} (Trả phòng muộn đến 18:00 với phụ thu 50% giá phòng){{/late_check_out_available}}
 
-### ❌ Chính Sách Hủy Phòng
-**Áp dụng gói "{{cancellation_policy}}"**:  # Source: curl_step_2.1 -> data.policy.cancellationPolicy.name
-{{#cancellation_policy_rules}}  # Source: curl_step_2.1 -> data.policy.cancellationPolicy.rules[]
-- {{description}}  # Generated from rules
-{{/cancellation_policy_rules}}
+## 📜 Chính Sách Đặc Biệt
+
+- **Thú cưng**: {{#policies.pets_allowed}}Được phép{{/policies.pets_allowed}}{{^policies.pets_allowed}}Không được phép{{/policies.pets_allowed}}
+
+- **Hút thuốc**: {{#policies.smoking_allowed}}Được phép ở khu vực chỉ định{{/policies.smoking_allowed}}{{^policies.smoking_allowed}}Không được phép{{/policies.smoking_allowed}}
+
+- **Trẻ em**: {{policies.children_policy}}
+
+### ❌ Chính Sách Hủy Phòng Chi Tiết
+{{#policies}}
+{{#cancellationPolicy}}
+**Áp dụng gói "{{name}}"**:
+{{#rules}}
+- {{description}}
+{{/rules}}
+{{/cancellationPolicy}}
+{{/policies}}
+
+### 🔄 Chính Sách Đổi Lịch Chi Tiết
+{{#policies}}
+{{#reschedulePolicy}}
+**Áp dụng gói "{{name}}"**:
+{{#rules}}
+- {{description}}
+{{/rules}}
+{{/reschedulePolicy}}
+{{/policies}}
 
 ### 💳 Thanh Toán
 - **Phương thức**: 
@@ -241,85 +476,3 @@ Bạn có câu hỏi về khách sạn này? Tôi có thể giúp bạn:
 
 Hãy cho tôi biết kế hoạch của bạn! 😊
 
----
-
-<!-- 
-====================================================================
-DATA SOURCE MAPPING REFERENCE (Based on Actual API Responses)
-====================================================================
-
-CURL COMMANDS EXECUTED:
-1. curl_step_1: GET /accommodation/hotels?page=0&size=1
-   → Extract: HOTEL_ID, CITY_ID
-
-2. curl_step_2.1: GET /accommodation/hotels/{HOTEL_ID}
-   → Response: HotelDetailsResponse
-   → Fields used:
-     - data.id → doc_id, hotel_id
-     - data.name → name, slug
-     - data.description → description
-     - data.starRating → star_rating
-     - data.status → status
-     - data.country/province/city/district/ward/street → location.*
-     - data.latitude/longitude → location.coordinates
-     - data.address → location.address
-     - data.amenities[] → amenity_tags (via mapping)
-     - data.photos[] → mainImageUrl, galleryImageUrls
-     - data.policy.* → check_in_time, check_out_time, cancellation_policy, etc.
-     - data.entertainmentVenues[] → nearby_venues
-     - data.partner.id → partner_id
-     - data.updatedAt/createdAt → last_updated
-
-3. curl_step_2.2: GET /accommodation/rooms?hotel-id={HOTEL_ID}
-   → Response: Page<RoomResponse>
-   → Fields used:
-     - data.content[] → rooms list
-     - data.totalItems → total_rooms
-     - MIN(data.content[].basePricePerNight) → reference_min_price
-     - MAX(data.content[].basePricePerNight) → reference_max_price
-     - COUNT(DISTINCT data.content[].name) → available_room_types
-
-4. curl_step_2.3: GET /reviews?hotel-id={HOTEL_ID}
-   → Response: Page<ReviewResponse>
-   → Fields used:
-     - AVG(data.content[].score) → review_score
-     - data.totalItems → review_count
-     - Note: May be empty array → review_score = null, review_count = 0
-
-5. curl_step_2.4: GET /location/entertainment-venues/city/{CITY_ID}
-   → Response: EntertainmentVenueGroupResponse[]
-   → Fields used:
-     - data[].entertainmentVenues[] → nearby_venues (if not in hotel response)
-     - data[].entertainmentVenues[].name → nearby_venues[].name
-     - data[].entertainmentVenues[].distance → nearby_venues[].distance
-
-6. curl_step_2.5: GET /amenity/amenities
-   → Response: AmenityResponse[]
-   → Purpose: Reference mapping table for Vietnamese → English amenity names
-   → Used by: AmenityMappingService to map curl_step_2.1 -> data.amenities[].name
-
-AGGREGATED FIELDS:
-- review_score: AVG(reviews.score) from curl_step_2.3
-- review_count: COUNT(reviews) from curl_step_2.3
-- reference_min_price: MIN(rooms.basePricePerNight) from curl_step_2.2
-- reference_max_price: MAX(rooms.basePricePerNight) from curl_step_2.2
-- available_room_types: COUNT(DISTINCT rooms.name) from curl_step_2.2
-
-INFERRED FIELDS:
-- vibe_tags: Inferred from star_rating + amenity_tags + location_tags
-- location_tags: Generated from city.name, district.name, + venue names
-- keywords: Generated from hotel.name, city.name, star_rating, amenity_tags
-
-MAPPING LOGIC:
-- amenity_tags: Map Vietnamese names from curl_step_2.1 -> data.amenities[].amenities[].name
-  to English using AmenityMappingService with curl_step_2.5 as reference
-- mainImageUrl: Filter photos by category name="main" or use first photo
-- galleryImageUrls: All photos except main, limit 5
-
-PROHIBITED DATA:
-- DO NOT include: commissionRate, partner contact info, internal IDs
-- DO NOT hardcode: exact prices for specific dates, current availability
-- DO NOT expose: Admin-only fields, Partner-only metrics
-
-====================================================================
--->
