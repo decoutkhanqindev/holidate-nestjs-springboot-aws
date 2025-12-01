@@ -83,26 +83,26 @@ export default function SuperAdminHomePage() {
                     const todayStr = today.toISOString().split('T')[0];
                     const firstDayThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
                     const firstDayStr = firstDayThisMonth.toISOString().split('T')[0];
-                    
+
                     // Lấy financials cho hôm nay
                     const todayFinancials = await getAdminFinancialsReport(
                         todayStr,
                         todayStr,
                         'day'
                     );
-                    
+
                     // Lấy financials cho cả tháng
                     const monthFinancials = await getAdminFinancialsReport(
                         firstDayStr,
                         todayStr,
                         'day'
                     );
-                    
+
                     console.log('[SuperAdminDashboard] Financials data received:', {
                         today: todayFinancials,
                         month: monthFinancials
                     });
-                    
+
                     setFinancialsData({
                         today: todayFinancials,
                         month: monthFinancials
@@ -340,10 +340,10 @@ export default function SuperAdminHomePage() {
                                 const todayData = ('currentPeriod' in financialsData.today && financialsData.today.currentPeriod?.summary)
                                     ? financialsData.today.currentPeriod.summary
                                     : financialsData.today?.summary;
-                                
+
                                 // Lấy từ summary trước
                                 revenue = todayData?.totalGrossRevenue ?? 0;
-                                
+
                                 // Nếu summary = 0, tính tổng từ data array
                                 if (revenue === 0) {
                                     const dataArray = ('currentPeriod' in financialsData.today && financialsData.today.currentPeriod?.data)
@@ -396,9 +396,9 @@ export default function SuperAdminHomePage() {
                         <div className="card-body">
                             <h5 className="card-title text-muted">
                                 Doanh thu tháng này (gross)
-                                <i className="bi bi-info-circle ms-2 text-muted" 
-                                   style={{ fontSize: '0.875rem', cursor: 'help' }}
-                                   title="Tổng doanh thu gộp từ đầu tháng đến hôm nay (từ SystemDailyReport + hôm nay)"></i>
+                                <i className="bi bi-info-circle ms-2 text-muted"
+                                    style={{ fontSize: '0.875rem', cursor: 'help' }}
+                                    title="Tổng doanh thu gộp từ đầu tháng đến hôm nay (từ SystemDailyReport + hôm nay)"></i>
                             </h5>
                             <h3 className="text-primary">
                                 {(() => {
@@ -408,10 +408,10 @@ export default function SuperAdminHomePage() {
                                         const monthData = ('currentPeriod' in financialsData.month && financialsData.month.currentPeriod?.summary)
                                             ? financialsData.month.currentPeriod.summary
                                             : financialsData.month?.summary;
-                                        
+
                                         // Lấy từ summary trước
                                         revenue = monthData?.totalGrossRevenue ?? 0;
-                                        
+
                                         // Nếu summary = 0, tính tổng từ data array
                                         if (revenue === 0) {
                                             const dataArray = ('currentPeriod' in financialsData.month && financialsData.month.currentPeriod?.data)
@@ -448,9 +448,9 @@ export default function SuperAdminHomePage() {
                         <div className="card-body">
                             <h5 className="card-title text-muted">
                                 Doanh thu tháng này (net)
-                                <i className="bi bi-info-circle ms-2 text-muted" 
-                                   style={{ fontSize: '0.875rem', cursor: 'help' }}
-                                   title="Doanh thu ròng = Doanh thu gộp × Tỷ lệ hoa hồng. Phần tiền Holidate thực sự thu về sau khi trừ phần trả cho đối tác."></i>
+                                <i className="bi bi-info-circle ms-2 text-muted"
+                                    style={{ fontSize: '0.875rem', cursor: 'help' }}
+                                    title="Doanh thu ròng = Doanh thu gộp × Tỷ lệ hoa hồng. Phần tiền Holidate thực sự thu về sau khi trừ phần trả cho đối tác."></i>
                             </h5>
                             <h3 className="text-success">
                                 {(() => {
@@ -460,10 +460,10 @@ export default function SuperAdminHomePage() {
                                         const monthData = ('currentPeriod' in financialsData.month && financialsData.month.currentPeriod?.summary)
                                             ? financialsData.month.currentPeriod.summary
                                             : financialsData.month?.summary;
-                                        
+
                                         // Lấy từ summary trước
                                         revenue = monthData?.totalNetRevenue ?? 0;
-                                        
+
                                         // Nếu summary = 0, tính tổng từ data array
                                         if (revenue === 0) {
                                             const dataArray = ('currentPeriod' in financialsData.month && financialsData.month.currentPeriod?.data)
