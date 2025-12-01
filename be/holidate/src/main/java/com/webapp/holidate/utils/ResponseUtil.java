@@ -1,14 +1,16 @@
 package com.webapp.holidate.utils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.webapp.holidate.dto.response.ApiResponse;
-import com.webapp.holidate.type.ErrorType;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
-import java.io.IOException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.webapp.holidate.dto.response.ApiResponse;
+import com.webapp.holidate.type.ErrorType;
+
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 
 public class ResponseUtil {
   public static ResponseEntity<ApiResponse<String>> handleExceptionResponse(ErrorType error) {
@@ -40,7 +42,7 @@ public class ResponseUtil {
   public static void handleAuthCookiesResponse(HttpServletResponse response, String name, String token, int maxAge) {
     Cookie cookie = new Cookie(name, token);
     cookie.setHttpOnly(true);
-    cookie.setSecure(false); // set to true in production with HTTPS
+    cookie.setSecure(true); // set to true in production with HTTPS
     cookie.setPath("/");
     cookie.setMaxAge(maxAge);
     response.addCookie(cookie);
