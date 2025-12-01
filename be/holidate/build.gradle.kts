@@ -26,6 +26,9 @@ repositories {
 }
 
 dependencies {
+  // Actuator - Health Checks & Metrics
+  implementation("org.springframework.boot:spring-boot-starter-actuator")
+
   // Database
   runtimeOnly("com.mysql:mysql-connector-j")
 
