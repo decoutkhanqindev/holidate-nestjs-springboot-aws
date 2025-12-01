@@ -91,6 +91,8 @@ export default function SuperHotelsPage() {
     }, [selectedProvinceId]);
 
     useEffect(() => {
+        let isCancelled = false; // Flag để cancel request nếu component unmount hoặc dependencies thay đổi
+
         const loadHotels = async () => {
             setIsLoading(true);
             try {
@@ -118,20 +120,34 @@ export default function SuperHotelsPage() {
                     minPrice !== '' ? Number(minPrice) : undefined, // min-price
                     maxPrice !== '' ? Number(maxPrice) : undefined // max-price
                 );
-                setHotels(response.hotels);
-                setTotalPages(response.totalPages);
-                setTotalItems(response.totalItems);
+
+                // Chỉ update state nếu request chưa bị cancel
+                if (!isCancelled) {
+                    setHotels(response.hotels);
+                    setTotalPages(response.totalPages);
+                    setTotalItems(response.totalItems);
+                }
             } catch (error: any) {
-                toast.error(error.message || "Không thể tải danh sách khách sạn", {
-                    position: "top-right",
-                    autoClose: 3000,
-                });
+                // Chỉ show error nếu request chưa bị cancel
+                if (!isCancelled) {
+                    toast.error(error.message || "Không thể tải danh sách khách sạn", {
+                        position: "top-right",
+                        autoClose: 3000,
+                    });
+                }
             } finally {
-                setIsLoading(false);
+                if (!isCancelled) {
+                    setIsLoading(false);
+                }
             }
         };
 
         loadHotels();
+
+        // Cleanup function: đánh dấu request đã bị cancel khi dependencies thay đổi hoặc component unmount
+        return () => {
+            isCancelled = true;
+        };
     }, [currentPage, sortBy, sortDir, selectedProvinceId, selectedCityId, searchName, selectedStarRating, selectedStatus, minPrice, maxPrice]);
 
     const handlePageChange = (page: number) => {
