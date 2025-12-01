@@ -1,253 +1,389 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PaymentTransactionsTable from "@/components/AdminSuper/Payment/PaymentTransactionsTable";
 import type { PaymentTransaction } from "@/types";
+import apiClient, { ApiResponse } from "@/service/apiClient";
+import Pagination from "@/components/Admin/pagination/Pagination";
+import { FaCreditCard, FaSearch } from "react-icons/fa";
 
-// Dữ liệu hardcode - sẽ thay thế bằng API sau
-const MOCK_PAYMENT_TRANSACTIONS: PaymentTransaction[] = [
-    {
-        id: "1",
-        adminName: "partner_vt_6",
-        adminEmail: "partner_vt_6@gmail.com",
-        hotelName: "Hoang Ngoc Beach Resort",
-        hotelId: "00d60e60-d366-4d73-b3c0-614ecb95feb7",
-        paymentDate: new Date("2025-01-15T10:30:00"),
-        expiryDate: new Date("2026-01-15T23:59:59"),
-        amount: 5000000,
-        status: "PAID",
-        paymentMethod: "VNPay",
-        transactionId: "TXN-20250115-001",
-        description: "Thanh toán phí dịch vụ tháng 9/2025",
-    },
-    {
-        id: "2",
-        adminName: "	partner_pt_5",
-        adminEmail: "partner_pt_5@gmail.com",
-        hotelName: "Sunset Hotel & Resort",
-        hotelId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-        paymentDate: new Date("2025-01-10T14:20:00"),
-        expiryDate: new Date("2026-01-10T23:59:59"),
-        amount: 7500000,
-        status: "PAID",
-        paymentMethod: "Bank Transfer",
-        transactionId: "TXN-20250110-002",
-        description: "Thanh toán phí dịch vụ tháng 8/2025",
-    },
-    {
-        id: "3",
-        adminName: "partner_dn_6",
-        adminEmail: "partner_dn_6@gmail.com",
-        hotelName: "Ocean View Hotel",
-        hotelId: "b2c3d4e5-f6a7-8901-bcde-f23456789012",
-        paymentDate: new Date("2025-01-05T09:15:00"),
-        expiryDate: new Date("2026-01-05T23:59:59"),
-        amount: 6000000,
-        status: "PENDING",
-        paymentMethod: "VNPay",
-        transactionId: "TXN-20250105-003",
-        description: "Thanh toán phí dịch vụ quý 3 năm 2025 - Đang chờ xử lý",
-    },
-    {
-        id: "4",
-        adminName: "partner_pt_2",
-        adminEmail: "partner_pt_2@gmail.com",
-        hotelName: "Mountain Peak Resort",
-        hotelId: "c3d4e5f6-a7b8-9012-cdef-345678901234",
-        paymentDate: new Date("2024-12-28T16:45:00"),
-        expiryDate: new Date("2025-12-28T23:59:59"),
-        amount: 8000000,
-        status: "EXPIRED",
-        paymentMethod: "Bank Transfer",
-        transactionId: "TXN-20241228-004",
-        description: "Thanh toán phí dịch vụ tháng 11/2025 - Đã hết hạn",
-    },
-    {
-        id: "5",
-        adminName: "partner_hn_7",
-        adminEmail: "partner_hn_7@gmail.com",
-        hotelName: "City Center Hotel",
-        hotelId: "d4e5f6a7-b8c9-0123-defa-456789012345",
-        paymentDate: new Date("2025-01-20T11:00:00"),
-        expiryDate: new Date("2026-01-20T23:59:59"),
-        amount: 4500000,
-        status: "PAID",
-        paymentMethod: "VNPay",
-        transactionId: "TXN-20250120-005",
-        description: "Thanh toán phí dịch vụ tháng 7/2025",
-    },
-];
+interface BookingResponse {
+    id: string;
+    user: {
+        id: string;
+        email: string;
+        fullName: string;
+    };
+    room: {
+        id: string;
+        name: string;
+    };
+    hotel: {
+        id: string;
+        name: string;
+        address?: string;
+        partner?: {
+            id: string;
+            email: string;
+            fullName: string;
+        } | null;
+    };
+    checkInDate: string;
+    checkOutDate: string;
+    numberOfNights: number;
+    numberOfRooms: number;
+    priceDetails: {
+        originalPrice?: number;
+        discountAmount?: number;
+        appliedDiscount?: {
+            id: string;
+            code: string;
+            percentage: number;
+        } | null;
+        netPriceAfterDiscount?: number;
+        tax?: {
+            name: string;
+            percentage: number;
+            amount: number;
+        };
+        serviceFee?: {
+            name: string;
+            percentage: number;
+            amount: number;
+        };
+        finalPrice: number;
+    };
+    contactFullName: string;
+    contactEmail: string;
+    contactPhone: string;
+    status: string;
+    paymentUrl?: string | null;
+    createdAt: string;
+    expiresAt?: string | null;
+    updatedAt: string;
+}
+
+const ITEMS_PER_PAGE = 10;
+
+// Map booking to payment transaction
+const mapBookingToTransaction = (booking: BookingResponse): PaymentTransaction => {
+    const bookingStatus = booking.status.toLowerCase();
+
+    // Determine payment status based on booking status
+    let paymentStatus: PaymentTransaction['status'] = 'pending';
+
+    if (bookingStatus === 'confirmed' || bookingStatus === 'checked_in' ||
+        bookingStatus === 'completed' || bookingStatus === 'rescheduled') {
+        paymentStatus = 'success';
+    } else if (bookingStatus === 'pending_payment') {
+        // Check if expired
+        if (booking.expiresAt) {
+            const expiryDate = new Date(booking.expiresAt);
+            if (expiryDate.getTime() < new Date().getTime()) {
+                paymentStatus = 'failed';
+            } else {
+                paymentStatus = 'pending';
+            }
+        } else {
+            paymentStatus = 'pending';
+        }
+    } else if (bookingStatus === 'cancelled') {
+        // Check if refunded (if booking was confirmed before cancellation)
+        paymentStatus = 'failed'; // Default to failed, could be refunded if needed
+    }
+
+    // Determine payment gateway and method from paymentUrl
+    let paymentGateway = 'VNPay';
+    let paymentMethod = 'VNPay';
+
+    if (booking.paymentUrl) {
+        if (booking.paymentUrl.includes('vnpay')) {
+            paymentGateway = 'VNPay';
+            paymentMethod = 'VNPay';
+        } else if (booking.paymentUrl.includes('stripe')) {
+            paymentGateway = 'Stripe';
+            paymentMethod = 'Thẻ tín dụng';
+        } else if (booking.paymentUrl.includes('paypal')) {
+            paymentGateway = 'PayPal';
+            paymentMethod = 'PayPal';
+        } else if (booking.paymentUrl.includes('momo')) {
+            paymentGateway = 'MoMo';
+            paymentMethod = 'MoMo';
+        }
+    }
+
+    // Extract transaction code from booking ID or payment URL
+    const gatewayTransactionCode = booking.paymentUrl
+        ? booking.paymentUrl.split('=').pop()?.substring(0, 20) || booking.id.substring(0, 8).toUpperCase()
+        : booking.id.substring(0, 8).toUpperCase();
+
+    // Determine paid_at based on status
+    const paidAt = (paymentStatus === 'success' && bookingStatus !== 'pending_payment')
+        ? new Date(booking.updatedAt)
+        : null;
+
+    // Determine refunded_at (if cancelled after being confirmed)
+    // Note: We can't determine if it was refunded from booking status alone
+    // This would require additional payment data
+    const refundedAt = null;
+
+    return {
+        transaction_id: booking.id, // Use booking ID as transaction ID
+        booking_id: booking.id,
+        hotel_id: booking.hotel.id,
+        user_id: booking.user.id,
+        amount: booking.priceDetails.originalPrice || booking.priceDetails.finalPrice,
+        currency: 'VND',
+        payment_method: paymentMethod,
+        payment_gateway: paymentGateway,
+        status: paymentStatus,
+        gateway_transaction_code: gatewayTransactionCode,
+        bank_code: null, // Not available in booking response
+        created_at: new Date(booking.createdAt),
+        paid_at: paidAt,
+        refunded_at: refundedAt,
+        discount_amount: booking.priceDetails.discountAmount || 0,
+        final_amount: booking.priceDetails.finalPrice,
+        // Additional fields for display
+        hotel_name: booking.hotel.name,
+        user_name: booking.user.fullName,
+        user_email: booking.user.email,
+    };
+};
+
+const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+    }).format(amount);
+};
 
 export default function SuperPaymentPage() {
-    const [transactions] = useState<PaymentTransaction[]>(MOCK_PAYMENT_TRANSACTIONS);
+    const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalItems, setTotalItems] = useState(0);
     const [filterStatus, setFilterStatus] = useState<string>("ALL");
     const [searchQuery, setSearchQuery] = useState<string>("");
+
+    const fetchTransactions = async (page: number) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await apiClient.get<ApiResponse<{
+                content: BookingResponse[];
+                page: number;
+                size: number;
+                totalItems: number;
+                totalPages: number;
+                first: boolean;
+                last: boolean;
+                hasNext: boolean;
+                hasPrevious: boolean;
+            }>>('/bookings', {
+                params: {
+                    page: page,
+                    size: ITEMS_PER_PAGE,
+                    'sort-by': 'created-at',
+                    'sort-dir': 'desc',
+                },
+            });
+
+            if (response.data?.statusCode === 200 && response.data.data) {
+                const mappedTransactions = response.data.data.content.map(mapBookingToTransaction);
+                setTransactions(mappedTransactions);
+                setTotalPages(response.data.data.totalPages || 0);
+                setTotalItems(response.data.data.totalItems || 0);
+            } else {
+                setTransactions([]);
+                setTotalPages(0);
+                setTotalItems(0);
+            }
+        } catch (err: any) {
+            setError(err.response?.data?.message || err.message || 'Không thể tải danh sách giao dịch');
+            setTransactions([]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchTransactions(currentPage);
+    }, [currentPage]);
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page - 1);
+    };
 
     // Filter transactions
     const filteredTransactions = transactions.filter((transaction) => {
         const matchesStatus = filterStatus === "ALL" || transaction.status === filterStatus;
         const matchesSearch =
             searchQuery === "" ||
-            transaction.adminName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            transaction.hotelName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            transaction.transactionId.toLowerCase().includes(searchQuery.toLowerCase());
+            transaction.transaction_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            transaction.booking_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            transaction.hotel_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            transaction.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            transaction.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            transaction.gateway_transaction_code?.toLowerCase().includes(searchQuery.toLowerCase());
         return matchesStatus && matchesSearch;
     });
 
+    // Calculate statistics
+    const stats = {
+        total: transactions.length,
+        success: transactions.filter((t) => t.status === "success").length,
+        pending: transactions.filter((t) => t.status === "pending").length,
+        failed: transactions.filter((t) => t.status === "failed").length,
+        refunded: transactions.filter((t) => t.status === "refunded").length,
+        totalAmount: transactions
+            .filter((t) => t.status === "success")
+            .reduce((sum, t) => sum + t.final_amount, 0),
+    };
+
     return (
-        <div className="container-fluid">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <h1 className="h3 text-dark mb-0">Quản lý giao dịch</h1>
-                <div className="text-muted small">
-                    <span className="badge bg-info">Dữ liệu mẫu</span>
+        <div className="px-4 py-3">
+            <div className="mb-4 pb-3 border-b border-gray-300">
+                <div className="flex justify-between items-center mb-4">
+                    <div>
+                        <h1 className="text-xl mb-1 font-bold text-gray-900 flex items-center gap-2">
+                            <FaCreditCard className="text-blue-600" />
+                            Quản lý giao dịch
+                        </h1>
+                        {!isLoading && (
+                            <p className="text-gray-600 text-sm mb-0 mt-2">
+                                Tổng cộng: <span className="font-semibold text-blue-600">{totalItems}</span> giao dịch
+                                {searchQuery && (
+                                    <span className="ml-2">
+                                        (Hiển thị: <span className="font-semibold text-blue-600">{filteredTransactions.length}</span>)
+                                    </span>
+                                )}
+                            </p>
+                        )}
+                    </div>
+                </div>
+
+                {/* Search and Filter */}
+                <div className="card shadow-sm mb-4">
+                    <div className="card-body">
+                        <div className="row g-3">
+                            <div className="col-md-6">
+                                <label htmlFor="search" className="form-label">
+                                    Tìm kiếm
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <FaSearch className="text-gray-400" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        className="form-control pl-10"
+                                        id="search"
+                                        placeholder="Tìm theo mã giao dịch, mã đơn, khách sạn, khách hàng..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <div className="col-md-4">
+                                <label htmlFor="statusFilter" className="form-label">
+                                    Lọc theo trạng thái
+                                </label>
+                                <select
+                                    className="form-select"
+                                    id="statusFilter"
+                                    value={filterStatus}
+                                    onChange={(e) => setFilterStatus(e.target.value)}
+                                >
+                                    <option value="ALL">Tất cả</option>
+                                    <option value="success">Thành công</option>
+                                    <option value="pending">Đang chờ</option>
+                                    <option value="failed">Thất bại</option>
+                                    <option value="refunded">Đã hoàn tiền</option>
+                                </select>
+                            </div>
+                            <div className="col-md-2 d-flex align-items-end">
+                                <button
+                                    className="btn btn-outline-secondary w-100"
+                                    onClick={() => {
+                                        setSearchQuery("");
+                                        setFilterStatus("ALL");
+                                    }}
+                                >
+                                    Xóa bộ lọc
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* Filter và Search */}
-            <div className="card shadow-sm mb-4">
-                <div className="card-body">
-                    <div className="row g-3">
-                        <div className="col-md-6">
-                            <label htmlFor="search" className="form-label">
-                                Tìm kiếm
-                            </label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                id="search"
-                                placeholder="Tìm theo tên admin, khách sạn, mã giao dịch..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+            {isLoading ? (
+                <div className="text-center py-12">
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+                    <p className="mt-3 text-gray-600">Đang tải danh sách giao dịch...</p>
+                </div>
+            ) : error ? (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 shadow-sm">
+                    <strong className="text-red-800">Lỗi:</strong> <span className="text-red-700">{error}</span>
+                </div>
+            ) : (
+                <>
+                    {/* Statistics Cards */}
+                    <div className="row g-3 mb-4">
+                        <div className="col-md-3">
+                            <div className="card border-primary">
+                                <div className="card-body">
+                                    <h6 className="card-subtitle mb-2 text-muted">Tổng giao dịch</h6>
+                                    <h4 className="card-title text-primary mb-0">{stats.total}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="col-md-3">
+                            <div className="card border-success">
+                                <div className="card-body">
+                                    <h6 className="card-subtitle mb-2 text-muted">Thành công</h6>
+                                    <h4 className="card-title text-success mb-0">{stats.success}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="col-md-3">
+                            <div className="card border-warning">
+                                <div className="card-body">
+                                    <h6 className="card-subtitle mb-2 text-muted">Đang chờ</h6>
+                                    <h4 className="card-title text-warning mb-0">{stats.pending}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="col-md-3">
+                            <div className="card border-danger">
+                                <div className="card-body">
+                                    <h6 className="card-subtitle mb-2 text-muted">Tổng tiền</h6>
+                                    <h4 className="card-title text-danger mb-0">
+                                        {formatCurrency(stats.totalAmount)}
+                                    </h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Transactions Table */}
+                    <PaymentTransactionsTable transactions={filteredTransactions} />
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="mt-4 flex justify-center">
+                            <Pagination
+                                currentPage={currentPage + 1}
+                                totalPages={totalPages}
+                                onPageChange={handlePageChange}
                             />
                         </div>
-                        <div className="col-md-4">
-                            <label htmlFor="statusFilter" className="form-label">
-                                Lọc theo trạng thái
-                            </label>
-                            <select
-                                className="form-select"
-                                id="statusFilter"
-                                value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value)}
-                            >
-                                <option value="ALL">Tất cả</option>
-                                <option value="PAID">Đã thanh toán</option>
-                                <option value="PENDING">Đang chờ</option>
-                                <option value="EXPIRED">Đã hết hạn</option>
-                                <option value="FAILED">Thất bại</option>
-                            </select>
-                        </div>
-                        <div className="col-md-2 d-flex align-items-end">
-                            <button
-                                className="btn btn-outline-secondary w-100"
-                                onClick={() => {
-                                    setSearchQuery("");
-                                    setFilterStatus("ALL");
-                                }}
-                            >
-                                Xóa bộ lọc
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Thống kê nhanh */}
-            <div className="row g-3 mb-4">
-                <div className="col-md-3">
-                    <div className="card border-primary">
-                        <div className="card-body">
-                            <h6 className="card-subtitle mb-2 text-muted">Tổng giao dịch</h6>
-                            <h4 className="card-title text-primary mb-0">
-                                {transactions.length}
-                            </h4>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-md-3">
-                    <div className="card border-success">
-                        <div className="card-body">
-                            <h6 className="card-subtitle mb-2 text-muted">Đã thanh toán</h6>
-                            <h4 className="card-title text-success mb-0">
-                                {transactions.filter((t) => t.status === "PAID").length}
-                            </h4>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-md-3">
-                    <div className="card border-warning">
-                        <div className="card-body">
-                            <h6 className="card-subtitle mb-2 text-muted">Đang chờ</h6>
-                            <h4 className="card-title text-warning mb-0">
-                                {transactions.filter((t) => t.status === "PENDING").length}
-                            </h4>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-md-3">
-                    <div className="card border-danger">
-                        <div className="card-body">
-                            <h6 className="card-subtitle mb-2 text-muted">Tổng tiền</h6>
-                            <h4 className="card-title text-danger mb-0">
-                                {transactions
-                                    .filter((t) => t.status === "PAID")
-                                    .reduce((sum, t) => sum + t.amount, 0)
-                                    .toLocaleString("vi-VN")}{" "}
-                                VND
-                            </h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Bảng giao dịch */}
-            <PaymentTransactionsTable transactions={filteredTransactions} />
+                    )}
+                </>
+            )}
         </div>
     );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

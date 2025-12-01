@@ -80,8 +80,15 @@ export default async function SuperHotelDetailPage({ params }: HotelDetailPagePr
                                 <p className="text-base text-gray-900">
                                     {hotelDetail?.partner?.fullName || 
                                      hotelDetail?.partner?.name || 
-                                     hotelDetail?.partner?.email || 
                                      hotel?.ownerName || 
+                                     'N/A'}
+                                </p>
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-medium text-gray-500">Email chủ khách sạn</h3>
+                                <p className="text-base text-gray-900">
+                                    {hotelDetail?.partner?.email || 
+                                     hotel?.ownerEmail || 
                                      'N/A'}
                                 </p>
                             </div>

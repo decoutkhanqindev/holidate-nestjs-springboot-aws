@@ -153,16 +153,28 @@ function mapHotelResponseToHotel(response: HotelResponse): Hotel {
         fullAddress = response.address || 'Chưa có địa chỉ';
     }
 
-    // Xử lý status - đảm bảo luôn có giá trị hợp lệ
+    // Xử lý status - Backend trả về lowercase (active, inactive, maintenance, closed)
+    // Nhưng type HotelStatus dùng uppercase (ACTIVE, PENDING, HIDDEN)
+    // Map từ backend status sang frontend type
     let mappedStatus: HotelStatus = 'ACTIVE'; // Mặc định là ACTIVE nếu không có status
 
     if (response.status) {
-        const statusUpper = response.status.toUpperCase();
-        if (statusUpper === 'ACTIVE' || statusUpper === 'PENDING' || statusUpper === 'HIDDEN') {
-            mappedStatus = statusUpper as HotelStatus;
-        } else {
-            // Nếu status không hợp lệ, mặc định là ACTIVE (vì khách sạn đã được đăng)
+        const statusLower = response.status.toLowerCase();
+        // Map từ backend status (lowercase) sang frontend type (uppercase)
+        if (statusLower === 'active') {
             mappedStatus = 'ACTIVE';
+        } else if (statusLower === 'inactive') {
+            mappedStatus = 'HIDDEN'; // Map inactive -> HIDDEN cho tương thích
+        } else if (statusLower === 'maintenance' || statusLower === 'closed') {
+            mappedStatus = 'PENDING'; // Map maintenance/closed -> PENDING cho tương thích
+        } else {
+            // Nếu là status cũ (PENDING, HIDDEN) hoặc không hợp lệ
+            const statusUpper = response.status.toUpperCase();
+            if (statusUpper === 'ACTIVE' || statusUpper === 'PENDING' || statusUpper === 'HIDDEN') {
+                mappedStatus = statusUpper as HotelStatus;
+            } else {
+                mappedStatus = 'ACTIVE';
+            }
         }
     }
 
@@ -196,6 +208,8 @@ function mapHotelResponseToHotel(response: HotelResponse): Hotel {
         ownerId: ownerId, // Map partner.id hoặc partnerId sang ownerId
         ownerName: ownerName, // Lưu tên partner nếu có từ list response
         ownerEmail: ownerEmail, // Lưu email partner nếu có từ list response
+        createdAt: response.createdAt, // Map createdAt từ response
+        updatedAt: response.updatedAt, // Map updatedAt từ response
         // Map entertainmentVenues từ response (nếu có)
         entertainmentVenues: (response as any).entertainmentVenues || undefined,
         // Map amenities từ response (nếu có)
@@ -231,15 +245,23 @@ export const getHotels = async (
     cityId?: string,
     provinceId?: string,
     userId?: string, // Thêm userId để filter theo owner (nếu role là PARTNER)
-    roleName?: string // Thêm roleName để biết có cần filter theo owner không
+    roleName?: string, // Thêm roleName để biết có cần filter theo owner không
+    sortBy?: string, // Thêm sortBy parameter (default: 'created-at')
+    sortDir?: 'asc' | 'desc', // Thêm sortDir parameter (default: 'desc')
+    name?: string, // Filter theo tên khách sạn
+    starRating?: number, // Filter theo số sao
+    status?: string, // Filter theo trạng thái (active, inactive, maintenance, closed)
+    amenityIds?: string[], // Filter theo tiện ích
+    minPrice?: number, // Giá tối thiểu
+    maxPrice?: number // Giá tối đa
 ): Promise<PaginatedHotelData> => {
     try {
 
         const params: any = {
             page,
             size,
-            'sort-by': 'createdAt', // Backend dùng "sort-by" (kebab-case)
-            'sort-dir': 'DESC'      // Backend dùng "sort-dir" (kebab-case)
+            'sort-by': sortBy || 'created-at', // Backend dùng "sort-by" (kebab-case), default: 'created-at'
+            'sort-dir': sortDir || 'desc'      // Backend dùng "sort-dir" (kebab-case), default: 'desc'
         };
 
         // Thêm filter theo location - ƯU TIÊN cityId
@@ -259,6 +281,28 @@ export const getHotels = async (
         if (userId && (roleName?.toLowerCase() === 'partner' || roleName?.toLowerCase() === 'admin')) {
             params['partner-id'] = userId.trim(); // Kebab-case (theo backend CommonParams)
             console.log(`[hotelService] Filtering hotels by partner-id (owner): ${userId} for role: ${roleName}`);
+        }
+
+        // Thêm các filter mới
+        if (name && name.trim() !== '') {
+            params['name'] = name.trim();
+        }
+        if (starRating !== undefined && starRating !== null) {
+            params['star-rating'] = starRating;
+        }
+        if (status && status.trim() !== '') {
+            params['status'] = status.trim().toLowerCase(); // Backend expect lowercase
+        }
+        if (amenityIds && amenityIds.length > 0) {
+            // Backend expect array: Spring Boot thường hỗ trợ format lặp lại key hoặc array
+            // Axios sẽ tự serialize array thành amenity-ids=id1&amenity-ids=id2
+            params['amenity-ids'] = amenityIds.map(id => id.trim());
+        }
+        if (minPrice !== undefined && minPrice !== null) {
+            params['min-price'] = minPrice;
+        }
+        if (maxPrice !== undefined && maxPrice !== null) {
+            params['max-price'] = maxPrice;
         }
 
         console.log("[hotelService] Request params:", JSON.stringify(params, null, 2));
