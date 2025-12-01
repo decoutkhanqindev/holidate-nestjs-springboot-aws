@@ -6,6 +6,7 @@ import StatCard from "@/components/AdminSuper/SuperAdminDashboard/StatCard";
 import { FaHotel, FaUsers, FaDollarSign, FaExclamationTriangle, FaCalendarCheck } from "react-icons/fa";
 import dynamic from 'next/dynamic';
 import type { ApexOptions } from 'apexcharts';
+import LoadingSpinner from "@/components/AdminSuper/common/LoadingSpinner";
 
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
@@ -122,12 +123,7 @@ export default function SuperAdminHomePage() {
     if (isLoading) {
         return (
             <div className="container-fluid">
-                <div className="text-center p-5">
-                    <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Đang tải...</span>
-                    </div>
-                    <p className="mt-3">Đang tải dữ liệu dashboard...</p>
-                </div>
+                <LoadingSpinner message="Đang tải dữ liệu dashboard..." />
             </div>
         );
     }

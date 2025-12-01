@@ -10,6 +10,7 @@ import type { Hotel } from "@/types";
 import { toast } from "react-toastify";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { updateHotelActionSuperAdmin } from "@/lib/actions/hotelActions";
+import LoadingSpinner from "@/components/AdminSuper/common/LoadingSpinner";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -274,9 +275,7 @@ export default function SuperHotelsPage() {
             </PageHeader>
 
             {isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                    <div className="text-gray-500">Đang tải danh sách khách sạn...</div>
-                </div>
+                <LoadingSpinner message="Đang tải danh sách khách sạn..." />
             ) : (
                 <>
                     <SuperHotelsTable

@@ -5,6 +5,7 @@ import { getAdminHotelPerformanceReport } from "@/lib/Super_Admin/superAdminRepo
 import type { HotelPerformance } from "@/lib/Super_Admin/superAdminReportsService";
 import Pagination from "@/components/Admin/pagination/Pagination";
 import { FaChartBar, FaCalendarAlt, FaSort } from "react-icons/fa";
+import LoadingSpinner from "@/components/AdminSuper/common/LoadingSpinner";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -172,12 +173,7 @@ export default function SuperBookingStatPage() {
 
             {/* Loading State */}
             {loading && (
-                <div className="text-center py-5">
-                    <div className="spinner-border text-info" role="status">
-                        <span className="visually-hidden">Đang tải...</span>
-                    </div>
-                    <p className="mt-2 text-muted">Đang tải dữ liệu...</p>
-                </div>
+                <LoadingSpinner message="Đang tải dữ liệu..." />
             )}
 
             {/* Error State */}
@@ -190,116 +186,160 @@ export default function SuperBookingStatPage() {
             {/* Table */}
             {!loading && !error && data && (
                 <>
-                    <div className="table-responsive">
-                        <table className="table table-hover table-bordered bg-white">
-                            <thead className="bg-gradient-to-br from-white to-gray-50">
-                                <tr>
-                                    <th className="px-3 py-3 text-left font-bold text-gray-900" style={{ width: '1cm', minWidth: '1cm' }}>
-                                        STT
-                                    </th>
-                                    <th 
-                                        className="px-3 py-3 text-left font-bold text-gray-900"
-                                        style={{ width: '4cm', minWidth: '4cm' }}
-                                    >
-                                        Tên khách sạn
-                                    </th>
-                                    <th 
-                                        className="px-3 py-3 text-left font-bold text-gray-900 cursor-pointer hover:bg-gray-100 transition-colors"
-                                        style={{ width: '2.5cm', minWidth: '2.5cm' }}
-                                        onClick={() => handleSort('bookings')}
-                                    >
-                                        <div className="d-flex align-items-center gap-2">
-                                            Tổng đơn đã tạo
-                                            {getSortIcon('bookings')}
-                                        </div>
-                                    </th>
-                                    <th 
-                                        className="px-3 py-3 text-left font-bold text-gray-900"
-                                        style={{ width: '2.5cm', minWidth: '2.5cm' }}
-                                    >
-                                        Tổng đơn hoàn thành
-                                    </th>
-                                    <th 
-                                        className="px-3 py-3 text-left font-bold text-gray-900"
-                                        style={{ width: '2.5cm', minWidth: '2.5cm' }}
-                                    >
-                                        Tổng đơn đã hủy
-                                    </th>
-                                    <th 
-                                        className="px-3 py-3 text-left font-bold text-gray-900 cursor-pointer hover:bg-gray-100 transition-colors"
-                                        style={{ width: '2cm', minWidth: '2cm' }}
-                                        onClick={() => handleSort('cancellationRate')}
-                                    >
-                                        <div className="d-flex align-items-center gap-2">
-                                            Tỷ lệ hủy (%)
-                                            {getSortIcon('cancellationRate')}
-                                        </div>
-                                    </th>
-                                    <th 
-                                        className="px-3 py-3 text-left font-bold text-gray-900 cursor-pointer hover:bg-gray-100 transition-colors"
-                                        style={{ width: '2cm', minWidth: '2cm' }}
-                                        onClick={() => handleSort('occupancy')}
-                                    >
-                                        <div className="d-flex align-items-center gap-2">
-                                            Tỷ lệ lấp đầy (%)
-                                            {getSortIcon('occupancy')}
-                                        </div>
-                                    </th>
-                                    <th 
-                                        className="px-3 py-3 text-left font-bold text-gray-900 cursor-pointer hover:bg-gray-100 transition-colors"
-                                        style={{ width: '2.5cm', minWidth: '2.5cm' }}
-                                        onClick={() => handleSort('revenue')}
-                                    >
-                                        <div className="d-flex align-items-center gap-2">
-                                            Doanh thu
-                                            {getSortIcon('revenue')}
-                                        </div>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {data.data.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={8} className="text-center py-4 text-muted">
-                                            Không có dữ liệu trong khoảng thời gian đã chọn
-                                        </td>
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200" style={{ width: '100%', overflow: 'visible', position: 'relative' }}>
+                        <div
+                            className="table-scroll-container"
+                            style={{
+                                width: '100%',
+                                overflowX: 'scroll',
+                                overflowY: 'hidden',
+                                display: 'block',
+                                position: 'relative',
+                                WebkitOverflowScrolling: 'touch',
+                                scrollbarWidth: 'auto',
+                                scrollbarColor: '#888 #ffffff',
+                                maxWidth: '100%'
+                            }}
+                        >
+                            <table style={{
+                                minWidth: '1200px',
+                                width: 'max-content',
+                                tableLayout: 'auto',
+                                margin: 0,
+                                borderCollapse: 'separate',
+                                borderSpacing: 0
+                            }}>
+                                <thead>
+                                    <tr className="bg-gradient-to-br from-white to-gray-50">
+                                        <th className="px-3 py-3 text-center font-bold text-gray-900 whitespace-nowrap" style={{ width: '1.5cm', minWidth: '1.5cm', borderBottom: '2px solid #dee2e6' }}>
+                                            STT
+                                        </th>
+                                        <th 
+                                            className="px-3 py-3 text-center font-bold text-gray-900 whitespace-nowrap"
+                                            style={{ width: '5cm', minWidth: '5cm', borderBottom: '2px solid #dee2e6' }}
+                                        >
+                                            Tên khách sạn
+                                        </th>
+                                        <th 
+                                            className="px-3 py-3 text-center font-bold text-gray-900 whitespace-nowrap cursor-pointer hover:bg-gray-100 transition-colors"
+                                            style={{ width: '3cm', minWidth: '3cm', borderBottom: '2px solid #dee2e6' }}
+                                            onClick={() => handleSort('bookings')}
+                                        >
+                                            <div className="d-flex align-items-center justify-content-center gap-2">
+                                                Tổng đơn đã tạo
+                                                {getSortIcon('bookings')}
+                                            </div>
+                                        </th>
+                                        <th 
+                                            className="px-3 py-3 text-center font-bold text-gray-900 whitespace-nowrap"
+                                            style={{ width: '3cm', minWidth: '3cm', borderBottom: '2px solid #dee2e6' }}
+                                        >
+                                            Tổng đơn hoàn thành
+                                        </th>
+                                        <th 
+                                            className="px-3 py-3 text-center font-bold text-gray-900 whitespace-nowrap"
+                                            style={{ width: '3cm', minWidth: '3cm', borderBottom: '2px solid #dee2e6' }}
+                                        >
+                                            Tổng đơn đã hủy
+                                        </th>
+                                        <th 
+                                            className="px-3 py-3 text-center font-bold text-gray-900 whitespace-nowrap cursor-pointer hover:bg-gray-100 transition-colors"
+                                            style={{ width: '2.5cm', minWidth: '2.5cm', borderBottom: '2px solid #dee2e6' }}
+                                            onClick={() => handleSort('cancellationRate')}
+                                        >
+                                            <div className="d-flex align-items-center justify-content-center gap-2">
+                                                Tỷ lệ hủy (%)
+                                                {getSortIcon('cancellationRate')}
+                                            </div>
+                                        </th>
+                                        <th 
+                                            className="px-3 py-3 text-center font-bold text-gray-900 whitespace-nowrap cursor-pointer hover:bg-gray-100 transition-colors"
+                                            style={{ width: '2.5cm', minWidth: '2.5cm', borderBottom: '2px solid #dee2e6' }}
+                                            onClick={() => handleSort('occupancy')}
+                                        >
+                                            <div className="d-flex align-items-center justify-content-center gap-2">
+                                                Tỷ lệ lấp đầy (%)
+                                                {getSortIcon('occupancy')}
+                                            </div>
+                                        </th>
+                                        <th 
+                                            className="px-3 py-3 text-center font-bold text-gray-900 whitespace-nowrap cursor-pointer hover:bg-gray-100 transition-colors"
+                                            style={{ width: '3.5cm', minWidth: '3.5cm', borderBottom: '2px solid #dee2e6' }}
+                                            onClick={() => handleSort('revenue')}
+                                        >
+                                            <div className="d-flex align-items-center justify-content-center gap-2">
+                                                Doanh thu
+                                                {getSortIcon('revenue')}
+                                            </div>
+                                        </th>
                                     </tr>
-                                ) : (
-                                    data.data.map((hotel, index) => (
-                                        <tr key={hotel.hotelId}>
-                                            <td className="px-3 py-2">
-                                                {data.page * ITEMS_PER_PAGE + index + 1}
-                                            </td>
-                                            <td className="px-3 py-2 fw-semibold">
-                                                {hotel.hotelName}
-                                            </td>
-                                            <td className="px-3 py-2">
-                                                {hotel.totalCreatedBookings.toLocaleString('vi-VN')}
-                                            </td>
-                                            <td className="px-3 py-2 text-success">
-                                                {hotel.totalCompletedBookings.toLocaleString('vi-VN')}
-                                            </td>
-                                            <td className="px-3 py-2 text-danger">
-                                                {hotel.totalCancelledBookings.toLocaleString('vi-VN')}
-                                            </td>
-                                            <td className="px-3 py-2">
-                                                <span className={hotel.cancellationRate > 20 ? 'text-danger' : hotel.cancellationRate > 10 ? 'text-warning' : 'text-success'}>
-                                                    {formatPercentage(hotel.cancellationRate)}
-                                                </span>
-                                            </td>
-                                            <td className="px-3 py-2">
-                                                <span className={hotel.averageOccupancyRate > 70 ? 'text-success' : hotel.averageOccupancyRate > 50 ? 'text-warning' : 'text-danger'}>
-                                                    {formatPercentage(hotel.averageOccupancyRate)}
-                                                </span>
-                                            </td>
-                                            <td className="px-3 py-2 fw-semibold">
-                                                {formatCurrency(hotel.totalRevenue)}
+                                </thead>
+                                <tbody>
+                                    {data.data.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={8} className="text-center py-12">
+                                                <div className="text-gray-400">
+                                                    <p className="mb-0 text-lg font-medium">
+                                                        Không có dữ liệu trong khoảng thời gian đã chọn
+                                                    </p>
+                                                    <p className="text-sm mb-0 mt-2">
+                                                        Vui lòng chọn khoảng thời gian khác
+                                                    </p>
+                                                </div>
                                             </td>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                                    ) : (
+                                        data.data.map((hotel, index) => (
+                                            <tr 
+                                                key={hotel.hotelId}
+                                                className="hover:bg-gray-50 transition-all duration-200 cursor-default"
+                                            >
+                                                <td className="px-3 py-3 text-center align-middle" style={{ width: '1.5cm', borderBottom: '1px solid #dee2e6' }}>
+                                                    <span className="text-gray-600 font-medium text-sm">
+                                                        {data.page * ITEMS_PER_PAGE + index + 1}
+                                                    </span>
+                                                </td>
+                                                <td className="px-3 py-3 text-center align-middle" style={{ width: '5cm', borderBottom: '1px solid #dee2e6' }}>
+                                                    <div className="font-semibold text-gray-900 text-sm">
+                                                        {hotel.hotelName}
+                                                    </div>
+                                                </td>
+                                                <td className="px-3 py-3 text-center align-middle" style={{ width: '3cm', borderBottom: '1px solid #dee2e6' }}>
+                                                    <span className="text-gray-900 text-sm">
+                                                        {hotel.totalCreatedBookings.toLocaleString('vi-VN')}
+                                                    </span>
+                                                </td>
+                                                <td className="px-3 py-3 text-center align-middle" style={{ width: '3cm', borderBottom: '1px solid #dee2e6' }}>
+                                                    <span className="text-success text-sm font-medium">
+                                                        {hotel.totalCompletedBookings.toLocaleString('vi-VN')}
+                                                    </span>
+                                                </td>
+                                                <td className="px-3 py-3 text-center align-middle" style={{ width: '3cm', borderBottom: '1px solid #dee2e6' }}>
+                                                    <span className="text-danger text-sm font-medium">
+                                                        {hotel.totalCancelledBookings.toLocaleString('vi-VN')}
+                                                    </span>
+                                                </td>
+                                                <td className="px-3 py-3 text-center align-middle" style={{ width: '2.5cm', borderBottom: '1px solid #dee2e6' }}>
+                                                    <span className={`text-sm font-medium ${hotel.cancellationRate > 20 ? 'text-danger' : hotel.cancellationRate > 10 ? 'text-warning' : 'text-success'}`}>
+                                                        {formatPercentage(hotel.cancellationRate)}
+                                                    </span>
+                                                </td>
+                                                <td className="px-3 py-3 text-center align-middle" style={{ width: '2.5cm', borderBottom: '1px solid #dee2e6' }}>
+                                                    <span className={`text-sm font-medium ${hotel.averageOccupancyRate > 70 ? 'text-success' : hotel.averageOccupancyRate > 50 ? 'text-warning' : 'text-danger'}`}>
+                                                        {formatPercentage(hotel.averageOccupancyRate)}
+                                                    </span>
+                                                </td>
+                                                <td className="px-3 py-3 text-center align-middle" style={{ width: '3.5cm', borderBottom: '1px solid #dee2e6' }}>
+                                                    <span className="text-gray-900 text-sm font-semibold">
+                                                        {formatCurrency(hotel.totalRevenue)}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     {/* Pagination */}

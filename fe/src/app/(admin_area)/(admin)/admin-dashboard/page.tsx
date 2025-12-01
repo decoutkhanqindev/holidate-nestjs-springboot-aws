@@ -4,6 +4,7 @@ import { useAuth } from '@/components/Admin/AuthContext_Admin/AuthContextAdmin';
 import { getPartnerDashboardSummary } from '@/lib/PartnerAPI/partnerDashboardService';
 import { getHotels } from '@/lib/AdminAPI/hotelService';
 import { getRoomsByHotelId } from '@/lib/AdminAPI/roomService';
+import LoadingSpinner from '@/components/Admin/common/LoadingSpinner';
 import dynamic from 'next/dynamic';
 import type { ApexOptions } from 'apexcharts';
 
@@ -147,12 +148,7 @@ export default function DashboardPage() {
     if (isLoading) {
         return (
             <div className="container-fluid">
-                <div className="text-center p-5">
-                    <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Đang tải...</span>
-                    </div>
-                    <p className="mt-3">Đang tải dữ liệu dashboard...</p>
-                </div>
+                <LoadingSpinner message="Đang tải dữ liệu dashboard..." />
             </div>
         );
     }

@@ -13,6 +13,7 @@ import { getHotelAdmins } from '@/lib/Super_Admin/hotelAdminService';
 import { getHotels } from '@/lib/AdminAPI/hotelService';
 import dynamic from 'next/dynamic';
 import type { ApexOptions } from 'apexcharts';
+import LoadingSpinner from "@/components/AdminSuper/common/LoadingSpinner";
 
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
@@ -1007,12 +1008,7 @@ export default function SuperAdminReportsPage() {
     const renderReportContent = () => {
         if (isLoading) {
             return (
-                <div className="text-center p-5">
-                    <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Đang tải...</span>
-                    </div>
-                    <p className="mt-3">Đang tải dữ liệu báo cáo...</p>
-                </div>
+                <LoadingSpinner message="Đang tải dữ liệu báo cáo..." />
             );
         }
 

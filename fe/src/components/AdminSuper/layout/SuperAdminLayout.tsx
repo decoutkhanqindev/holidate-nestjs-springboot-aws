@@ -70,7 +70,7 @@ export default function SuperAdminAreaLayout({ children }: { children: ReactNode
             >
                 <div className="d-flex align-items-center justify-content-center border-bottom" style={{ height: '70px', flexShrink: 0 }}>
                     <Link href="/super-admin" className="h4 m-0 text-info text-decoration-none fw-bold">
-                        {isCollapsed ? 'SA' : 'SuperPanel'}
+                        {isCollapsed ? 'SA' : 'Quản trị viên'}
                     </Link>
                 </div>
                 <nav className="flex-grow-1 p-2 mt-2 overflow-auto">

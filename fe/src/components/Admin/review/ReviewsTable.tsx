@@ -208,7 +208,12 @@ export default function ReviewsTable({ reviews }: ReviewsTableProps) {
                                 </td>
                                 <td className="px-4 py-4 whitespace-nowrap text-center">
                                     {review.roomId && review.roomId !== '' ? (
-                                        <RoomImageDisplay roomId={review.roomId} roomName={review.roomName} />
+                                        <div className="flex flex-col items-center gap-2">
+                                            <RoomImageDisplay roomId={review.roomId} roomName={review.roomName} />
+                                            <span className="text-xs text-gray-700 font-medium max-w-[120px] truncate" title={review.roomName}>
+                                                {review.roomName !== 'N/A' ? review.roomName : 'Chưa có tên'}
+                                            </span>
+                                        </div>
                                     ) : (
                                         <span className="text-gray-400 italic text-sm">Chưa có thông tin</span>
                                     )}
