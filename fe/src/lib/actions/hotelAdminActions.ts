@@ -48,7 +48,7 @@ export async function createHotelAdminAction(formData: FormData) {
             authProvider: authProvider.trim(),
         };
 
-        const newUser =         await createHotelAdminServer(payload);
+        const newUser = await createHotelAdminServer(payload);
 
         revalidatePath('/super-user-management');
         return { success: true };
@@ -81,7 +81,7 @@ export async function updateHotelAdminAction(formData: FormData) {
         const payload: any = {};
         // Luôn gửi fullName vì là required field
         payload.fullName = fullName.trim();
-        
+
         // Luôn gửi active khi edit (vì form luôn có field active khi edit)
         // Convert string "true"/"false" từ form thành boolean
         if (active !== null && active !== undefined && active !== '') {
@@ -101,13 +101,13 @@ export async function updateHotelAdminAction(formData: FormData) {
         });
 
         const updatedUser = await updateUserServer(userId, payload);
-        
+
         // Log response để kiểm tra
         // QUAN TRỌNG: active nằm trong authInfo.active, không phải ở root level
-        const activeValue = updatedUser.authInfo?.active !== undefined 
-            ? updatedUser.authInfo.active 
+        const activeValue = updatedUser.authInfo?.active !== undefined
+            ? updatedUser.authInfo.active
             : (updatedUser.active !== undefined ? updatedUser.active : undefined);
-        
+
         console.log('[updateHotelAdminAction] Response from updateUserServer:', {
             userId: updatedUser.id,
             email: updatedUser.email,
