@@ -85,7 +85,7 @@ services:
           memory: 1G
         reservations:
           cpus: '1.0'
-          memory: 0.5G
+          memory: 512M
     
     # Optional: Logging configuration
     logging:
