@@ -11,6 +11,7 @@ import {
     getPartnerCustomerSummary,
     getPartnerReviewsSummary,
 } from '@/lib/PartnerAPI/partnerReportsService';
+import LoadingSpinner from '@/components/Admin/common/LoadingSpinner';
 import dynamic from 'next/dynamic';
 import type { ApexOptions } from 'apexcharts';
 
@@ -1477,9 +1478,97 @@ export default function PartnerReportsPage() {
                 } else {
                 }
                 break;
+            case 'reviews':
+                // Xử lý reviews data
+                const reviewsData = reportData as any;
+                const totalReviews = reviewsData?.totalReviews || 0;
+                const averageScore = reviewsData?.averageScore || 0;
+                const scoreDistribution = reviewsData?.scoreDistribution || [];
+                
+                // Kiểm tra nếu không có dữ liệu
+                if (totalReviews === 0 || !scoreDistribution || scoreDistribution.length === 0) {
+                    // Không tạo chartOptions để hiển thị thông báo không có dữ liệu
+                    break;
+                }
+                
+                // Tạo donut chart cho phân bố điểm đánh giá
+                const reviewCounts = scoreDistribution.map((item: any) => item.reviewCount || 0);
+                const reviewLabels = scoreDistribution.map((item: any) => {
+                    const bucket = item.scoreBucket || '';
+                    if (bucket === '9-10') return 'Xuất sắc (9-10)';
+                    if (bucket === '7-8') return 'Tốt (7-8)';
+                    if (bucket === '5-6') return 'Trung bình (5-6)';
+                    if (bucket === '3-4') return 'Kém (3-4)';
+                    if (bucket === '1-2') return 'Rất kém (1-2)';
+                    return bucket;
+                });
+                
+                chartOptions = {
+                    chart: { 
+                        type: 'donut',
+                        toolbar: { show: false },
+                    },
+                    labels: reviewLabels,
+                    colors: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#dc2626'],
+                    legend: { 
+                        position: 'bottom',
+                        fontSize: '14px',
+                    },
+                    plotOptions: {
+                        pie: {
+                            donut: {
+                                size: '60%',
+                                labels: {
+                                    show: true,
+                                    total: {
+                                        show: true,
+                                        label: 'Tổng đánh giá',
+                                        fontSize: '16px',
+                                        fontWeight: 600,
+                                        formatter: () => totalReviews.toString(),
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    tooltip: {
+                        y: {
+                            formatter: (value: number) => {
+                                const percentage = totalReviews > 0 ? ((value / totalReviews) * 100).toFixed(1) : '0';
+                                return `${value} đánh giá (${percentage}%)`;
+                            },
+                        },
+                    },
+                    dataLabels: {
+                        enabled: true,
+                        formatter: (val: number) => {
+                            const percentage = totalReviews > 0 ? ((val / totalReviews) * 100).toFixed(1) : '0';
+                            return percentage + '%';
+                        },
+                    },
+                };
+                
+                chartSeries = reviewCounts;
+                break;
         }
 
         if (!chartOptions) {
+            // Kiểm tra nếu là reviews và không có dữ liệu
+            if (activeTab === 'reviews') {
+                const reviewsData = reportData as any;
+                const totalReviews = reviewsData?.totalReviews || 0;
+                
+                if (totalReviews === 0) {
+                    return (
+                        <div className="alert alert-info text-center py-4">
+                            <i className="bi bi-info-circle me-2"></i>
+                            <strong>Không có dữ liệu đánh giá trong khoảng thời gian đã chọn.</strong>
+                            <p className="mb-0 mt-2 text-sm">Vui lòng chọn khoảng thời gian khác hoặc kiểm tra lại dữ liệu.</p>
+                        </div>
+                    );
+                }
+            }
+            
             console.warn('[PartnerReportsPage] renderChart: No chartOptions created', {
                 activeTab,
                 reportDataKeys: reportData ? Object.keys(reportData) : [],
@@ -1545,6 +1634,8 @@ export default function PartnerReportsPage() {
             ? 'Biểu đồ hiệu suất phòng'
             : activeTab === 'customers'
             ? 'Biểu đồ khách hàng'
+            : activeTab === 'reviews'
+            ? 'Biểu đồ phân bố đánh giá'
             : 'Biểu đồ';
 
         return (
@@ -1564,13 +1655,7 @@ export default function PartnerReportsPage() {
 
     const renderReportContent = () => {
         if (isLoading) {
-            return (
-                <div className="text-center p-5">
-                    <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Đang tải...</span>
-                    </div>
-                </div>
-            );
+            return <LoadingSpinner message="Đang tải dữ liệu báo cáo..." />;
         }
 
         if (error) {

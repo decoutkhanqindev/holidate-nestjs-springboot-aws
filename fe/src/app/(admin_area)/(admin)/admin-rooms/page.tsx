@@ -10,6 +10,7 @@ import { getRoomsByHotelId, type PaginatedRoomsResult } from "@/lib/AdminAPI/roo
 import { getProvinces, getCities, type LocationOption } from "@/lib/AdminAPI/locationService";
 import RoomsTable from "@/components/Admin/rooms/RoomsTable";
 import { useAuth } from "@/components/Admin/AuthContext_Admin/AuthContextAdmin";
+import LoadingSpinner from "@/components/Admin/common/LoadingSpinner";
 
 // Component PageHeader để code gọn hơn
 function PageHeader({ title, children }: { title: React.ReactNode, children?: React.ReactNode }) {
@@ -320,7 +321,7 @@ export default function ManageRoomsPage() {
                 {selectedHotelId && (
                     <>
                         {isLoadingRooms ? (
-                            <div className="text-center py-8 text-gray-500">Đang tải danh sách phòng...</div>
+                            <LoadingSpinner message="Đang tải danh sách phòng..." />
                         ) : roomsData ? (
                             <RoomsTable
                                 rooms={roomsData.rooms}

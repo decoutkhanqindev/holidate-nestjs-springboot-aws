@@ -10,6 +10,7 @@ import type { HotelAdmin } from "@/types";
 import HotelAdminFormModal from "@/components/AdminSuper/ManageAdmin/HotelAdminFormModal";
 import { toast } from "react-toastify";
 import { FaSearch } from "react-icons/fa";
+import LoadingSpinner from "@/components/AdminSuper/common/LoadingSpinner";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -290,7 +291,7 @@ export default function SuperAdminsPage() {
             </div>
 
             {isLoading ? (
-                <p>Đang tải danh sách đối tác...</p>
+                <LoadingSpinner message="Đang tải danh sách đối tác..." />
             ) : (
                 <>
                     <HotelAdminsTable

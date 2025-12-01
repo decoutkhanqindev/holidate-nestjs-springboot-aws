@@ -12,6 +12,7 @@ import {
     type RescheduleRule
 } from "@/lib/AdminAPI/policyService";
 import { FaFileContract, FaTimesCircle, FaCalendarAlt, FaExclamationTriangle, FaCheckCircle, FaSearch, FaCopy } from "react-icons/fa";
+import LoadingSpinner from "@/components/AdminSuper/common/LoadingSpinner";
 
 export default function SuperPolicyPage() {
     const [cancellationPolicies, setCancellationPolicies] = useState<CancellationPolicy[]>([]);
@@ -21,7 +22,7 @@ export default function SuperPolicyPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'cancellation-policies' | 'cancellation-rules' | 'reschedule-policies' | 'reschedule-rules'>('cancellation-policies');
-    
+
     // Search states
     const [searchTerm, setSearchTerm] = useState<string>('');
 
@@ -191,12 +192,7 @@ export default function SuperPolicyPage() {
             </div>
 
             {isLoading ? (
-                <div className="text-center py-5">
-                    <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
-                        <span className="visually-hidden">Đang tải...</span>
-                    </div>
-                    <p className="mt-3 text-muted">Đang tải dữ liệu chính sách...</p>
-                </div>
+                <LoadingSpinner message="Đang tải dữ liệu chính sách..." />
             ) : error ? (
                 <div className="alert alert-danger border-0 shadow-sm" role="alert">
                     <strong>Lỗi:</strong> {error}
@@ -338,56 +334,73 @@ export default function SuperPolicyPage() {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {[...filteredCancellationRules].sort((a, b) => b.daysBeforeCheckIn - a.daysBeforeCheckIn).map((rule, index) => (
-                                                        <tr key={rule.id} className="border-bottom">
-                                                            <td className="align-middle" style={{ padding: '12px 8px', width: '1cm', textAlign: 'left' }}>
-                                                                <span className="text-muted fw-medium" style={{ fontSize: '0.9rem' }}>
-                                                                    {index + 1}
-                                                                </span>
-                                                            </td>
-                                                            <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
-                                                                <div className="fw-semibold text-dark" style={{ fontSize: '0.9rem', wordBreak: 'break-word' }}>
-                                                                    {rule.name || `Quy tắc ${rule.daysBeforeCheckIn} ngày - ${rule.penaltyPercentage}%`}
-                                                                </div>
-                                                            </td>
-                                                            <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
-                                                                <div className="d-flex align-items-center gap-2">
-                                                                    <code className="text-primary small" style={{ fontSize: '0.75rem', fontFamily: 'monospace', wordBreak: 'break-all' }}>
-                                                                        {rule.id}
-                                                                    </code>
-                                                                    <button
-                                                                        className="btn btn-sm p-0 border-0 text-muted"
-                                                                        style={{ fontSize: '0.75rem' }}
-                                                                        onClick={() => copyToClipboard(rule.id)}
-                                                                        title="Copy ID"
-                                                                    >
-                                                                        <FaCopy />
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                            <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
-                                                                <span className="badge bg-primary" style={{ fontSize: '0.9rem' }}>
-                                                                    {rule.daysBeforeCheckIn}+ ngày
-                                                                </span>
-                                                            </td>
-                                                            <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
-                                                                <span className={`fw-semibold ${rule.penaltyPercentage === 0 ? 'text-success' : rule.penaltyPercentage === 100 ? 'text-danger' : 'text-warning'}`} style={{ fontSize: '0.9rem' }}>
-                                                                    {rule.penaltyPercentage}%
-                                                                </span>
-                                                            </td>
-                                                            <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
-                                                                <div className="text-dark" style={{ fontSize: '0.9rem' }}>
-                                                                    {rule.penaltyPercentage === 0 ? (
-                                                                        <span className="text-success"><FaCheckCircle /> Miễn phí hủy</span>
-                                                                    ) : rule.penaltyPercentage === 100 ? (
-                                                                        <span className="text-danger"><FaTimesCircle /> Không hoàn tiền</span>
-                                                                    ) : (
-                                                                        <span className="text-warning"><FaExclamationTriangle /> Phí hủy {rule.penaltyPercentage}%</span>
-                                                                    )}
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
+                                                    {[...filteredCancellationRules].sort((a, b) => b.daysBeforeCheckIn - a.daysBeforeCheckIn).map((rule, index) => {
+                                                        // Tìm policy chứa rule này
+                                                        const policy = cancellationPolicies.find(p =>
+                                                            p.rules?.some(r => r.id === rule.id)
+                                                        );
+
+                                                        return (
+                                                            <tr key={rule.id} className="border-bottom">
+                                                                <td className="align-middle" style={{ padding: '12px 8px', width: '1cm', textAlign: 'left' }}>
+                                                                    <span className="text-muted fw-medium" style={{ fontSize: '0.9rem' }}>
+                                                                        {index + 1}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
+                                                                    <div className="d-flex flex-column gap-1">
+                                                                        {policy && (
+                                                                            <div className="fw-semibold text-primary small">{policy.name}</div>
+                                                                        )}
+                                                                        <div className="fw-semibold text-dark" style={{ fontSize: '0.9rem', wordBreak: 'break-word' }}>
+                                                                            {rule.name || `Quy tắc ${rule.daysBeforeCheckIn} ngày - ${rule.penaltyPercentage}%`}
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
+                                                                    <div className="d-flex align-items-center gap-2">
+                                                                        <code className="text-primary small" style={{ fontSize: '0.75rem', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                                                                            {rule.id}
+                                                                        </code>
+                                                                        <button
+                                                                            className="btn btn-sm p-0 border-0 text-muted"
+                                                                            style={{ fontSize: '0.75rem' }}
+                                                                            onClick={() => copyToClipboard(rule.id)}
+                                                                            title="Copy ID"
+                                                                        >
+                                                                            <FaCopy />
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
+                                                                    <div className="d-flex flex-column gap-1">
+                                                                        {policy && (
+                                                                            <div className="fw-semibold text-primary small mb-1">{policy.name}</div>
+                                                                        )}
+                                                                        <span className="badge bg-primary" style={{ fontSize: '0.9rem', width: 'fit-content' }}>
+                                                                            {rule.daysBeforeCheckIn}+ ngày
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
+                                                                    <span className={`fw-semibold ${rule.penaltyPercentage === 0 ? 'text-success' : rule.penaltyPercentage === 100 ? 'text-danger' : 'text-warning'}`} style={{ fontSize: '0.9rem' }}>
+                                                                        {rule.penaltyPercentage}%
+                                                                    </span>
+                                                                </td>
+                                                                <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
+                                                                    <div className="text-dark" style={{ fontSize: '0.9rem' }}>
+                                                                        {rule.penaltyPercentage === 0 ? (
+                                                                            <span className="text-success"><FaCheckCircle /> Miễn phí hủy</span>
+                                                                        ) : rule.penaltyPercentage === 100 ? (
+                                                                            <span className="text-danger"><FaTimesCircle /> Không hoàn tiền</span>
+                                                                        ) : (
+                                                                            <span className="text-warning"><FaExclamationTriangle /> Phí hủy {rule.penaltyPercentage}%</span>
+                                                                        )}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
                                                 </tbody>
                                             </table>
                                         </div>
@@ -493,56 +506,73 @@ export default function SuperPolicyPage() {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {[...filteredRescheduleRules].sort((a, b) => b.daysBeforeCheckIn - a.daysBeforeCheckIn).map((rule, index) => (
-                                                        <tr key={rule.id} className="border-bottom">
-                                                            <td className="align-middle" style={{ padding: '12px 8px', width: '1cm', textAlign: 'left' }}>
-                                                                <span className="text-muted fw-medium" style={{ fontSize: '0.9rem' }}>
-                                                                    {index + 1}
-                                                                </span>
-                                                            </td>
-                                                            <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
-                                                                <div className="fw-semibold text-dark" style={{ fontSize: '0.9rem', wordBreak: 'break-word' }}>
-                                                                    {rule.name || `Quy tắc ${rule.daysBeforeCheckIn} ngày - ${rule.feePercentage}%`}
-                                                                </div>
-                                                            </td>
-                                                            <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
-                                                                <div className="d-flex align-items-center gap-2">
-                                                                    <code className="text-primary small" style={{ fontSize: '0.75rem', fontFamily: 'monospace', wordBreak: 'break-all' }}>
-                                                                        {rule.id}
-                                                                    </code>
-                                                                    <button
-                                                                        className="btn btn-sm p-0 border-0 text-muted"
-                                                                        style={{ fontSize: '0.75rem' }}
-                                                                        onClick={() => copyToClipboard(rule.id)}
-                                                                        title="Copy ID"
-                                                                    >
-                                                                        <FaCopy />
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                            <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
-                                                                <span className="badge bg-info" style={{ fontSize: '0.9rem' }}>
-                                                                    {rule.daysBeforeCheckIn}+ ngày
-                                                                </span>
-                                                            </td>
-                                                            <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
-                                                                <span className={`fw-semibold ${rule.feePercentage === 0 ? 'text-success' : rule.feePercentage === 100 ? 'text-danger' : 'text-warning'}`} style={{ fontSize: '0.9rem' }}>
-                                                                    {rule.feePercentage}%
-                                                                </span>
-                                                            </td>
-                                                            <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
-                                                                <div className="text-dark" style={{ fontSize: '0.9rem' }}>
-                                                                    {rule.feePercentage === 0 ? (
-                                                                        <span className="text-success"><FaCheckCircle /> Miễn phí đổi lịch</span>
-                                                                    ) : rule.feePercentage === 100 ? (
-                                                                        <span className="text-danger"><FaTimesCircle /> Không cho phép đổi lịch</span>
-                                                                    ) : (
-                                                                        <span className="text-warning"><FaExclamationTriangle /> Phí đổi lịch {rule.feePercentage}%</span>
-                                                                    )}
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
+                                                    {[...filteredRescheduleRules].sort((a, b) => b.daysBeforeCheckIn - a.daysBeforeCheckIn).map((rule, index) => {
+                                                        // Tìm policy chứa rule này
+                                                        const policy = reschedulePolicies.find(p =>
+                                                            p.rules?.some(r => r.id === rule.id)
+                                                        );
+
+                                                        return (
+                                                            <tr key={rule.id} className="border-bottom">
+                                                                <td className="align-middle" style={{ padding: '12px 8px', width: '1cm', textAlign: 'left' }}>
+                                                                    <span className="text-muted fw-medium" style={{ fontSize: '0.9rem' }}>
+                                                                        {index + 1}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
+                                                                    <div className="d-flex flex-column gap-1">
+                                                                        {policy && (
+                                                                            <div className="fw-semibold text-info small">{policy.name}</div>
+                                                                        )}
+                                                                        <div className="fw-semibold text-dark" style={{ fontSize: '0.9rem', wordBreak: 'break-word' }}>
+                                                                            {rule.name || `Quy tắc ${rule.daysBeforeCheckIn} ngày - ${rule.feePercentage}%`}
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
+                                                                    <div className="d-flex align-items-center gap-2">
+                                                                        <code className="text-primary small" style={{ fontSize: '0.75rem', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                                                                            {rule.id}
+                                                                        </code>
+                                                                        <button
+                                                                            className="btn btn-sm p-0 border-0 text-muted"
+                                                                            style={{ fontSize: '0.75rem' }}
+                                                                            onClick={() => copyToClipboard(rule.id)}
+                                                                            title="Copy ID"
+                                                                        >
+                                                                            <FaCopy />
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
+                                                                    <div className="d-flex flex-column gap-1">
+                                                                        {policy && (
+                                                                            <div className="fw-semibold text-info small mb-1">{policy.name}</div>
+                                                                        )}
+                                                                        <span className="badge bg-info" style={{ fontSize: '0.9rem', width: 'fit-content' }}>
+                                                                            {rule.daysBeforeCheckIn}+ ngày
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
+                                                                    <span className={`fw-semibold ${rule.feePercentage === 0 ? 'text-success' : rule.feePercentage === 100 ? 'text-danger' : 'text-warning'}`} style={{ fontSize: '0.9rem' }}>
+                                                                        {rule.feePercentage}%
+                                                                    </span>
+                                                                </td>
+                                                                <td className="align-middle" style={{ padding: '12px 8px', width: '3cm', textAlign: 'left' }}>
+                                                                    <div className="text-dark" style={{ fontSize: '0.9rem' }}>
+                                                                        {rule.feePercentage === 0 ? (
+                                                                            <span className="text-success"><FaCheckCircle /> Miễn phí đổi lịch</span>
+                                                                        ) : rule.feePercentage === 100 ? (
+                                                                            <span className="text-danger"><FaTimesCircle /> Không cho phép đổi lịch</span>
+                                                                        ) : (
+                                                                            <span className="text-warning"><FaExclamationTriangle /> Phí đổi lịch {rule.feePercentage}%</span>
+                                                                        )}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
                                                 </tbody>
                                             </table>
                                         </div>

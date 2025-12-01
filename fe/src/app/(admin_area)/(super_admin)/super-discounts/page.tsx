@@ -9,6 +9,7 @@ import type { SuperDiscount } from "@/types";
 import DiscountFormModal from "@/components/AdminSuper/discounts/DiscountFormModal";
 import { toast } from "react-toastify";
 import { FunnelIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import LoadingSpinner from "@/components/AdminSuper/common/LoadingSpinner";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -621,12 +622,7 @@ export default function SuperDiscountsPage() {
             </div>
 
             {isLoading ? (
-                <div className="text-center py-5">
-                    <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Đang tải...</span>
-                    </div>
-                    <p className="mt-2 text-muted">Đang tải danh sách mã giảm giá...</p>
-                </div>
+                <LoadingSpinner message="Đang tải danh sách mã giảm giá..." />
             ) : (
                 <>
                     <DiscountsTable
