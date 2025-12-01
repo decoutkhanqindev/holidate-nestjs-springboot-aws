@@ -4,7 +4,7 @@ services:
   backend:
     build:
       context: ..
-      dockerfile: docker/Dockerfile
+      dockerfile: deploy/Dockerfile
     image: holidate-backend:latest
     container_name: holidate-backend
     restart: always
