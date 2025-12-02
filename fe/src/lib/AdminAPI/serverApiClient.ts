@@ -1,8 +1,7 @@
 // lib/AdminAPI/serverApiClient.ts
 // Helper để tạo API client cho server actions (lấy token từ cookies)
 import axios, { AxiosInstance } from 'axios';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+import { API_BASE_URL } from '@/config/api.config';
 
 export interface ApiResponse<T> {
     statusCode: number;
@@ -45,6 +44,7 @@ export async function createServerApiClient(): Promise<AxiosInstance> {
     const instance = axios.create({
         baseURL: API_BASE_URL,
         timeout: 65000,
+        withCredentials: true, // QUAN TRỌNG: Cho phép gửi cookies (cần thiết cho CORS và OAuth)
         // Set default Content-Type cho JSON requests
         // Axios sẽ tự động set boundary khi dùng FormData
         headers: {

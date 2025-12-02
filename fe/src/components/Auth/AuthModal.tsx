@@ -12,7 +12,7 @@ import {
     sendPasswordResetOtp,
     resetPassword
 } from '@/service/authService';
-import { API_BASE_URL } from '@/service/api';
+import { API_BASE_URL } from '@/config/api.config';
 
 const EyeIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-eye-fill" viewBox="0 0 16 16">
@@ -297,7 +297,7 @@ export default function AuthModal() {
                         5. Sau đó apiClient sẽ tự động thêm Authorization header từ localStorage
                         
                         Flow chi tiết:
-                        - Click button → redirect đến: http://localhost:8080/oauth2/authorization/google
+                        - Click button → redirect đến: ${API_BASE_URL}/oauth2/authorization/google
                         - Backend (CustomOAuth2AuthenticationSuccessHandler) tạo token và lưu vào cookie
                         - Redirect về frontend URL (thường là trang chủ hoặc URL đã lưu trong oauthReturnUrl)
                         - AuthContext.tsx → useEffect → initializeAuth() → getMyProfile() → lưu token vào localStorage

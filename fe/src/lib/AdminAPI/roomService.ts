@@ -2,6 +2,7 @@
 import type { Room } from "@/types";
 import apiClient, { ApiResponse } from "@/service/apiClient";
 import { createServerApiClient } from "./serverApiClient";
+import { API_BASE_URL } from "@/config/api.config";
 
 const baseURL = '/accommodation/rooms';
 
@@ -473,7 +474,7 @@ export const createRoomServer = async (payload: CreateRoomPayload): Promise<Room
 
         // Sử dụng axios.post() thay vì request() để đảm bảo method POST
         // Axios sẽ tự động xử lý FormData và set Content-Type với boundary
-        const fullUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}${url}`;
+        const fullUrl = `${API_BASE_URL}${url}`;
         console.log("[roomService] About to call serverClient.post() with:");
         console.log("  - Method: POST (explicit)");
         console.log("  - FormData entries count:", Array.from(formData.entries()).length);
