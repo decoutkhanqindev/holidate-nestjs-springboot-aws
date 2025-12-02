@@ -2,7 +2,9 @@ package com.webapp.holidate.utils;
 
 import java.io.IOException;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,11 +42,13 @@ public class ResponseUtil {
   }
 
   public static void handleAuthCookiesResponse(HttpServletResponse response, String name, String token, int maxAge) {
-    Cookie cookie = new Cookie(name, token);
-    cookie.setHttpOnly(true);
-    cookie.setSecure(true); // set to true in production with HTTPS
-    cookie.setPath("/");
-    cookie.setMaxAge(maxAge);
-    response.addCookie(cookie);
+    ResponseCookie cookie = ResponseCookie.from(name, token)
+            .httpOnly(true)
+            .secure(true)
+            .path("/")
+            .maxAge(maxAge)
+            .sameSite("None")
+            .build();
+    response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
   }
 }
