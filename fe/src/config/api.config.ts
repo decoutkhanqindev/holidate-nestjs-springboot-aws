@@ -60,7 +60,6 @@ export function markProductionUp(): void {
 }
 
 /**
- * Reset fallback flag và force dùng Production API
  * Dùng khi muốn force reset về production sau khi đã fallback sang local
  */
 export function resetToProductionApi(): void {
@@ -74,8 +73,7 @@ export function resetToProductionApi(): void {
 }
 
 function getApiBaseUrl(): string {
-    // QUAN TRỌNG: Backend đã deploy lên host, luôn ưu tiên Production API
-    // Chỉ dùng env var nếu nó trỏ đến production hoặc nếu cần override cho testing
+
 
     // Nếu có environment variable và nó trỏ đến production, dùng nó
     if (process.env.NEXT_PUBLIC_API_URL) {
@@ -115,11 +113,7 @@ function getApiBaseUrl(): string {
 
 export const API_BASE_URL = getApiBaseUrl();
 
-/**
- * ============================================
- * HELPER FUNCTIONS
- * ============================================
- */
+
 export const isProduction = process.env.NODE_ENV === 'production';
 export const isDevelopment = process.env.NODE_ENV === 'development';
 
