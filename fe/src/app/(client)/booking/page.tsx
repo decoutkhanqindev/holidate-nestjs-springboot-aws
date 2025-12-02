@@ -58,15 +58,16 @@ function BookingComponent() {
     }, [isLoggedIn, bookingIntent, closeModal]);
 
     useEffect(() => {
-        if (!isAuthLoading && roomId) {
+        if (!isAuthLoading && roomId && roomId.trim() !== '' && roomId !== 'undefined' && roomId !== 'null') {
             setIsLoading(true);
             hotelService.getRoomById(roomId)
                 .then(setRoomDetails)
                 .catch(err => {
+                    console.error('[BookingPage] Lỗi khi load room details:', err);
                     setGeneralError("Không thể tải được thông tin chi tiết của phòng.");
                 })
                 .finally(() => setIsLoading(false));
-        } else if (!roomId) {
+        } else if (!roomId || roomId === 'undefined' || roomId === 'null') {
             setIsLoading(false);
             setGeneralError("Thiếu ID phòng để tiếp tục.");
         }

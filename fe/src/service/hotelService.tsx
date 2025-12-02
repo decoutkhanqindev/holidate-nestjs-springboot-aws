@@ -237,16 +237,25 @@ class HotelService {
      * Lấy thông tin chi tiết 1 phòng theo ID
      */
     async getRoomById(roomId: string): Promise<RoomDetailResponse> {
+        // Validate roomId
+        if (!roomId || roomId.trim() === '' || roomId === 'undefined' || roomId === 'null') {
+            console.error('[HotelService] ❌ roomId không hợp lệ:', roomId);
+            throw new Error('Room ID không hợp lệ');
+        }
+
         try {
-//  
+            const url = `${this.roomsURL}/${roomId}`;
+            console.log('[HotelService] Gọi API getRoomById:', url);
 
-            const response = await this.api.get<ApiResponse<RoomDetailResponse>>(`${this.roomsURL}/${roomId}`);
-
-//  
+            const response = await this.api.get<ApiResponse<RoomDetailResponse>>(url);
 
             return response.data.data;
         } catch (error: any) {
-//   
+            console.error('[HotelService] ❌ Lỗi khi gọi getRoomById:', {
+                roomId,
+                error: error.message,
+                response: error.response?.data
+            });
             throw new Error('Không thể tải thông tin chi tiết phòng');
         }
     }

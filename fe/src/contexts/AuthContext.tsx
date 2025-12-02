@@ -193,14 +193,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                         setIsLoggedIn(true);
 
                         // Load avatarUrl từ profile (async, không block)
-                        getUserProfile(userIdFromStorage).then(profile => {
-                            setUser(prevUser => ({
-                                ...prevUser!,
-                                avatarUrl: profile.avatarUrl,
-                            }));
-                        }).catch(() => {
-                            // Silent fail - avatar sẽ load sau
-                        });
+                        if (userIdFromStorage && userIdFromStorage.trim() !== '' && userIdFromStorage !== 'undefined' && userIdFromStorage !== 'null') {
+                            getUserProfile(userIdFromStorage).then(profile => {
+                                setUser(prevUser => ({
+                                    ...prevUser!,
+                                    avatarUrl: profile.avatarUrl,
+                                }));
+                            }).catch(() => {
+                                // Silent fail - avatar sẽ load sau
+                            });
+                        }
 
                         setIsLoading(false);
                         return; // QUAN TRỌNG: Return ngay khi đã restore session từ localStorage
@@ -362,16 +364,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                         }
 
                         // Load avatarUrl từ profile
-                        setTimeout(() => {
-                            getUserProfile(meData.id).then(profile => {
-                                setUser(prevUser => ({
-                                    ...prevUser!,
-                                    avatarUrl: profile.avatarUrl,
-                                }));
-                            }).catch(() => {
-                                // Silent fail - avatar sẽ load sau
-                            });
-                        }, 50);
+                        if (meData.id && meData.id.trim() !== '' && meData.id !== 'undefined' && meData.id !== 'null') {
+                            setTimeout(() => {
+                                getUserProfile(meData.id).then(profile => {
+                                    setUser(prevUser => ({
+                                        ...prevUser!,
+                                        avatarUrl: profile.avatarUrl,
+                                    }));
+                                }).catch(() => {
+                                    // Silent fail - avatar sẽ load sau
+                                });
+                            }, 50);
+                        }
 
                         setIsLoading(false);
                         return;

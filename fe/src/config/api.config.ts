@@ -1,13 +1,4 @@
-// config/api.config.ts
-// File cấu hình tập trung cho API URL
-// Cho phép dễ dàng chuyển đổi giữa môi trường Production và Local
-// Có cơ chế tự động fallback: nếu production down, tự chuyển sang local
 
-/**
- * ============================================
- * ĐỊNH NGHĨA CÁC URL API
- * ============================================
- */
 export const API_URLS = {
     /** Backend Production - đã deploy lên host */
     PRODUCTION: 'https://api.holidate.site',
@@ -64,33 +55,62 @@ export function markProductionUp(): void {
     if (typeof window !== 'undefined') {
         localStorage.removeItem(FALLBACK_STORAGE_KEY);
         localStorage.removeItem(FALLBACK_TIMESTAMP_KEY);
+        console.log('[API Config] Đã reset fallback flag, quay lại dùng Production API');
+    }
+}
+
+/**
+ * Reset fallback flag và force dùng Production API
+ * Dùng khi muốn force reset về production sau khi đã fallback sang local
+ */
+export function resetToProductionApi(): void {
+    if (typeof window !== 'undefined') {
+        localStorage.removeItem(FALLBACK_STORAGE_KEY);
+        localStorage.removeItem(FALLBACK_TIMESTAMP_KEY);
+        console.log('[API Config]  Đã force reset về Production API:', API_URLS.PRODUCTION);
+        // Reload page để áp dụng thay đổi
+        window.location.reload();
     }
 }
 
 function getApiBaseUrl(): string {
-    // Nếu có environment variable, dùng giá trị đó (ưu tiên cao nhất)
+    // QUAN TRỌNG: Backend đã deploy lên host, luôn ưu tiên Production API
+    // Chỉ dùng env var nếu nó trỏ đến production hoặc nếu cần override cho testing
+
+    // Nếu có environment variable và nó trỏ đến production, dùng nó
     if (process.env.NEXT_PUBLIC_API_URL) {
-        const envUrl = process.env.NEXT_PUBLIC_API_URL;
-
-        // Nếu env var là production nhưng production đang down, fallback sang local
-        if (envUrl === API_URLS.PRODUCTION && isProductionDown()) {
-            return API_URLS.LOCAL;
+        const envUrl = process.env.NEXT_PUBLIC_API_URL.trim();
+        // Nếu env var là production URL, dùng nó
+        if (envUrl === API_URLS.PRODUCTION) {
+            if (typeof window !== 'undefined') {
+                console.log('[API Config]  Sử dụng Production API từ env var:', envUrl);
+            }
+            return envUrl;
         }
-
+        // Nếu env var là local và đang ở production mode, cảnh báo
+        if (envUrl === API_URLS.LOCAL && process.env.NODE_ENV === 'production') {
+            console.warn('[API Config] WARNING: Đang ở production mode nhưng env var trỏ đến local. Dùng Production API thay vì local.');
+            return API_URLS.PRODUCTION;
+        }
+        // Trong development, cho phép dùng local nếu env var chỉ định
+        if (typeof window !== 'undefined') {
+            console.log('[API Config] Sử dụng API URL từ env var:', envUrl);
+        }
         return envUrl;
     }
 
-    // Nếu không có env var, chọn theo NODE_ENV
-    if (process.env.NODE_ENV === 'production') {
-        // Nếu production đang down và đang ở development mode, fallback sang local
-        if (isProductionDown() && typeof window !== 'undefined') {
-            return API_URLS.LOCAL;
+    // Mặc định LUÔN dùng Production API (https://api.holidate.site)
+    // Reset fallback flag cũ nếu có để đảm bảo luôn thử production trước
+    if (typeof window !== 'undefined') {
+        console.log('[API Config]  Mặc định dùng Production API:', API_URLS.PRODUCTION);
+        const fallbackFlag = localStorage.getItem(FALLBACK_STORAGE_KEY);
+        if (fallbackFlag === 'true') {
+            console.warn('[API Config] Phát hiện fallback flag cũ trong localStorage. Đang reset để dùng Production API...');
+            localStorage.removeItem(FALLBACK_STORAGE_KEY);
+            localStorage.removeItem(FALLBACK_TIMESTAMP_KEY);
         }
-        return API_URLS.PRODUCTION;
     }
-
-    // Development mode mặc định dùng local
-    return API_URLS.LOCAL;
+    return API_URLS.PRODUCTION;
 }
 
 export const API_BASE_URL = getApiBaseUrl();
