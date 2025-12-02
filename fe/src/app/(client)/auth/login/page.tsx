@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { API_BASE_URL } from '@/config/api.config';
 
 export default function ClientLoginPage() {
     const router = useRouter();
@@ -56,7 +57,7 @@ export default function ClientLoginPage() {
         sessionStorage.removeItem('lastLogoutTime');
         
         // Redirect đến OAuth2 endpoint của backend
-        window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+        window.location.href = `${API_BASE_URL}/oauth2/authorization/google`;
     };
 
     return (

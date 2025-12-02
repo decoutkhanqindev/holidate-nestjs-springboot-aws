@@ -1,5 +1,6 @@
 // lib/AdminAPI/locationService.ts
 import apiClient, { ApiResponse } from "@/service/apiClient";
+import { API_BASE_URL } from "@/config/api.config";
 
 export interface LocationOption {
     id: string;
@@ -75,7 +76,6 @@ export const getCities = async (provinceId?: string, name?: string): Promise<Loc
 export const getCitiesServer = async (provinceId?: string, name?: string): Promise<LocationOption[]> => {
     try {
         const axios = (await import('axios')).default;
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
         
         let url = '/location/cities?';
         const params: string[] = [];
@@ -97,6 +97,7 @@ export const getCitiesServer = async (provinceId?: string, name?: string): Promi
         
         const response = await axios.get<ApiResponse<LocationOption[]>>(fullUrl, {
             timeout: 10000, // 10 seconds timeout
+            withCredentials: true, // QUAN TRỌNG: Cho phép gửi cookies (cần thiết cho CORS)
             headers: {
                 'Content-Type': 'application/json',
             },

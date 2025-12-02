@@ -1,6 +1,6 @@
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-import axios from 'axios';
+//const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';import axios from 'axios';
+import { API_BASE_URL } from '@/config/api.config';
 import { hotelService, HotelResponse } from './hotelService';
 export type LocationType =
     | 'COUNTRY'
@@ -24,55 +24,105 @@ const getProvinces = async (name?: string): Promise<any[]> => {
     let url = `${API_BASE_URL}/location/provinces?`;
     if (name) url += `name=${encodeURIComponent(name)}&`;
     try {
-        const response = await fetch(url.replace(/&$/, ''), { credentials: 'include' });
-        if (!response.ok) return [];
+        const response = await fetch(url.replace(/&$/, ''), {
+            credentials: 'include',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        if (!response.ok) {
+            return [];
+        }
         const json = await response.json();
         return json.data || [];
-    } catch (error) { console.error("getProvinces error:", error); return []; }
+    } catch (error) {
+        return [];
+    }
 };
 
 const getCities = async (name?: string): Promise<any[]> => {
     let url = `${API_BASE_URL}/location/cities?`;
     if (name) url += `name=${encodeURIComponent(name)}&`;
     try {
-        const response = await fetch(url.replace(/&$/, ''), { credentials: 'include' });
-        if (!response.ok) return [];
+        const response = await fetch(url.replace(/&$/, ''), {
+            credentials: 'include',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        if (!response.ok) {
+            return [];
+        }
         const json = await response.json();
         return json.data || [];
-    } catch (error) { console.error("getCities error:", error); return []; }
+    } catch (error) {
+        return [];
+    }
 };
 
 const getDistricts = async (name?: string): Promise<any[]> => {
     let url = `${API_BASE_URL}/location/districts?`;
     if (name) url += `name=${encodeURIComponent(name)}&`;
     try {
-        const response = await fetch(url.replace(/&$/, ''), { credentials: 'include' });
-        if (!response.ok) return [];
+        const response = await fetch(url.replace(/&$/, ''), {
+            credentials: 'include',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        if (!response.ok) {
+            return [];
+        }
         const json = await response.json();
         return json.data || [];
-    } catch (error) { console.error("getDistricts error:", error); return []; }
+    } catch (error) {
+        return [];
+    }
 };
 
 const getHotels = async (name?: string): Promise<any[]> => {
     let url = `${API_BASE_URL}/accommodation/hotels`;
     if (name) url += `?name=${encodeURIComponent(name)}`;
     try {
-        const response = await fetch(url, { credentials: 'include' });
-        if (!response.ok) return [];
+        const response = await fetch(url, {
+            credentials: 'include',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        if (!response.ok) {
+            return [];
+        }
         const json = await response.json();
         // API phân trang trả về data.content, API thường trả về data
         return json.data?.content || json.data || [];
-    } catch (error) { console.error("getHotels error:", error); return []; }
+    } catch (error) {
+        return [];
+    }
 };
 
 const getHotelsByCity = async (cityName: string): Promise<any[]> => {
     const url = `${API_BASE_URL}/accommodation/hotels?city=${encodeURIComponent(cityName)}`;
     try {
-        const response = await fetch(url, { credentials: 'include' });
-        if (!response.ok) return [];
+        const response = await fetch(url, {
+            credentials: 'include',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        if (!response.ok) {
+            return [];
+        }
         const json = await response.json();
         return json.data?.content || json.data || [];
-    } catch (error) { console.error("getHotelsByCity error:", error); return []; }
+    } catch (error) {
+        return [];
+    }
 };
 
 
