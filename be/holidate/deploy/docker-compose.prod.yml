@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  backend:
+    image: 387056640966.dkr.ecr.ap-southeast-1.amazonaws.com/holidate-backend:v1.0.2
+    container_name: holidate-backend
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      # Spring Profile
+      - SPRING_PROFILES_ACTIVE=prod
+      
+      # Database Configuration
+      - DB_URL=${DB_URL}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      
+      # AWS S3 Configuration
+      - AWS_S3_ACCESS_KEY=${AWS_S3_ACCESS_KEY}
+      - AWS_S3_SECRET_KEY=${AWS_S3_SECRET_KEY}
+      - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME}
+      - AWS_S3_REGION=${AWS_S3_REGION}
+      - AWS_S3_BASE_URL=${AWS_S3_BASE_URL}
+      
+      # Admin User Configuration
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - ADMIN_FULLNAME=${ADMIN_FULLNAME}
+      
+      # JWT Configuration
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_ISSUER=${JWT_ISSUER}
+      - JWT_ACCESS_TOKEN_EXPIRATION_MILLIS=${JWT_ACCESS_TOKEN_EXPIRATION_MILLIS}
+      - JWT_REFRESH_TOKEN_EXPIRATION_MILLIS=${JWT_REFRESH_TOKEN_EXPIRATION_MILLIS}
+      - JWT_TOKEN_COOKIE_NAME=${JWT_TOKEN_COOKIE_NAME}
+      
+      # Mail Configuration
+      - MAIL_HOST=${MAIL_HOST}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      
+      # Google OAuth2 Configuration
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      
+      # Frontend/Backend URL Configuration
+      - FRONTEND_URL=${FRONTEND_URL}
+      - BACKEND_URL=${BACKEND_URL}
+      
+      # OTP Configuration
+      - OTP_EXPIRATION_MILLIS=${OTP_EXPIRATION_MILLIS}
+      - OTP_MAX_ATTEMPTS=${OTP_MAX_ATTEMPTS}
+      - OTP_BLOCK_TIME_MILLIS=${OTP_BLOCK_TIME_MILLIS}
+      
+      # Pricing Configuration
+      - VAT_RATE=${VAT_RATE}
+      - SERVICE_FEE_RATE=${SERVICE_FEE_RATE}
+      - DYNAMIC_PRICING_LOOK_AHEAD_MILLIS=${DYNAMIC_PRICING_LOOK_AHEAD_MILLIS}
+      - WEEKEND_PRICE_MULTIPLIER=${WEEKEND_PRICE_MULTIPLIER}
+      
+      # VNPay Configuration
+      - VNPAY_TMN_CODE=${VNPAY_TMN_CODE}
+      - VNPAY_HASH_SECRET=${VNPAY_HASH_SECRET}
+      - VNPAY_API_URL=${VNPAY_API_URL}
+      - VNPAY_REFUND_URL=${VNPAY_REFUND_URL}
+
+      - SERVER_FORWARD_HEADERS_STRATEGY=native
+      - SERVER_TOMCAT_REMOTEIP_INTERNAL_PROXIES=.*
+      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_REDIRECT_URI=https://api.holidate.site/login/oauth2/code/google
+    
+    # Optional: Add health check
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Optional: Resource limits (adjust based on your EC2 instance)
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '1.0'
+          memory: 512M
+    
+    # Optional: Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
