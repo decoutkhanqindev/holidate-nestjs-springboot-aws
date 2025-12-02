@@ -6,6 +6,7 @@ import type { PaymentTransaction } from "@/types";
 import apiClient, { ApiResponse } from "@/service/apiClient";
 import Pagination from "@/components/Admin/pagination/Pagination";
 import { FaCreditCard, FaSearch } from "react-icons/fa";
+import LoadingSpinner from "@/components/AdminSuper/common/LoadingSpinner";
 
 interface BookingResponse {
     id: string;
@@ -321,10 +322,7 @@ export default function SuperPaymentPage() {
             </div>
 
             {isLoading ? (
-                <div className="text-center py-12">
-                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
-                    <p className="mt-3 text-gray-600">Đang tải danh sách giao dịch...</p>
-                </div>
+                <LoadingSpinner message="Đang tải danh sách giao dịch..." />
             ) : error ? (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 shadow-sm">
                     <strong className="text-red-800">Lỗi:</strong> <span className="text-red-700">{error}</span>

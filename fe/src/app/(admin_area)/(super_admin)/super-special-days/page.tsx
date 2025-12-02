@@ -5,6 +5,7 @@ import { getAllSpecialDays, type SpecialDay } from "@/lib/AdminAPI/specialDaySer
 import { createSpecialDayAction, updateSpecialDayAction, deleteSpecialDayAction } from "@/lib/actions/specialDayActions";
 import { toast } from "react-toastify";
 import { FaCalendarDay, FaPlus, FaEdit, FaTrash, FaSearch, FaCopy, FaTimes } from "react-icons/fa";
+import LoadingSpinner from "@/components/AdminSuper/common/LoadingSpinner";
 
 export default function SuperSpecialDaysPage() {
     const [specialDays, setSpecialDays] = useState<SpecialDay[]>([]);
@@ -241,12 +242,7 @@ export default function SuperSpecialDaysPage() {
 
             {/* Content */}
             {isLoading ? (
-                <div className="text-center py-5">
-                    <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
-                        <span className="visually-hidden">Đang tải...</span>
-                    </div>
-                    <p className="mt-3 text-muted">Đang tải danh sách ngày đặc biệt...</p>
-                </div>
+                <LoadingSpinner message="Đang tải danh sách ngày đặc biệt..." />
             ) : error ? (
                 <div className="alert alert-danger border-0 shadow-sm" role="alert">
                     <strong>Lỗi:</strong> {error}

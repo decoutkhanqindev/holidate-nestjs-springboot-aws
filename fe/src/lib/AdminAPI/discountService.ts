@@ -57,8 +57,23 @@ export interface GetDiscountsParams {
     size?: number;
     code?: string;
     active?: boolean;
-    sortBy?: string;
-    sortDir?: 'ASC' | 'DESC';
+    currentlyValid?: boolean;
+    validFrom?: string; // ISO format: YYYY-MM-DD
+    validTo?: string; // ISO format: YYYY-MM-DD
+    minPercentage?: number;
+    maxPercentage?: number;
+    minBookingPrice?: number;
+    maxBookingPrice?: number;
+    minBookingCount?: number;
+    maxBookingCount?: number;
+    available?: boolean;
+    exhausted?: boolean;
+    minTimesUsed?: number;
+    maxTimesUsed?: number;
+    hotelId?: string;
+    specialDayId?: string;
+    sortBy?: string; // code, percentage, valid-from, valid-to, usage-limit, times-used, min-booking-price, created-at
+    sortDir?: 'asc' | 'desc';
 }
 
 export interface PaginatedDiscountsResult {
@@ -75,10 +90,24 @@ export async function getDiscounts(params: GetDiscountsParams = {}): Promise<Pag
             size = 10,
             code,
             active,
-            sortBy = 'createdAt',
-            sortDir = 'ASC',
+            currentlyValid,
+            validFrom,
+            validTo,
+            minPercentage,
+            maxPercentage,
+            minBookingPrice,
+            maxBookingPrice,
+            minBookingCount,
+            maxBookingCount,
+            available,
+            exhausted,
+            minTimesUsed,
+            maxTimesUsed,
+            hotelId,
+            specialDayId,
+            sortBy = 'created-at',
+            sortDir = 'asc',
         } = params;
-
 
         // Backend sử dụng kebab-case cho query params
         const queryParams: any = {
@@ -88,8 +117,24 @@ export async function getDiscounts(params: GetDiscountsParams = {}): Promise<Pag
             'sort-dir': sortDir,
         };
 
-        if (code) queryParams.code = code;
+        // Thêm các filter parameters
+        if (code && code.trim() !== '') queryParams.code = code.trim();
         if (active !== undefined) queryParams.active = active;
+        if (currentlyValid !== undefined) queryParams['currently-valid'] = currentlyValid;
+        if (validFrom) queryParams['valid-from'] = validFrom;
+        if (validTo) queryParams['valid-to'] = validTo;
+        if (minPercentage !== undefined && minPercentage !== null) queryParams['min-percentage'] = minPercentage;
+        if (maxPercentage !== undefined && maxPercentage !== null) queryParams['max-percentage'] = maxPercentage;
+        if (minBookingPrice !== undefined && minBookingPrice !== null) queryParams['min-booking-price'] = minBookingPrice;
+        if (maxBookingPrice !== undefined && maxBookingPrice !== null) queryParams['max-booking-price'] = maxBookingPrice;
+        if (minBookingCount !== undefined && minBookingCount !== null) queryParams['min-booking-count'] = minBookingCount;
+        if (maxBookingCount !== undefined && maxBookingCount !== null) queryParams['max-booking-count'] = maxBookingCount;
+        if (available !== undefined) queryParams.available = available;
+        if (exhausted !== undefined) queryParams.exhausted = exhausted;
+        if (minTimesUsed !== undefined && minTimesUsed !== null) queryParams['min-times-used'] = minTimesUsed;
+        if (maxTimesUsed !== undefined && maxTimesUsed !== null) queryParams['max-times-used'] = maxTimesUsed;
+        if (hotelId && hotelId.trim() !== '') queryParams['hotel-id'] = hotelId.trim();
+        if (specialDayId && specialDayId.trim() !== '') queryParams['special-day-id'] = specialDayId.trim();
 
         const response = await apiClient.get<ApiResponse<PaginatedDiscountResponse>>(
             baseURL,

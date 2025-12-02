@@ -5,6 +5,7 @@ import "./booking-table.css";
 import apiClient, { ApiResponse } from "@/service/apiClient";
 import Pagination from "@/components/Admin/pagination/Pagination";
 import { FaEye, FaHotel, FaSearch } from "react-icons/fa";
+import LoadingSpinner from "@/components/AdminSuper/common/LoadingSpinner";
 
 interface BookingResponse {
     id: string;
@@ -239,10 +240,7 @@ export default function SuperNewsPage() {
             </div>
 
             {isLoading ? (
-                <div className="text-center py-12">
-                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
-                    <p className="mt-3 text-gray-600">Đang tải danh sách đơn hàng...</p>
-                </div>
+                <LoadingSpinner message="Đang tải danh sách đơn hàng..." />
             ) : error ? (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 shadow-sm">
                     <strong className="text-red-800">Lỗi:</strong> <span className="text-red-700">{error}</span>
@@ -265,25 +263,27 @@ export default function SuperNewsPage() {
                                 maxWidth: '100%'
                             }}
                         >
-                            <table className="border-collapse" style={{
+                            <table style={{
                                 minWidth: '1100px',
                                 width: 'max-content',
                                 tableLayout: 'auto',
-                                margin: 0
+                                margin: 0,
+                                borderCollapse: 'separate',
+                                borderSpacing: 0
                             }}>
                                 <thead>
-                                    <tr className="bg-gradient-to-br from-white to-gray-50 border-b-2 border-gray-300">
-                                        <th className="px-3 py-3 text-left font-bold text-gray-900 whitespace-nowrap" style={{ width: '1cm', minWidth: '1cm' }}>STT</th>
-                                        <th className="px-3 py-3 text-left font-bold text-gray-900 whitespace-nowrap" style={{ width: '3cm', minWidth: '3cm' }}>Mã đơn</th>
-                                        <th className="px-3 py-3 text-left font-bold text-gray-900 whitespace-nowrap" style={{ width: '4cm', minWidth: '4cm' }}>Khách hàng</th>
-                                        <th className="px-3 py-3 text-left font-bold text-gray-900 whitespace-nowrap" style={{ width: '5.5cm', minWidth: '5.5cm' }}>Khách sạn</th>
-                                        <th className="px-3 py-3 text-left font-bold text-gray-900 whitespace-nowrap" style={{ width: '3cm', minWidth: '3cm' }}>Phòng</th>
-                                        <th className="px-3 py-3 text-left font-bold text-gray-900 whitespace-nowrap" style={{ width: '2.5cm', minWidth: '2.5cm', paddingLeft: '0.2cm' }}>Ngày nhận - trả</th>
-                                        <th className="px-3 py-3 text-left font-bold text-gray-900 whitespace-nowrap" style={{ width: '2cm', minWidth: '2cm', paddingLeft: '0.1cm' }}>Số đêm</th>
-                                        <th className="px-3 py-3 text-left font-bold text-gray-900 whitespace-nowrap" style={{ width: '1.8cm', minWidth: '1.8cm', paddingLeft: '0.1cm' }}>Tổng tiền</th>
-                                        <th className="px-3 py-3 text-left font-bold text-gray-900 whitespace-nowrap" style={{ width: '3.5cm', minWidth: '3.5cm', paddingLeft: '0.1cm' }}>Trạng thái</th>
-                                        <th className="px-3 py-3 text-left font-bold text-gray-900 whitespace-nowrap" style={{ width: '1.8cm', minWidth: '1.8cm', paddingLeft: '0.1cm' }}>Ngày tạo</th>
-                                        <th className="px-3 py-3 text-left font-bold text-gray-900 whitespace-nowrap" style={{ width: '1.3cm', minWidth: '1.3cm', paddingLeft: '0.1cm' }}>Hành động</th>
+                                    <tr className="bg-gradient-to-br from-white to-gray-50">
+                                        <th className="px-3 py-3 text-center font-bold text-gray-900 whitespace-nowrap" style={{ width: '1cm', minWidth: '1cm', borderBottom: '2px solid #dee2e6' }}>STT</th>
+                                        <th className="px-3 py-3 text-center font-bold text-gray-900 whitespace-nowrap" style={{ width: '3cm', minWidth: '3cm', borderBottom: '2px solid #dee2e6' }}>Mã đơn</th>
+                                        <th className="px-3 py-3 text-center font-bold text-gray-900 whitespace-nowrap" style={{ width: '4cm', minWidth: '4cm', borderBottom: '2px solid #dee2e6' }}>Khách hàng</th>
+                                        <th className="px-3 py-3 text-center font-bold text-gray-900 whitespace-nowrap" style={{ width: '5.5cm', minWidth: '5.5cm', borderBottom: '2px solid #dee2e6' }}>Khách sạn</th>
+                                        <th className="px-3 py-3 text-center font-bold text-gray-900 whitespace-nowrap" style={{ width: '3cm', minWidth: '3cm', borderBottom: '2px solid #dee2e6' }}>Phòng</th>
+                                        <th className="px-3 py-3 text-center font-bold text-gray-900 whitespace-nowrap" style={{ width: '2.5cm', minWidth: '2.5cm', borderBottom: '2px solid #dee2e6' }}>Ngày nhận - trả</th>
+                                        <th className="px-3 py-3 text-center font-bold text-gray-900 whitespace-nowrap" style={{ width: '2cm', minWidth: '2cm', borderBottom: '2px solid #dee2e6' }}>Số đêm</th>
+                                        <th className="px-3 py-3 text-center font-bold text-gray-900 whitespace-nowrap" style={{ width: '1.8cm', minWidth: '1.8cm', borderBottom: '2px solid #dee2e6' }}>Tổng tiền</th>
+                                        <th className="px-3 py-3 text-center font-bold text-gray-900 whitespace-nowrap" style={{ width: '3.5cm', minWidth: '3.5cm', borderBottom: '2px solid #dee2e6' }}>Trạng thái</th>
+                                        <th className="px-3 py-3 text-center font-bold text-gray-900 whitespace-nowrap" style={{ width: '1.8cm', minWidth: '1.8cm', borderBottom: '2px solid #dee2e6' }}>Ngày tạo</th>
+                                        <th className="px-3 py-3 text-center font-bold text-gray-900 whitespace-nowrap" style={{ width: '1.3cm', minWidth: '1.3cm', borderBottom: '2px solid #dee2e6' }}>Hành động</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -310,14 +310,14 @@ export default function SuperNewsPage() {
                                             return (
                                                 <tr
                                                     key={booking.id}
-                                                    className="border-b border-gray-200 hover:bg-gray-50 transition-all duration-200 cursor-default"
+                                                    className="hover:bg-gray-50 transition-all duration-200 cursor-default"
                                                 >
-                                                    <td className="px-3 py-3 text-left align-middle" style={{ width: '1cm' }}>
+                                                    <td className="px-3 py-3 text-center align-middle" style={{ width: '1cm', borderBottom: '1px solid #dee2e6' }}>
                                                         <span className="text-gray-600 font-medium text-sm">
                                                             {originalIndex >= 0 ? (currentPage * ITEMS_PER_PAGE) + originalIndex + 1 : index + 1}
                                                         </span>
                                                     </td>
-                                                    <td className="px-3 py-3 text-left align-middle" style={{ width: '3cm' }}>
+                                                    <td className="px-3 py-3 text-center align-middle" style={{ width: '3cm', borderBottom: '1px solid #dee2e6' }}>
                                                         <code
                                                             className="text-blue-600 font-mono text-sm font-medium break-all inline-block max-w-full"
                                                             title={booking.id}
@@ -325,7 +325,7 @@ export default function SuperNewsPage() {
                                                             {booking.id}
                                                         </code>
                                                     </td>
-                                                    <td className="px-3 py-3 text-left align-middle" style={{ width: '4cm' }}>
+                                                    <td className="px-3 py-3 text-center align-middle" style={{ width: '4cm', borderBottom: '1px solid #dee2e6' }}>
                                                         <div>
                                                             <div className="font-semibold text-gray-900 mb-2 text-sm">
                                                                 {booking.user.fullName}
@@ -338,7 +338,7 @@ export default function SuperNewsPage() {
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-3 py-3 text-left align-middle" style={{ width: '5.5cm' }}>
+                                                    <td className="px-3 py-3 text-center align-middle" style={{ width: '5.5cm', borderBottom: '1px solid #dee2e6' }}>
                                                         <div>
                                                             <div className="font-semibold text-gray-900 mb-2 text-sm">
                                                                 {booking.hotel.name}
@@ -357,7 +357,7 @@ export default function SuperNewsPage() {
                                                             )}
                                                         </div>
                                                     </td>
-                                                    <td className="px-3 py-3 text-left align-middle" style={{ width: '3cm' }}>
+                                                    <td className="px-3 py-3 text-center align-middle" style={{ width: '3cm', borderBottom: '1px solid #dee2e6' }}>
                                                         <div
                                                             className="font-medium text-gray-900 mb-1 text-sm break-words"
                                                             style={{
@@ -378,25 +378,25 @@ export default function SuperNewsPage() {
                                                             </div>
                                                         )}
                                                     </td>
-                                                    <td className="px-3 py-3 text-left align-middle" style={{ width: '2.5cm', paddingLeft: '0.2cm' }}>
+                                                    <td className="px-3 py-3 text-center align-middle" style={{ width: '2.5cm', borderBottom: '1px solid #dee2e6' }}>
                                                         <div className="text-gray-900">
                                                             <div className="mb-1 text-sm">{formatDate(booking.checkInDate)}</div>
                                                             <div className="text-gray-600 text-xs">{formatDate(booking.checkOutDate)}</div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-3 py-3 text-left align-middle" style={{ width: '2cm', paddingLeft: '0.1cm' }}>
+                                                    <td className="px-3 py-3 text-center align-middle" style={{ width: '2cm', borderBottom: '1px solid #dee2e6' }}>
                                                         <div className="font-medium text-gray-900 mb-1 text-sm">{booking.numberOfNights} đêm</div>
                                                         <div className="text-gray-600 text-xs" style={{ lineHeight: '1.4' }}>
                                                             {booking.numberOfRooms} phòng, {booking.numberOfAdults} người lớn
                                                             {booking.numberOfChildren > 0 && `, ${booking.numberOfChildren} trẻ em`}
                                                         </div>
                                                     </td>
-                                                    <td className="px-3 py-3 text-left align-middle" style={{ width: '1.8cm', paddingLeft: '0.1cm' }}>
+                                                    <td className="px-3 py-3 text-center align-middle" style={{ width: '1.8cm', borderBottom: '1px solid #dee2e6' }}>
                                                         <div className="font-bold text-blue-600 mb-1 text-sm">
                                                             {formatCurrency(booking.priceDetails.finalPrice)}
                                                         </div>
                                                         {booking.priceDetails.appliedDiscount && (
-                                                            <div className="text-green-600 flex items-center gap-1 text-xs">
+                                                            <div className="text-green-600 flex items-center justify-center gap-1 text-xs">
                                                                 <span className="bg-green-100 text-green-800 border border-green-300 px-2 py-1 rounded text-xs">
                                                                     {booking.priceDetails.appliedDiscount.code}
                                                                     {' '}(-{booking.priceDetails.appliedDiscount.percentage}%)
@@ -404,15 +404,17 @@ export default function SuperNewsPage() {
                                                             </div>
                                                         )}
                                                     </td>
-                                                    <td className="px-3 py-3 text-left align-middle" style={{ width: '3.5cm', paddingLeft: '0.1cm' }}>
-                                                        {getStatusBadge(booking.status)}
+                                                    <td className="px-3 py-3 text-center align-middle" style={{ width: '3.5cm', borderBottom: '1px solid #dee2e6' }}>
+                                                        <div className="d-flex justify-content-center">
+                                                            {getStatusBadge(booking.status)}
+                                                        </div>
                                                     </td>
-                                                    <td className="px-3 py-3 text-left align-middle" style={{ width: '1.8cm', paddingLeft: '0.1cm' }}>
+                                                    <td className="px-3 py-3 text-center align-middle" style={{ width: '1.8cm', borderBottom: '1px solid #dee2e6' }}>
                                                         <div className="text-gray-900 text-sm">
                                                             {formatDateTime(booking.createdAt)}
                                                         </div>
                                                     </td>
-                                                    <td className="px-3 py-3 text-left align-middle" style={{ width: '1.3cm', paddingLeft: '0.1cm' }}>
+                                                    <td className="px-3 py-3 text-center align-middle" style={{ width: '1.3cm', borderBottom: '1px solid #dee2e6' }}>
                                                         <button
                                                             className="inline-flex items-center justify-center rounded-full border border-blue-500 text-blue-500 hover:bg-blue-50 hover:scale-110 transition-all duration-200"
                                                             style={{

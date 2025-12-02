@@ -75,6 +75,7 @@ function mapUserResponseToCustomerUser(user: UserResponse): CustomerUser {
 
 /**
  * Lấy danh sách Customer Users (users với role USER)
+ * Hàm này sẽ gọi API nhiều lần nếu cần để lấy TẤT CẢ users từ backend
  */
 export async function getCustomerUsers({
     page = 1,
@@ -89,35 +90,61 @@ export async function getCustomerUsers({
     currentPage: number;
 }> {
     try {
-        // Fetch TẤT CẢ users từ backend (không dùng pagination params)
-        // Frontend sẽ tự phân trang để hiển thị 10 items mỗi trang
-        const usersResponse = await apiClient.get<ApiResponse<UserResponse[] | PaginatedUserResponse>>(
-            baseURL
-        );
-
+        // Backend giới hạn size tối đa là 100, nên ta sẽ gọi với size=100
+        // và gọi nhiều lần nếu cần để lấy hết tất cả users
+        const MAX_PAGE_SIZE = 100;
         let allUsers: UserResponse[] = [];
+        let currentPageBackend = 0;
+        let hasMore = true;
 
-        // Kiểm tra xem response có phải là paginated không
-        if (usersResponse.data?.statusCode === 200) {
-            const responseData = usersResponse.data.data;
+        // Lặp để lấy tất cả users từ backend
+        while (hasMore) {
+            const usersResponse = await apiClient.get<ApiResponse<PaginatedUserResponse | UserResponse[]>>(
+                `${baseURL}?page=${currentPageBackend}&size=${MAX_PAGE_SIZE}`
+            );
+
+            if (usersResponse.data?.statusCode === 200 && usersResponse.data?.data) {
+                const responseData = usersResponse.data.data;
+                
+                // Kiểm tra xem response có phải là paginated không
+                if (Array.isArray(responseData)) {
+                    // Trường hợp backend trả về array trực tiếp (không paginated)
+                    allUsers = [...allUsers, ...responseData];
+                    hasMore = false; // Không còn page nào nữa
+                } else if (responseData && typeof responseData === 'object' && 'content' in responseData) {
+                    // Trường hợp paginated response
+                    const paginatedData = responseData as PaginatedUserResponse;
+                    
+                    // Thêm users từ page hiện tại vào danh sách
+                    if (paginatedData.content && paginatedData.content.length > 0) {
+                        allUsers = [...allUsers, ...paginatedData.content];
+                    }
+
+                    // Kiểm tra xem còn page nào nữa không
+                    hasMore = paginatedData.hasNext === true && !paginatedData.last;
+                    currentPageBackend++;
+                } else {
+                    hasMore = false;
+                }
+            } else {
+                hasMore = false;
+            }
             
-            // Kiểm tra xem có phải là paginated response không
-            if (Array.isArray(responseData)) {
-                // Không phải paginated, trả về array trực tiếp
-                allUsers = responseData;
-            } else if (responseData && typeof responseData === 'object' && 'content' in responseData) {
-                // Là paginated response từ backend - lấy tất cả content
-                const paginatedData = responseData as PaginatedUserResponse;
-                allUsers = paginatedData.content;
+            // Giới hạn số lần gọi API để tránh vòng lặp vô hạn (tối đa 1000 pages = 100,000 users)
+            if (currentPageBackend >= 1000) {
+                hasMore = false;
             }
         }
 
-        // Filter users với role USER (customer)
+        // Filter users với role USER (customer) - kiểm tra cả uppercase và lowercase
         const customerUsers = allUsers.filter(
-            user => user.role?.name?.toUpperCase() === 'USER'
+            user => {
+                const roleName = user.role?.name?.toUpperCase();
+                return roleName === 'USER' || roleName === 'CUSTOMER';
+            }
         );
 
-        // Phân trang ở frontend: chỉ lấy 10 items cho trang hiện tại
+        // Phân trang ở frontend: chỉ lấy items cho trang hiện tại
         const start = (page - 1) * limit;
         const end = start + limit;
         const paginatedCustomerUsers = customerUsers.slice(start, end);

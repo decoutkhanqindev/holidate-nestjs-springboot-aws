@@ -1,268 +1,479 @@
-// app/admin-payments/page.tsx
 "use client";
 
 import { useState, useEffect } from 'react';
-import { getBookings } from '@/lib/AdminAPI/bookingService';
 import { getHotels } from '@/lib/AdminAPI/hotelService';
 import { useAuth } from '@/components/Admin/AuthContext_Admin/AuthContextAdmin';
-import type { Booking, PaymentStatus } from '@/types';
+import LoadingSpinner from '@/components/Admin/common/LoadingSpinner';
+import PaymentTransactionsTable from '@/components/AdminSuper/Payment/PaymentTransactionsTable';
+import Pagination from '@/components/Admin/pagination/Pagination';
+import { FaCreditCard, FaSearch } from 'react-icons/fa';
+import type { PaymentTransaction } from '@/types';
+import apiClient, { ApiResponse } from '@/service/apiClient';
 
-function PageHeader({ title }: { title: React.ReactNode }) {
-    return (
-        <div className="mb-8 pb-4 border-b border-gray-200">
-            <h1 className="text-3xl font-bold text-gray-800">{title}</h1>
-        </div>
-    );
-}
-
-// Component hiển thị thẻ thống kê
-function StatsCard({ title, value, icon, color }: { title: string; value: number; icon: React.ReactNode; color: 'blue' | 'green' | 'yellow' | 'red' | 'gray' }) {
-    const colorClasses = {
-        blue: 'bg-blue-50 border-blue-200 text-blue-700',
-        green: 'bg-green-50 border-green-200 text-green-700',
-        yellow: 'bg-yellow-50 border-yellow-200 text-yellow-700',
-        red: 'bg-red-50 border-red-200 text-red-700',
-        gray: 'bg-gray-50 border-gray-200 text-gray-700',
+interface BookingResponse {
+    id: string;
+    user: {
+        id: string;
+        email: string;
+        fullName: string;
     };
-
-    return (
-        <div className={`rounded-lg border-2 p-6 ${colorClasses[color]}`}>
-            <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-sm font-medium opacity-80">{title}</p>
-                    <p className="text-3xl font-bold mt-2">{value.toLocaleString('vi-VN')}</p>
-                </div>
-                <div className="text-4xl opacity-60">
-                    {icon}
-                </div>
-            </div>
-        </div>
-    );
+    room: {
+        id: string;
+        name: string;
+    };
+    hotel: {
+        id: string;
+        name: string;
+        address?: string;
+        partner?: {
+            id: string;
+            email: string;
+            fullName: string;
+        } | null;
+    };
+    checkInDate: string;
+    checkOutDate: string;
+    numberOfNights: number;
+    numberOfRooms: number;
+    priceDetails: {
+        originalPrice?: number;
+        discountAmount?: number;
+        appliedDiscount?: {
+            id: string;
+            code: string;
+            percentage: number;
+        } | null;
+        netPriceAfterDiscount?: number;
+        tax?: {
+            name: string;
+            percentage: number;
+            amount: number;
+        };
+        serviceFee?: {
+            name: string;
+            percentage: number;
+            amount: number;
+        };
+        finalPrice: number;
+    };
+    contactFullName: string;
+    contactEmail: string;
+    contactPhone: string;
+    status: string;
+    paymentUrl?: string | null;
+    createdAt: string;
+    expiresAt?: string | null;
+    updatedAt: string;
 }
+
+const ITEMS_PER_PAGE = 10;
+
+// Map booking to payment transaction
+const mapBookingToTransaction = (booking: BookingResponse): PaymentTransaction => {
+    const bookingStatus = (booking.status || '').toLowerCase();
+
+    // Determine payment status based on booking status
+    let paymentStatus: PaymentTransaction['status'] = 'pending';
+
+    if (bookingStatus === 'confirmed' || bookingStatus === 'checked_in' ||
+        bookingStatus === 'completed' || bookingStatus === 'rescheduled') {
+        paymentStatus = 'success';
+    } else if (bookingStatus === 'pending_payment') {
+        // Check if expired
+        if (booking.expiresAt) {
+            const expiryDate = new Date(booking.expiresAt);
+            if (expiryDate.getTime() < new Date().getTime()) {
+                paymentStatus = 'failed';
+            } else {
+                paymentStatus = 'pending';
+            }
+        } else {
+            paymentStatus = 'pending';
+        }
+    } else if (bookingStatus === 'cancelled') {
+        // Check if refunded (if booking was confirmed before cancellation)
+        paymentStatus = 'failed'; // Default to failed, could be refunded if needed
+    }
+
+    // Determine payment gateway and method from paymentUrl
+    let paymentGateway = 'VNPay';
+    let paymentMethod = 'VNPay';
+
+    if (booking.paymentUrl) {
+        if (booking.paymentUrl.includes('vnpay')) {
+            paymentGateway = 'VNPay';
+            paymentMethod = 'VNPay';
+        } else if (booking.paymentUrl.includes('stripe')) {
+            paymentGateway = 'Stripe';
+            paymentMethod = 'Thẻ tín dụng';
+        } else if (booking.paymentUrl.includes('paypal')) {
+            paymentGateway = 'PayPal';
+            paymentMethod = 'PayPal';
+        } else if (booking.paymentUrl.includes('momo')) {
+            paymentGateway = 'MoMo';
+            paymentMethod = 'MoMo';
+        }
+    }
+
+    // Extract transaction code from booking ID or payment URL
+    const gatewayTransactionCode = booking.paymentUrl
+        ? booking.paymentUrl.split('=').pop()?.substring(0, 20) || (booking.id || '').substring(0, 8).toUpperCase()
+        : (booking.id || '').substring(0, 8).toUpperCase();
+
+    // Determine paid_at based on status
+    const paidAt = (paymentStatus === 'success' && bookingStatus !== 'pending_payment')
+        ? new Date(booking.updatedAt)
+        : null;
+
+    // Determine refunded_at (if cancelled after being confirmed)
+    const refundedAt = null;
+
+    return {
+        transaction_id: booking.id || '', // Use booking ID as transaction ID
+        booking_id: booking.id || '',
+        hotel_id: booking.hotel?.id || '',
+        user_id: booking.user?.id || '',
+        amount: booking.priceDetails?.originalPrice || booking.priceDetails?.finalPrice || 0,
+        currency: 'VND',
+        payment_method: paymentMethod,
+        payment_gateway: paymentGateway,
+        status: paymentStatus,
+        gateway_transaction_code: gatewayTransactionCode,
+        bank_code: null, // Not available in booking response
+        created_at: booking.createdAt ? new Date(booking.createdAt) : new Date(),
+        paid_at: paidAt,
+        refunded_at: refundedAt,
+        discount_amount: booking.priceDetails?.discountAmount || 0,
+        final_amount: booking.priceDetails?.finalPrice || 0,
+        // Additional fields for display
+        hotel_name: booking.hotel?.name || '',
+        user_name: booking.user?.fullName || '',
+        user_email: booking.user?.email || '',
+    };
+};
+
+const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+    }).format(amount);
+};
 
 export default function PaymentsPage() {
     const { effectiveUser } = useAuth();
+    const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [totalBookingsCount, setTotalBookingsCount] = useState(0); // Tổng số bookings thực tế
-    const [stats, setStats] = useState({
-        paid: 0,           // Đã thanh toán
-        unpaid: 0,         // Chưa thanh toán
-        pending: 0,        // Đặt cọc / Chờ xử lý
-        refunded: 0,       // Hoàn tiền
-        cancelled: 0,      // Đã hủy (có thể có hoàn tiền hoặc không)
-    });
+    const [error, setError] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalItems, setTotalItems] = useState(0);
+    const [filterStatus, setFilterStatus] = useState<string>("ALL");
+    const [searchQuery, setSearchQuery] = useState<string>("");
+
+    const fetchTransactions = async (page: number) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const roleName = effectiveUser?.role?.name;
+            const userId = effectiveUser?.id;
+
+            let allBookings: BookingResponse[] = [];
+            let totalPagesCount = 0;
+            let totalItemsCount = 0;
+
+            // Nếu là PARTNER, phải lấy bookings của TẤT CẢ hotels họ sở hữu
+            if (roleName?.toLowerCase() === 'partner' && userId) {
+                console.log(`[PaymentsPage] Partner ${userId} - Fetching hotels...`);
+
+                // 1. Lấy TẤT CẢ hotels của partner (pagination)
+                const allHotelIds: string[] = [];
+                let hotelPage = 0;
+                const hotelPageSize = 50;
+                let hasMoreHotels = true;
+
+                while (hasMoreHotels) {
+                    try {
+                        const hotelsData = await getHotels(
+                            hotelPage,
+                            hotelPageSize,
+                            undefined,
+                            undefined,
+                            userId, // QUAN TRỌNG: Filter theo partner-id
+                            'PARTNER'
+                        );
+
+                        // Backend đã filter theo partner-id trong query params, nên tất cả hotels trả về đều thuộc partner này
+                        // Không cần verify ownerId vì backend đã filter đúng
+                        const pageHotelIds = hotelsData.hotels.map(h => h.id);
+                        allHotelIds.push(...pageHotelIds);
+
+                        console.log(`[PaymentsPage] Page ${hotelPage}: Got ${hotelsData.hotels.length} hotels (filtered by partner-id: ${userId})`);
+
+                        hasMoreHotels = hotelsData.hasNext || false;
+                        hotelPage++;
+                    } catch (err: any) {
+                        console.error(`[PaymentsPage] Error fetching hotels page ${hotelPage}:`, err);
+                        hasMoreHotels = false;
+                    }
+                }
+
+                console.log(`[PaymentsPage] Partner ${userId} owns ${allHotelIds.length} hotels:`, allHotelIds);
+
+                if (allHotelIds.length === 0) {
+                    // Partner không có hotels
+                    console.log(`[PaymentsPage] Partner ${userId} has no hotels`);
+                    allBookings = [];
+                    totalPagesCount = 0;
+                    totalItemsCount = 0;
+                } else {
+                    // 2. Lấy bookings của TẤT CẢ hotels (pagination cho mỗi hotel)
+                    const allBookingsFromHotels: BookingResponse[] = [];
+                    for (const hotelId of allHotelIds) {
+                        try {
+                            console.log(`[PaymentsPage] Fetching bookings for hotel ${hotelId}...`);
+                            let bookingPage = 0;
+                            const bookingPageSize = 50;
+                            let hasMoreBookings = true;
+
+                            while (hasMoreBookings) {
+                                const response = await apiClient.get<ApiResponse<{
+                                    content: BookingResponse[];
+                                    page: number;
+                                    size: number;
+                                    totalItems: number;
+                                    totalPages: number;
+                                    first: boolean;
+                                    last: boolean;
+                                    hasNext: boolean;
+                                    hasPrevious: boolean;
+                                }>>('/bookings', {
+                                    params: {
+                                        page: bookingPage,
+                                        size: bookingPageSize,
+                                        'sort-by': 'created-at',
+                                        'sort-dir': 'desc',
+                                        'hotel-id': hotelId, // QUAN TRỌNG: Chỉ lấy bookings của hotel này
+                                    },
+                                });
+
+                                if (response.data?.statusCode === 200 && response.data.data) {
+                                    const bookings = response.data.data.content;
+
+                                    // QUAN TRỌNG: Verify từng booking để đảm bảo chỉ lấy bookings của hotel này
+                                    const validBookings = bookings.filter(b => {
+                                        const bookingHotelId = b.hotel?.id;
+                                        if (!bookingHotelId) {
+                                            console.warn(`[PaymentsPage] WARNING: Booking ${b.id} has no hotel.id!`);
+                                            return false;
+                                        }
+                                        if (bookingHotelId !== hotelId) {
+                                            console.error(`[PaymentsPage] ERROR: Backend returned booking ${b.id} with hotel ${bookingHotelId}, but we requested hotel ${hotelId}! This is a backend bug.`);
+                                            return false;
+                                        }
+                                        return true;
+                                    });
+
+                                    if (validBookings.length !== bookings.length) {
+                                        console.error(`[PaymentsPage] ERROR: Backend returned ${bookings.length - validBookings.length} bookings NOT matching hotel ${hotelId}!`);
+                                    }
+
+                                    allBookingsFromHotels.push(...validBookings);
+                                    console.log(`[PaymentsPage] Hotel ${hotelId} page ${bookingPage}: Got ${validBookings.length} valid bookings (total returned: ${bookings.length})`);
+
+                                    hasMoreBookings = response.data.data.hasNext || false;
+                                    bookingPage++;
+                                } else {
+                                    hasMoreBookings = false;
+                                }
+                            }
+                        } catch (err: any) {
+                            console.error(`[PaymentsPage] Error fetching bookings for hotel ${hotelId}:`, err);
+                        }
+                    }
+
+                    console.log(`[PaymentsPage] Total bookings from all partner hotels: ${allBookingsFromHotels.length}`);
+
+                    // 3. Sort và paginate
+                    allBookingsFromHotels.sort((a, b) => {
+                        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                    });
+
+                    totalItemsCount = allBookingsFromHotels.length;
+                    totalPagesCount = Math.ceil(totalItemsCount / ITEMS_PER_PAGE);
+                    const startIndex = page * ITEMS_PER_PAGE;
+                    const endIndex = startIndex + ITEMS_PER_PAGE;
+                    allBookings = allBookingsFromHotels.slice(startIndex, endIndex);
+                }
+            } else {
+                // ADMIN: Gọi API bình thường
+                const response = await apiClient.get<ApiResponse<{
+                    content: BookingResponse[];
+                    page: number;
+                    size: number;
+                    totalItems: number;
+                    totalPages: number;
+                    first: boolean;
+                    last: boolean;
+                    hasNext: boolean;
+                    hasPrevious: boolean;
+                }>>('/bookings', {
+                    params: {
+                        page: page,
+                        size: ITEMS_PER_PAGE,
+                        'sort-by': 'created-at',
+                        'sort-dir': 'desc',
+                    },
+                });
+
+                if (response.data?.statusCode === 200 && response.data.data) {
+                    allBookings = response.data.data.content;
+                    totalPagesCount = response.data.data.totalPages || 0;
+                    totalItemsCount = response.data.data.totalItems || 0;
+                }
+            }
+
+            // Map bookings to transactions
+            const mappedTransactions = allBookings.map(mapBookingToTransaction);
+
+            // Sort by created_at descending
+            mappedTransactions.sort((a, b) =>
+                new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
+
+            setTransactions(mappedTransactions);
+            setTotalPages(totalPagesCount);
+            setTotalItems(totalItemsCount);
+        } catch (err: any) {
+            setError(err.response?.data?.message || err.message || 'Không thể tải danh sách giao dịch');
+            setTransactions([]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        async function loadPaymentStats() {
-            setIsLoading(true);
-            try {
-                const userId = effectiveUser?.id;
-                const roleName = effectiveUser?.role?.name;
+        fetchTransactions(currentPage);
+    }, [currentPage, effectiveUser?.id, effectiveUser?.role?.name]);
 
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page - 1);
+    };
 
-                // Lấy hotels của PARTNER nếu cần
-                let hotelIds: string[] = [];
-                if (roleName?.toLowerCase() === 'partner' && userId) {
-                    try {
-                        const hotelsData = await getHotels(0, 1000, undefined, undefined, userId, roleName);
-                        hotelIds = hotelsData.hotels.map(h => h.id);
-                    } catch (hotelError: any) {
-                    }
-                }
-
-                // Lấy tất cả bookings để tính toán thống kê
-                // Vì cần thống kê, nên lấy nhiều records hơn (size lớn hơn)
-                const allBookings: Booking[] = [];
-                let currentPage = 0;
-                let hasMore = true;
-
-                // Lấy tất cả bookings (có thể cần nhiều pages)
-                while (hasMore && currentPage < 10) { // Giới hạn tối đa 10 pages để tránh quá tải
-                    try {
-                        const response = roleName?.toLowerCase() === 'partner' && hotelIds.length > 0
-                            ? await getBookings({
-                                page: currentPage,
-                                size: 100, // Lấy nhiều hơn để tính toán
-                                sortBy: 'createdAt',
-                                sortDir: 'DESC',
-                                roleName: roleName,
-                                currentUserId: userId,
-                                hotelId: hotelIds[0], // PARTNER: lấy bookings của hotel đầu tiên
-                            })
-                            : await getBookings({
-                                page: currentPage,
-                                size: 100,
-                                sortBy: 'createdAt',
-                                sortDir: 'DESC',
-                                roleName: roleName,
-                                currentUserId: userId,
-                            });
-
-                        allBookings.push(...response.data);
-                        
-                        // Kiểm tra xem còn trang nào không
-                        hasMore = response.totalPages > currentPage + 1;
-                        currentPage++;
-                    } catch (error: any) {
-                        hasMore = false;
-                    }
-                }
-
-
-                // Tính toán thống kê
-                // Logic: 
-                // - Đã thanh toán: paymentStatus = PAID và bookingStatus không phải CANCELLED
-                // - Chưa thanh toán: paymentStatus = UNPAID
-                // - Đặt cọc / Chờ xử lý: paymentStatus = PENDING
-                // - Hoàn tiền: paymentStatus = REFUNDED
-                // - Đã hủy: bookingStatus = CANCELLED (bất kể paymentStatus)
-                const newStats = {
-                    paid: 0,
-                    unpaid: 0,
-                    pending: 0,
-                    refunded: 0,
-                    cancelled: 0,
-                };
-
-                // Tính tổng số booking (không double count)
-                const totalBookings = allBookings.length;
-
-                allBookings.forEach(booking => {
-                    // Đếm cancelled trước (theo bookingStatus)
-                    if (booking.bookingStatus === 'CANCELLED') {
-                        newStats.cancelled++;
-                        // Nếu cancelled và có refund, cũng đếm vào refunded
-                        if (booking.paymentStatus === 'REFUNDED') {
-                            newStats.refunded++;
-                        }
-                        return; // Không đếm vào các category khác nếu đã cancelled
-                    }
-
-                    // Đếm theo paymentStatus cho các booking chưa cancelled
-                    switch (booking.paymentStatus) {
-                        case 'PAID':
-                            newStats.paid++;
-                            break;
-                        case 'UNPAID':
-                            newStats.unpaid++;
-                            break;
-                        case 'PENDING':
-                            newStats.pending++;
-                            break;
-                        case 'REFUNDED':
-                            newStats.refunded++;
-                            break;
-                        default:
-                            // Nếu paymentStatus không rõ, phân loại theo bookingStatus
-                            if (booking.bookingStatus === 'PENDING') {
-                                newStats.pending++;
-                            } else {
-                                newStats.unpaid++;
-                            }
-                    }
-                });
-
-                // Log để debug
-                console.log("[PaymentsPage] Breakdown:", {
-                    paid: newStats.paid,
-                    unpaid: newStats.unpaid,
-                    pending: newStats.pending,
-                    cancelled: newStats.cancelled,
-                    refunded: newStats.refunded,
-                    sum: newStats.paid + newStats.unpaid + newStats.pending + newStats.cancelled + newStats.refunded,
-                    totalBookings: totalBookings
-                });
-
-                setStats(newStats);
-                setTotalBookingsCount(totalBookings); // Lưu tổng số bookings thực tế
-            } catch (error: any) {
-                alert('Không thể tải thống kê thanh toán: ' + (error.message || 'Lỗi không xác định'));
-            } finally {
-                setIsLoading(false);
-            }
-        }
-
-        loadPaymentStats();
-    }, [effectiveUser?.id, effectiveUser?.role?.name]);
-
-    if (isLoading) {
-        return (
-            <div>
-                <PageHeader title={<span style={{ color: '#2563eb' }}>Quản lý Thanh toán</span>} />
-                <div className="text-center py-8 text-gray-500">
-                    Đang tải thống kê thanh toán...
-                </div>
-            </div>
-        );
-    }
+    // Filter transactions
+    const filteredTransactions = transactions.filter((transaction) => {
+        const matchesStatus = filterStatus === "ALL" || transaction.status === filterStatus;
+        const searchLower = searchQuery.toLowerCase();
+        const matchesSearch =
+            searchQuery === "" ||
+            (transaction.transaction_id || '').toLowerCase().includes(searchLower) ||
+            (transaction.booking_id || '').toLowerCase().includes(searchLower) ||
+            (transaction.hotel_name || '').toLowerCase().includes(searchLower) ||
+            (transaction.user_name || '').toLowerCase().includes(searchLower) ||
+            (transaction.user_email || '').toLowerCase().includes(searchLower) ||
+            (transaction.gateway_transaction_code || '').toLowerCase().includes(searchLower);
+        return matchesStatus && matchesSearch;
+    });
 
     return (
-        <div>
-            <PageHeader title={<span style={{ color: '#2563eb' }}>Quản lý Thanh toán</span>} />
-
-            {/* Dashboard thống kê */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-                <StatsCard
-                    title="Đã Thanh toán"
-                    value={stats.paid}
-                    icon={<span>💰</span>}
-                    color="green"
-                />
-                <StatsCard
-                    title="Chưa Thanh toán"
-                    value={stats.unpaid}
-                    icon={<span>⏳</span>}
-                    color="yellow"
-                />
-                <StatsCard
-                    title="Đặt Cọc / Chờ Xử lý"
-                    value={stats.pending}
-                    icon={<span>📝</span>}
-                    color="blue"
-                />
-                <StatsCard
-                    title="Đã Hủy"
-                    value={stats.cancelled}
-                    icon={<span>❌</span>}
-                    color="red"
-                />
-                <StatsCard
-                    title="Hoàn Tiền"
-                    value={stats.refunded}
-                    icon={<span>↩️</span>}
-                    color="gray"
-                />
-            </div>
-
-            {/* Tổng kết */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">Tổng quan</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                        <p className="text-sm text-gray-600">Tổng số đơn hàng</p>
-                        <p className="text-2xl font-bold text-gray-900 mt-1">
-                            {totalBookingsCount.toLocaleString('vi-VN')}
-                        </p>
+        <div className="px-4 py-3">
+            <div className="mb-4 pb-3 border-b border-gray-300">
+                <div className="flex justify-between items-center mb-4">
+                    <div>
+                        <h1 className="text-xl mb-1 font-bold text-gray-900 flex items-center gap-2">
+                            <FaCreditCard className="text-blue-600" />
+                            Quản lý giao dịch
+                        </h1>
+                        {!isLoading && (
+                            <p className="text-gray-600 text-sm mb-0 mt-2">
+                                Tổng cộng: <span className="font-semibold text-blue-600">{totalItems}</span> giao dịch
+                                {searchQuery && (
+                                    <span className="ml-2">
+                                        (Hiển thị: <span className="font-semibold text-blue-600">{filteredTransactions.length}</span>)
+                                    </span>
+                                )}
+                            </p>
+                        )}
                     </div>
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                        <p className="text-sm text-gray-600">Tỷ lệ thanh toán thành công</p>
-                        <p className="text-2xl font-bold text-green-600 mt-1">
-                            {stats.paid + stats.unpaid + stats.pending > 0
-                                ? `${Math.round((stats.paid / (stats.paid + stats.unpaid + stats.pending)) * 100)}%`
-                                : '0%'}
-                        </p>
-                    </div>
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                        <p className="text-sm text-gray-600">Tỷ lệ hủy đơn</p>
-                        <p className="text-2xl font-bold text-red-600 mt-1">
-                            {stats.paid + stats.unpaid + stats.pending + stats.cancelled > 0
-                                ? `${Math.round((stats.cancelled / (stats.paid + stats.unpaid + stats.pending + stats.cancelled)) * 100)}%`
-                                : '0%'}
-                        </p>
+                </div>
+
+                {/* Search and Filter */}
+                <div className="card shadow-sm mb-4">
+                    <div className="card-body">
+                        <div className="row g-3">
+                            <div className="col-md-6">
+                                <label htmlFor="search" className="form-label">
+                                    Tìm kiếm
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <FaSearch className="text-gray-400" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        className="form-control pl-10"
+                                        id="search"
+                                        placeholder="Tìm theo mã giao dịch, mã đơn, khách sạn, khách hàng..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <div className="col-md-4">
+                                <label htmlFor="statusFilter" className="form-label">
+                                    Lọc theo trạng thái
+                                </label>
+                                <select
+                                    className="form-select"
+                                    id="statusFilter"
+                                    value={filterStatus}
+                                    onChange={(e) => setFilterStatus(e.target.value)}
+                                >
+                                    <option value="ALL">Tất cả</option>
+                                    <option value="success">Thành công</option>
+                                    <option value="pending">Đang chờ</option>
+                                    <option value="failed">Thất bại</option>
+                                    <option value="refunded">Đã hoàn tiền</option>
+                                </select>
+                            </div>
+                            <div className="col-md-2 d-flex align-items-end">
+                                <button
+                                    className="btn btn-outline-secondary w-100"
+                                    onClick={() => {
+                                        setSearchQuery("");
+                                        setFilterStatus("ALL");
+                                    }}
+                                >
+                                    Xóa bộ lọc
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            {isLoading ? (
+                <LoadingSpinner message="Đang tải danh sách giao dịch..." />
+            ) : error ? (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 shadow-sm">
+                    <strong className="text-red-800">Lỗi:</strong> <span className="text-red-700">{error}</span>
+                </div>
+            ) : (
+                <>
+                    {/* Transactions Table */}
+                    <PaymentTransactionsTable transactions={filteredTransactions} />
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="mt-4 flex justify-center">
+                            <Pagination
+                                currentPage={currentPage + 1}
+                                totalPages={totalPages}
+                                onPageChange={handlePageChange}
+                            />
+                        </div>
+                    )}
+                </>
+            )}
         </div>
     );
 }
-

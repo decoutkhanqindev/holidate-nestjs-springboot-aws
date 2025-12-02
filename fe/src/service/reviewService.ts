@@ -2,7 +2,7 @@
 import apiClient, { ApiResponse } from './apiClient';
 import type { Review } from '@/types';
 import { getPhotoCategories } from '@/lib/AdminAPI/photoCategoryService';
-
+//const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 // Interface từ API response
 interface ReviewResponse {
     id: string;
@@ -82,16 +82,16 @@ function mapReviewResponseToReview(response: ReviewResponse): Review {
     let userId = '';
     let userName = 'Không xác định';
     let userAvatar: string | undefined = undefined;
-    
+
     if (response.user) {
         userId = response.user.id || '';
         userName = response.user.fullName || 'Không xác định';
         userAvatar = response.user.avatarUrl;
     }
-    
+
     let hotelId = '';
     let hotelName = 'N/A';
-    
+
     if (response.booking?.hotel) {
         hotelId = response.booking.hotel.id;
         hotelName = response.booking.hotel.name;
@@ -102,17 +102,17 @@ function mapReviewResponseToReview(response: ReviewResponse): Review {
         hotelId = response.hotelId;
         hotelName = 'N/A';
     }
-    
+
     let roomId = '';
     let roomName = 'N/A';
-    
+
     if (response.booking?.room) {
         roomId = response.booking.room.id;
         roomName = response.booking.room.name;
     }
-    
+
     const bookingId = response.booking?.id || '';
-    
+
     return {
         id: response.id,
         userId: userId,
@@ -140,7 +140,7 @@ function mapReviewResponseToReview(response: ReviewResponse): Review {
 export async function getReviews(params: GetReviewsParams = {}): Promise<PaginatedReviewsResult> {
     try {
         const queryParams: Record<string, string | number> = {};
-        
+
         // Đảm bảo hotelId không được null, undefined, hoặc empty string
         // Nếu hotelId không hợp lệ, không thêm vào query (backend sẽ trả về tất cả reviews - không mong muốn)
         if (params.hotelId && params.hotelId.trim() !== '') {
@@ -156,7 +156,7 @@ export async function getReviews(params: GetReviewsParams = {}): Promise<Paginat
                 hasPrevious: false,
             };
         }
-        
+
         if (params.userId && params.userId.trim() !== '') queryParams.userId = params.userId.trim();
         if (params.bookingId && params.bookingId.trim() !== '') queryParams.bookingId = params.bookingId.trim();
         if (params.minScore !== undefined) queryParams.minScore = params.minScore;
@@ -174,7 +174,7 @@ export async function getReviews(params: GetReviewsParams = {}): Promise<Paginat
 
         if (response.data?.statusCode === 200 && response.data?.data) {
             const reviews = response.data.data.content.map(mapReviewResponseToReview);
-            
+
             return {
                 data: reviews,
                 totalPages: response.data.data.totalPages,
@@ -194,8 +194,8 @@ export async function getReviews(params: GetReviewsParams = {}): Promise<Paginat
             hasPrevious: false,
         };
     } catch (error: any) {
-        const errorMessage = error.response?.data?.message 
-            || error.message 
+        const errorMessage = error.response?.data?.message
+            || error.message
             || 'Không thể tải danh sách đánh giá';
         throw new Error(errorMessage);
     }
@@ -214,8 +214,8 @@ export async function getReviewById(reviewId: string): Promise<Review> {
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        const errorMessage = error.response?.data?.message 
-            || error.message 
+        const errorMessage = error.response?.data?.message
+            || error.message
             || 'Không thể tải chi tiết đánh giá';
         throw new Error(errorMessage);
     }
@@ -229,24 +229,24 @@ export async function createReview(payload: CreateReviewPayload): Promise<Review
         const formData = new FormData();
         formData.append('bookingId', payload.bookingId);
         formData.append('score', payload.score.toString());
-        
+
         if (payload.comment) {
             formData.append('comment', payload.comment);
         }
-        
+
         // Xử lý photos với đúng format: photos[0].categoryId và photos[0].files[0], photos[0].files[1], etc.
         if (payload.photos && payload.photos.length > 0) {
             // Fetch photo categories để lấy categoryId
             let photoCategoryId: string | null = null;
             try {
                 const categories = await getPhotoCategories();
-                
+
                 // Tìm category "Review" hoặc "Đánh giá"
-                const reviewCategory = categories.find(cat => 
-                    cat.name.toLowerCase().includes('review') || 
+                const reviewCategory = categories.find(cat =>
+                    cat.name.toLowerCase().includes('review') ||
                     cat.name.toLowerCase().includes('đánh giá')
                 );
-                
+
                 if (reviewCategory) {
                     photoCategoryId = reviewCategory.id;
                 } else if (categories.length > 0) {
@@ -256,12 +256,12 @@ export async function createReview(payload: CreateReviewPayload): Promise<Review
                 }
             } catch (err) {
             }
-            
+
             // Gửi photos với đúng format: photos[0].files[0], photos[0].files[1], etc.
             payload.photos.forEach((photo, index) => {
                 formData.append(`photos[0].files[${index}]`, photo);
             });
-            
+
             // Thêm categoryId (bắt buộc theo backend validation)
             if (photoCategoryId) {
                 formData.append('photos[0].categoryId', photoCategoryId);
@@ -282,8 +282,8 @@ export async function createReview(payload: CreateReviewPayload): Promise<Review
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        const errorMessage = error.response?.data?.message 
-            || error.message 
+        const errorMessage = error.response?.data?.message
+            || error.message
             || 'Không thể tạo đánh giá';
         throw new Error(errorMessage);
     }
@@ -303,21 +303,21 @@ export async function updateReview(
 ): Promise<Review> {
     try {
         const formData = new FormData();
-        
+
         if (payload.score !== undefined) {
             formData.append('score', payload.score.toString());
         }
-        
+
         if (payload.comment !== undefined) {
             formData.append('comment', payload.comment);
         }
-        
+
         if (payload.photosToAdd && payload.photosToAdd.length > 0) {
             payload.photosToAdd.forEach((photo) => {
                 formData.append('photosToAdd', photo);
             });
         }
-        
+
         if (payload.photoIdsToDelete && payload.photoIdsToDelete.length > 0) {
             payload.photoIdsToDelete.forEach((photoId) => {
                 formData.append('photoIdsToDelete', photoId);
@@ -336,8 +336,8 @@ export async function updateReview(
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        const errorMessage = error.response?.data?.message 
-            || error.message 
+        const errorMessage = error.response?.data?.message
+            || error.message
             || 'Không thể cập nhật đánh giá';
         throw new Error(errorMessage);
     }
@@ -350,8 +350,8 @@ export async function deleteReview(reviewId: string): Promise<void> {
     try {
         await apiClient.delete<ApiResponse<ReviewResponse>>(`/reviews/${reviewId}`);
     } catch (error: any) {
-        const errorMessage = error.response?.data?.message 
-            || error.message 
+        const errorMessage = error.response?.data?.message
+            || error.message
             || 'Không thể xóa đánh giá';
         throw new Error(errorMessage);
     }

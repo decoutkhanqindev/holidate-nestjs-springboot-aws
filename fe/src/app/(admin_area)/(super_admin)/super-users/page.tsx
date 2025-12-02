@@ -7,6 +7,7 @@ import type { CustomerUser } from "@/lib/Super_Admin/userService";
 import { toast } from "react-toastify";
 import { deleteUserAction } from "@/lib/actions/userActions";
 import { FaTrash } from "react-icons/fa";
+import LoadingSpinner from "@/components/AdminSuper/common/LoadingSpinner";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -93,47 +94,41 @@ export default function SuperUsersPage() {
             </div>
 
             {isLoading ? (
-                <div className="text-center py-5">
-                    <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Đang tải...</span>
-                    </div>
-                    <p className="mt-3 text-muted">Đang tải danh sách người dùng...</p>
-                </div>
+                <LoadingSpinner message="Đang tải danh sách người dùng..." />
             ) : (
                 <>
                     <div className="card shadow-sm">
                         <div className="card-body p-0">
                             <div className="table-responsive">
-                                <table className="table table-hover mb-0">
+                                <table className="table table-hover align-middle mb-0">
                                     <thead className="table-light">
                                         <tr>
-                                            <th scope="col" className="p-3" style={{ width: '60px' }}>STT</th>
+                                            <th scope="col" className="p-3">STT</th>
                                             <th scope="col" className="p-3">Tên</th>
                                             <th scope="col" className="p-3">Số điện thoại</th>
                                             <th scope="col" className="p-3">Email</th>
                                             <th scope="col" className="p-3">Địa chỉ</th>
-                                            <th scope="col" className="p-3" style={{ width: '120px' }}>Trạng thái</th>
-                                            <th scope="col" className="p-3" style={{ width: '180px' }}>Ngày tạo</th>
-                                            <th scope="col" className="p-3 text-end" style={{ width: '100px' }}>Hành động</th>
+                                            <th scope="col" className="p-3">Trạng thái</th>
+                                            <th scope="col" className="p-3">Ngày tạo</th>
+                                            <th scope="col" className="p-3 text-end">Hành động</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {users.length === 0 ? (
                                             <tr>
-                                                <td colSpan={8} className="text-center py-5 text-muted">
-                                                    <i className="bi bi-inbox" style={{ fontSize: '3rem' }}></i>
-                                                    <p className="mt-3 mb-0">Không có người dùng nào</p>
+                                                <td colSpan={8} className="text-center p-4 text-muted">
+                                                    Không có người dùng nào
                                                 </td>
                                             </tr>
                                         ) : (
                                             users.map((user, index) => (
                                                 <tr key={user.id}>
-                                                    <td className="p-3 align-middle">
+                                                    <td className="p-3">
                                                         <span className="text-muted">
                                                             {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
                                                         </span>
                                                     </td>
-                                                    <td className="p-3 align-middle">
+                                                    <td className="p-3">
                                                         <div className="d-flex align-items-center">
                                                             {user.avatarUrl ? (
                                                                 <img
@@ -161,30 +156,30 @@ export default function SuperUsersPage() {
                                                             <span className="fw-medium text-dark">{user.fullName || 'N/A'}</span>
                                                         </div>
                                                     </td>
-                                                    <td className="p-3 align-middle">
+                                                    <td className="p-3">
                                                         <span>{user.phoneNumber || 'N/A'}</span>
                                                     </td>
-                                                    <td className="p-3 align-middle">
+                                                    <td className="p-3">
                                                         <span className="text-primary">{user.email}</span>
                                                     </td>
-                                                    <td className="p-3 align-middle">
+                                                    <td className="p-3">
                                                         <span className="text-muted small">
                                                             {user.address || 'N/A'}
                                                         </span>
                                                     </td>
-                                                    <td className="p-3 align-middle">
+                                                    <td className="p-3">
                                                         <span
                                                             className={`badge ${user.status === 'ACTIVE' ? 'bg-success-subtle text-success-emphasis' : 'bg-danger-subtle text-danger-emphasis'}`}
                                                         >
                                                             {user.status === 'ACTIVE' ? 'Đang hoạt động' : 'Vô hiệu hóa'}
                                                         </span>
                                                     </td>
-                                                    <td className="p-3 align-middle">
+                                                    <td className="p-3">
                                                         <span className="text-muted small">
                                                             {formatDate(user.createdAt)}
                                                         </span>
                                                     </td>
-                                                    <td className="p-3 align-middle text-end">
+                                                    <td className="p-3 text-end">
                                                         <button
                                                             onClick={() => handleDelete(user)}
                                                             className="btn btn-sm btn-outline-danger"
