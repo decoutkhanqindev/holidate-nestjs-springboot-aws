@@ -2,10 +2,7 @@ version: '3.8'
 
 services:
   backend:
-    build:
-      context: ..
-      dockerfile: deploy/Dockerfile
-    image: holidate-backend:latest
+    image: 387056640966.dkr.ecr.ap-southeast-1.amazonaws.com/holidate-backend:v1.0.0
     container_name: holidate-backend
     restart: always
     ports:
