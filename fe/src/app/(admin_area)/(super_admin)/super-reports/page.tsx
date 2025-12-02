@@ -780,6 +780,167 @@ export default function SuperAdminReportsPage() {
                     }];
                 }
                 break;
+            case 'users':
+                // Biểu đồ cho thống kê người dùng
+                console.log('[SuperAdminReports] Rendering users chart:', {
+                    hasReportData: !!reportData,
+                    reportDataKeys: reportData ? Object.keys(reportData) : [],
+                    hasCurrentPeriod: 'currentPeriod' in (reportData || {}),
+                    reportData: reportData
+                });
+
+                // Luôn khởi tạo biểu đồ, ngay cả khi không có dữ liệu
+                if ('currentPeriod' in reportData && reportData.currentPeriod) {
+                    const current = reportData.currentPeriod;
+                    const previous = reportData.previousPeriod;
+                    
+                    console.log('[SuperAdminReports] Users data with comparison:', {
+                        current: current,
+                        previous: previous,
+                        newCustomers: current.growth?.newCustomers,
+                        newPartners: current.growth?.newPartners
+                    });
+                    
+                    // Biểu đồ cột so sánh số lượng mới giữa kỳ hiện tại và kỳ trước
+                    chartOptions = {
+                        chart: {
+                            type: 'bar',
+                            toolbar: { show: false },
+                            stacked: false,
+                        },
+                        xaxis: {
+                            categories: ['Khách hàng mới', 'Đối tác mới'],
+                            title: { text: 'Loại người dùng' },
+                        },
+                        yaxis: {
+                            title: { text: 'Số lượng' },
+                            labels: {
+                                formatter: (val: number) => val.toLocaleString('en-US'),
+                            },
+                        },
+                        colors: ['#2563eb', '#10b981'],
+                        legend: { position: 'top' },
+                        plotOptions: {
+                            bar: {
+                                columnWidth: '60%',
+                                borderRadius: 4,
+                            },
+                        },
+                        dataLabels: {
+                            enabled: true,
+                            formatter: (val: number) => val.toLocaleString('en-US'),
+                        },
+                        tooltip: {
+                            y: {
+                                formatter: (val: number) => `${val.toLocaleString('en-US')} người`,
+                            },
+                        },
+                    };
+                    chartSeries = [
+                        {
+                            name: 'Kỳ hiện tại',
+                            data: [
+                                current.growth?.newCustomers || 0,
+                                current.growth?.newPartners || 0,
+                            ],
+                        },
+                        {
+                            name: 'Kỳ trước',
+                            data: [
+                                previous?.growth?.newCustomers || 0,
+                                previous?.growth?.newPartners || 0,
+                            ],
+                        },
+                    ];
+                } else if (reportData && (reportData.growth || reportData.platformTotals)) {
+                    // Không có comparison, chỉ hiển thị kỳ hiện tại
+                    console.log('[SuperAdminReports] Users data without comparison:', {
+                        growth: reportData.growth,
+                        platformTotals: reportData.platformTotals,
+                        newCustomers: reportData.growth?.newCustomers,
+                        newPartners: reportData.growth?.newPartners
+                    });
+
+                    chartOptions = {
+                        chart: {
+                            type: 'bar',
+                            toolbar: { show: false },
+                        },
+                        xaxis: {
+                            categories: ['Khách hàng mới', 'Đối tác mới'],
+                            title: { text: 'Loại người dùng' },
+                        },
+                        yaxis: {
+                            title: { text: 'Số lượng' },
+                            labels: {
+                                formatter: (val: number) => val.toLocaleString('en-US'),
+                            },
+                        },
+                        colors: ['#2563eb'],
+                        plotOptions: {
+                            bar: {
+                                columnWidth: '60%',
+                                borderRadius: 4,
+                            },
+                        },
+                        dataLabels: {
+                            enabled: true,
+                            formatter: (val: number) => val.toLocaleString('en-US'),
+                        },
+                        tooltip: {
+                            y: {
+                                formatter: (val: number) => `${val.toLocaleString('en-US')} người`,
+                            },
+                        },
+                    };
+                    chartSeries = [{
+                        name: 'Số lượng mới',
+                        data: [
+                            reportData.growth?.newCustomers || 0,
+                            reportData.growth?.newPartners || 0,
+                        ],
+                    }];
+                } else {
+                    // Fallback: hiển thị biểu đồ với dữ liệu 0
+                    console.warn('[SuperAdminReports] No users data available, showing empty chart');
+                    chartOptions = {
+                        chart: {
+                            type: 'bar',
+                            toolbar: { show: false },
+                        },
+                        xaxis: {
+                            categories: ['Khách hàng mới', 'Đối tác mới'],
+                            title: { text: 'Loại người dùng' },
+                        },
+                        yaxis: {
+                            title: { text: 'Số lượng' },
+                            labels: {
+                                formatter: (val: number) => val.toLocaleString('en-US'),
+                            },
+                        },
+                        colors: ['#2563eb'],
+                        plotOptions: {
+                            bar: {
+                                columnWidth: '60%',
+                                borderRadius: 4,
+                            },
+                        },
+                        dataLabels: {
+                            enabled: true,
+                            formatter: (val: number) => val.toLocaleString('en-US'),
+                        },
+                        tooltip: {
+                            y: {
+                                formatter: (val: number) => `${val.toLocaleString('en-US')} người`,
+                            },
+                        },
+                    };
+                    chartSeries = [{
+                        name: 'Số lượng mới',
+                        data: [0, 0],
+                    }];
+                }
+                break;
             case 'seasonality':
                 if (reportData?.data) {
                     const data = Array.isArray(reportData.data) ? reportData.data : [];
@@ -1135,6 +1296,77 @@ export default function SuperAdminReportsPage() {
                                 </div>
                             </div>
                         )}
+                    </div>
+                )}
+
+                {/* Summary Cards for Users */}
+                {activeTab === 'users' && (
+                    <div className="row mb-4">
+                        {(() => {
+                            const current = ('currentPeriod' in reportData && reportData.currentPeriod)
+                                ? reportData.currentPeriod
+                                : reportData;
+                            const previous = ('previousPeriod' in reportData && reportData.previousPeriod)
+                                ? reportData.previousPeriod
+                                : null;
+                            
+                            return (
+                                <>
+                                    <div className="col-md-3">
+                                        <div className="card bg-primary text-white">
+                                            <div className="card-body">
+                                                <h6 className="card-subtitle mb-2">Khách hàng mới</h6>
+                                                <h3 className="card-title">
+                                                    {(current?.growth?.newCustomers || 0).toLocaleString('en-US')}
+                                                </h3>
+                                                {previous && (
+                                                    <small className="text-white-50">
+                                                        Kỳ trước: {(previous.growth?.newCustomers || 0).toLocaleString('en-US')}
+                                                    </small>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="col-md-3">
+                                        <div className="card bg-success text-white">
+                                            <div className="card-body">
+                                                <h6 className="card-subtitle mb-2">Đối tác mới</h6>
+                                                <h3 className="card-title">
+                                                    {(current?.growth?.newPartners || 0).toLocaleString('en-US')}
+                                                </h3>
+                                                {previous && (
+                                                    <small className="text-white-50">
+                                                        Kỳ trước: {(previous.growth?.newPartners || 0).toLocaleString('en-US')}
+                                                    </small>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="col-md-3">
+                                        <div className="card bg-info text-white">
+                                            <div className="card-body">
+                                                <h6 className="card-subtitle mb-2">Tổng khách hàng</h6>
+                                                <h3 className="card-title">
+                                                    {(current?.platformTotals?.totalCustomers || 0).toLocaleString('en-US')}
+                                                </h3>
+                                                <small className="text-white-50">Tổng số trên hệ thống</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="col-md-3">
+                                        <div className="card bg-warning text-white">
+                                            <div className="card-body">
+                                                <h6 className="card-subtitle mb-2">Tổng đối tác</h6>
+                                                <h3 className="card-title">
+                                                    {(current?.platformTotals?.totalPartners || 0).toLocaleString('en-US')}
+                                                </h3>
+                                                <small className="text-white-50">Tổng số trên hệ thống</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
+                            );
+                        })()}
                     </div>
                 )}
 

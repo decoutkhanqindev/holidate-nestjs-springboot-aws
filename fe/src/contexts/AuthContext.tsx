@@ -392,7 +392,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 }
             } catch (error: any) {
                 // Log lỗi chi tiết để debug
-                console.error("[Client AuthContext] ❌ Lỗi khi gọi getMyProfile():", error);
+                console.error("[Client AuthContext] ❌ Lỗi khi gọi getMyProfile():", {
+                    message: error?.message,
+                    code: error?.code,
+                    name: error?.name,
+                    status: error?.response?.status,
+                    statusText: error?.response?.statusText,
+                    responseData: error?.response?.data,
+                    config: {
+                        url: error?.config?.url,
+                        baseURL: error?.config?.baseURL,
+                        method: error?.config?.method
+                    },
+                    stack: error?.stack
+                });
                 // LƯU Ý: Cookie HttpOnly không thể đọc từ document.cookie (bảo mật)
                 // Nếu cookie rỗng ở đây là bình thường - browser vẫn gửi HttpOnly cookie tự động
                 

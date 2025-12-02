@@ -1,5 +1,5 @@
 //  services/authService.ts
-import apiClient from './api';
+import apiClient from './apiClient';
 
 // 1 Đăng ký
 export const registerUser = (data: any) => {

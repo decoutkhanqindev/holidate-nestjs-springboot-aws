@@ -1,7 +1,7 @@
 // src/service/apiClient.ts
 
-import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { API_BASE_URL, API_URLS, markProductionDown } from '@/config/api.config';
+import axios, { AxiosInstance, AxiosError } from 'axios';
+import { API_BASE_URL } from '@/config/api.config';
 export interface ApiResponse<T> {
     statusCode: number;
     message: string;
@@ -9,6 +9,11 @@ export interface ApiResponse<T> {
 }
 
 const createAxiosInstance = (): AxiosInstance => {
+    // Log URL đang dùng để debug
+    if (typeof window !== 'undefined') {
+        console.log('[API Client] Đang sử dụng API URL:', API_BASE_URL);
+    }
+
     const instance = axios.create({
         baseURL: API_BASE_URL,
         timeout: 65000,
@@ -24,6 +29,8 @@ const createAxiosInstance = (): AxiosInstance => {
                 const token = localStorage.getItem('accessToken');
                 const url = config.url || '';
 
+                // Log request để debug
+                console.log(`[API Client] Request: ${config.method?.toUpperCase()} ${config.baseURL}${url}`);
 
                 if (token) {
                     config.headers.Authorization = `Bearer ${token}`;
@@ -36,40 +43,20 @@ const createAxiosInstance = (): AxiosInstance => {
 
     instance.interceptors.response.use(
         (response) => {
+            // Log response thành công để debug
+            if (typeof window !== 'undefined') {
+                console.log(`[API Client] Response thành công: ${response.config.method?.toUpperCase()} ${response.config.url}`, {
+                    status: response.status,
+                    statusText: response.statusText,
+                    hasData: !!response.data,
+                    dataKeys: response.data ? Object.keys(response.data) : []
+                });
+            }
             return response;
         },
         async (error: AxiosError) => {
             const url = error.config?.url || '';
             const status = error.response?.status;
-            const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean; _fallbackRetry?: boolean };
-
-
-            if (
-                !originalRequest._fallbackRetry && // Chưa retry fallback
-                originalRequest.baseURL === API_URLS.PRODUCTION && // Đang dùng production
-                typeof window !== 'undefined' && // Chỉ ở client-side
-                (
-                    !error.response || // Network error (không có response)
-                    error.code === 'ECONNABORTED' || // Timeout
-                    error.code === 'ERR_NETWORK' || // Network error
-                    status === 500 || // Server error
-                    status === 502 || // Bad gateway
-                    status === 503 || // Service unavailable
-                    status === 504 // Gateway timeout
-                )
-            ) {
-                markProductionDown();
-
-                // Retry với local API
-                originalRequest._fallbackRetry = true;
-                originalRequest.baseURL = API_URLS.LOCAL;
-
-                try {
-                    return await axios(originalRequest);
-                } catch (fallbackError) {
-                    return Promise.reject(error);
-                }
-            }
 
             // ============================================
             // XỬ LÝ LỖI 401 (Unauthorized)
@@ -83,6 +70,18 @@ const createAxiosInstance = (): AxiosInstance => {
                         localStorage.removeItem('refreshToken');
                     }
                 }
+            }
+
+            // Log tất cả các lỗi để debug
+            if (typeof window !== 'undefined') {
+                console.error(`[API Client] Response lỗi: ${error.config?.method?.toUpperCase()} ${error.config?.url}`, {
+                    status: status,
+                    statusText: error.response?.statusText,
+                    message: error.message,
+                    code: error.code,
+                    responseData: error.response?.data,
+                    baseURL: error.config?.baseURL
+                });
             }
 
             return Promise.reject(error);

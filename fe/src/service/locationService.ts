@@ -1,5 +1,4 @@
-
-//const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';import axios from 'axios';
+import axios from 'axios';
 import { API_BASE_URL } from '@/config/api.config';
 import { hotelService, HotelResponse } from './hotelService';
 export type LocationType =
@@ -45,6 +44,7 @@ const getCities = async (name?: string): Promise<any[]> => {
     let url = `${API_BASE_URL}/location/cities?`;
     if (name) url += `name=${encodeURIComponent(name)}&`;
     try {
+        console.log('[LocationService] Gọi API getCities:', url.replace(/&$/, ''));
         const response = await fetch(url.replace(/&$/, ''), {
             credentials: 'include',
             mode: 'cors',
@@ -52,12 +52,25 @@ const getCities = async (name?: string): Promise<any[]> => {
                 'Content-Type': 'application/json',
             }
         });
+        console.log('[LocationService] Response status:', response.status, response.statusText);
         if (!response.ok) {
+            console.error('[LocationService] Response không OK:', response.status, response.statusText);
             return [];
         }
         const json = await response.json();
+        console.log('[LocationService] Response data:', { hasData: !!json.data, dataLength: json.data?.length });
         return json.data || [];
-    } catch (error) {
+    } catch (error: any) {
+        console.error('[LocationService] Lỗi khi gọi getCities:', {
+            message: error?.message,
+            name: error?.name,
+            code: error?.code,
+            type: error?.type,
+            errno: error?.errno,
+            stack: error?.stack,
+            url: url.replace(/&$/, ''),
+            baseURL: API_BASE_URL
+        });
         return [];
     }
 };
