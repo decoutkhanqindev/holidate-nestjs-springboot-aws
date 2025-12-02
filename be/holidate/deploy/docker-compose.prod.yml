@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   backend:
-    image: 387056640966.dkr.ecr.ap-southeast-1.amazonaws.com/holidate-backend:v1.0.0
+    image: 387056640966.dkr.ecr.ap-southeast-1.amazonaws.com/holidate-backend:v1.0.2
     container_name: holidate-backend
     restart: always
     ports:
@@ -65,6 +65,10 @@ services:
       - VNPAY_HASH_SECRET=${VNPAY_HASH_SECRET}
       - VNPAY_API_URL=${VNPAY_API_URL}
       - VNPAY_REFUND_URL=${VNPAY_REFUND_URL}
+
+      - SERVER_FORWARD_HEADERS_STRATEGY=native
+      - SERVER_TOMCAT_REMOTEIP_INTERNAL_PROXIES=.*
+      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_REDIRECT_URI=https://api.holidate.site/login/oauth2/code/google
     
     # Optional: Add health check
     healthcheck:
