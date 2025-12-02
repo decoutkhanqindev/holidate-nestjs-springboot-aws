@@ -1,22 +1,7 @@
 package com.webapp.holidate.config.security;
 
-import com.webapp.holidate.component.security.CustomAccessDeniedHandler;
-import com.webapp.holidate.component.security.CustomAuthenticationEntryPoint;
-import com.webapp.holidate.component.security.CustomJwtDecoder;
-import com.webapp.holidate.component.security.filter.CustomCookieAuthenticationFilter;
-import com.webapp.holidate.component.security.filter.CustomJwtAuthenticationFilter;
-import com.webapp.holidate.component.security.oauth2.CustomOAuth2AuthenticationFailureHandler;
-import com.webapp.holidate.component.security.oauth2.CustomOAuth2AuthenticationSuccessHandler;
-import com.webapp.holidate.constants.AppProperties;
-import com.webapp.holidate.constants.api.endpoint.*;
-import com.webapp.holidate.constants.api.endpoint.KnowledgeBaseEndpoints;
-import com.webapp.holidate.constants.api.endpoint.auth.AuthEndpoints;
-import com.webapp.holidate.service.auth.GoogleService;
-import com.webapp.holidate.type.user.RoleType;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import lombok.experimental.NonFinal;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,7 +21,36 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
+import com.webapp.holidate.component.security.CustomAccessDeniedHandler;
+import com.webapp.holidate.component.security.CustomAuthenticationEntryPoint;
+import com.webapp.holidate.component.security.CustomJwtDecoder;
+import com.webapp.holidate.component.security.filter.CustomCookieAuthenticationFilter;
+import com.webapp.holidate.component.security.filter.CustomJwtAuthenticationFilter;
+import com.webapp.holidate.component.security.oauth2.CustomOAuth2AuthenticationFailureHandler;
+import com.webapp.holidate.component.security.oauth2.CustomOAuth2AuthenticationSuccessHandler;
+import com.webapp.holidate.constants.AppProperties;
+import com.webapp.holidate.constants.api.endpoint.AccommodationEndpoints;
+import com.webapp.holidate.constants.api.endpoint.AmenityEndpoints;
+import com.webapp.holidate.constants.api.endpoint.BookingEndpoints;
+import com.webapp.holidate.constants.api.endpoint.CommonEndpoints;
+import com.webapp.holidate.constants.api.endpoint.DashboardEndpoints;
+import com.webapp.holidate.constants.api.endpoint.DiscountEndpoints;
+import com.webapp.holidate.constants.api.endpoint.DocumentEndpoints;
+import com.webapp.holidate.constants.api.endpoint.ImageEndpoints;
+import com.webapp.holidate.constants.api.endpoint.KnowledgeBaseEndpoints;
+import com.webapp.holidate.constants.api.endpoint.LocationEndpoints;
+import com.webapp.holidate.constants.api.endpoint.PolicyEndpoints;
+import com.webapp.holidate.constants.api.endpoint.ReportEndpoints;
+import com.webapp.holidate.constants.api.endpoint.SpecialDayEndpoints;
+import com.webapp.holidate.constants.api.endpoint.UserEndpoints;
+import com.webapp.holidate.constants.api.endpoint.auth.AuthEndpoints;
+import com.webapp.holidate.service.auth.GoogleService;
+import com.webapp.holidate.type.user.RoleType;
+
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 
 @Configuration
 @EnableWebSecurity
