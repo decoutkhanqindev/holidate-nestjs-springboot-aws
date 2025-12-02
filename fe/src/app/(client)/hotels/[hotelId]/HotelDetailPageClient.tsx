@@ -1923,105 +1923,82 @@ export default function HotelDetailPageClient({
                 let verifiedReviews: Review[] = [];
                 const shouldVerify = reviewsResult.data.length > 0; // Chỉ verify nếu có reviews
 
-                // Filter reviews ngay lập tức dựa trên hotelId từ review object (nếu có)
-                // Nếu review có hotelId và không khớp → loại bỏ ngay
-                let preFilteredReviews = reviewsResult.data.filter(review => {
-                    // Nếu review có hotelId trong object, kiểm tra ngay
-                    if (review.hotelId && review.hotelId !== '' && review.hotelId !== 'N/A') {
-                        const matches = review.hotelId === hotelIdStr || review.hotelId === currentHotelId;
-                        if (!matches) {
-                            console.warn('[HotelDetailPage] ⚠️ Review có hotelId không khớp, loại bỏ:', {
-                                reviewId: review.id,
-                                reviewHotelId: review.hotelId,
-                                expectedHotelId: hotelIdStr
-                            });
-                            return false;
-                        }
-                    }
-                    // Nếu không có hotelId trong review object, cần verify
-                    return true;
-                });
-
-                console.log('[HotelDetailPage] Reviews sau pre-filter:', {
-                    original: reviewsResult.data.length,
-                    filtered: preFilteredReviews.length,
-                    hotelId: hotelIdStr
-                });
-
-                if (preFilteredReviews.length > 0) {
-                    // Verify tất cả reviews còn lại (những reviews không có hotelId trong object)
-                    // Giới hạn verify tối đa 10 reviews để tránh performance issue
-                    const reviewsToVerify = preFilteredReviews
-                        .filter(r => !r.hotelId || r.hotelId === '' || r.hotelId === 'N/A')
-                        .slice(0, Math.min(10, preFilteredReviews.length));
+                if (shouldVerify) {
+                    // Chỉ verify 1-2 reviews đầu tiên để tránh performance issue
+                    const reviewsToVerify = reviewsResult.data.slice(0, Math.min(2, reviewsResult.data.length));
 
                     console.log('[HotelDetailPage] Verifying reviews hotelId...', {
-                        total: preFilteredReviews.length,
+                        total: reviewsResult.data.length,
                         toVerify: reviewsToVerify.length,
                         hotelId: hotelIdStr
                     });
 
-                    if (reviewsToVerify.length > 0) {
-                        try {
-                            const { getReviewById } = await import('@/service/reviewService');
+                    try {
+                        const { getReviewById } = await import('@/service/reviewService');
 
-                            const verificationResults = await Promise.all(
-                                reviewsToVerify.map(async (review) => {
-                                    try {
-                                        const detail = await getReviewById(review.id);
-                                        const reviewHotelId = detail.hotelId;
+                        const verificationResults = await Promise.all(
+                            reviewsToVerify.map(async (review) => {
+                                try {
+                                    const detail = await getReviewById(review.id);
+                                    const reviewHotelId = detail.hotelId;
 
-                                        if (reviewHotelId && reviewHotelId !== '' && reviewHotelId !== 'N/A') {
-                                            const matches = reviewHotelId === hotelIdStr || reviewHotelId === currentHotelId;
-                                            if (!matches) {
-                                                console.error('[HotelDetailPage] ❌ Review belongs to DIFFERENT hotel!', {
-                                                    reviewId: review.id,
-                                                    reviewHotelId,
-                                                    expectedHotelId: hotelIdStr,
-                                                    currentHotelId
-                                                });
-                                            }
-                                            return { review, verified: matches, hotelId: reviewHotelId };
+                                    if (reviewHotelId && reviewHotelId !== '' && reviewHotelId !== 'N/A') {
+                                        const matches = reviewHotelId === hotelIdStr || reviewHotelId === currentHotelId;
+                                        if (!matches) {
+                                            console.error('[HotelDetailPage] ❌ Review belongs to DIFFERENT hotel!', {
+                                                reviewId: review.id,
+                                                reviewHotelId,
+                                                expectedHotelId: hotelIdStr,
+                                                currentHotelId
+                                            });
                                         }
-                                        // Nếu không có hotelId trong detail, trust backend
-                                        return { review, verified: true, hotelId: null };
-                                    } catch (err) {
-                                        // Nếu lỗi khi verify, trust backend
-                                        return { review, verified: true, hotelId: null };
+                                        return { review, verified: matches, hotelId: reviewHotelId };
                                     }
-                                })
+                                    // Nếu không có hotelId trong detail, trust backend
+                                    return { review, verified: true, hotelId: null };
+                                } catch (err) {
+                                    // Nếu lỗi khi verify, trust backend
+                                    return { review, verified: true, hotelId: null };
+                                }
+                            })
+                        );
+
+                        // Kiểm tra xem có review nào không thuộc hotel này không
+                        const invalidReviews = verificationResults.filter(r => !r.verified);
+                        if (invalidReviews.length > 0) {
+                            console.error('[HotelDetailPage] ❌ Backend filter is WRONG! Found reviews from different hotels!', {
+                                invalidCount: invalidReviews.length,
+                                hotelId: hotelIdStr,
+                                invalidReviews: invalidReviews.map(r => ({
+                                    id: r.review.id,
+                                    hotelId: r.hotelId
+                                }))
+                            });
+
+                            // Nếu có review sai, chỉ lấy những reviews đã verify đúng
+                            // Nếu không có review nào đúng → verifiedReviews = [] (sẽ hiển thị "Chưa có đánh giá")
+                            const validReviewIds = new Set(
+                                verificationResults
+                                    .filter(r => r.verified)
+                                    .map(r => r.review.id)
                             );
 
-                            // Kiểm tra xem có review nào không thuộc hotel này không
-                            const invalidReviews = verificationResults.filter(r => !r.verified);
-                            if (invalidReviews.length > 0) {
-                                console.error('[HotelDetailPage] ❌ Backend filter is WRONG! Found reviews from different hotels!', {
-                                    invalidCount: invalidReviews.length,
-                                    hotelId: hotelIdStr,
-                                    invalidReviews: invalidReviews.map(r => ({
-                                        id: r.review.id,
-                                        hotelId: r.hotelId
-                                    }))
-                                });
+                            // Chỉ lấy reviews đã verify đúng
+                            verifiedReviews = reviewsResult.data.filter(r => validReviewIds.has(r.id));
 
-                                // Loại bỏ các reviews sai
-                                const invalidReviewIds = new Set(invalidReviews.map(r => r.review.id));
-                                verifiedReviews = preFilteredReviews.filter(r => !invalidReviewIds.has(r.id));
-                            } else {
-                                // Tất cả reviews đã verify đều đúng, trust backend cho các reviews còn lại
-                                verifiedReviews = preFilteredReviews;
-                            }
-                        } catch (err) {
-                            // Nếu lỗi khi verify, trust pre-filtered reviews
-                            verifiedReviews = preFilteredReviews;
+                            // Nếu tất cả reviews đều sai → verifiedReviews = [] → sẽ hiển thị "Chưa có đánh giá"
+                            // Điều này đúng vì backend filter sai, không thể trust được
+                        } else {
+                            // Tất cả reviews đã verify đều đúng, trust backend cho các reviews còn lại
+                            verifiedReviews = reviewsResult.data;
                         }
-                    } else {
-                        // Tất cả reviews đã có hotelId và đã được filter đúng
-                        verifiedReviews = preFilteredReviews;
+                    } catch (err) {
+                        // Nếu lỗi khi verify, trust backend
+                        verifiedReviews = reviewsResult.data;
                     }
                 } else {
-                    // Không có reviews sau pre-filter
-                    verifiedReviews = [];
+                    // Không có reviews, không cần verify
+                    verifiedReviews = reviewsResult.data;
                 }
 
                 console.log('[HotelDetailPage] Reviews after verification:', {

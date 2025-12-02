@@ -167,24 +167,9 @@ export async function getReviews(params: GetReviewsParams = {}): Promise<Paginat
         if (params.sortDir) queryParams.sortDir = params.sortDir;
 
         // Log query params để debug
-        console.log('[ReviewService] Gọi API getReviews với params:', {
-            hotelId: queryParams.hotelId || 'MISSING',
-            userId: queryParams.userId || 'N/A',
-            bookingId: queryParams.bookingId || 'N/A',
-            page: queryParams.page || 0,
-            size: queryParams.size || 10,
-            allParams: queryParams
-        });
 
         const response = await apiClient.get<ApiResponse<PaginatedReviewResponse>>('/reviews', {
             params: queryParams
-        });
-
-        console.log('[ReviewService] API response:', {
-            statusCode: response.data?.statusCode,
-            totalItems: response.data?.data?.totalItems,
-            contentLength: response.data?.data?.content?.length,
-            hotelIdRequested: queryParams.hotelId
         });
 
         if (response.data?.statusCode === 200 && response.data?.data) {

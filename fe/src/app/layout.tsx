@@ -4,7 +4,6 @@ import "./globals.css";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-datepicker/dist/react-datepicker.css';
 import BootstrapClient from "@/components/BootstrapClient";
-import ScriptErrorHandler from "@/components/ScriptErrorHandler";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,7 +20,6 @@ export default function RootLayout({
   return (
     <html lang="vi">
       <body className={inter.className}>
-        <ScriptErrorHandler />
         {children}
         <BootstrapClient />
       </body>

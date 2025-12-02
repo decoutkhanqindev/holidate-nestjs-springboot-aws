@@ -53,17 +53,8 @@ export interface UpdateUserProfilePayload {
  * Lấy thông tin user theo ID (để load profile)
  */
 export async function getUserProfile(userId: string): Promise<UserProfileResponse> {
-    // Validate userId
-    if (!userId || userId.trim() === '' || userId === 'undefined' || userId === 'null') {
-        console.error('[UserService] ❌ userId không hợp lệ:', userId);
-        throw new Error('User ID không hợp lệ');
-    }
-
     try {
-        const url = `${baseURL}/${userId}`;
-        console.log('[UserService] Gọi API getUserProfile:', url);
-        
-        const response = await apiClient.get<ApiResponse<UserProfileResponse>>(url);
+        const response = await apiClient.get<ApiResponse<UserProfileResponse>>(`${baseURL}/${userId}`);
 
         if (response.data?.statusCode === 200 && response.data?.data) {
             return response.data.data;
@@ -71,11 +62,6 @@ export async function getUserProfile(userId: string): Promise<UserProfileRespons
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error('[UserService] ❌ Lỗi khi gọi getUserProfile:', {
-            userId,
-            error: error.message,
-            response: error.response?.data
-        });
         const errorMessage = error.response?.data?.message
             || error.message
             || 'Không thể tải thông tin người dùng';

@@ -151,4 +151,3 @@ Production API (https://api.holidate.site)
 2. **Monitor**: Xem console logs để biết khi nào fallback xảy ra
 3. **Backend Local**: Luôn giữ backend local sẵn sàng khi production bảo trì
 
-

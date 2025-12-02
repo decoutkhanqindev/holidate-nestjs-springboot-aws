@@ -9,19 +9,9 @@ export interface ApiResponse<T> {
 }
 
 const createAxiosInstance = (): AxiosInstance => {
-    // Validate API_BASE_URL không phải UUID hoặc undefined
-    if (!API_BASE_URL || API_BASE_URL.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-        console.error('[API Client] ❌ API_BASE_URL không hợp lệ:', API_BASE_URL);
-        throw new Error(`API_BASE_URL không hợp lệ: ${API_BASE_URL}`);
-    }
-
-    if (typeof window !== 'undefined') {
-        console.log('[API Client] Đang khởi tạo với baseURL:', API_BASE_URL);
-    }
-
     const instance = axios.create({
         baseURL: API_BASE_URL,
-        timeout: 15000, // Giảm từ 65s xuống 15s để tránh chờ quá lâu
+        timeout: 65000,
         withCredentials: true, // QUAN TRỌNG: Cho phép gửi cookies (cần thiết cho OAuth)
         headers: {
             'Content-Type': 'application/json',
@@ -33,21 +23,7 @@ const createAxiosInstance = (): AxiosInstance => {
             if (typeof window !== 'undefined') {
                 const token = localStorage.getItem('accessToken');
                 const url = config.url || '';
-                const fullUrl = `${config.baseURL || API_BASE_URL}${url}`;
 
-                // Validate URL không chứa UUID làm baseURL
-                if (config.baseURL && config.baseURL.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-                    console.error('[API Client] ❌ baseURL là UUID, không hợp lệ:', config.baseURL);
-                    return Promise.reject(new Error(`Invalid baseURL: ${config.baseURL}`));
-                }
-
-                // Validate URL không chứa undefined/null
-                if (url.includes('undefined') || url.includes('null')) {
-                    console.error('[API Client] ❌ URL chứa undefined/null:', fullUrl);
-                    return Promise.reject(new Error(`Invalid URL contains undefined/null: ${fullUrl}`));
-                }
-
-                console.log(`[API Client] Request: ${config.method?.toUpperCase()} ${fullUrl}`);
 
                 if (token) {
                     config.headers.Authorization = `Bearer ${token}`;

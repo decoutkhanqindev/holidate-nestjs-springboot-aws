@@ -133,7 +133,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             // Điều này đảm bảo token được sync vào localStorage ngay sau OAuth redirect
             const oauthLoginInProgress = sessionStorage.getItem('oauthLoginInProgress');
             const isOAuthLogin = oauthLoginInProgress === 'true';
-
+            
             if (isOAuthLogin) {
                 // Xóa các flag có thể block OAuth check
                 sessionStorage.removeItem('skipOAuthCheck');
@@ -152,7 +152,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 return; // Không kiểm tra session nữa
             }
 
-
+            // BƯỚC 1: Kiểm tra localStorage-based session (email login) TRƯỚC
+            // QUAN TRỌNG: Nếu có token hợp lệ trong localStorage VÀ không phải OAuth login, dùng nó
+            // Nếu đang OAuth login, bỏ qua localStorage và check cookie OAuth trực tiếp
             // Điều này đảm bảo sau OAuth redirect, code luôn check cookie để sync token
             const tokenFromStorage = localStorage.getItem('accessToken');
             const userIdFromStorage = localStorage.getItem('userId');
@@ -191,16 +193,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                         setIsLoggedIn(true);
 
                         // Load avatarUrl từ profile (async, không block)
-                        if (userIdFromStorage && userIdFromStorage.trim() !== '' && userIdFromStorage !== 'undefined' && userIdFromStorage !== 'null') {
-                            getUserProfile(userIdFromStorage).then(profile => {
-                                setUser(prevUser => ({
-                                    ...prevUser!,
-                                    avatarUrl: profile.avatarUrl,
-                                }));
-                            }).catch(() => {
-                                // Silent fail - avatar sẽ load sau
-                            });
-                        }
+                        getUserProfile(userIdFromStorage).then(profile => {
+                            setUser(prevUser => ({
+                                ...prevUser!,
+                                avatarUrl: profile.avatarUrl,
+                            }));
+                        }).catch(() => {
+                            // Silent fail - avatar sẽ load sau
+                        });
 
                         setIsLoading(false);
                         return; // QUAN TRỌNG: Return ngay khi đã restore session từ localStorage
@@ -222,8 +222,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 // Chỉ check cookie OAuth để sync token vào localStorage
             }
 
-
-
+            // BƯỚC 2: Kiểm tra cookie-based session (OAuth)
+            // QUAN TRỌNG: Sau OAuth redirect, token chỉ có trong cookie
+            // Cần check cookie và sync token vào localStorage
+            
+            // QUAN TRỌNG: Chỉ check OAuth cookie nếu:
+            // 1. Đang OAuth login (isOAuthLogin = true) - bắt buộc check cookie
+            // 2. HOẶC không có token hợp lệ trong localStorage (để sync từ cookie)
+            // VÀ không vừa logout (để tránh tự động login lại)
+            
             // Kiểm tra xem có token hợp lệ trong localStorage không (nếu không phải OAuth login)
             let shouldCheckOAuthCookie = false;
             if (isOAuthLogin) {
@@ -262,7 +269,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 return;
             }
 
-
+            // QUAN TRỌNG: Kiểm tra xem có timestamp của lần logout gần nhất không
             // Nếu logout gần đây (trong vòng 5 giây), không tự động login lại
             // LƯU Ý: Khi login bằng Google OAuth, flag này sẽ được xóa trong handleGoogleLogin
             const lastLogoutTime = sessionStorage.getItem('lastLogoutTime');
@@ -282,11 +289,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             // Nếu không có token hợp lệ và không vừa logout, check OAuth cookie
 
             try {
-
+                // QUAN TRỌNG: Gọi getMyProfile() để lấy token từ cookie (OAuth)
+                // getMyProfile() có thể dùng cookie (OAuth) hoặc Authorization header
+                // Nếu có cookie OAuth, backend sẽ trả về token và ta sẽ sync vào localStorage
+                // Điều này đảm bảo token trong cookie được sync vào localStorage để apiClient có thể dùng
+                // 
                 // LƯU Ý: Cookie HttpOnly không thể đọc từ document.cookie (bảo mật)
                 // Nhưng với withCredentials: true, browser sẽ tự động gửi cookie trong request
-
-
+                
+                // QUAN TRỌNG: Nếu vừa OAuth redirect, đợi LÂU HƠN để cookie được set đầy đủ và backend xử lý xong
+                // Backend có thể cần thời gian để:
+                // 1. Xử lý OAuth callback (CustomOAuth2AuthenticationSuccessHandler)
+                // 2. Tạo/tìm user trong database (GoogleService)
+                // 3. Lưu authInfo và refreshToken
+                // 4. Set cookie với accessToken
                 // 5. Xử lý CustomCookieAuthenticationFilter khi gọi /auth/me
                 if (isOAuthLogin) {
                     await new Promise(resolve => setTimeout(resolve, 3000));
@@ -294,9 +310,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     // Nếu không phải OAuth login nhưng check cookie, đợi một chút
                     await new Promise(resolve => setTimeout(resolve, 500));
                 }
-
+                
                 console.log("[Client AuthContext] 🔍 Đang gọi getMyProfile() để check OAuth cookie và sync token...");
-
+                
                 const meResponse = await getMyProfile();
                 const meData = meResponse.data.data;
 
@@ -346,18 +362,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                         }
 
                         // Load avatarUrl từ profile
-                        if (meData.id && meData.id.trim() !== '' && meData.id !== 'undefined' && meData.id !== 'null') {
-                            setTimeout(() => {
-                                getUserProfile(meData.id).then(profile => {
-                                    setUser(prevUser => ({
-                                        ...prevUser!,
-                                        avatarUrl: profile.avatarUrl,
-                                    }));
-                                }).catch(() => {
-                                    // Silent fail - avatar sẽ load sau
-                                });
-                            }, 50);
-                        }
+                        setTimeout(() => {
+                            getUserProfile(meData.id).then(profile => {
+                                setUser(prevUser => ({
+                                    ...prevUser!,
+                                    avatarUrl: profile.avatarUrl,
+                                }));
+                            }).catch(() => {
+                                // Silent fail - avatar sẽ load sau
+                            });
+                        }, 50);
 
                         setIsLoading(false);
                         return;
@@ -381,10 +395,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 console.error("[Client AuthContext] ❌ Lỗi khi gọi getMyProfile():", error);
                 // LƯU Ý: Cookie HttpOnly không thể đọc từ document.cookie (bảo mật)
                 // Nếu cookie rỗng ở đây là bình thường - browser vẫn gửi HttpOnly cookie tự động
-
+                
                 if (error?.response?.status === 401) {
                 } else if (error?.response?.status === 500) {
-
+                    
                     // QUAN TRỌNG: Chỉ retry nếu đang OAuth login VÀ không có token hợp lệ trong localStorage
                     // Nếu đã có token hợp lệ trong localStorage, không cần retry OAuth cookie
                     const hasValidTokenInStorage = tokenFromStorage && userIdFromStorage;
@@ -417,37 +431,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     // Vì lỗi 500 sau OAuth redirect thường là do cookie chưa được set đầy đủ hoặc backend chưa xử lý xong
                     if (shouldRetryOAuth && isOAuthLogin) {
                         console.log("[Client AuthContext] 🔄 Retry getMyProfile() với multiple attempts vì OAuth login...");
-
+                        
                         // Retry với nhiều attempts hơn và delay dài hơn cho OAuth
                         let retryAttempts = 5; // Tăng số lần retry
                         let retryDelay = 3000; // Bắt đầu với 3s (dài hơn nữa, vì cookie đã có token nhưng backend chưa sẵn sàng)
-
+                        
                         for (let attempt = 1; attempt <= retryAttempts; attempt++) {
                             try {
                                 await new Promise(resolve => setTimeout(resolve, retryDelay));
-
+                                
                                 const retryResponse = await getMyProfile();
                                 const retryData = retryResponse.data.data;
-
+                            
                                 if (retryData && retryData.id && retryData.accessToken) {
-
+                                    
                                     const decodedToken = jwtDecode<any>(retryData.accessToken);
                                     if (decodedToken.exp && decodedToken.exp * 1000 < Date.now()) {
                                         sessionStorage.removeItem('oauthLoginInProgress');
                                         setIsLoading(false);
                                         return;
                                     }
-
+                                    
                                     // QUAN TRỌNG: Lưu token vào localStorage ngay
                                     localStorage.setItem('accessToken', retryData.accessToken);
                                     if (retryData.refreshToken) {
                                         localStorage.setItem('refreshToken', retryData.refreshToken);
                                     }
                                     localStorage.setItem('userId', retryData.id);
-
+                                    
                                     // Xóa flag OAuth sau khi sync token thành công
                                     sessionStorage.removeItem('oauthLoginInProgress');
-
+                                    
                                     const hasRedirected = processTokenResponse({
                                         id: retryData.id,
                                         email: retryData.email,
@@ -456,13 +470,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                                         accessToken: retryData.accessToken,
                                         refreshToken: retryData.refreshToken || '',
                                     });
-
+                                    
                                     const oauthReturnUrl = sessionStorage.getItem('oauthReturnUrl');
                                     if (oauthReturnUrl && !hasRedirected) {
                                         sessionStorage.removeItem('oauthReturnUrl');
                                         router.push(oauthReturnUrl);
                                     }
-
+                                    
                                     setIsLoading(false);
                                     return; // Success, exit retry loop
                                 }
@@ -474,12 +488,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                                     message: errorMessage,
                                     data: retryError?.response?.data
                                 });
-
+                                
                                 // Nếu không phải lỗi 500, không retry nữa (có thể là lỗi khác)
                                 if (errorStatus !== 500 && errorStatus !== undefined) {
                                     break;
                                 }
-
+                                
                                 // Nếu không phải lần retry cuối cùng, tăng delay và tiếp tục
                                 if (attempt < retryAttempts) {
                                     // Tăng delay với exponential backoff, nhưng max là 5s
@@ -487,7 +501,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                                 } else {
                                     console.error("[Client AuthContext] ⚠️ ĐÂY LÀ LỖI BACKEND (500 Internal Server Error)");
                                     console.error("[Client AuthContext]   1. Backend có lỗi khi xử lý OAuth callback (NullPointerException, v.v.)");
-
+                                    
                                     // Hiển thị thông báo cho user
                                     if (typeof window !== 'undefined') {
                                         alert('⚠️ Lỗi đăng nhập: Backend đang gặp sự cố. Vui lòng:\n\n1. Refresh trang và thử lại\n2. Nếu vẫn lỗi, vui lòng liên hệ admin để kiểm tra backend logs\n3. Hoặc thử đăng nhập bằng email/password thay vì Google');
@@ -499,7 +513,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                         // Nếu không retry được nhưng đang OAuth login, log warning
                     }
                 }
-
+                
                 // Xóa flag OAuth login nếu có lỗi
                 if (isOAuthLogin) {
                     sessionStorage.removeItem('oauthLoginInProgress');
@@ -532,7 +546,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (!hasRedirected) {
                 // Lấy URL hiện tại
                 const currentPath = window.location.pathname;
-
+                
                 // Nếu đang ở trang booking, giữ lại trang đó (không redirect)
                 if (currentPath.startsWith('/booking')) {
                     // Không redirect, chỉ cập nhật state
