@@ -1,5 +1,13 @@
 package com.webapp.holidate.component.security.oauth2;
 
+import java.io.IOException;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
+import org.springframework.stereotype.Component;
+
 import com.nimbusds.jose.JOSEException;
 import com.webapp.holidate.constants.AppProperties;
 import com.webapp.holidate.entity.user.User;
@@ -10,19 +18,13 @@ import com.webapp.holidate.repository.user.UserRepository;
 import com.webapp.holidate.service.auth.AuthService;
 import com.webapp.holidate.type.ErrorType;
 import com.webapp.holidate.utils.ResponseUtil;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
-import org.springframework.stereotype.Component;
-
-import java.io.IOException;
 
 @Component
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -71,7 +73,9 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SimpleUrlAuthentic
     authInfoRepository.save(authInfo);
 
     int maxAge = (int) (refreshTokenExpirationMillis / 1000);
-    ResponseUtil.handleAuthCookiesResponse(response, tokenCookieName, accessToken, maxAge);
+    // Set cookie domain to .holidate.site for production
+    String cookieDomain = frontendUrl != null && frontendUrl.contains("holidate.site") ? ".holidate.site" : null;
+    ResponseUtil.handleAuthCookiesResponse(response, tokenCookieName, accessToken, maxAge, cookieDomain);
 
     getRedirectStrategy().sendRedirect(request, response, frontendUrl);
   }

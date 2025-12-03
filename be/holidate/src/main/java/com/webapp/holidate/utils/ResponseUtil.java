@@ -11,7 +11,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.webapp.holidate.dto.response.ApiResponse;
 import com.webapp.holidate.type.ErrorType;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 
 public class ResponseUtil {
@@ -42,13 +41,23 @@ public class ResponseUtil {
   }
 
   public static void handleAuthCookiesResponse(HttpServletResponse response, String name, String token, int maxAge) {
-    ResponseCookie cookie = ResponseCookie.from(name, token)
+    handleAuthCookiesResponse(response, name, token, maxAge, null);
+  }
+
+  public static void handleAuthCookiesResponse(HttpServletResponse response, String name, String token, int maxAge, String domain) {
+    ResponseCookie.ResponseCookieBuilder cookieBuilder = ResponseCookie.from(name, token)
             .httpOnly(true)
             .secure(true)
             .path("/")
             .maxAge(maxAge)
-            .sameSite("None")
-            .build();
+            .sameSite("None");
+    
+    // Set domain for production (holidate.site)
+    if (domain != null && !domain.isEmpty()) {
+      cookieBuilder.domain(domain);
+    }
+    
+    ResponseCookie cookie = cookieBuilder.build();
     response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
   }
 }

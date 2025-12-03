@@ -1,5 +1,14 @@
 package com.webapp.holidate.controller.auth;
 
+import java.text.ParseException;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.nimbusds.jose.JOSEException;
 import com.webapp.holidate.component.security.filter.CustomAuthenticationToken;
 import com.webapp.holidate.constants.AppProperties;
@@ -15,16 +24,13 @@ import com.webapp.holidate.dto.response.user.UserResponse;
 import com.webapp.holidate.service.auth.AuthService;
 import com.webapp.holidate.service.auth.EmailService;
 import com.webapp.holidate.utils.ResponseUtil;
+
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.*;
-
-import java.text.ParseException;
 
 @RestController
 @RequestMapping(AuthEndpoints.AUTH)
@@ -37,6 +43,10 @@ public class AuthController {
   @NonFinal
   @Value(AppProperties.JWT_TOKEN_COOKIE_NAME)
   String tokenCookieName;
+
+  @NonFinal
+  @Value(AppProperties.FRONTEND_URL)
+  String frontendUrl;
 
   @PostMapping(AuthEndpoints.REGISTER)
   public ApiResponse<UserResponse> register(@RequestBody @Valid RegisterRequest request) {
@@ -79,7 +89,9 @@ public class AuthController {
     LogoutResponse response = authService.logout(request);
 
     // clear the token cookie
-    ResponseUtil.handleAuthCookiesResponse(httpServletResponse, tokenCookieName, null, 0);
+    // Set cookie domain to .holidate.site for production
+    String cookieDomain = frontendUrl != null && frontendUrl.contains("holidate.site") ? ".holidate.site" : null;
+    ResponseUtil.handleAuthCookiesResponse(httpServletResponse, tokenCookieName, null, 0, cookieDomain);
 
     return ApiResponse.<LogoutResponse>builder()
       .data(response)
