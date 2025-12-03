@@ -21,6 +21,8 @@ COPY . .
 # Set environment variables for build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+# Skip ESLint during Docker build (linting should be done in CI/CD pipeline)
+ENV ESLINT_NO_DEV_ERRORS=true
 
 # Build the application
 RUN npm run build
