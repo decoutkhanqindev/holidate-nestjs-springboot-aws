@@ -3,12 +3,12 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/Admin/AuthContext_Admin/AuthContextAdmin';
 import { loginAdmin } from '@/lib/AdminAPI/adminAuthService';
 
-export default function AdminLoginPage() {
+function AdminLoginForm() {
     const auth = useAuth();
     const searchParams = useSearchParams();
     const redirectMessage = searchParams.get('message');
@@ -125,5 +125,27 @@ export default function AdminLoginPage() {
                 </form>
             </div>
         </div>
+    );
+}
+
+export default function AdminLoginPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-pink-100">
+                <div className="w-full max-w-md rounded-3xl bg-white p-10 shadow-2xl border border-gray-100">
+                    <div className="flex flex-col items-center mb-8">
+                        <div className="bg-gradient-to-br from-blue-400 to-pink-400 p-3 rounded-full mb-3 shadow-lg">
+                            <svg width="40" height="40" fill="none" viewBox="0 0 24 24"><path fill="#fff" d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.418 0-8 1.79-8 4v2a1 1 0 001 1h14a1 1 0 001-1v-2c0-2.21-3.582-4-8-4z" /></svg>
+                        </div>
+                        <h2 className="text-4xl font-extrabold mb-2 tracking-wide bg-gradient-to-r from-blue-600 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
+                            Trang Quản Trị
+                        </h2>
+                        <span className="text-gray-500 text-sm">Đang tải...</span>
+                    </div>
+                </div>
+            </div>
+        }>
+            <AdminLoginForm />
+        </Suspense>
     );
 }
