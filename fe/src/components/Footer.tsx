@@ -38,7 +38,7 @@ export default function Footer() {
                             <li className="mb-2"><Link href="/about" className="text-secondary text-decoration-none">Giới thiệu</Link></li>
                             <li className="mb-2"><Link href="/hotels" className="text-secondary text-decoration-none">Khách sạn</Link></li>
                             <li className="mb-2"><Link href="/help" className="text-secondary text-decoration-none">Trung tâm trợ giúp</Link></li>
-                            <li className="mb-2"><Link href="/careers" className="text-secondary text-decoration-none">Tuyển dụng</Link></li>
+                            <li className="mb-2"><Link href="/contact/tuyen-dung-doi-tac" className="text-secondary text-decoration-none">Tuyển dụng</Link></li>
                             <li className="mb-2"><Link href="/contact" className="text-secondary text-decoration-none">Liên hệ</Link></li>
                         </ul>
                     </div>
