@@ -1,10 +1,8 @@
+version: '3.8'
+
 services:
   frontend:
-    build:
-      context: ..
-      dockerfile: deploy/Dockerfile
-      args:
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+    image: 387056640966.dkr.ecr.ap-southeast-1.amazonaws.com/holidate-frontend:v1.0.0
     container_name: holidate-frontend
     restart: always
     ports:
