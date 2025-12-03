@@ -1,6 +1,8 @@
 //  src/app/(admin)/login/page.tsx
 'use client';
 
+export const dynamic = "force-dynamic";
+
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/Admin/AuthContext_Admin/AuthContextAdmin';

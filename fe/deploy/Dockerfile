@@ -24,6 +24,10 @@ ENV NODE_ENV=production
 # Skip ESLint during Docker build (linting should be done in CI/CD pipeline)
 ENV ESLINT_NO_DEV_ERRORS=true
 
+# Build arguments for Next.js public environment variables
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+
 # Build the application
 RUN npm run build
 
