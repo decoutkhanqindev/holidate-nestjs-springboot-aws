@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   backend:
-    image: 387056640966.dkr.ecr.ap-southeast-1.amazonaws.com/holidate-backend:v1.0.3
+    image: 387056640966.dkr.ecr.ap-southeast-1.amazonaws.com/holidate-backend:v1.0.4
     container_name: holidate-backend
     restart: always
     ports:
