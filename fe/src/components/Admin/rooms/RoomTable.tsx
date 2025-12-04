@@ -30,7 +30,32 @@ export default function RoomsTable({ rooms, hotelId }: { rooms: Room[], hotelId:
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{room.name}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{room.type}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{room.image ? <img src={room.image} alt={room.name} className="h-12 w-12 object-cover rounded-md" /> : 'Chưa có hình ảnh'}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{room.price.toLocaleString('vi-VN')} VNĐ</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                {(() => {
+                                    const basePrice = room.basePricePerNight ?? room.price ?? 0;
+                                    const currentPrice = room.currentPricePerNight ?? basePrice;
+                                    const hasDiscount = basePrice > currentPrice && basePrice > 0 && currentPrice > 0;
+                                    const discountPercentage = hasDiscount ? Math.round((1 - currentPrice / basePrice) * 100) : 0;
+                                    
+                                    return (
+                                        <div className="space-y-1">
+                                            {hasDiscount && (
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-green-100 text-green-800 border border-green-300">
+                                                        -{discountPercentage}%
+                                                    </span>
+                                                    <span className="text-xs text-gray-500 line-through">
+                                                        {basePrice.toLocaleString('vi-VN')} VNĐ
+                                                    </span>
+                                                </div>
+                                            )}
+                                            <div className={hasDiscount ? "text-gray-900 font-medium" : ""}>
+                                                {currentPrice.toLocaleString('vi-VN')} VNĐ
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+                            </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{room.status}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                 <div className="inline-flex items-center justify-center gap-x-4">

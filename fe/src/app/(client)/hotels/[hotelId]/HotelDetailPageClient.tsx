@@ -1648,6 +1648,8 @@ function RoomCard({ room, handleSelectRoom, onViewDetail, innerRef }: {
     const availableRooms = room.availableRooms ?? room.quantity ?? 0;
     const hasAvailableRooms = availableRooms > 0;
     const isLowStock = availableRooms > 0 && availableRooms <= 3;
+    const hasDiscount = basePrice > currentPrice && basePrice > 0 && currentPrice > 0;
+    const discountPercentage = hasDiscount ? Math.round((1 - currentPrice / basePrice) * 100) : 0;
 
     return (
         <div ref={innerRef} className="bg-white rounded shadow-sm p-2 mb-2 text-dark">
@@ -1684,7 +1686,8 @@ function RoomCard({ room, handleSelectRoom, onViewDetail, innerRef }: {
                             </div>
                             <div className="col-12 col-md-3 text-md-end mb-2 mb-md-0 d-flex flex-column justify-content-center">
                                 <div className="text-muted mb-0" style={{ color: '#ff9800', fontSize: '12px' }}>Ưu đãi cho khách đặt phòng sớm</div>
-                                {basePrice > currentPrice && basePrice > 0 && (<div className="text-muted text-decoration-line-through mb-0" style={{ fontSize: '12px' }}>{basePrice.toLocaleString("vi-VN")} VND</div>)}
+                                {hasDiscount && (<span className="badge bg-success mb-1 d-inline-block" style={{ fontSize: '11px', width: 'fit-content', marginLeft: 'auto' }}>-{discountPercentage}%</span>)}
+                                {hasDiscount && (<div className="text-muted text-decoration-line-through mb-0" style={{ fontSize: '12px' }}>{basePrice.toLocaleString("vi-VN")} VND</div>)}
                                 <div className="fw-bold mb-0" style={{ color: '#ff6b00', fontSize: '18px' }}>{currentPrice.toLocaleString("vi-VN")} VND</div>
                                 <div className="text-muted mb-0" style={{ fontSize: '11px' }}>Chưa bao gồm thuế và phí</div>
                             </div>

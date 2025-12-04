@@ -1,5 +1,15 @@
 package com.webapp.holidate.mapper.acommodation;
 
+import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+
+import org.mapstruct.AfterMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+
 import com.webapp.holidate.dto.request.acommodation.hotel.HotelCreationRequest;
 import com.webapp.holidate.dto.response.acommodation.hotel.HotelBriefResponse;
 import com.webapp.holidate.dto.response.acommodation.hotel.HotelDetailsResponse;
@@ -11,15 +21,6 @@ import com.webapp.holidate.mapper.amenity.AmenityCategoryMapper;
 import com.webapp.holidate.mapper.image.PhotoCategoryMapper;
 import com.webapp.holidate.mapper.location.EntertainmentVenueCategoryMapper;
 import com.webapp.holidate.mapper.policy.HotelPolicyMapper;
-import org.mapstruct.AfterMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
-
-import java.time.LocalDate;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
 
 @Mapper(componentModel = "spring", uses = {
     EntertainmentVenueCategoryMapper.class,
@@ -105,7 +106,9 @@ public interface HotelMapper {
 
   /**
    * Tính giá hiện tại thấp nhất của hotel dựa trên RoomInventory
-   * Logic tương tự như RoomMapper.getCurrentPricePerNight() nhưng cho toàn hotel
+   * Logic: Lấy giá hiện tại của từng phòng (giá của ngày hôm nay hoặc ngày gần nhất trong tương lai),
+   * sau đó tìm giá thấp nhất trong số các giá đó.
+   * Điều này đảm bảo hotel.currentPricePerNight khớp với logic của room.currentPricePerNight.
    */
   default double getCurrentPricePerNight(Hotel hotel) {
     LocalDate today = LocalDate.now();
@@ -115,22 +118,49 @@ public interface HotelMapper {
       return 0.0;
     }
 
-    List<RoomInventory> roomInventories = rooms.stream()
-        .flatMap(room -> room.getInventories().stream())
+    // Lấy giá hiện tại của từng phòng (sử dụng cùng logic như RoomMapper.getCurrentPricePerNight())
+    List<Double> roomCurrentPrices = rooms.stream()
+        .map(room -> getRoomCurrentPricePerNight(room, today))
+        .filter(price -> price > 0.0)
         .toList();
 
-    if (roomInventories.isEmpty()) {
-      // Không có inventory, return base price thấp nhất
+    if (roomCurrentPrices.isEmpty()) {
+      // Không có giá nào, return base price thấp nhất
       return getRawPricePerNight(hotel);
     }
 
-    // Tìm inventory có giá thấp nhất và vẫn còn phòng available
-    Optional<RoomInventory> cheapestAvailableInventory = roomInventories.stream()
-        .filter(inventory -> !inventory.getId().getDate().isBefore(today))
-        .filter(inventory -> inventory.getAvailableRooms() > 0)
-        .min(Comparator.comparingDouble(RoomInventory::getPrice));
+    // Tìm giá thấp nhất trong số các giá hiện tại của các phòng
+    return roomCurrentPrices.stream()
+        .mapToDouble(Double::doubleValue)
+        .min()
+        .orElse(getRawPricePerNight(hotel));
+  }
 
-    return cheapestAvailableInventory.map(RoomInventory::getPrice).orElseGet(() -> getRawPricePerNight(hotel));
+  /**
+   * Lấy giá hiện tại của một phòng - logic giống với RoomMapper.getCurrentPricePerNight()
+   * Tìm inventory cho ngày hôm nay, nếu không có thì tìm inventory gần nhất trong tương lai
+   */
+  default double getRoomCurrentPricePerNight(Room room, LocalDate today) {
+    // Nếu không có inventories, return base price
+    if (room.getInventories() == null || room.getInventories().isEmpty()) {
+      return room.getBasePricePerNight();
+    }
+
+    // Tìm inventory cho ngày hiện tại
+    Optional<RoomInventory> todayInventory = room.getInventories().stream()
+        .filter(inventory -> inventory.getId().getDate().equals(today))
+        .findFirst();
+
+    if (todayInventory.isPresent()) {
+      return todayInventory.get().getPrice();
+    }
+
+    // Nếu không có inventory cho ngày hiện tại, tìm inventory gần nhất trong tương lai
+    Optional<RoomInventory> nearestFutureInventory = room.getInventories().stream()
+        .filter(inventory -> !inventory.getId().getDate().isBefore(today))
+        .min(Comparator.comparing(inv -> inv.getId().getDate()));
+
+    return nearestFutureInventory.map(RoomInventory::getPrice).orElseGet(room::getBasePricePerNight);
   }
 
   /**

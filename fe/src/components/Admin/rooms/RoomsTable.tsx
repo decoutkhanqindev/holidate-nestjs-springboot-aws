@@ -460,8 +460,31 @@ export default function RoomsTable({ rooms, hotelId, currentPage, totalPages, to
                                         <div className="text-sm text-gray-600">{room.type || 'N/A'}</div>
                                     </td>
                                     <td className="px-2 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-900 font-medium text-left">
-                                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(room.price)}
+                                        <div className="text-sm text-left">
+                                            {(() => {
+                                                const basePrice = room.basePricePerNight ?? room.price ?? 0;
+                                                const currentPrice = room.currentPricePerNight ?? basePrice;
+                                                const hasDiscount = basePrice > currentPrice && basePrice > 0 && currentPrice > 0;
+                                                const discountPercentage = hasDiscount ? Math.round((1 - currentPrice / basePrice) * 100) : 0;
+                                                
+                                                return (
+                                                    <div className="space-y-1">
+                                                        {hasDiscount && (
+                                                            <div className="flex items-center gap-1">
+                                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-green-100 text-green-800 border border-green-300">
+                                                                    -{discountPercentage}%
+                                                                </span>
+                                                                <span className="text-xs text-gray-500 line-through">
+                                                                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(basePrice)}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        <div className="text-gray-900 font-medium">
+                                                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(currentPrice)}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">

@@ -61,7 +61,9 @@ export interface Room {
     hotelId: string;
     name: string;
     type: string;
-    price: number;
+    price: number; // Base price (backward compatibility, mapped from basePricePerNight)
+    basePricePerNight?: number; // Giá cơ bản / đêm
+    currentPricePerNight?: number; // Giá hiện tại / đêm (có thể đã giảm)
     status: RoomStatus;
     image: string;
     images?: string[]; // Nhiều ảnh

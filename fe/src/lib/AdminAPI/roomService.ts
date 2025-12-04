@@ -135,7 +135,9 @@ function mapRoomResponseToRoom(response: RoomResponse): Room {
         hotelId: response.hotelId || '', // Có thể không có trong response
         name: response.name,
         type: response.view || '',
-        price: response.basePricePerNight,
+        price: response.basePricePerNight, // Backward compatibility
+        basePricePerNight: response.basePricePerNight,
+        currentPricePerNight: response.currentPricePerNight,
         status: mappedStatus,
         image: imageUrl,
         images: images,
