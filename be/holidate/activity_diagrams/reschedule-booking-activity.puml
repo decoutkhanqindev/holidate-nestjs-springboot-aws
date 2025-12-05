@@ -1,5 +1,5 @@
 @startuml
-|Khách hàng|
+|Người dùng|
 start
 if (Đã đăng nhập?) then (Chưa)
   :Đăng nhập vào hệ thống;
@@ -9,12 +9,12 @@ if (Đã đăng nhập?) then (Chưa)
     :Thông báo lỗi đăng nhập;
     stop
   else (Có)
-    |Khách hàng|
+    |Người dùng|
   endif
 else (Đã đăng nhập)
 endif
 
-|Khách hàng|
+|Người dùng|
 :Chọn đơn đặt phòng cần đổi lịch;
 :Nhập ngày check-in, check-out mới;
 :Nhấn nút "Đổi lịch";
@@ -24,7 +24,7 @@ endif
 
 if (Thông tin hợp lệ?) then (Không)
   :Thông báo lỗi;
-  |Khách hàng|
+  |Người dùng|
   -> Nhập lại thông tin;
 else (Có)
   |Hệ thống|
@@ -34,12 +34,12 @@ else (Có)
 
   if (Cần thanh toán thêm?) then (Có)
     :Tạo liên kết thanh toán;
-    :Chuyển đến cổng thanh toán;
+    :Chuyển đến VNPay;
 
-    |Khách hàng|
+    |Người dùng|
     :Thanh toán số tiền chênh lệch;
 
-    |Cổng thanh toán VNPay|
+    |VNPay|
     :Xử lý thanh toán;
     :Gửi kết quả về hệ thống;
 
@@ -60,7 +60,7 @@ else (Có)
   :Cập nhật đơn đặt phòng\nvới ngày và giá mới;
   :Gửi email thông báo đổi lịch;
 
-  |Khách hàng|
+  |Người dùng|
   :Nhận thông báo đổi lịch thành công;
 endif
 

@@ -15,25 +15,25 @@ else (Đã đăng nhập)
 endif
 
 |Người dùng|
-:Truy cập trang danh sách đơn đặt phòng;
+:Truy cập trang danh sách người dùng;
 if (Muốn lọc/tìm kiếm?) then (Có)
-  :Nhập tiêu chí lọc\n(trạng thái, ngày, giá...);
+  :Nhập tiêu chí lọc\n(email, tên, vai trò, địa chỉ, trạng thái...);
   :Nhấn nút "Tìm kiếm";
 else (Không)
 endif
 
 |Hệ thống|
-:Lấy danh sách đơn đặt phòng từ CSDL\n(theo tiêu chí lọc nếu có);
+:Lấy danh sách người dùng từ CSDL\n(theo tiêu chí lọc nếu có);
 
-if (Có đơn đặt phòng?) then (Không)
-  :Thông báo không có đơn đặt phòng;
+if (Có người dùng?) then (Không)
+  :Thông báo không có người dùng;
 else (Có)
   |Hệ thống|
-  :Hiển thị danh sách đơn đặt phòng;
-  :Thông báo số lượng đơn đặt phòng;
+  :Hiển thị danh sách người dùng;
+  :Thông báo số lượng người dùng;
 
   |Người dùng|
-  :Xem thông tin các đơn đặt phòng\n(ngày, phòng, giá, trạng thái...);
+  :Xem thông tin các người dùng\n(email, tên, vai trò, địa chỉ, trạng thái...);
 endif
 
 stop

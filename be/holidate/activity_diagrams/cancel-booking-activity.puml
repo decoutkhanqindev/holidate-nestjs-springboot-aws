@@ -1,52 +1,47 @@
 @startuml
-|Khách hàng|
+|Người dùng|
 start
 if (Đã đăng nhập?) then (Chưa)
-  :Đăng nhập vào hệ thống;
+  :Đăng nhập hệ thống;
   |Hệ thống|
-  :Xác thực thông tin đăng nhập;
   if (Đăng nhập thành công?) then (Không)
-    :Thông báo lỗi đăng nhập;
     stop
   else (Có)
-    |Khách hàng|
+    |Người dùng|
   endif
 else (Đã đăng nhập)
 endif
 
-|Khách hàng|
-:Chọn đơn đặt phòng cần hủy;
-:Nhấn nút "Hủy đơn";
+|Người dùng|
+:Chọn đơn và nhấn "Hủy đơn";
 
 |Hệ thống|
-:Kiểm tra đơn đặt phòng có thể hủy?;
-
-if (Đơn có thể hủy?) then (Không)
-  :Thông báo lỗi\nđơn không thể hủy;
-  |Khách hàng|
-  -> Không thể hủy đơn;
+:Kiểm tra điều kiện hủy;
+if (Hợp lệ?) then (Không)
+  :Thông báo lỗi;
+  stop
 else (Có)
-  |Hệ thống|
-  :Lấy chính sách hủy phòng;
-  :Tính phí hủy dựa trên\nsố ngày trước ngày check-in;
-  :Tính số tiền hoàn lại;
-
-  if (Có phí hủy?) then (Có)
-    :Hoàn tiền qua cổng thanh toán\n(số tiền = tổng tiền - phí hủy);
-  else (Không)
-    :Hoàn toàn bộ số tiền\nqua cổng thanh toán;
+  :Tính toán phí hủy và tiền hoàn;
+  
+  if (Cần hoàn tiền?) then (Có)
+    :Gửi yêu cầu hoàn tiền;
+    |VNPay|
+    :Xử lý giao dịch hoàn tiền;
+    :Trả về kết quả;
+    |Hệ thống|
   endif
 
-  |Hệ thống|
-  :Cập nhật trạng thái đơn đặt phòng\nthành "Đã hủy";
-  :Giải phóng phòng đã đặt;
-  :Gửi email thông báo hoàn tiền;
-
-  |Khách hàng|
-  :Nhận thông báo hủy đơn thành công;
-  :Nhận email thông báo số tiền hoàn lại;
+  if (Xử lý thành công?) then (Có)
+    :Cập nhật trạng thái "Đã hủy";
+    :Cập nhật lại kho phòng;
+    :Gửi email xác nhận;
+    |Người dùng|
+    :Nhận thông báo thành công;
+  else (Không)
+    |Hệ thống|
+    :Thông báo lỗi xử lý;
+  endif
 endif
 
 stop
 @enduml
-

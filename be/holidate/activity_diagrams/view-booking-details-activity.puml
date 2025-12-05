@@ -1,5 +1,5 @@
 @startuml
-|Khách hàng|
+|Người dùng|
 start
 if (Đã đăng nhập?) then (Chưa)
   :Đăng nhập vào hệ thống;
@@ -9,12 +9,12 @@ if (Đã đăng nhập?) then (Chưa)
     :Thông báo lỗi đăng nhập;
     stop
   else (Có)
-    |Khách hàng|
+    |Người dùng|
   endif
 else (Đã đăng nhập)
 endif
 
-|Khách hàng|
+|Người dùng|
 :Nhấn vào đơn đặt phòng\ntừ danh sách;
 
 |Hệ thống|
@@ -26,7 +26,7 @@ else (Tồn tại)
   |Hệ thống|
   :Hiển thị thông tin chi tiết đơn đặt phòng\n(ngày check-in/out, phòng, khách sạn,\ngiá, trạng thái, thông tin liên hệ, ...);
 
-  |Khách hàng|
+  |Người dùng|
   :Xem thông tin chi tiết đơn đặt phòng;
 endif
 

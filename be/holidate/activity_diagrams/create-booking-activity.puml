@@ -1,5 +1,5 @@
 @startuml
-|Khách hàng|
+|Người dùng|
 start
 if (Đã đăng nhập?) then (Chưa)
   :Đăng nhập vào hệ thống;
@@ -9,16 +9,16 @@ if (Đã đăng nhập?) then (Chưa)
     :Thông báo lỗi đăng nhập;
     stop
   else (Có)
-    |Khách hàng|
+    |Người dùng|
   endif
 else (Đã đăng nhập)
 endif
 
-|Khách hàng|
+|Người dùng|
 :Chọn phòng và nhập thông tin\n(ngày check-in, check-out,\nsố phòng, số người lớn, trẻ em);
 :Nhập thông tin liên hệ\n(họ tên, email, số điện thoại);
-if (Có mã giảm giá?) then (Có)
-  :Nhập mã giảm giá;
+if (Có mã khuyến mãi?) then (Có)
+  :Nhập mã khuyến mãi;
 else (Không)
 endif
 :Nhấn nút "Đặt phòng";
@@ -28,21 +28,21 @@ endif
 
 if (Thông tin hợp lệ?) then (Không)
   :Thông báo lỗi;
-  |Khách hàng|
+  |Người dùng|
   -> Nhập lại thông tin;
 else (Có)
   |Hệ thống|
   :Tính giá phòng ban đầu;
 
-  if (Có mã giảm giá?) then (Có)
-    :Kiểm tra và áp dụng mã giảm giá;
-    if (Mã giảm giá hợp lệ?) then (Không)
-      :Thông báo lỗi\nmã giảm giá không hợp lệ;
-      |Khách hàng|
-      -> Nhập lại mã giảm giá;
+  if (Có mã khuyến mãi?) then (Có)
+    :Kiểm tra và áp dụng mã khuyến mãi;
+    if (Mã khuyến mãi hợp lệ?) then (Không)
+      :Thông báo lỗi\nmã khuyến mãi không hợp lệ;
+      |Người dùng|
+      -> Nhập lại mã khuyến mãi;
     else (Có)
       |Hệ thống|
-      :Tính giá sau giảm giá;
+      :Tính giá sau khuyến mãi;
     endif
   else (Không)
   endif
@@ -55,7 +55,7 @@ else (Có)
   :Tạo liên kết thanh toán;
   :Trả về thông tin đơn đặt phòng\nvà liên kết thanh toán;
 
-  |Khách hàng|
+  |Người dùng|
   :Nhận thông tin đơn đặt phòng;
   :Chuyển đến trang thanh toán;
 endif

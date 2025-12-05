@@ -15,25 +15,24 @@ else (Đã đăng nhập)
 endif
 
 |Người dùng|
-:Nhập thông tin khách sạn\n(tên, mô tả, địa chỉ);
-:Chọn thông tin địa chỉ\n(quốc gia, tỉnh, thành phố, quận, phường, đường);
-:Chọn đối tác;
-if (Có ảnh khách sạn?) then (Có)
-  :Tải lên ảnh khách sạn;
+:Truy cập trang tạo tài khoản người dùng;
+:Nhập thông tin người dùng\n(email, mật khẩu, họ tên, vai trò);
+if (Có thông tin địa chỉ?) then (Có)
+  :Chọn thông tin địa chỉ\n(quốc gia, tỉnh, thành phố, quận, phường, đường);
 else (Không)
 endif
-:Nhấn nút "Tạo khách sạn";
+:Nhấn nút "Tạo tài khoản";
 
 |Hệ thống|
-:Kiểm tra tên khách sạn\nđã tồn tại?;
+:Kiểm tra email đã tồn tại?;
 
-if (Tên đã tồn tại?) then (Có)
-  :Thông báo lỗi\ntên khách sạn đã tồn tại;
+if (Email đã tồn tại?) then (Có)
+  :Thông báo lỗi\nemail đã tồn tại;
   |Người dùng|
-  -> Nhập lại tên khách sạn;
+  -> Nhập lại email;
 else (Không)
   |Hệ thống|
-  :Kiểm tra thông tin địa chỉ\nvà đối tác hợp lệ?;
+  :Kiểm tra thông tin người dùng hợp lệ\n(vai trò, địa chỉ nếu có);
 
   if (Thông tin hợp lệ?) then (Không)
     :Thông báo lỗi thông tin không hợp lệ;
@@ -41,12 +40,12 @@ else (Không)
     -> Nhập lại thông tin;
   else (Có)
     |Hệ thống|
-    :Tạo khách sạn mới;
+    :Tạo tài khoản người dùng mới;
     :Lưu thông tin vào CSDL;
-    :Thông báo tạo khách sạn thành công;
+    :Thông báo tạo tài khoản thành công;
 
     |Người dùng|
-    :Nhận thông báo tạo khách sạn thành công;
+    :Nhận thông báo tạo tài khoản thành công;
   endif
 endif
 

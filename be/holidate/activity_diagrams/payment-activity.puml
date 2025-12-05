@@ -1,5 +1,5 @@
 @startuml
-|Khách hàng|
+|Người dùng|
 start
 if (Đã đăng nhập?) then (Chưa)
   :Đăng nhập vào hệ thống;
@@ -9,23 +9,23 @@ if (Đã đăng nhập?) then (Chưa)
     :Thông báo lỗi đăng nhập;
     stop
   else (Có)
-    |Khách hàng|
+    |Người dùng|
   endif
 else (Đã đăng nhập)
 endif
 
-|Khách hàng|
+|Người dùng|
 :Nhấn vào liên kết thanh toán\ntừ đơn đặt phòng;
 
 |Hệ thống|
 :Tạo thông tin thanh toán;
-:Chuyển hướng đến cổng thanh toán VNPay;
+:Chuyển hướng đến VNPay;
 
-|Khách hàng|
+|Người dùng|
 :Nhập thông tin thanh toán\n(ngân hàng, số tài khoản, mật khẩu);
 :Xác nhận thanh toán;
 
-|Cổng thanh toán VNPay|
+|VNPay|
 :Xử lý thanh toán;
 :Gửi kết quả về hệ thống;
 
@@ -37,7 +37,7 @@ if (Thanh toán thành công?) then (Có)
   :Gửi email xác nhận đặt phòng;
   :Chuyển đến trang thông báo thành công;
 
-  |Khách hàng|
+  |Người dùng|
   :Nhận thông báo thanh toán thành công;
 else (Thất bại)
   |Hệ thống|
@@ -45,7 +45,7 @@ else (Thất bại)
   :Giải phóng phòng đã giữ;
   :Chuyển đến trang thông báo thất bại;
 
-  |Khách hàng|
+  |Người dùng|
   :Nhận thông báo thanh toán thất bại;
 endif
 

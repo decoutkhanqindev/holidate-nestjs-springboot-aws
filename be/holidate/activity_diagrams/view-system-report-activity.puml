@@ -1,0 +1,33 @@
+@startuml
+|Người dùng|
+start
+if (Đã đăng nhập?) then (Chưa)
+  :Đăng nhập vào hệ thống;
+  |Hệ thống|
+  :Xác thực thông tin đăng nhập;
+  if (Đăng nhập thành công?) then (Không)
+    :Thông báo lỗi đăng nhập;
+    stop
+  else (Có)
+    |Người dùng|
+  endif
+else (Đã đăng nhập)
+endif
+
+|Người dùng|
+:Truy cập Dashboard quản trị;
+:Chọn khoảng thời gian cần xem báo cáo\n(tuần, tháng, quý hoặc tùy chỉnh);
+:Nhấn nút "Xem báo cáo";
+
+|Hệ thống|
+:Tổng hợp dữ liệu từ tất cả\nkhách sạn và người dùng;
+:Tính toán các chỉ số vĩ mô\n(tổng doanh thu, tổng đơn đặt phòng,\nngười dùng mới, khách sạn mới,\ntop khách sạn doanh thu cao);
+:Trực quan hóa dữ liệu\n(biểu đồ tròn, cột, đường);
+:Hiển thị báo cáo toàn hệ thống;
+
+|Người dùng|
+:Xem các chỉ số vĩ mô\n(tổng doanh thu toàn sàn,\ntổng số lượng đơn đặt phòng,\nsố lượng người dùng mới đăng ký,\nsố lượng khách sạn mới tham gia,\ntop các khách sạn có doanh thu cao nhất);
+
+stop
+@enduml
+
