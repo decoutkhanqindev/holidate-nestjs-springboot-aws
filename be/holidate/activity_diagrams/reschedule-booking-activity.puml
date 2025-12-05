@@ -1,0 +1,68 @@
+@startuml
+|Khách hàng|
+start
+if (Đã đăng nhập?) then (Chưa)
+  :Đăng nhập vào hệ thống;
+  |Hệ thống|
+  :Xác thực thông tin đăng nhập;
+  if (Đăng nhập thành công?) then (Không)
+    :Thông báo lỗi đăng nhập;
+    stop
+  else (Có)
+    |Khách hàng|
+  endif
+else (Đã đăng nhập)
+endif
+
+|Khách hàng|
+:Chọn đơn đặt phòng cần đổi lịch;
+:Nhập ngày check-in, check-out mới;
+:Nhấn nút "Đổi lịch";
+
+|Hệ thống|
+:Kiểm tra thông tin đổi lịch\n(đơn có thể đổi, ngày hợp lệ, phòng còn trống);
+
+if (Thông tin hợp lệ?) then (Không)
+  :Thông báo lỗi;
+  |Khách hàng|
+  -> Nhập lại thông tin;
+else (Có)
+  |Hệ thống|
+  :Lấy chính sách đổi lịch;
+  :Tính phí đổi lịch và giá mới;
+  :Tính chênh lệch giá;
+
+  if (Cần thanh toán thêm?) then (Có)
+    :Tạo liên kết thanh toán;
+    :Chuyển đến cổng thanh toán;
+
+    |Khách hàng|
+    :Thanh toán số tiền chênh lệch;
+
+    |Cổng thanh toán VNPay|
+    :Xử lý thanh toán;
+    :Gửi kết quả về hệ thống;
+
+    |Hệ thống|
+    if (Thanh toán thành công?) then (Không)
+      :Thông báo lỗi thanh toán;
+      stop
+    else (Có)
+    endif
+  else if (Cần hoàn tiền?) then (Có)
+    :Hoàn tiền chênh lệch\nqua cổng thanh toán;
+  else (Không cần thanh toán)
+  endif
+
+  |Hệ thống|
+  :Giải phóng phòng cho ngày cũ;
+  :Giữ phòng cho ngày mới;
+  :Cập nhật đơn đặt phòng\nvới ngày và giá mới;
+  :Gửi email thông báo đổi lịch;
+
+  |Khách hàng|
+  :Nhận thông báo đổi lịch thành công;
+endif
+
+stop
+@enduml

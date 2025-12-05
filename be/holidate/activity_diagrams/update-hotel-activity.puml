@@ -1,0 +1,62 @@
+@startuml
+|Người dùng|
+start
+if (Đã đăng nhập?) then (Chưa)
+  :Đăng nhập vào hệ thống;
+  |Hệ thống|
+  :Xác thực thông tin đăng nhập;
+  if (Đăng nhập thành công?) then (Không)
+    :Thông báo lỗi đăng nhập;
+    stop
+  else (Có)
+    |Người dùng|
+  endif
+else (Đã đăng nhập)
+endif
+
+|Người dùng|
+:Chọn khách sạn cần cập nhật;
+:Nhập thông tin cần cập nhật\n(tên, mô tả, địa chỉ, ảnh, tiện ích, chính sách...);
+:Nhấn nút "Cập nhật";
+
+|Hệ thống|
+:Kiểm tra khách sạn có tồn tại?;
+
+if (Khách sạn tồn tại?) then (Không)
+  :Thông báo lỗi\nkhách sạn không tồn tại;
+  |Người dùng|
+  -> Chọn khách sạn khác;
+else (Có)
+  |Hệ thống|
+  if (Có thay đổi tên?) then (Có)
+    :Kiểm tra tên mới\nđã tồn tại?;
+    if (Tên đã tồn tại?) then (Có)
+      :Thông báo lỗi\ntên khách sạn đã tồn tại;
+      |Người dùng|
+      -> Nhập lại tên;
+    else (Không)
+    endif
+  else (Không)
+  endif
+
+  |Hệ thống|
+  :Kiểm tra thông tin cập nhật hợp lệ?;
+
+  if (Thông tin hợp lệ?) then (Không)
+    :Thông báo lỗi thông tin không hợp lệ;
+    |Người dùng|
+    -> Nhập lại thông tin;
+  else (Có)
+    |Hệ thống|
+    :Cập nhật thông tin khách sạn;
+    :Lưu thông tin vào CSDL;
+    :Thông báo cập nhật thành công;
+
+    |Người dùng|
+    :Nhận thông báo cập nhật thành công;
+  endif
+endif
+
+stop
+@enduml
+

@@ -1,0 +1,52 @@
+@startuml
+|Khách hàng|
+start
+if (Đã đăng nhập?) then (Chưa)
+  :Đăng nhập vào hệ thống;
+  |Hệ thống|
+  :Xác thực thông tin đăng nhập;
+  if (Đăng nhập thành công?) then (Không)
+    :Thông báo lỗi đăng nhập;
+    stop
+  else (Có)
+    |Khách hàng|
+  endif
+else (Đã đăng nhập)
+endif
+
+|Khách hàng|
+:Chọn đơn đặt phòng cần hủy;
+:Nhấn nút "Hủy đơn";
+
+|Hệ thống|
+:Kiểm tra đơn đặt phòng có thể hủy?;
+
+if (Đơn có thể hủy?) then (Không)
+  :Thông báo lỗi\nđơn không thể hủy;
+  |Khách hàng|
+  -> Không thể hủy đơn;
+else (Có)
+  |Hệ thống|
+  :Lấy chính sách hủy phòng;
+  :Tính phí hủy dựa trên\nsố ngày trước ngày check-in;
+  :Tính số tiền hoàn lại;
+
+  if (Có phí hủy?) then (Có)
+    :Hoàn tiền qua cổng thanh toán\n(số tiền = tổng tiền - phí hủy);
+  else (Không)
+    :Hoàn toàn bộ số tiền\nqua cổng thanh toán;
+  endif
+
+  |Hệ thống|
+  :Cập nhật trạng thái đơn đặt phòng\nthành "Đã hủy";
+  :Giải phóng phòng đã đặt;
+  :Gửi email thông báo hoàn tiền;
+
+  |Khách hàng|
+  :Nhận thông báo hủy đơn thành công;
+  :Nhận email thông báo số tiền hoàn lại;
+endif
+
+stop
+@enduml
+

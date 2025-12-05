@@ -1,0 +1,42 @@
+@startuml
+|Người dùng|
+start
+if (Đã đăng nhập?) then (Chưa)
+  :Đăng nhập vào hệ thống;
+  |Hệ thống|
+  :Xác thực thông tin đăng nhập;
+  if (Đăng nhập thành công?) then (Không)
+    :Thông báo lỗi đăng nhập;
+    stop
+  else (Có)
+    |Người dùng|
+  endif
+else (Đã đăng nhập)
+endif
+
+|Người dùng|
+:Chọn phòng;
+:Chọn khoảng thời gian\n(ngày bắt đầu, ngày kết thúc);
+if (Muốn lọc theo trạng thái?) then (Có)
+  :Chọn trạng thái lọc;
+else (Không)
+endif
+:Nhấn nút "Xem kho phòng";
+
+|Hệ thống|
+:Lấy danh sách kho phòng từ CSDL\n(theo phòng, khoảng thời gian, trạng thái nếu có);
+
+if (Có kho phòng?) then (Không)
+  :Thông báo không có kho phòng;
+else (Có)
+  |Hệ thống|
+  :Hiển thị danh sách kho phòng;
+  :Thông báo số lượng kho phòng;
+
+  |Người dùng|
+  :Xem thông tin kho phòng\n(ngày, giá, số phòng còn lại, trạng thái...);
+endif
+
+stop
+@enduml
+

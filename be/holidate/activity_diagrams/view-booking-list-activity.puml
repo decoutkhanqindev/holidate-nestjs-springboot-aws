@@ -1,0 +1,41 @@
+@startuml
+|Khách hàng|
+start
+if (Đã đăng nhập?) then (Chưa)
+  :Đăng nhập vào hệ thống;
+  |Hệ thống|
+  :Xác thực thông tin đăng nhập;
+  if (Đăng nhập thành công?) then (Không)
+    :Thông báo lỗi đăng nhập;
+    stop
+  else (Có)
+    |Khách hàng|
+  endif
+else (Đã đăng nhập)
+endif
+
+|Khách hàng|
+:Truy cập trang danh sách đơn đặt phòng;
+if (Muốn lọc/tìm kiếm?) then (Có)
+  :Nhập tiêu chí lọc\n(trạng thái, ngày, giá...);
+  :Nhấn nút "Tìm kiếm";
+else (Không)
+endif
+
+|Hệ thống|
+:Lấy danh sách đơn đặt phòng từ CSDL\n(theo tiêu chí lọc nếu có);
+
+if (Có đơn đặt phòng?) then (Không)
+  :Thông báo không có đơn đặt phòng;
+else (Có)
+  |Hệ thống|
+  :Hiển thị danh sách đơn đặt phòng;
+  :Thông báo số lượng đơn đặt phòng;
+
+  |Khách hàng|
+  :Xem thông tin các đơn đặt phòng\n(ngày, phòng, giá, trạng thái...);
+endif
+
+stop
+@enduml
+

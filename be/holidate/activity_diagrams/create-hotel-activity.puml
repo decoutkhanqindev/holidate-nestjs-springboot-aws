@@ -1,0 +1,55 @@
+@startuml
+|Người dùng|
+start
+if (Đã đăng nhập?) then (Chưa)
+  :Đăng nhập vào hệ thống;
+  |Hệ thống|
+  :Xác thực thông tin đăng nhập;
+  if (Đăng nhập thành công?) then (Không)
+    :Thông báo lỗi đăng nhập;
+    stop
+  else (Có)
+    |Người dùng|
+  endif
+else (Đã đăng nhập)
+endif
+
+|Người dùng|
+:Nhập thông tin khách sạn\n(tên, mô tả, địa chỉ);
+:Chọn thông tin địa chỉ\n(quốc gia, tỉnh, thành phố, quận, phường, đường);
+:Chọn đối tác (partner);
+if (Có ảnh khách sạn?) then (Có)
+  :Tải lên ảnh khách sạn;
+else (Không)
+endif
+:Nhấn nút "Tạo khách sạn";
+
+|Hệ thống|
+:Kiểm tra tên khách sạn\nđã tồn tại?;
+
+if (Tên đã tồn tại?) then (Có)
+  :Thông báo lỗi\ntên khách sạn đã tồn tại;
+  |Người dùng|
+  -> Nhập lại tên khách sạn;
+else (Không)
+  |Hệ thống|
+  :Kiểm tra thông tin địa chỉ\nvà đối tác hợp lệ?;
+
+  if (Thông tin hợp lệ?) then (Không)
+    :Thông báo lỗi thông tin không hợp lệ;
+    |Người dùng|
+    -> Nhập lại thông tin;
+  else (Có)
+    |Hệ thống|
+    :Tạo khách sạn mới;
+    :Lưu thông tin vào CSDL;
+    :Thông báo tạo khách sạn thành công;
+
+    |Người dùng|
+    :Nhận thông báo tạo khách sạn thành công;
+  endif
+endif
+
+stop
+@enduml
+
