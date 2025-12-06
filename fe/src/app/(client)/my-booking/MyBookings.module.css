@@ -245,6 +245,36 @@
     background-color: #fbebee;
 }
 
+.payment {
+    border-color: #28a745;
+    color: #28a745;
+    background-color: #d4edda;
+}
+
+.payment:hover {
+    background-color: #c3e6cb;
+}
+
+.checkIn {
+    border-color: #17a2b8;
+    color: #17a2b8;
+    background-color: #d1ecf1;
+}
+
+.checkIn:hover {
+    background-color: #bee5eb;
+}
+
+.checkOut {
+    border-color: #6f42c1;
+    color: #6f42c1;
+    background-color: #e2d9f3;
+}
+
+.checkOut:hover {
+    background-color: #d1c4e9;
+}
+
 .toggleButton {
     background: #f0f0f0;
     border: none;
