@@ -57,15 +57,15 @@ function FailureComponent() {
             }
             return 'Thanh toán thất bại. Vui lòng thử lại.';
         }
-        
+
         if (reason === 'invalid_signature') {
             return 'Chữ ký giao dịch không hợp lệ.';
         }
-        
+
         if (reason === 'payment_already_processed') {
             return 'Giao dịch này đã được xử lý trước đó.';
         }
-        
+
         if (reason === 'missing_transaction_ref') {
             return 'Thiếu thông tin giao dịch.';
         }
@@ -106,8 +106,8 @@ function FailureComponent() {
             <div className={styles.failureCard}>
                 <div className={styles.icon}>
                     <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="12" cy="12" r="10" stroke="#dc3545" strokeWidth="2"/>
-                        <path d="M12 8V12M12 16H12.01" stroke="#dc3545" strokeWidth="2" strokeLinecap="round"/>
+                        <circle cx="12" cy="12" r="10" stroke="#dc3545" strokeWidth="2" />
+                        <path d="M12 8V12M12 16H12.01" stroke="#dc3545" strokeWidth="2" strokeLinecap="round" />
                     </svg>
                 </div>
                 <h1>Thanh toán thất bại</h1>
@@ -123,8 +123,8 @@ function FailureComponent() {
                 )}
 
                 <div className={styles.actions}>
-                    <button 
-                        onClick={() => router.push('/my-booking')} 
+                    <button
+                        onClick={() => router.push('/my-booking')}
                         className={styles.primaryButton}
                     >
                         Xem lại đơn hàng
