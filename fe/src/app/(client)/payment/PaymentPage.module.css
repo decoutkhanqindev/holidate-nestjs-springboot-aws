@@ -1,0 +1,232 @@
+/* src/app/payment/PaymentPage.module.css */
+
+.container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.paymentCard {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.header h1 {
+    margin: 0 0 10px 0;
+    color: #333;
+    font-size: 1.8rem;
+}
+
+.bookingId {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.bookingInfo {
+    margin-bottom: 30px;
+}
+
+.bookingInfo h2 {
+    margin: 0 0 20px 0;
+    color: #333;
+    font-size: 1.3rem;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 10px;
+}
+
+.infoRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.infoRow:last-child {
+    border-bottom: none;
+}
+
+.infoRow span:first-child {
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.infoRow strong,
+.infoRow span:last-child {
+    color: #333;
+    font-weight: 600;
+    text-align: right;
+}
+
+.priceSection {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.priceRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.priceRow span:first-child {
+    font-size: 1.1rem;
+    color: #333;
+    font-weight: 500;
+}
+
+.finalPrice {
+    font-size: 1.5rem;
+    color: #d9534f;
+    font-weight: bold;
+}
+
+.actions {
+    text-align: center;
+}
+
+.warning {
+    color: #856404;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+.note {
+    color: #6c757d;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+    font-style: italic;
+}
+
+.payButton {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 14px 40px;
+    border-radius: 6px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-right: 10px;
+}
+
+.payButton:hover {
+    background: #218838;
+}
+
+.cancelButton {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 14px 40px;
+    border-radius: 6px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.cancelButton:hover {
+    background: #5a6268;
+}
+
+.redirecting {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.redirecting p {
+    margin-top: 20px;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.loading,
+.errorBox {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.errorBox h2 {
+    color: #dc3545;
+    margin-bottom: 15px;
+}
+
+.errorBox p {
+    color: #666;
+    margin-bottom: 30px;
+}
+
+.errorActions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.errorMessageBox {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 6px;
+    padding: 15px;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.errorMessageBox p {
+    color: #856404;
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.backButton {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.backButton:hover {
+    background: #0056b3;
+}
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #007bff;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
