@@ -1,41 +1,51 @@
-@startuml Holidate Deployment Diagram
+@startuml
+!pragma layout smetana
 
 title Holidate - Complete Deployment Architecture
-left to right direction
+top to bottom direction
 
 '===============================================
-' STYLING
+' STYLING - OPTIMIZED FOR PRESENTATIONS
 '===============================================
+skinparam defaultFontSize 16
+skinparam ArrowFontSize 14
+skinparam shadowing false
+skinparam ArrowThickness 2
+
 skinparam cloud {
     BackgroundColor #E8F5E9
     BorderColor #2E7D32
+    BorderThickness 2
 }
 
 skinparam node {
     BackgroundColor #E3F2FD
     BorderColor #1976D2
-    FontSize 12
+    BorderThickness 2
+    FontSize 16
 }
 
 skinparam component {
     BackgroundColor #FFF3E0
     BorderColor #F57C00
-    FontSize 11
+    BorderThickness 2
+    FontSize 16
 }
 
 skinparam rectangle {
     BackgroundColor #F3E5F5
     BorderColor #7B1FA2
+    BorderThickness 2
 }
 
 '===============================================
 ' EXTERNAL LAYER
 '===============================================
-actor "User\n(Browser/Mobile)" as User
+actor "End User" as User
 
 cloud "Internet" as Internet {
-    node "Tenten\n(Domain Provider)" as DomainProvider {
-        component "DNS\n(Name Servers)" as DNS
+    node "Tenten Domain Provider" as DomainProvider {
+        component "DNS Server" as DNS
     }
 }
 
@@ -48,17 +58,9 @@ cloud "AWS Cloud\n(Region: ap-southeast-1)" as AWSCloud {
     ' AWS MANAGED SERVICES
     '-------------------------------------------
     rectangle "AWS Managed Services" as AWSServices {
-        node "AWS S3" as S3 {
-            database "holidate-storage\n(Images/Files)" as S3Bucket
-        }
-        
-        node "AWS RDS" as RDS {
-            database "holidate-db\n(MySQL:3306)" as RDSDatabase
-        }
-        
-        node "AWS ECR" as ECR {
-            component "Container Registry\n(Docker Images)" as ECRRegistry
-        }
+        database "S3 Storage" as S3Bucket
+        database "RDS MySQL" as RDSDatabase
+        component "ECR Registry" as ECRRegistry
     }
     
     '-------------------------------------------
@@ -69,30 +71,29 @@ cloud "AWS Cloud\n(Region: ap-southeast-1)" as AWSCloud {
     '-------------------------------------------
     ' EC2 INSTANCE 1: WEB SERVER
     '-------------------------------------------
-    node "EC2 Instance\n<<holidate-web-server>>\nOS: Ubuntu" as WebServer {
+    node "EC2: Web Server\n(Ubuntu)" as WebServer {
         
-        component "Caddy\nReverse Proxy\n(Port 443)" as CaddyWeb
+        component "Caddy Proxy" as CaddyWeb
         
         rectangle "Docker Containers" as WebContainers {
-            component "Frontend\nNext.js App\nPort: 3000\nDomain: holidate.site" as Frontend
-            
-            component "Backend\nSpring Boot API\nPort: 8080\nDomain: api.holidate.site" as Backend
+            component "Next.js App" as Frontend
+            component "Spring Boot API" as Backend
         }
     }
     
     '-------------------------------------------
     ' EC2 INSTANCE 2: N8N SERVER
     '-------------------------------------------
-    node "EC2 Instance\n<<holidate-n8n-server>>\nOS: Ubuntu" as N8NServer {
+    node "EC2: n8n Server\n(Ubuntu)" as N8NServer {
         
-        component "Caddy\nReverse Proxy\n(Port 443)" as CaddyN8N
+        component "Caddy Proxy" as CaddyN8N
         
         rectangle "Docker Container" as N8NContainer {
-            component "n8n\nWorkflow Automation\nPort: 5678\nDomain: n8n.holidate.site" as N8N
+            component "n8n Automation" as N8N
             
             rectangle "AI Components" as AIComponents #FCE4EC {
-                component "Chatbot AI Agent" as Chatbot
-                component "Vector DB\n(Pinecone/Qdrant)" as VectorDB
+                component "Chatbot Agent" as Chatbot
+                component "Vector DB" as VectorDB
             }
         }
     }
@@ -103,47 +104,43 @@ cloud "AWS Cloud\n(Region: ap-southeast-1)" as AWSCloud {
 '===============================================
 
 '--- User to DNS ---
-User --> DNS : 1. Requests\nhttps://holidate.site\nhttps://api.holidate.site\nhttps://n8n.holidate.site
+User --> DNS : HTTPS Requests\n(holidate.site, api.holidate.site, n8n.holidate.site)
 
 '--- DNS to Servers ---
-DNS --> WebServer : 2a. DNS Resolution\nholidate.site\napi.holidate.site\n(Points to Web Server IP)
-DNS --> N8NServer : 2b. DNS Resolution\nn8n.holidate.site\n(Points to n8n Server IP)
+DNS --> WebServer : DNS Resolves\n(holidate.site, api.holidate.site)
+DNS --> N8NServer : DNS Resolves\n(n8n.holidate.site)
 
 '--- Security Groups Protection ---
-SecurityGroups -[hidden]right-> WebServer
-SecurityGroups -[hidden]right-> N8NServer
-SecurityGroups ..> RDS : Protects
-note right on link
-  Port 3306
-  Only from EC2
-end note
+SecurityGroups ..> RDSDatabase : Firewall\n(Port 3306)
+SecurityGroups ..> WebServer : Protects
+SecurityGroups ..> N8NServer : Protects
 
 '--- Web Server Internal Routing ---
-WebServer --> CaddyWeb : Receives HTTPS:443
-CaddyWeb --> Frontend : 3a. Forwards to\nhttp://localhost:3000
-CaddyWeb --> Backend : 3b. Forwards to\nhttp://localhost:8080
+WebServer --> CaddyWeb : HTTPS:443
+CaddyWeb --> Frontend : Port 3000
+CaddyWeb --> Backend : Port 8080
 
 '--- Frontend to Backend Communication ---
-Frontend --> Backend : 4. API Calls\nhttps://api.holidate.site\n(JSON/REST)
+Frontend --> Backend : REST API Calls
 
 '--- n8n Server Internal Routing ---
-N8NServer --> CaddyN8N : Receives HTTPS:443
-CaddyN8N --> N8N : 5. Forwards to\nhttp://localhost:5678
+N8NServer --> CaddyN8N : HTTPS:443
+CaddyN8N --> N8N : Port 5678
 
 '--- Backend to AWS Services ---
-Backend --> RDSDatabase : 6a. Database Operations\nJDBC Connection\nPort: 3306\n(Read/Write)
-Backend --> S3Bucket : 6b. File Operations\nAWS SDK\n(Upload/Download)
+Backend --> RDSDatabase : JDBC:3306\n(Read/Write)
+Backend --> S3Bucket : AWS SDK\n(Upload/Download)
 
 '--- Cross-Server Communication ---
-N8N --> Backend : 7. API Integration\nhttps://api.holidate.site\n(JSON/REST)\n(Booking/Room Data)
+N8N --> Backend : REST API\n(Booking/Room Data)
 
 '--- n8n Internal Components ---
 N8N --> Chatbot : Uses
-N8N --> VectorDB : Query/Store\nEmbeddings
+N8N --> VectorDB : Embeddings
 
 '--- AWS ECR to Docker Containers ---
-ECR ..> WebContainers : Pulls Images
-ECR ..> N8NContainer : Pulls Images
+ECRRegistry ..> WebContainers : Pull Images
+ECRRegistry ..> N8NContainer : Pull Images
 
 @enduml
 
