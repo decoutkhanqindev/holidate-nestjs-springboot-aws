@@ -199,11 +199,17 @@ function MyBookingsComponent() {
         reschedule: Set<string>;
         viewDetails: Set<string>;
         review: Set<string>;
+        checkIn: Set<string>;
+        checkOut: Set<string>;
+        payment: Set<string>;
     }>({
         cancel: new Set(),
         reschedule: new Set(),
         viewDetails: new Set(),
         review: new Set(),
+        checkIn: new Set(),
+        checkOut: new Set(),
+        payment: new Set(),
     });
 
     const fetchBookings = useCallback(async () => {
@@ -330,6 +336,162 @@ function MyBookingsComponent() {
         }
     };
 
+    const handleCheckIn = async (bookingId: string) => {
+        if (confirm('Bạn có chắc chắn muốn check-in đơn đặt phòng này?')) {
+            setLoadingStates(prev => ({
+                ...prev,
+                checkIn: new Set(prev.checkIn).add(bookingId)
+            }));
+            try {
+                await bookingService.checkInBooking(bookingId);
+                alert('Check-in thành công!');
+                fetchBookings();
+            } catch (err: any) {
+                alert(`Lỗi: ${err.message}`);
+            } finally {
+                setLoadingStates(prev => {
+                    const newSet = new Set(prev.checkIn);
+                    newSet.delete(bookingId);
+                    return { ...prev, checkIn: newSet };
+                });
+            }
+        }
+    };
+
+    const handleCheckOut = async (bookingId: string) => {
+        if (confirm('Bạn có chắc chắn muốn check-out đơn đặt phòng này?')) {
+            setLoadingStates(prev => ({
+                ...prev,
+                checkOut: new Set(prev.checkOut).add(bookingId)
+            }));
+            try {
+                await bookingService.checkOutBooking(bookingId);
+                alert('Check-out thành công!');
+                fetchBookings();
+            } catch (err: any) {
+                alert(`Lỗi: ${err.message}`);
+            } finally {
+                setLoadingStates(prev => {
+                    const newSet = new Set(prev.checkOut);
+                    newSet.delete(bookingId);
+                    return { ...prev, checkOut: newSet };
+                });
+            }
+        }
+    };
+
+    const handlePayment = async (booking: BookingResponse) => {
+        setLoadingStates(prev => ({
+            ...prev,
+            payment: new Set(prev.payment).add(booking.id)
+        }));
+        try {
+            // Kiểm tra status trước
+            if (booking.status?.toLowerCase() !== 'pending_payment') {
+                alert('Đơn hàng này không còn ở trạng thái chờ thanh toán. Vui lòng làm mới trang để xem trạng thái mới nhất.');
+                fetchBookings();
+                return;
+            }
+
+            // Thử lấy paymentUrl từ booking object trước (nếu có)
+            if (booking.paymentUrl) {
+                window.location.href = booking.paymentUrl;
+                return;
+            }
+
+            // Thử lấy từ danh sách bookings (vì backend có thể trả về paymentUrl trong getAll)
+            if (user?.id) {
+                try {
+                    const bookingsData = await bookingService.getBookings({
+                        'user-id': user.id,
+                        'status': 'pending_payment',
+                        'page': 0,
+                        'size': 100,
+                        'sort-by': 'created-at',
+                        'sort-dir': 'desc'
+                    });
+
+                    const foundBooking = bookingsData.content.find(b => b.id === booking.id);
+                    if (foundBooking && foundBooking.paymentUrl) {
+                        window.location.href = foundBooking.paymentUrl;
+                        return;
+                    }
+                } catch (listErr) {
+                    console.error('Error fetching bookings:', listErr);
+                }
+            }
+
+            // Thử lấy từ getBookingById
+            try {
+                const refreshedBooking = await bookingService.getBookingById(booking.id);
+                if (refreshedBooking.paymentUrl) {
+                    window.location.href = refreshedBooking.paymentUrl;
+                    return;
+                }
+            } catch (refreshErr) {
+                console.error('Error refreshing booking:', refreshErr);
+            }
+
+            // Nếu không có paymentUrl, chuyển đến trang booking với query params từ booking hiện tại
+            // Tính số đêm từ checkInDate và checkOutDate
+            const checkInDate = new Date(booking.checkInDate);
+            const checkOutDate = new Date(booking.checkOutDate);
+            const nights = Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24));
+
+            // Lấy hotelImageUrl từ room photos hoặc để null
+            const hotelImageUrl = booking.room?.photos?.[0]?.photos?.[0]?.url || '';
+
+            // Tạo query params
+            const params = new URLSearchParams({
+                roomId: booking.room.id,
+                checkin: booking.checkInDate.split('T')[0], // Chỉ lấy phần date (YYYY-MM-DD)
+                nights: nights.toString(),
+                adults: booking.numberOfAdults.toString(),
+                children: (booking.numberOfChildren || 0).toString(),
+                rooms: '1',
+                hotelName: booking.hotel.name,
+                hotelImageUrl: hotelImageUrl,
+                breakfast: 'false',
+                roomView: booking.room.name || ''
+            });
+
+            // Chuyển đến trang booking với query params
+            window.location.href = `/booking?${params.toString()}`;
+        } catch (err: any) {
+            console.error('Error in handlePayment:', err);
+            // Nếu có lỗi, vẫn chuyển đến trang booking với query params
+            try {
+                const checkInDate = new Date(booking.checkInDate);
+                const checkOutDate = new Date(booking.checkOutDate);
+                const nights = Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24));
+                const hotelImageUrl = booking.room?.photos?.[0]?.photos?.[0]?.url || '';
+
+                const params = new URLSearchParams({
+                    roomId: booking.room.id,
+                    checkin: booking.checkInDate.split('T')[0],
+                    nights: nights.toString(),
+                    adults: booking.numberOfAdults.toString(),
+                    children: (booking.numberOfChildren || 0).toString(),
+                    rooms: '1',
+                    hotelName: booking.hotel.name,
+                    hotelImageUrl: hotelImageUrl,
+                    breakfast: 'false',
+                    roomView: booking.room.name || ''
+                });
+
+                window.location.href = `/booking?${params.toString()}`;
+            } catch (fallbackErr) {
+                alert('Đã xảy ra lỗi. Vui lòng thử lại.');
+            }
+        } finally {
+            setLoadingStates(prev => {
+                const newSet = new Set(prev.payment);
+                newSet.delete(booking.id);
+                return { ...prev, payment: newSet };
+            });
+        }
+    };
+
     // Không cần handleReviewSuccess nữa vì sẽ xử lý ở trang detail
 
     const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('vi-VN');
@@ -418,7 +580,7 @@ function MyBookingsComponent() {
 
 
                         <div className={styles.cardActions}>
-                            <button 
+                            <button
                                 onClick={async () => {
                                     setLoadingStates(prev => ({
                                         ...prev,
@@ -448,11 +610,62 @@ function MyBookingsComponent() {
                                     'Xem chi tiết'
                                 )}
                             </button>
+                            {/* Nút "Thanh toán" cho booking có status pending_payment */}
+                            {booking.status.toLowerCase() === 'pending_payment' && (
+                                <button
+                                    onClick={() => handlePayment(booking)}
+                                    disabled={loadingStates.payment.has(booking.id)}
+                                    className={`${styles.actionButton} ${styles.payment}`}
+                                >
+                                    {loadingStates.payment.has(booking.id) ? (
+                                        <>
+                                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                            Đang xử lý...
+                                        </>
+                                    ) : (
+                                        'Thanh toán'
+                                    )}
+                                </button>
+                            )}
+                            {/* Nút "Check-in" cho booking có status confirmed */}
+                            {booking.status.toLowerCase() === 'confirmed' && (
+                                <button
+                                    onClick={() => handleCheckIn(booking.id)}
+                                    disabled={loadingStates.checkIn.has(booking.id)}
+                                    className={`${styles.actionButton} ${styles.checkIn}`}
+                                >
+                                    {loadingStates.checkIn.has(booking.id) ? (
+                                        <>
+                                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                            Đang xử lý...
+                                        </>
+                                    ) : (
+                                        'Check-in'
+                                    )}
+                                </button>
+                            )}
+                            {/* Nút "Check-out" cho booking có status checked_in */}
+                            {booking.status.toLowerCase() === 'checked_in' && (
+                                <button
+                                    onClick={() => handleCheckOut(booking.id)}
+                                    disabled={loadingStates.checkOut.has(booking.id)}
+                                    className={`${styles.actionButton} ${styles.checkOut}`}
+                                >
+                                    {loadingStates.checkOut.has(booking.id) ? (
+                                        <>
+                                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                            Đang xử lý...
+                                        </>
+                                    ) : (
+                                        'Check-out'
+                                    )}
+                                </button>
+                            )}
                             {(booking.status.toLowerCase() === 'confirmed' || booking.status.toLowerCase() === 'rescheduled') &&
                                 <>
                                     {/* Chỉ hiển thị nút "Đổi lịch" nếu khách sạn cho phép đổi lịch */}
                                     {isRescheduleAllowed(hotelPoliciesCache[booking.hotel.id]) && (
-                                        <button 
+                                        <button
                                             onClick={() => handleOpenRescheduleModal(booking)}
                                             disabled={loadingStates.reschedule.has(booking.id)}
                                             className={`${styles.actionButton} ${styles.reschedule}`}
@@ -467,7 +680,7 @@ function MyBookingsComponent() {
                                             )}
                                         </button>
                                     )}
-                                    <button 
+                                    <button
                                         onClick={() => handleCancelBooking(booking.id)}
                                         disabled={loadingStates.cancel.has(booking.id)}
                                         className={`${styles.actionButton} ${styles.cancel}`}
@@ -485,7 +698,7 @@ function MyBookingsComponent() {
                             }
                             {/* Chỉ hiển thị button "Đánh giá" nếu booking đã confirmed (đã thanh toán) */}
                             {booking.status.toLowerCase() === 'confirmed' && (
-                                <button 
+                                <button
                                     onClick={() => handleOpenReviewForm(booking)}
                                     disabled={loadingStates.review.has(booking.id)}
                                     className={`${styles.actionButton} ${styles.review}`}

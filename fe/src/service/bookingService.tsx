@@ -17,6 +17,11 @@ export interface BookingResponse {
     hotel: {
         id: string;
         name: string;
+        address?: string;
+        street?: { name: string };
+        ward?: { name: string };
+        district?: { name: string };
+        city?: { name: string };
     };
     room: {
         id: string;
@@ -30,9 +35,19 @@ export interface BookingResponse {
     createdAt: string;
     numberOfAdults: number;
     numberOfChildren: number;
+    contactFullName?: string;
+    contactEmail?: string;
+    contactPhone?: string;
     priceDetails: {
+        originalPrice?: number;
+        discountAmount?: number;
+        netPriceAfterDiscount?: number;
+        tax?: { name: string; percentage: number; amount: number };
+        serviceFee?: { name: string; percentage: number; amount: number };
         finalPrice: number;
+        appliedDiscount?: { code: string } | null;
     };
+    paymentUrl?: string; // URL thanh toán (chỉ có khi status là pending_payment)
 }
 
 // === INTERFACES CHO TỪNG API ===
@@ -134,7 +149,7 @@ class BookingService {
         }
     }
 
-    async getBookings(params: { 'user-id'?: string; page?: number; size?: number; 'sort-by'?: string, 'sort-dir'?: string }): Promise<PagedResponse<BookingResponse>> {
+    async getBookings(params: { 'user-id'?: string; 'status'?: string; page?: number; size?: number; 'sort-by'?: string, 'sort-dir'?: string }): Promise<PagedResponse<BookingResponse>> {
         try {
             const response = await this.api.get<ApiResponse<PagedResponse<BookingResponse>>>('/bookings', { params });
             if (response.data && response.data.data) { return response.data.data; }
@@ -171,6 +186,45 @@ class BookingService {
             throw new Error("Phản hồi đổi lịch không hợp lệ.");
         } catch (error: any) {
             throw new Error(error.response?.data?.message || 'Không thể đổi lịch. Vui lòng thử lại.');
+        }
+    }
+
+    async checkInBooking(bookingId: string): Promise<BookingResponse> {
+        try {
+            const response = await this.api.post<ApiResponse<BookingResponse>>(`/bookings/${bookingId}/check-in`);
+            if (response.data && response.data.data) { return response.data.data; }
+            throw new Error("Phản hồi check-in không hợp lệ.");
+        } catch (error: any) {
+            throw new Error(error.response?.data?.message || 'Không thể check-in. Vui lòng thử lại.');
+        }
+    }
+
+    async checkOutBooking(bookingId: string): Promise<BookingResponse> {
+        try {
+            const response = await this.api.post<ApiResponse<BookingResponse>>(`/bookings/${bookingId}/check-out`);
+            if (response.data && response.data.data) { return response.data.data; }
+            throw new Error("Phản hồi check-out không hợp lệ.");
+        } catch (error: any) {
+            throw new Error(error.response?.data?.message || 'Không thể check-out. Vui lòng thử lại.');
+        }
+    }
+
+    async getPaymentUrl(bookingId: string): Promise<{ paymentUrl: string }> {
+        try {
+            // Gọi API để lấy paymentUrl cho booking
+            const response = await this.api.get<ApiResponse<{ paymentUrl: string }>>(`/bookings/${bookingId}/payment-url`);
+            if (response.data && response.data.data && response.data.data.paymentUrl) {
+                return response.data.data;
+            }
+            throw new Error("Không thể lấy URL thanh toán.");
+        } catch (error: any) {
+            // Nếu API không tồn tại (404), throw error với status code để frontend xử lý
+            if (error.response?.status === 404) {
+                const notFoundError: any = new Error('API payment-url chưa tồn tại');
+                notFoundError.response = { status: 404 };
+                throw notFoundError;
+            }
+            throw new Error(error.response?.data?.message || 'Không thể lấy URL thanh toán. Vui lòng thử lại.');
         }
     }
 }
