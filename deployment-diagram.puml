@@ -1,7 +1,7 @@
 @startuml
 !pragma layout smetana
 
-title Holidate - Complete Deployment Architecture
+title Holidate System Diagram
 top to bottom direction
 
 '===============================================
