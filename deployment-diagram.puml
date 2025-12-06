@@ -93,7 +93,7 @@ cloud "AWS Cloud\n(Region: ap-southeast-1)" as AWSCloud {
             
             rectangle "AI Components" as AIComponents #FCE4EC {
                 component "Chatbot Agent" as Chatbot
-                component "Vector DB" as VectorDB
+                component "Pinecone (Vector DB)" as VectorDB
             }
         }
     }
@@ -129,14 +129,17 @@ CaddyN8N --> N8N : Port 5678
 
 '--- Backend to AWS Services ---
 Backend --> RDSDatabase : JDBC:3306\n(Read/Write)
-Backend --> S3Bucket : AWS SDK\n(Upload/Download)
+Backend --> S3Bucket : AWS SDK\n(Upload Markdown/Files)
+
+'--- n8n to AWS S3 (RAG Workflow) ---
+N8N ..> S3Bucket : Fetch Markdown Files
 
 '--- Cross-Server Communication ---
 N8N --> Backend : REST API\n(Booking/Room Data)
 
 '--- n8n Internal Components ---
 N8N --> Chatbot : Uses
-N8N --> VectorDB : Embeddings
+N8N --> VectorDB : Upsert Embeddings
 
 '--- AWS ECR to Docker Containers ---
 ECRRegistry ..> WebContainers : Pull Images
