@@ -1,0 +1,149 @@
+@startuml Holidate Deployment Diagram
+
+title Holidate - Complete Deployment Architecture
+left to right direction
+
+'===============================================
+' STYLING
+'===============================================
+skinparam cloud {
+    BackgroundColor #E8F5E9
+    BorderColor #2E7D32
+}
+
+skinparam node {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 12
+}
+
+skinparam component {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+    FontSize 11
+}
+
+skinparam rectangle {
+    BackgroundColor #F3E5F5
+    BorderColor #7B1FA2
+}
+
+'===============================================
+' EXTERNAL LAYER
+'===============================================
+actor "User\n(Browser/Mobile)" as User
+
+cloud "Internet" as Internet {
+    node "Tenten\n(Domain Provider)" as DomainProvider {
+        component "DNS\n(Name Servers)" as DNS
+    }
+}
+
+'===============================================
+' AWS CLOUD INFRASTRUCTURE
+'===============================================
+cloud "AWS Cloud\n(Region: ap-southeast-1)" as AWSCloud {
+    
+    '-------------------------------------------
+    ' AWS MANAGED SERVICES
+    '-------------------------------------------
+    rectangle "AWS Managed Services" as AWSServices {
+        node "AWS S3" as S3 {
+            database "holidate-storage\n(Images/Files)" as S3Bucket
+        }
+        
+        node "AWS RDS" as RDS {
+            database "holidate-db\n(MySQL:3306)" as RDSDatabase
+        }
+        
+        node "AWS ECR" as ECR {
+            component "Container Registry\n(Docker Images)" as ECRRegistry
+        }
+    }
+    
+    '-------------------------------------------
+    ' SECURITY GROUPS
+    '-------------------------------------------
+    rectangle "Security Groups\n(Firewall)" as SecurityGroups
+    
+    '-------------------------------------------
+    ' EC2 INSTANCE 1: WEB SERVER
+    '-------------------------------------------
+    node "EC2 Instance\n<<holidate-web-server>>\nOS: Ubuntu" as WebServer {
+        
+        component "Caddy\nReverse Proxy\n(Port 443)" as CaddyWeb
+        
+        rectangle "Docker Containers" as WebContainers {
+            component "Frontend\nNext.js App\nPort: 3000\nDomain: holidate.site" as Frontend
+            
+            component "Backend\nSpring Boot API\nPort: 8080\nDomain: api.holidate.site" as Backend
+        }
+    }
+    
+    '-------------------------------------------
+    ' EC2 INSTANCE 2: N8N SERVER
+    '-------------------------------------------
+    node "EC2 Instance\n<<holidate-n8n-server>>\nOS: Ubuntu" as N8NServer {
+        
+        component "Caddy\nReverse Proxy\n(Port 443)" as CaddyN8N
+        
+        rectangle "Docker Container" as N8NContainer {
+            component "n8n\nWorkflow Automation\nPort: 5678\nDomain: n8n.holidate.site" as N8N
+            
+            rectangle "AI Components" as AIComponents #FCE4EC {
+                component "Chatbot AI Agent" as Chatbot
+                component "Vector DB\n(Pinecone/Qdrant)" as VectorDB
+            }
+        }
+    }
+}
+
+'===============================================
+' RELATIONSHIPS & DATA FLOW
+'===============================================
+
+'--- User to DNS ---
+User --> DNS : 1. Requests\nhttps://holidate.site\nhttps://api.holidate.site\nhttps://n8n.holidate.site
+
+'--- DNS to Servers ---
+DNS --> WebServer : 2a. DNS Resolution\nholidate.site\napi.holidate.site\n(Points to Web Server IP)
+DNS --> N8NServer : 2b. DNS Resolution\nn8n.holidate.site\n(Points to n8n Server IP)
+
+'--- Security Groups Protection ---
+SecurityGroups -[hidden]right-> WebServer
+SecurityGroups -[hidden]right-> N8NServer
+SecurityGroups ..> RDS : Protects
+note right on link
+  Port 3306
+  Only from EC2
+end note
+
+'--- Web Server Internal Routing ---
+WebServer --> CaddyWeb : Receives HTTPS:443
+CaddyWeb --> Frontend : 3a. Forwards to\nhttp://localhost:3000
+CaddyWeb --> Backend : 3b. Forwards to\nhttp://localhost:8080
+
+'--- Frontend to Backend Communication ---
+Frontend --> Backend : 4. API Calls\nhttps://api.holidate.site\n(JSON/REST)
+
+'--- n8n Server Internal Routing ---
+N8NServer --> CaddyN8N : Receives HTTPS:443
+CaddyN8N --> N8N : 5. Forwards to\nhttp://localhost:5678
+
+'--- Backend to AWS Services ---
+Backend --> RDSDatabase : 6a. Database Operations\nJDBC Connection\nPort: 3306\n(Read/Write)
+Backend --> S3Bucket : 6b. File Operations\nAWS SDK\n(Upload/Download)
+
+'--- Cross-Server Communication ---
+N8N --> Backend : 7. API Integration\nhttps://api.holidate.site\n(JSON/REST)\n(Booking/Room Data)
+
+'--- n8n Internal Components ---
+N8N --> Chatbot : Uses
+N8N --> VectorDB : Query/Store\nEmbeddings
+
+'--- AWS ECR to Docker Containers ---
+ECR ..> WebContainers : Pulls Images
+ECR ..> N8NContainer : Pulls Images
+
+@enduml
+
