@@ -4918,9 +4918,9 @@ Partners can only access reports for hotels they own. Hotel ownership is validat
 
 **POST** `/partner/reports/generate-all`
 
-- **Role Required**: PARTNER
-  - **PARTNER**: Can generate daily reports for all hotels they own
-- **Description**: Manually triggers the daily report generation process for all historical data in the system, but only for hotels owned by the authenticated partner. This endpoint processes all dates from the earliest booking date to the latest, generating `HotelDailyReport` and `RoomDailyPerformance` records for each date. This is useful for initial system setup or when regenerating reports after data corrections. Note: This operation may take a significant amount of time depending on the volume of historical data.
+- **Role Required**: ADMIN
+  - **ADMIN**: Can generate daily reports for all hotels in the system
+- **Description**: Manually triggers the daily report generation process for all historical data in the system, processing all hotels regardless of ownership. This endpoint processes all dates from the earliest booking date to the latest, generating `HotelDailyReport` and `RoomDailyPerformance` records for each date for all hotels in the system. This is useful for initial system setup, data migration, or regenerating reports after data corrections. Note: This operation may take a significant amount of time depending on the volume of historical data.
 - **Request Body**: None
 - **Response**:
 
@@ -4942,11 +4942,12 @@ Partners can only access reports for hotels they own. Hotel ownership is validat
 ```
 
 - **Notes**:
-  - This endpoint processes all dates from the earliest to the latest date found in bookings for hotels owned by the partner
+  - This endpoint processes all dates from the earliest to the latest date found in bookings for **all hotels in the system** (not limited to any specific partner)
   - Each date is processed in a separate transaction. If one date fails, others continue processing
   - The response includes a summary of total dates processed, success/failure counts, and up to 10 error messages
   - This operation may take a long time depending on the amount of historical data
   - Should be run before `POST /admin/reports/generate-all` to ensure HotelDailyReport data is available for system-wide reports
+  - **Admin Only**: This endpoint requires ADMIN role and generates reports for the entire hotel system, not just hotels owned by a specific partner
 
 ### Notes on Partner Reports
 
@@ -5900,7 +5901,8 @@ All admin report endpoints support period comparison. When `compare-from` and `c
 **POST** `/partner/reports/generate-all`
 
 - **Role Required**: ADMIN
-- **Description**: Manually triggers the daily report generation process for all historical data in the system. This endpoint processes all dates from the earliest booking date to the latest, similar to the background job but for the entire system instead of just one day.
+  - **ADMIN**: Can generate daily reports for all hotels in the system
+- **Description**: Manually triggers the daily report generation process for all historical data in the system, processing all hotels regardless of ownership. This endpoint processes all dates from the earliest booking date to the latest, generating `HotelDailyReport` and `RoomDailyPerformance` records for each date for all hotels in the system. This is useful for initial system setup, data migration, or regenerating reports after data corrections. Note: This operation may take a significant amount of time depending on the volume of historical data.
 - **Request Body**: None
 - **Response**:
 
@@ -5909,25 +5911,26 @@ All admin report endpoints support period comparison. When `compare-from` and `c
   "statusCode": 200,
   "message": "",
   "data": {
-    "totalDates": "integer",
-    "successCount": "integer",
-    "failureCount": "integer",
-    "minDate": "date (ISO format: YYYY-MM-DD)",
-    "maxDate": "date (ISO format: YYYY-MM-DD)",
+    "totalDates": "integer - Total number of dates processed",
+    "successCount": "integer - Number of dates successfully processed",
+    "failureCount": "integer - Number of dates that failed to process",
+    "minDate": "date (ISO format: YYYY-MM-DD) - Earliest date processed",
+    "maxDate": "date (ISO format: YYYY-MM-DD) - Latest date processed",
     "errors": [
-      "string (error messages, max 10 errors)"
+      "string (error messages, max 10 errors) - Array of error messages from failed date processing"
     ]
   }
 }
 ```
 
 - **Notes**:
-  - This endpoint processes all dates from the earliest to the latest date found in the Booking table
+  - This endpoint processes all dates from the earliest to the latest date found in bookings for **all hotels in the system** (not limited to any specific partner)
   - Each date is processed in a separate transaction. If one date fails, others continue processing
   - The response includes a summary of total dates processed, success/failure counts, and up to 10 error messages
   - This operation may take a long time depending on the amount of historical data
   - Generates `HotelDailyReport` and `RoomDailyPerformance` data for all dates
-  - Should be run before `POST /admin/reports/generate-all` to ensure hotel data is available for system reports
+  - Should be run before `POST /admin/reports/generate-all` to ensure HotelDailyReport data is available for system-wide reports
+  - **Admin Only**: This endpoint requires ADMIN role and generates reports for the entire hotel system, not just hotels owned by a specific partner
 
 ### Notes on Partner Reports
 
