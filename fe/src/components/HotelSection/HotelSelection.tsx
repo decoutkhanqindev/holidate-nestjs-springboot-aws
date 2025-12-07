@@ -547,15 +547,22 @@ export default function HotelSelection() {
                                         <div className="card h-100 shadow-sm border-0" style={{ cursor: 'pointer' }}>
                                             <div className="position-relative">
                                                 <Image src={getHotelImageUrl(hotel)} width={400} height={300} alt={hotel.name} className="card-img-top" style={{ objectFit: 'cover', height: '200px' }} />
-                                                {hotel.rawPricePerNight > hotel.currentPricePerNight && (<span className="badge bg-success position-absolute top-0 end-0 m-2">-{Math.round((1 - hotel.currentPricePerNight / hotel.rawPricePerNight) * 100)}%</span>)}
+                                                {hotel.rawPricePerNight !== hotel.currentPricePerNight && hotel.rawPricePerNight > 0 && hotel.currentPricePerNight > 0 && (
+                                                    <span className={`badge position-absolute top-0 end-0 m-2 ${hotel.currentPricePerNight < hotel.rawPricePerNight ? 'bg-success' : 'bg-danger'}`}>
+                                                        {hotel.currentPricePerNight < hotel.rawPricePerNight ? '-' : '+'}
+                                                        {Math.round(Math.abs((hotel.currentPricePerNight - hotel.rawPricePerNight) / hotel.rawPricePerNight * 100))}%
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="card-body d-flex flex-column">
                                                 <h5 className="card-title fw-bold line-clamp-2 break-words" style={{ minHeight: '3rem' }}>{hotel.name}</h5>
                                                 <p className="card-text text-primary small fw-bold">⭐ {formatRating(hotel.averageScore)}</p>
                                                 <p className="card-text text-muted small " title={getFullAddress(hotel)}>📍 {getFullAddress(hotel)}</p>
                                                 <div className="mt-auto pt-2">
+                                                    {hotel.rawPricePerNight !== hotel.currentPricePerNight && hotel.rawPricePerNight > 0 && hotel.currentPricePerNight > 0 && (
+                                                        <small className="text-muted text-decoration-line-through d-block">{formatPrice(hotel.rawPricePerNight)}</small>
+                                                    )}
                                                     <p className="card-text text-danger fw-bold fs-5 mb-0">{formatPrice(hotel.currentPricePerNight)}</p>
-                                                    {hotel.rawPricePerNight > hotel.currentPricePerNight && (<small className="text-muted text-decoration-line-through d-block">{formatPrice(hotel.rawPricePerNight)}</small>)}
                                                     <small className="text-muted d-block">Chưa bao gồm thuế và phí</small>
                                                 </div>
                                             </div>

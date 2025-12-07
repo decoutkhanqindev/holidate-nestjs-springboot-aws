@@ -852,9 +852,9 @@ export default function HotelsCard() {
                                             <div className="position-absolute top-0 start-0 m-2 px-2 py-1 bg-dark bg-opacity-75 text-white rounded fw-bold small">
                                                 <i className="bi bi-geo-alt-fill me-1"></i> {hotel.district?.name || hotel.city?.name}
                                             </div>
-                                            {hotel.rawPricePerNight > hotel.currentPricePerNight && (
-                                                <div className="position-absolute top-0 end-0 m-2 px-2 py-1 bg-warning text-white rounded fw-bold small">
-                                                    Tiết kiệm {Math.round((1 - hotel.currentPricePerNight / hotel.rawPricePerNight) * 100)}%
+                                            {hotel.rawPricePerNight !== hotel.currentPricePerNight && hotel.rawPricePerNight > 0 && hotel.currentPricePerNight > 0 && (
+                                                <div className={`position-absolute top-0 end-0 m-2 px-2 py-1 text-white rounded fw-bold small ${hotel.currentPricePerNight < hotel.rawPricePerNight ? 'bg-warning' : 'bg-danger'}`}>
+                                                    {hotel.currentPricePerNight < hotel.rawPricePerNight ? 'Tiết kiệm' : 'Tăng'} {Math.round(Math.abs((hotel.currentPricePerNight - hotel.rawPricePerNight) / hotel.rawPricePerNight * 100))}%
                                                 </div>
                                             )}
                                             <div className="card-body">
@@ -867,7 +867,7 @@ export default function HotelsCard() {
                                                         showLabel={false}
                                                     />
                                                 </div>
-                                                {hotel.rawPricePerNight > hotel.currentPricePerNight && (<div className="mb-1 text-muted text-decoration-line-through small">{formatPrice(hotel.rawPricePerNight)}</div>)}
+                                                {hotel.rawPricePerNight !== hotel.currentPricePerNight && hotel.rawPricePerNight > 0 && hotel.currentPricePerNight > 0 && (<div className="mb-1 text-muted text-decoration-line-through small">{formatPrice(hotel.rawPricePerNight)}</div>)}
                                                 <div className="mb-1 fw-bold text-danger fs-5">{formatPrice(hotel.currentPricePerNight)}</div>
                                                 <div className="text-muted small">Chưa bao gồm thuế và phí</div>
                                             </div>

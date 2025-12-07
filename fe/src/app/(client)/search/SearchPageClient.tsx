@@ -431,16 +431,17 @@ export default function SearchPageClient({
                                 const allPhotos = hotel.photos?.flatMap((p: HotelPhoto) => p.photos.map(photo => photo.url)) || [];
                                 const mainImage = allPhotos[0] || '/placeholder.svg';
                                 const thumbnailImages = allPhotos.slice(1, 4);
-                                const hasDiscount = hotel.rawPricePerNight > hotel.currentPricePerNight && hotel.rawPricePerNight > 0 && hotel.currentPricePerNight > 0;
-                                const discountPercentage = hasDiscount ? Math.round((1 - hotel.currentPricePerNight / hotel.rawPricePerNight) * 100) : 0;
+                                const hasPriceChange = hotel.rawPricePerNight !== hotel.currentPricePerNight && hotel.rawPricePerNight > 0 && hotel.currentPricePerNight > 0;
+                                const priceChangePercentage = hasPriceChange ? Math.round(Math.abs((hotel.currentPricePerNight - hotel.rawPricePerNight) / hotel.rawPricePerNight * 100)) : 0;
+                                const isPriceDecrease = hasPriceChange && hotel.currentPricePerNight < hotel.rawPricePerNight;
                                 const cardContent = (
                                     <div className={styles.hotelCard} onClick={() => handleSelectHotel(hotel.id)}>
                                         <div className={styles.imageColumn}>
                                             <div className={styles.mainImageWrapper}>
                                                 <Image src={mainImage} alt={hotel.name} fill sizes="(max-width: 768px) 100vw, 33vw" style={{ objectFit: 'cover' }} />
-                                                {hasDiscount && (
-                                                    <span className="badge bg-success position-absolute top-0 end-0 m-2" style={{ fontSize: '12px', zIndex: 10 }}>
-                                                        -{discountPercentage}%
+                                                {hasPriceChange && (
+                                                    <span className={`badge position-absolute top-0 end-0 m-2 ${isPriceDecrease ? 'bg-success' : 'bg-danger'}`} style={{ fontSize: '12px', zIndex: 10 }}>
+                                                        {isPriceDecrease ? '-' : '+'}{priceChangePercentage}%
                                                     </span>
                                                 )}
                                             </div>
@@ -471,7 +472,7 @@ export default function SearchPageClient({
                                         </div>
                                         <div className={styles.priceColumn}>
                                             <div className="text-end text-muted text-decoration-line-through small">
-                                                {hasDiscount ? `${hotel.rawPricePerNight?.toLocaleString('vi-VN')} VND` : <span>&nbsp;</span>}
+                                                {hasPriceChange ? `${hotel.rawPricePerNight?.toLocaleString('vi-VN')} VND` : <span>&nbsp;</span>}
                                             </div>
                                             <div className={`text-end mb-1 ${styles.priceFinal}`}>
                                                 {hotel.currentPricePerNight > 0 ? `${hotel.currentPricePerNight?.toLocaleString('vi-VN')} VND` : 'Liên hệ giá'}
