@@ -162,13 +162,6 @@ export async function getPartnerRevenueReport(
             { params }
         );
         
-        console.log('[partnerReportsService] Revenue report response:', {
-            status: response.status,
-            statusCode: response.data?.statusCode,
-            hasData: !!response.data?.data,
-            dataType: typeof response.data?.data,
-            dataKeys: response.data?.data ? Object.keys(response.data.data) : [],
-        });
         
         if (!response.data?.data) {
             throw new Error('API không trả về dữ liệu');
@@ -176,12 +169,6 @@ export async function getPartnerRevenueReport(
         
         return response.data.data;
     } catch (error: any) {
-        console.error('[partnerReportsService] Error in getPartnerRevenueReport:', {
-            error,
-            message: error.message,
-            response: error.response?.data,
-            status: error.response?.status,
-            url: error.config?.url,
             params: error.config?.params,
         });
         throw error;

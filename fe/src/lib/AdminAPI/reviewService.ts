@@ -159,19 +159,11 @@ export async function getReviews(params: GetReviewsParams = {}): Promise<Paginat
         if (params.sortBy) queryParams.sortBy = params.sortBy;
         if (params.sortDir) queryParams.sortDir = params.sortDir;
 
-        console.log("[reviewService] Fetching reviews with params:", {
-            ...queryParams,
-            roleName: params.roleName,
-            currentUserId: params.currentUserId,
-        });
 
         const response = await apiClient.get<ApiResponse<PaginatedReviewResponse>>('/reviews', {
             params: queryParams
         });
 
-        console.log("[reviewService] Response received:", {
-            status: response.status,
-            totalItems: response.data?.data?.totalItems,
             page: response.data?.data?.page,
             totalPages: response.data?.data?.totalPages,
         });

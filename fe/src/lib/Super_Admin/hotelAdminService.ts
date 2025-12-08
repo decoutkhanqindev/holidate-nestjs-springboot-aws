@@ -76,17 +76,6 @@ function mapUserResponseToHotelAdmin(user: UserResponse): HotelAdmin {
     // Xử lý active: nếu active === true → ACTIVE, nếu active === false → INACTIVE
     const status: 'ACTIVE' | 'INACTIVE' = activeValue === true ? 'ACTIVE' : 'INACTIVE';
 
-    // Log để debug
-    if (user.id && user.email) {
-        console.log(`[mapUserResponseToHotelAdmin] Mapping user:`, {
-            userId: user.id,
-            email: user.email,
-            activeFromAuthInfo: user.authInfo?.active,
-            activeFromRoot: user.active,
-            finalActive: activeValue,
-            mappedStatus: status
-        });
-    }
 
     return {
         id: parseInt(user.id) || 0, // For display/compatibility (parsed from UUID, may be 0 if not a valid number)
@@ -283,11 +272,6 @@ export async function createHotelAdminServer(payload: {
         // Thử 1: Lấy từ API /roles (yêu cầu ADMIN role)
         try {
             const rolesResponse = await serverClient.get<ApiResponse<Array<{ id: string; name: string; description?: string }>>>(`/roles`);
-            console.log('[createHotelAdminServer] /roles API response:', {
-                statusCode: rolesResponse.data?.statusCode,
-                dataLength: rolesResponse.data?.data?.length || 0,
-                roles: rolesResponse.data?.data?.map(r => ({ id: r.id, name: r.name }))
-            });
 
             if (rolesResponse.data?.statusCode === 200 && rolesResponse.data?.data) {
                 // Tìm role PARTNER với nhiều cách so sánh
@@ -298,28 +282,17 @@ export async function createHotelAdminServer(payload: {
 
                 if (partnerRole && partnerRole.id) {
                     partnerRoleId = partnerRole.id;
-                } else {
-                    console.warn('[createHotelAdminServer] ⚠️ PARTNER role not found in /roles API response. Available roles:', rolesResponse.data.data.map(r => r.name));
                 }
             } else {
             }
         } catch (error: any) {
-            console.error('[createHotelAdminServer] ❌ Error fetching roles from /roles API:', {
-                message: error.message,
-                status: error.response?.status,
-                statusText: error.response?.statusText,
-                data: error.response?.data
-            });
+            // Error fetching roles
         }
 
         // Thử 2: Nếu không tìm thấy, lấy từ danh sách users PARTNER có sẵn
         if (!partnerRoleId) {
             try {
                 const usersResponse = await serverClient.get<ApiResponse<UserResponse[]>>(baseURL);
-                console.log('[createHotelAdminServer] Users API response:', {
-                    statusCode: usersResponse.data?.statusCode,
-                    dataLength: usersResponse.data?.data?.length || 0
-                });
 
                 if (usersResponse.data?.statusCode === 200 && usersResponse.data?.data) {
                     const partnerUsers = usersResponse.data.data.filter(
@@ -328,16 +301,10 @@ export async function createHotelAdminServer(payload: {
 
                     if (partnerUsers.length > 0 && partnerUsers[0].role?.id) {
                         partnerRoleId = partnerUsers[0].role.id;
-                    } else {
                     }
                 }
             } catch (error: any) {
-                console.error('[createHotelAdminServer] ❌ Error fetching users:', {
-                    message: error.message,
-                    status: error.response?.status,
-                    statusText: error.response?.statusText,
-                    data: error.response?.data
-                });
+                // Error fetching users
             }
         }
 
@@ -371,34 +338,10 @@ export async function createHotelAdminServer(payload: {
             }
         }
 
-        console.log('[createHotelAdminServer] Creating user with payload:', {
-            email: userPayload.email,
-            fullName: userPayload.fullName,
-            roleId: userPayload.roleId,
-            authProvider: userPayload.authProvider,
-            hasPassword: !!userPayload.password,
-            passwordLength: userPayload.password?.length || 0,
-            phoneNumber: userPayload.phoneNumber || 'N/A'
-        });
-
         const userResponse = await serverClient.post<ApiResponse<UserResponse>>(baseURL, userPayload);
-        console.log('[createHotelAdminServer] User creation response:', {
-            statusCode: userResponse.data?.statusCode,
-            hasData: !!userResponse.data?.data,
-            userId: userResponse.data?.data?.id,
-            userEmail: userResponse.data?.data?.email,
-            userRole: userResponse.data?.data?.role?.name
-        });
 
         if (userResponse.data?.statusCode === 200 && userResponse.data?.data) {
             const newUser = userResponse.data.data;
-            console.log('[createHotelAdminServer] ✅ User created successfully:', {
-                id: newUser.id,
-                email: newUser.email,
-                fullName: newUser.fullName,
-                roleId: newUser.role?.id,
-                roleName: newUser.role?.name
-            });
 
             // QUAN TRỌNG: User mới tạo có active = false, cần activate để có thể login
             // Gọi API Update User với active = true để activate account
@@ -412,13 +355,7 @@ export async function createHotelAdminServer(payload: {
                 });
 
             } catch (updateError: any) {
-                console.error('[createHotelAdminServer] ⚠️ Error activating user via update API:', {
-                    message: updateError.message,
-                    status: updateError.response?.status,
-                    responseData: updateError.response?.data
-                });
-                // Không throw error vì user đã được tạo thành công
-                // Chỉ log warning
+                // Error activating user via update API
             }
 
             // Note: HotelUpdateRequest không có partnerId field
@@ -436,18 +373,6 @@ export async function createHotelAdminServer(payload: {
 
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        // Log chi tiết toàn bộ error response
-        console.error('[createHotelAdminServer] ❌ Error creating hotel admin - Full Error Details:', {
-            message: error.message,
-            status: error.response?.status,
-            statusText: error.response?.statusText,
-            headers: error.response?.headers,
-            responseData: error.response?.data,
-            responseDataString: JSON.stringify(error.response?.data, null, 2),
-            requestUrl: error.config?.url,
-            requestMethod: error.config?.method,
-            requestData: error.config?.data
-        });
 
         // Xử lý lỗi validation từ backend
         let errorMessage = 'Không thể tạo admin khách sạn';
@@ -479,7 +404,6 @@ export async function createHotelAdminServer(payload: {
         } else if (error.response?.status === 500) {
             // Lỗi server (500 Internal Server Error)
             const errorData = error.response?.data;
-            console.error('[createHotelAdminServer] ⚠️ Server error (500). Backend may have encountered an unexpected exception.');
 
             // Thử lấy message từ ApiResponse format
             if (errorData?.message) {

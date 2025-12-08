@@ -103,13 +103,6 @@ function mapRoomResponseToRoom(response: RoomResponse): Room {
         : (response.totalRooms !== undefined && response.totalRooms !== null
             ? response.totalRooms
             : 0);
-    console.log("[mapRoomResponseToRoom] Quantity mapping:", {
-        hasQuantity: response.quantity !== undefined,
-        quantity: response.quantity,
-        hasTotalRooms: response.totalRooms !== undefined,
-        totalRooms: response.totalRooms,
-        finalQuantity: quantity
-    });
 
     // Map status từ backend (lowercase: active, inactive, maintenance, closed) sang frontend (uppercase)
     // Theo API docs: active, inactive, maintenance, closed
@@ -187,7 +180,6 @@ export const getRoomsByHotelId = async (
             'sort-dir': 'ASC'        // Default ASC
         };
 
-        console.log("[roomService] Request params:", JSON.stringify(params, null, 2));
 
         // Thêm timestamp để bypass cache (nếu có)
         const response = await apiClient.get<ApiResponse<PaginatedRoomResponse>>(
@@ -201,12 +193,6 @@ export const getRoomsByHotelId = async (
         );
 
         if (response.data.statusCode === 200 && response.data.data) {
-            console.log("[roomService] Raw API response (first room):", JSON.stringify(response.data.data.content[0], null, 2));
-            console.log("[roomService] Raw quantity/totalRooms in response:", response.data.data.content.map((r: any) => ({
-                id: r.id,
-                name: r.name,
-                quantity: r.quantity,
-                totalRooms: r.totalRooms,
                 availableRooms: r.availableRooms
             })));
             const rooms = response.data.data.content.map(mapRoomResponseToRoom);

@@ -80,26 +80,11 @@ export default function PartnerReportsPage() {
                 const inRange = checkOutDate >= fromDate && checkOutDate <= toDate;
                 
                 if (inRange) {
-                    console.log('[PartnerReportsPage] Booking in range:', {
-                        id: booking.id,
-                        checkOutDate: booking.checkOutDate,
-                        totalAmount: booking.totalAmount,
-                        status: booking.bookingStatus,
-                    });
                 }
                 
                 return inRange;
             });
 
-            console.log('[PartnerReportsPage] Bookings in date range:', {
-                total: bookingsInRange.length,
-                dateRange: { from: fromDate.toISOString(), to: toDate.toISOString() },
-                sampleBookings: bookingsInRange.slice(0, 3).map((b: any) => ({
-                    id: b.id,
-                    checkOutDate: b.checkOutDate,
-                    totalAmount: b.totalAmount,
-                })),
-            });
 
             // Lọc chỉ lấy bookings đã thanh toán (confirmed, completed, checked_in)
             const paidBookings = bookingsInRange.filter(booking => {
@@ -150,13 +135,6 @@ export default function PartnerReportsPage() {
                 if (periodKey) {
                     const oldRevenue = revenueMap[periodKey] || 0;
                     revenueMap[periodKey] = oldRevenue + revenue;
-                    console.log('[PartnerReportsPage] Added revenue to period:', {
-                        periodKey,
-                        bookingId: booking.id,
-                        bookingRevenue: revenue,
-                        periodTotalBefore: oldRevenue,
-                        periodTotalAfter: revenueMap[periodKey],
-                    });
                 }
             });
 
@@ -207,9 +185,6 @@ export default function PartnerReportsPage() {
                 paidBookings: paidBookings.length,
                 periodsWithRevenue: Object.keys(revenueMap).length,
                 totalRevenue,
-                dataLength: data.length,
-                data,
-                revenueMap,
             });
 
             return {
@@ -253,13 +228,6 @@ export default function PartnerReportsPage() {
                 hasMore = response.totalPages > currentPage + 1;
                 currentPage++;
             }
-
-            console.log('[PartnerReportsPage] Sample bookings:', allBookings.slice(0, 3).map((b: any) => ({
-                id: b.id,
-                createdAt: b.createdAt,
-                bookingStatus: b.bookingStatus,
-                totalAmount: b.totalAmount,
-            })));
 
             // Filter bookings trong khoảng thời gian (theo createdAt hoặc checkInDate - khi booking được tạo hoặc check-in)
             const fromDate = new Date(from);

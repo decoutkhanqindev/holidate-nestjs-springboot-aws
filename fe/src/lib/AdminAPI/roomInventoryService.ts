@@ -73,7 +73,6 @@ export const getRoomInventories = async (
             queryParams['sort-by'] = params.sortBy.trim();
         }
 
-        console.log("[roomInventoryService] Request params:", JSON.stringify(queryParams, null, 2));
 
         const response = await apiClient.get<ApiResponse<PaginatedRoomInventoryResponse>>(
             baseURL,

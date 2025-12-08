@@ -76,7 +76,7 @@ export const getCities = async (provinceId?: string, name?: string): Promise<Loc
 export const getCitiesServer = async (provinceId?: string, name?: string): Promise<LocationOption[]> => {
     try {
         const axios = (await import('axios')).default;
-        
+
         let url = '/location/cities?';
         const params: string[] = [];
 
@@ -94,7 +94,7 @@ export const getCitiesServer = async (provinceId?: string, name?: string): Promi
         }
 
         const fullUrl = `${API_BASE_URL}${url}`;
-        
+
         const response = await axios.get<ApiResponse<LocationOption[]>>(fullUrl, {
             timeout: 10000, // 10 seconds timeout
             withCredentials: true, // QUAN TRỌNG: Cho phép gửi cookies (cần thiết cho CORS)
@@ -102,15 +102,11 @@ export const getCitiesServer = async (provinceId?: string, name?: string): Promi
                 'Content-Type': 'application/json',
             },
         });
-        
+
         return response.data.data || [];
     } catch (error: any) {
         // Chỉ log lỗi nếu không phải ECONNREFUSED (backend không chạy là expected trong dev)
         if (error.code !== 'ECONNREFUSED' && error.code !== 'ETIMEDOUT') {
-        } else {
-            // Backend không chạy hoặc không accessible từ server - đây là expected behavior
-            // Client component sẽ tự fetch lại từ browser
-            console.log('[locationService] [SERVER] Backend không accessible từ server (expected). Client sẽ tự fetch.');
         }
         return [];
     }
@@ -258,17 +254,7 @@ export const createWard = async (name: string, districtId: string, code: string)
     };
 
     try {
-        console.log(`[locationService] Request Body:`, JSON.stringify(requestBody, null, 2));
-
         const response = await apiClient.post<ApiResponse<any>>('/location/wards', requestBody);
-
-        console.log(`[locationService] Response received:`, {
-            status: response.status,
-            statusCode: response.data?.statusCode,
-            hasData: !!response.data?.data,
-            dataStructure: response.data ? Object.keys(response.data) : 'no data',
-            fullResponse: JSON.stringify(response.data, null, 2),
-        });
 
         // Kiểm tra HTTP status trước - nếu 200/201 thì coi như thành công
         if (response.status === 200 || response.status === 201) {
@@ -309,18 +295,12 @@ export const createWard = async (name: string, districtId: string, code: string)
             if (result) {
                 return result;
             } else {
-                console.warn('[locationService] Full response:', JSON.stringify(response.data, null, 2));
                 throw new Error('Tạo thành công nhưng không nhận được thông tin phản hồi. Vui lòng kiểm tra lại danh sách.');
             }
         }
 
-        console.error('[locationService] ❌ Invalid response structure:', JSON.stringify(response.data, null, 2));
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error('[locationService] Error response data (full):', JSON.stringify(error.response?.data, null, 2));
-        console.error('[locationService] Request Body:', JSON.stringify(requestBody, null, 2));
-        console.error('[locationService] REQUEST:', JSON.stringify(requestBody, null, 2));
-        console.error('[locationService] RESPONSE DATA:', JSON.stringify(error.response?.data || { message: error.message }, null, 2));
 
         let errorMessage = 'Không thể tạo phường/xã mới';
         if (error.response?.data?.message) {
@@ -355,27 +335,12 @@ export const createDistrict = async (name: string, cityId: string, code: string)
     };
 
     try {
-        console.log(`[locationService] Request Body:`, JSON.stringify(requestBody, null, 2));
-
         let response;
         try {
             response = await apiClient.post<ApiResponse<any>>('/location/districts', requestBody);
         } catch (apiError: any) {
-            console.error('[locationService] Error details:', {
-                hasResponse: !!apiError.response,
-                status: apiError.response?.status,
-                data: apiError.response?.data,
-            });
-            throw apiError; // Re-throw để catch block bên ngoài xử lý
+            throw apiError;
         }
-
-        console.log(`[locationService] Response received:`, {
-            status: response.status,
-            statusCode: response.data?.statusCode,
-            hasData: !!response.data?.data,
-            dataStructure: response.data ? Object.keys(response.data) : 'no data',
-            fullResponse: JSON.stringify(response.data, null, 2),
-        });
 
         // Kiểm tra HTTP status trước - nếu 200/201 thì coi như thành công
         if (response.status === 200 || response.status === 201) {
@@ -416,27 +381,12 @@ export const createDistrict = async (name: string, cityId: string, code: string)
             if (result) {
                 return result;
             } else {
-                console.warn('[locationService] Full response:', JSON.stringify(response.data, null, 2));
                 throw new Error('Tạo thành công nhưng không nhận được thông tin phản hồi. Vui lòng kiểm tra lại danh sách.');
             }
         }
 
-        console.error('[locationService] ❌ Invalid response structure:', JSON.stringify(response.data, null, 2));
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error('[locationService] Error response data (full):', JSON.stringify(error.response?.data, null, 2));
-        console.error('[locationService] Error response data (raw):', error.response?.data);
-        console.error('[locationService] Error config:', {
-            url: error.config?.url,
-            method: error.config?.method,
-            baseURL: error.config?.baseURL,
-            data: error.config?.data,
-        });
-        console.error('[locationService] Request Body:', JSON.stringify(requestBody, null, 2));
-
-        // Log riêng để copy cho backend
-        console.error(JSON.stringify(requestBody, null, 2));
-        console.error(JSON.stringify(error.response?.data || { message: error.message }, null, 2));
 
         // Xử lý error message - kiểm tra nhiều nguồn
         let errorMessage = 'Không thể tạo quận/huyện mới';
@@ -478,17 +428,7 @@ export const createCity = async (name: string, code: string, provinceId: string)
     };
 
     try {
-        console.log(`[locationService] Request Body:`, JSON.stringify(requestBody, null, 2));
-
         const response = await apiClient.post<ApiResponse<any>>('/location/cities', requestBody);
-
-        console.log(`[locationService] Response received:`, {
-            status: response.status,
-            statusCode: response.data?.statusCode,
-            hasData: !!response.data?.data,
-            dataStructure: response.data ? Object.keys(response.data) : 'no data',
-            fullResponse: JSON.stringify(response.data, null, 2),
-        });
 
         // Kiểm tra HTTP status trước - nếu 200/201 thì coi như thành công
         if (response.status === 200 || response.status === 201) {
@@ -530,20 +470,12 @@ export const createCity = async (name: string, code: string, provinceId: string)
             if (result) {
                 return result;
             } else {
-                // HTTP 200 nhưng không parse được - có thể backend đã lưu nhưng response khác
-                console.warn('[locationService] Full response:', JSON.stringify(response.data, null, 2));
-                // Vẫn throw error để user biết, nhưng có thể data đã được lưu
                 throw new Error('Tạo thành công nhưng không nhận được thông tin phản hồi. Vui lòng kiểm tra lại danh sách.');
             }
         }
 
-        console.error('[locationService] ❌ Invalid response structure:', JSON.stringify(response.data, null, 2));
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error('[locationService] Error response data (full):', JSON.stringify(error.response?.data, null, 2));
-        console.error('[locationService] Request Body:', JSON.stringify(requestBody, null, 2));
-        console.error('[locationService] REQUEST:', JSON.stringify(requestBody, null, 2));
-        console.error('[locationService] RESPONSE DATA:', JSON.stringify(error.response?.data || { message: error.message }, null, 2));
 
         let errorMessage = 'Không thể tạo thành phố/quận mới';
         if (error.response?.data?.message) {
@@ -574,11 +506,6 @@ export const createProvince = async (name: string, code: string, countryId: stri
     };
 
     try {
-        console.log(`[locationService] Request Body (JSON):`, JSON.stringify(requestBody, null, 2));
-        console.log(`[locationService] Request Body (raw):`, requestBody);
-        console.log(`[locationService] - name: "${requestBody.name}" (length: ${requestBody.name.length})`);
-        console.log(`[locationService] - code: "${requestBody.code}" (length: ${requestBody.code.length})`);
-
         const response = await apiClient.post<ApiResponse<any>>('/location/provinces', requestBody);
 
         if (response.data.statusCode === 200 && response.data.data) {
@@ -592,18 +519,6 @@ export const createProvince = async (name: string, code: string, countryId: stri
         }
         throw new Error('Invalid response from server');
     } catch (error: any) {
-        console.error('[locationService] Error response data (full):', JSON.stringify(error.response?.data, null, 2));
-        console.error('[locationService] Request config:', {
-            url: error.config?.url,
-            method: error.config?.method,
-            baseURL: error.config?.baseURL,
-        });
-        console.error('[locationService] Request Body (đã gửi lên backend):', error.config?.data ? JSON.parse(error.config.data) : requestBody);
-        console.error('[locationService] Request Body (JSON string):', error.config?.data || JSON.stringify(requestBody, null, 2));
-
-        // Log riêng để dễ copy-paste cho backend team
-        console.error(JSON.stringify(requestBody, null, 2));
-        console.error(JSON.stringify(error.response?.data || { message: error.message }, null, 2));
 
         // Xử lý error message chi tiết hơn
         let errorMessage = 'Không thể tạo tỉnh/thành phố mới';
@@ -629,7 +544,6 @@ export const createProvince = async (name: string, code: string, countryId: stri
                 }
             }
         } else if (error.message) {
-            console.log('[locationService] ⚠️ ERROR TỪ FRONTEND (network/timeout/etc):', error.message);
             errorMessage = error.message;
         }
 

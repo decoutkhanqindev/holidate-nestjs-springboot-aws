@@ -81,7 +81,6 @@ export const findBedTypeIdByName = async (bedTypeName: string, hotelId?: string)
                         if (roomDetails?.bedType) {
                             const existingBedTypeName = roomDetails.bedType.name;
                             if (bedTypeNamesMatch(existingBedTypeName, bedTypeName)) {
-                                console.log(`[bedTypeService] Found bedType ID in hotel ${hotelId}: ${roomDetails.bedType.id} (matched "${existingBedTypeName}" with "${bedTypeName}")`);
                                 return roomDetails.bedType.id;
                             }
                         }
@@ -207,7 +206,6 @@ export const getAvailableBedTypes = async (hotelId?: string): Promise<BedType[]>
             a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' })
         );
 
-        console.log(`[bedTypeService] Bed types (${bedTypes.length} total):`, bedTypes.map(bt => bt.name).join(', '));
         
         return bedTypes;
     } catch (error: any) {
@@ -286,7 +284,6 @@ export const findOrCreateBedTypeByName = async (bedTypeName: string, hotelId: st
         for (const variant of nameVariants) {
             const variantId = await findBedTypeIdByName(variant, hotelId);
             if (variantId) {
-                console.log(`[bedTypeService] ✅ Found bedType with variant name: "${variant}" -> ${variantId} (original: "${trimmedName}")`);
                 return variantId;
             }
         }

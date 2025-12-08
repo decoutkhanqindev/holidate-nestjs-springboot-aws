@@ -331,9 +331,6 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
     const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        // Log ra browser console
-        console.log("=".repeat(80));
-
         const formData = new FormData(event.currentTarget);
 
         // Parse giá tiền từ format (loại bỏ dấu chấm) trước khi gửi
@@ -359,10 +356,6 @@ export default function RoomForm({ formAction, hotelId, room }: RoomFormProps) {
             }
         }
 
-        console.log("[RoomForm] FormData entries (client-side):");
-        formDataEntries.forEach((entry, index) => {
-        });
-        console.log("=".repeat(80));
 
         // Gọi server action
         await formAction(formData);

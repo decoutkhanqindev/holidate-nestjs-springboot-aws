@@ -4,27 +4,6 @@ import { redirect } from 'next/navigation';
 import { createRoomServer, type CreateRoomPayload } from '@/lib/AdminAPI/roomService';
 
 export async function createRoomAction(formData: FormData) {
-    // Log ở client-side để thấy trong browser console
-    console.log("=".repeat(80));
-    console.log("[createRoomAction] FormData entries (client-side):");
-
-    const clientFormDataEntries: Array<{ key: string; value: string }> = [];
-    for (const [key, value] of formData.entries()) {
-        if (value instanceof File) {
-            clientFormDataEntries.push({
-                key,
-                value: `File: ${value.name} (${value.size} bytes)`
-            });
-        } else {
-            clientFormDataEntries.push({
-                key,
-                value: String(value)
-            });
-        }
-    }
-    clientFormDataEntries.forEach((entry, index) => {
-    });
-    console.log("=".repeat(80));
 
     try {
         const hotelId = formData.get('hotelId') as string;

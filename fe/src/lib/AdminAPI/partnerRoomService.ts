@@ -215,15 +215,6 @@ export async function logAllRoomsByPartnerEmail(partnerEmail: string): Promise<v
     try {
         const result = await getAllRoomsByPartnerEmail(partnerEmail);
         
-        console.log(`Partner: ${result.partner.fullName} (${result.partner.email})`);
-
-        result.hotels.forEach((hotel, index) => {
-            console.log(`${index + 1}. ${hotel.name} (ID: ${hotel.id})`);
-            
-            hotel.rooms.forEach((room, roomIndex) => {
-                console.log(`      - Giá: ${room.basePricePerNight?.toLocaleString('vi-VN') || 'N/A'} VND/đêm`);
-            });
-        });
 
     } catch (error: any) {
         throw error;
