@@ -1,0 +1,214 @@
+{
+    "nodes": [
+      {
+        "parameters": {
+          "model": {
+            "__rl": true,
+            "value": "gpt-4o",
+            "mode": "list",
+            "cachedResultName": "gpt-4o"
+          },
+          "builtInTools": {},
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+        "typeVersion": 1.3,
+        "position": [
+          -704,
+          144
+        ],
+        "id": "6c27d81d-0895-4b0d-a545-07651f70515c",
+        "name": "OpenAI Chat Model",
+        "credentials": {
+          "openAiApi": {
+            "id": "DM5TLJVcvl7xyaex",
+            "name": "OpenAi account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "sessionIdType": "customKey",
+          "sessionKey": "={{ $json.sessionId }}"
+        },
+        "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+        "typeVersion": 1.3,
+        "position": [
+          -512,
+          144
+        ],
+        "id": "80d74dc6-0ad8-4d76-af52-6783c7f9a3df",
+        "name": "Simple Memory"
+      },
+      {
+        "parameters": {
+          "mode": "retrieve-as-tool",
+          "toolDescription": "Use this tool to retrieve information about hotels in Vietnam, including room details, amenities, pricing policies, and locations. Always call this tool when the user asks about booking accommodation or hotel recommendations.",
+          "pineconeIndex": {
+            "__rl": true,
+            "value": "holidate-training-ai-agent-n8n-index",
+            "mode": "list",
+            "cachedResultName": "holidate-training-ai-agent-n8n-index"
+          },
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+        "typeVersion": 1.3,
+        "position": [
+          -224,
+          128
+        ],
+        "id": "da17e0a5-3b98-408a-aed0-d75478794b4b",
+        "name": "Pinecone Vector Store",
+        "credentials": {
+          "pineconeApi": {
+            "id": "MhJjsFjO00aj8Zen",
+            "name": "PineconeApi account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "model": "text-embedding-3-large",
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+        "typeVersion": 1.2,
+        "position": [
+          -384,
+          272
+        ],
+        "id": "5e8c6ca8-ad63-475e-befb-f93ef24faf6f",
+        "name": "Embeddings OpenAI",
+        "credentials": {
+          "openAiApi": {
+            "id": "DM5TLJVcvl7xyaex",
+            "name": "OpenAi account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "9c4bdf4a-4fbc-485b-b3bc-e09647d8d450",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [
+          -800,
+          -80
+        ],
+        "id": "1c7d9d93-58ce-4534-9fda-5ab11d3fd839",
+        "name": "Webhook",
+        "webhookId": "9c4bdf4a-4fbc-485b-b3bc-e09647d8d450"
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $json.chatInput }}",
+          "options": {
+            "systemMessage": "You are a professional and friendly AI ChatBot assistant of the Holidate Hotel Booking System. Your main task is to assist customers in searching for hotel information, checking facilities, prices and policies based on the data provided.\n\nMandatory rules:\n1. Always use the information lookup tool before answering. Absolutely DO NOT fabricate information (Illusion).\n2. Honesty: If the information is not in the data found, be honest and say: \"I currently do not have detailed information about this part in the system, would you like me to search for another hotel?\".\n3. Quote: When quoting, always include a warning: \"This price is for reference only and may change depending on the time\".\n4. Writing style: Polite, friendly, use natural Vietnamese, address \"em\" and call customers \"anh/chi\".\n\n5. Format: Use Markdown (bold, bullet points) to present room information for easy reading.\n\nExample:\n- Customer asks: \"Does Muong Thanh Da Nang Hotel have a swimming pool?\"\n\n- Operation: Search tool -> Find amenities -> Answer yes/no with detailed description if available."
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 3,
+        "position": [
+          -544,
+          -80
+        ],
+        "id": "269e248c-1603-4cb3-a631-e1e6e4eae3a3",
+        "name": "AI Agent",
+        "alwaysOutputData": false
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ { \"output\": $json.output } }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.4,
+        "position": [
+          -192,
+          -80
+        ],
+        "id": "a24cf19c-5f1b-46f0-ad4f-242650dfc92a",
+        "name": "Respond to Webhook"
+      }
+    ],
+    "connections": {
+      "OpenAI Chat Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Simple Memory": {
+        "ai_memory": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "ai_memory",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Pinecone Vector Store": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Embeddings OpenAI": {
+        "ai_embedding": [
+          [
+            {
+              "node": "Pinecone Vector Store",
+              "type": "ai_embedding",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "AI Agent": {
+        "main": [
+          [
+            {
+              "node": "Respond to Webhook",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {},
+    "meta": {
+      "templateCredsSetupCompleted": true,
+      "instanceId": "c57b70723f54864769ece4aeb1aa72368bc75704a74d49344e0597a9701afb0d"
+    }
+  }
