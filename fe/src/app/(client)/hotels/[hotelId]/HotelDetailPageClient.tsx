@@ -1464,6 +1464,14 @@ const getFullAddress = (hotel: HotelResponse) => {
     return addressParts.length > 0 ? addressParts.join(', ') : 'Chưa có địa chỉ';
 };
 
+// Hàm mở Google Maps với địa chỉ
+const openGoogleMaps = (address: string) => {
+    if (!address || address === 'Chưa có địa chỉ') return;
+    const encodedAddress = encodeURIComponent(address);
+    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+    window.open(googleMapsUrl, '_blank');
+};
+
 const formatDateForDisplay = (checkin: Date, nights: number): string => {
     try {
         const checkoutDate = new Date(checkin);
@@ -1910,16 +1918,6 @@ export default function HotelDetailPageClient({
                     sortDir: 'DESC'
                 });
 
-                console.log('[HotelDetailPage] Reviews fetched from API:', {
-                    total: reviewsResult.data.length,
-                    hotelId: hotelIdStr,
-                    reviews: reviewsResult.data.map(r => ({
-                        id: r.id,
-                        hotelId: r.hotelId || 'N/A',
-                        score: r.score
-                    }))
-                });
-
                 // VẤN ĐỀ: Backend ReviewResponse không có hotelId, nên không thể verify trực tiếp
                 // Backend đã filter trong query: (:hotelId IS NULL OR r.hotel.id = :hotelId)
                 // Nếu backend không nhận được hotelId (NULL), sẽ trả về TẤT CẢ reviews
@@ -1935,12 +1933,6 @@ export default function HotelDetailPageClient({
                     // Chỉ verify 1-2 reviews đầu tiên để tránh performance issue
                     const reviewsToVerify = reviewsResult.data.slice(0, Math.min(2, reviewsResult.data.length));
 
-                    console.log('[HotelDetailPage] Verifying reviews hotelId...', {
-                        total: reviewsResult.data.length,
-                        toVerify: reviewsToVerify.length,
-                        hotelId: hotelIdStr
-                    });
-
                     try {
                         const { getReviewById } = await import('@/service/reviewService');
 
@@ -1953,12 +1945,7 @@ export default function HotelDetailPageClient({
                                     if (reviewHotelId && reviewHotelId !== '' && reviewHotelId !== 'N/A') {
                                         const matches = reviewHotelId === hotelIdStr || reviewHotelId === currentHotelId;
                                         if (!matches) {
-                                            console.error('[HotelDetailPage] ❌ Review belongs to DIFFERENT hotel!', {
-                                                reviewId: review.id,
-                                                reviewHotelId,
-                                                expectedHotelId: hotelIdStr,
-                                                currentHotelId
-                                            });
+                                            // Review belongs to different hotel - silently skip
                                         }
                                         return { review, verified: matches, hotelId: reviewHotelId };
                                     }
@@ -1974,14 +1961,7 @@ export default function HotelDetailPageClient({
                         // Kiểm tra xem có review nào không thuộc hotel này không
                         const invalidReviews = verificationResults.filter(r => !r.verified);
                         if (invalidReviews.length > 0) {
-                            console.error('[HotelDetailPage] ❌ Backend filter is WRONG! Found reviews from different hotels!', {
-                                invalidCount: invalidReviews.length,
-                                hotelId: hotelIdStr,
-                                invalidReviews: invalidReviews.map(r => ({
-                                    id: r.review.id,
-                                    hotelId: r.hotelId
-                                }))
-                            });
+                            // Backend filter is wrong - found reviews from different hotels - silently handle
 
                             // Nếu có review sai, chỉ lấy những reviews đã verify đúng
                             // Nếu không có review nào đúng → verifiedReviews = [] (sẽ hiển thị "Chưa có đánh giá")
@@ -2008,12 +1988,6 @@ export default function HotelDetailPageClient({
                     // Không có reviews, không cần verify
                     verifiedReviews = reviewsResult.data;
                 }
-
-                console.log('[HotelDetailPage] Reviews after verification:', {
-                    total: reviewsResult.data.length,
-                    verified: verifiedReviews.length,
-                    hotelId: hotelIdStr
-                });
 
                 // Chỉ set reviews nếu hotelId vẫn khớp (phòng trường hợp user chuyển trang trong lúc fetch)
                 if (hotelIdStr === (hotelId as string) && hotelIdStr === hotel.id) {
@@ -2108,10 +2082,6 @@ export default function HotelDetailPageClient({
 
         // Đảm bảo hotelId vẫn khớp trước khi load more
         if (hotelIdStr !== currentHotelId) {
-            console.warn('[HotelDetailPage] Cannot load more reviews: hotelId mismatch', {
-                hotelIdStr,
-                currentHotelId
-            });
             return;
         }
 
@@ -2137,13 +2107,6 @@ export default function HotelDetailPageClient({
                 }
                 // Nếu có hotelId, kiểm tra khớp
                 const matches = review.hotelId === hotelIdStr || review.hotelId === currentHotelId;
-                if (!matches) {
-                    console.warn('[HotelDetailPage] Review hotelId mismatch in loadMore:', {
-                        reviewId: review.id,
-                        reviewHotelId: review.hotelId,
-                        currentHotelId: hotelIdStr
-                    });
-                }
                 return matches;
             });
 
@@ -2376,7 +2339,37 @@ export default function HotelDetailPageClient({
                             <h1 className="fw-bold fs-2 text-dark mb-3">{hotel.name}</h1>
                             <div className="mb-4 d-flex align-items-start">
                                 <i className="bi bi-geo-alt-fill text-danger fs-5 me-2 mt-1"></i>
-                                <span className="text-muted">{getFullAddress(hotel)}</span>
+                                <span className="text-muted me-2 flex-grow-1">{getFullAddress(hotel)}</span>
+                                <button
+                                    onClick={() => openGoogleMaps(getFullAddress(hotel))}
+                                    className="btn btn-sm btn-outline-primary d-flex align-items-center justify-content-center ms-2"
+                                    style={{
+                                        textDecoration: 'none',
+                                        transition: 'all 0.2s ease',
+                                        flexShrink: 0,
+                                        cursor: 'pointer',
+                                        borderRadius: '6px',
+                                        minWidth: '90px',
+                                        height: '36px',
+                                        padding: '4px 12px',
+                                        border: '1px solid #0d6efd',
+                                        backgroundColor: '#fff'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.transform = 'scale(1.05)';
+                                        e.currentTarget.style.backgroundColor = '#0d6efd';
+                                        e.currentTarget.style.color = '#fff';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.transform = 'scale(1)';
+                                        e.currentTarget.style.backgroundColor = '#fff';
+                                        e.currentTarget.style.color = '#0d6efd';
+                                    }}
+                                    title="Xem trên Google Maps"
+                                >
+                                    <i className="bi bi-map me-1"></i>
+                                    <span style={{ fontSize: '0.875rem', fontWeight: '600' }}>Maps</span>
+                                </button>
                             </div>
                             <div className="d-flex align-items-center flex-wrap bg-light p-3 rounded-3">
                                 <div className="ms-auto">
@@ -2647,10 +2640,6 @@ export default function HotelDetailPageClient({
 
                                     // Đảm bảo hotelId khớp trước khi reload
                                     if (hotelIdStr !== currentHotelId) {
-                                        console.warn('[HotelDetailPage] Cannot reload reviews: hotelId mismatch', {
-                                            hotelIdStr,
-                                            currentHotelId
-                                        });
                                         setIsReviewsLoading(false);
                                         return;
                                     }
@@ -2672,13 +2661,6 @@ export default function HotelDetailPageClient({
                                                 }
                                                 // Nếu có hotelId, kiểm tra khớp
                                                 const matches = review.hotelId === hotelIdStr || review.hotelId === currentHotelId;
-                                                if (!matches) {
-                                                    console.warn('[HotelDetailPage] Review hotelId mismatch in reload:', {
-                                                        reviewId: review.id,
-                                                        reviewHotelId: review.hotelId,
-                                                        currentHotelId: hotelIdStr
-                                                    });
-                                                }
                                                 return matches;
                                             });
 
