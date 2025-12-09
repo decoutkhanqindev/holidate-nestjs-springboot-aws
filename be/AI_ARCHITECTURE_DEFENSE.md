@@ -428,6 +428,37 @@ Mandatory rules:
 
 ---
 
+### **Q4: Làm sao ngăn chặn việc spam chatbot gây tốn chi phí OpenAI?**
+
+**Vấn đề:**
+- User có thể spam chatbot → Tốn rất nhiều tiền OpenAI API
+- Cần bảo vệ hệ thống khỏi abuse
+
+**Giải pháp:**
+- **Rate Limiting:** API Gateway giới hạn 10 requests/phút/IP
+- **User Quota:** Chỉ user đã login mới được chat full tính năng, user guest bị giới hạn số lượt
+- **Caching:** Cache các câu trả lời phổ biến để không gọi OpenAI nhiều lần
+
+**Defense Tip:**
+> "Hệ thống áp dụng 2 lớp bảo vệ: (1) **Rate Limiting** ở API Gateway (giới hạn 10 requests/phút/IP). (2) **User Quota** trong Business Logic: Chỉ user đã login mới được chat full tính năng, user guest bị giới hạn số lượt. Ngoài ra, cache các câu trả lời phổ biến để không gọi OpenAI nhiều lần."
+
+---
+
+### **Q5: Có gửi thông tin nhạy cảm của khách (SĐT, Email) sang OpenAI không?**
+
+**Vấn đề:**
+- User có thể hỏi về thông tin cá nhân trong conversation
+- Cần đảm bảo PII (Personally Identifiable Information) không bị gửi sang OpenAI
+
+**Giải pháp:**
+- **PII Scrubbing:** Trước khi gửi prompt sang OpenAI, hệ thống mask hoặc replace các pattern nhạy cảm
+- **Data Retention:** OpenAI API được cấu hình `retention: 0` (không lưu data để train) theo chính sách Enterprise Privacy
+
+**Defense Tip:**
+> "Trước khi gửi prompt sang OpenAI, hệ thống có bước **PII Scrubbing** (làm sạch dữ liệu). Các pattern như SĐT, Email sẽ được mask (ví dụ: `09***`) hoặc replace bằng placeholder. OpenAI API cũng được cấu hình `retention: 0` (không lưu data để train) theo chính sách Enterprise Privacy."
+
+---
+
 ## 📎 Phụ Lục (Appendix)
 
 ### A.1. n8n Workflow Configuration (Training)

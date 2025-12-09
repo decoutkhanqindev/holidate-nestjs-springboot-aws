@@ -11,6 +11,7 @@
 - [3. Automation Schedulers](#3-automation-schedulers-các-job-tự-động)
 - [4. VNPay Integration](#4-vnpay-integration-tích-hợp-thanh-toán-vnpay)
 - [5. Security & Auth](#5-security--auth-bảo-mật--xác-thực)
+- [6. Edge Cases Handling](#6-edge-cases-handling-xử-lý-các-trường-hợp-đặc-biệt)
 
 ---
 
@@ -542,6 +543,22 @@ RoleHierarchy roleHierarchy() {
 ### 💡 Mẹo Bảo Vệ (Defense Tip)
 
 > "Hệ thống sử dụng JWT-based authentication với HS512 algorithm. Khi user login, hệ thống verify password bằng BCrypt, sau đó generate JWT token chứa email, role, và expiration time. Token được sign với secret key. Khi user gửi request, hệ thống có 2 filters: CookieAuthenticationFilter để xử lý cookie-based auth, và JwtAuthenticationFilter để xử lý Bearer token. SecurityConfig sử dụng role hierarchy (ADMIN > PARTNER > USER) để đảm bảo admin có thể access tất cả endpoints của partner và user. Tất cả endpoints đều được protect theo role, chỉ có auth endpoints và một số GET endpoints là public."
+
+---
+
+## 6. Edge Cases Handling (Xử Lý Các Trường Hợp Đặc Biệt)
+
+### 6.1. Payment Reconciliation (Đối Soát Thanh Toán)
+
+**Q:** "Nếu VNPay gọi Callback (IPN) thất bại (do mạng/server down) thì sao?"
+
+**A:** Hệ thống có **Scheduled Job: Payment Reconciliation** chạy 15 phút/lần. Nó sẽ gọi API 'Query Transaction' của VNPay để kiểm tra các đơn hàng đang PENDING. Nếu VNPay báo thành công mà database chưa cập nhật, hệ thống sẽ tự động cập nhật và gửi mail vé cho khách. Đảm bảo 'Tiền đi thì Vé về'.
+
+### 6.2. In-Memory Search Scalability (Khả Năng Mở Rộng Tìm Kiếm Trong Bộ Nhớ)
+
+**Q:** "Load dữ liệu vào RAM để search có sợ tràn bộ nhớ (OOM) khi dữ liệu lớn không?"
+
+**A:** Hiện tại hệ thống dùng **Pagination ngay từ Database** (Bước 1) để chỉ lấy IDs của trang hiện tại (ví dụ 20 khách sạn), sau đó mới load chi tiết Inventory của 20 khách sạn đó vào RAM (Bước 2). Vì vậy, dù DB có 1 triệu khách sạn, RAM chỉ tốn dung lượng cho 20 khách sạn đang hiển thị -> O(1) memory usage cho mỗi request.
 
 ---
 
