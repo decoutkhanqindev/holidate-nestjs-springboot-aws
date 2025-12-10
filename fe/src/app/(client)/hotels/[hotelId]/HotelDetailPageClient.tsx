@@ -1,189 +1,3 @@
-// 'use client';
-
-// import { useEffect, useState, useRef, useCallback } from "react";
-// import { useParams, useRouter, useSearchParams } from "next/navigation";
-// import Image from "next/image";
-// import DatePicker, { registerLocale } from 'react-datepicker';
-// import { vi } from 'date-fns/locale/vi';
-// import 'react-datepicker/dist/react-datepicker.css';
-
-// import { hotelService, HotelResponse, Room, PaginatedData, RoomDetailResponse } from "@/service/hotelService";
-// import { getReviews, GetReviewsParams } from "@/service/reviewService";
-// import { bookingService, BookingResponse } from "@/service/bookingService";
-// import GuestPicker from '@/components/DateSupport/GuestPicker';
-// import ReviewsList from '@/components/Review/ReviewsList';
-// import CreateReviewForm from '@/components/Review/CreateReviewForm';
-// import type { Review } from '@/types';
-// import styles from './HotelDetailPage.module.css';
-
-// registerLocale('vi', vi);
-
-// // --- HÀM TIỆN ÍCH (GIỮ NGUYÊN) ---
-// const getFullAddress = (hotel: HotelResponse) => {
-//     return [
-//         hotel.address,
-//         hotel.street?.name,
-//         hotel.ward?.name,
-//         hotel.district?.name,
-//         hotel.city?.name
-//     ].filter(Boolean).join(', ');
-// };
-
-// const formatDateForDisplay = (checkin: Date, nights: number): string => {
-//     try {
-//         const checkoutDate = new Date(checkin);
-//         checkoutDate.setDate(checkin.getDate() + nights);
-//         const format = (date: Date) => `${date.getDate()} thg ${date.getMonth() + 1}`;
-//         return `${format(checkin)} - ${format(checkoutDate)}, ${nights} đêm`;
-//     } catch (e) {
-//         const today = new Date();
-//         const tomorrow = new Date(today);
-//         tomorrow.setDate(today.getDate() + 1);
-//         return `${today.getDate()} thg ${today.getMonth() + 1} - ${tomorrow.getDate()} thg ${tomorrow.getMonth() + 1}, 1 đêm`;
-//     }
-// };
-
-// const formatDistance = (distanceInMeters: number) => {
-//     if (distanceInMeters < 1000) {
-//         return `${distanceInMeters} m`;
-//     }
-//     return `${(distanceInMeters / 1000).toFixed(2)} km`;
-// };
-
-// const customStylesForPage = `
-//     .sticky-tab-bar { position: sticky !important; top: 0 !important; background: #fff !important; z-index: 1000 !important; border-bottom: 2px solid #e3e6ea !important; }
-//     .sticky-tab-bar .tab-item { cursor: pointer !important; font-weight: bold !important; padding: 0 18px !important; height: 48px !important; display: inline-flex !important; align-items: center !important; color: #6c757d !important; border: none !important; background: none !important; outline: none !important; font-size: 16px !important; transition: color 0.2s !important; }
-//     .sticky-tab-bar .tab-item.active { color: #1565c0 !important; border-bottom: 3px solid #1565c0 !important; background: none !important; }
-//     .sticky-tab-bar .tab-item:not(.active):hover { color: #0070f3 !important; }
-// `;
-
-// // --- COMPONENT ROOM DETAIL MODAL ---
-// function RoomDetailModal({
-//     room,
-//     isOpen,
-//     onClose,
-//     onSelectRoom
-// }: {
-//     room: RoomDetailResponse | null;
-//     isOpen: boolean;
-//     onClose: () => void;
-//     onSelectRoom: (room: Room, price: number, includesBreakfast: boolean) => void;
-// }) {
-//     const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-//     if (!isOpen || !room) return null;
-
-//     const allPhotos = room.photos?.flatMap(cat => cat.photos.map(p => p.url)) || [];
-//     const currentPhoto = allPhotos[currentImageIndex] || "/placeholder.svg";
-//     const totalPhotos = allPhotos.length;
-
-//     const basePrice = room.basePricePerNight ?? 0;
-//     const currentPrice = room.currentPricePerNight ?? basePrice;
-//     const hasDiscount = currentPrice < basePrice && basePrice > 0;
-//     const discountPercentage = hasDiscount ? Math.round((1 - currentPrice / basePrice) * 100) : 0;
-
-//     // Lấy tất cả amenities của phòng
-//     const roomAmenitiesFlat = room.amenities?.flatMap(group => group.amenities) || [];
-
-//     // Tính năng phòng
-//     const features: { name: string; icon: string }[] = [];
-//     if (room.wifiAvailable) features.push({ name: "WiFi", icon: "wifi" });
-//     if (room.smokingAllowed) features.push({ name: "Hút thuốc", icon: "smoking" });
-
-//     // Kiểm tra amenities để tìm các tính năng đặc biệt
-//     const featureMap: { [key: string]: { name: string; icon: string } } = {
-//         'Máy lạnh': { name: 'Máy lạnh', icon: 'snow' },
-//         'Tủ lạnh': { name: 'Tủ lạnh', icon: 'box' },
-//         'Nước nóng': { name: 'Nước nóng', icon: 'droplet-fill' },
-//         'Vòi tắm đứng': { name: 'Vòi tắm đứng', icon: 'droplet' },
-//         'WiFi': { name: 'WiFi', icon: 'wifi' },
-//         'TV': { name: 'TV', icon: 'tv' },
-//     };
-
-//     roomAmenitiesFlat.forEach(amenity => {
-//         const feature = featureMap[amenity.name];
-//         if (feature && !features.find(f => f.name === feature.name)) {
-//             features.push(feature);
-//         }
-//     });
-
-//     // Tiện ích phòng (amenities) - loại bỏ những cái đã hiển thị ở tính năng
-//     const featureNames = features.map(f => f.name);
-//     const roomAmenities = roomAmenitiesFlat.filter(amenity =>
-//         !featureNames.includes(amenity.name)
-//     );
-
-//     const nextImage = () => {
-//         setCurrentImageIndex((prev) => (prev + 1) % totalPhotos);
-//     };
-
-//     const prevImage = () => {
-//         setCurrentImageIndex((prev) => (prev - 1 + totalPhotos) % totalPhotos);
-//     };
-
-//     const selectImage = (index: number) => {
-//         setCurrentImageIndex(index);
-//     };
-
-//     return (
-//         <div
-//             className="modal fade show d-block"
-//             style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}
-//             onClick={onClose}
-//         >
-//             <div
-//                 className="modal-dialog modal-dialog-centered"
-//                 style={{ maxWidth: '1100px', width: '90%', maxHeight: '90vh' }}
-//                 onClick={(e) => e.stopPropagation()}
-//             >
-//                 <div className="modal-content" style={{ maxHeight: '90vh', borderRadius: '8px', overflow: 'hidden' }}>
-//                     {/* Header */}
-//                     <div className="modal-header border-bottom py-3 px-4">
-//                         <h5 className="modal-title fw-bold mb-0">{room.name}</h5>
-//                         <button
-//                             type="button"
-//                             className="btn-close"
-//                             onClick={onClose}
-//                             aria-label="Close"
-//                         ></button>
-//                     </div>
-
-//                     <div className="modal-body p-0" style={{ maxHeight: 'calc(90vh - 120px)', overflow: 'auto' }}>
-//                         <div className="row g-0">
-//                             {/* Left: Image Gallery */}
-//                             <div className="col-lg-7">
-//                                 <div className="position-relative" style={{ height: '400px', backgroundColor: '#f5f5f5' }}>
-//                                     {totalPhotos > 0 && (
-//                                         <>
-//                                             <Image
-//                                                 src={currentPhoto}
-//                                                 alt={room.name}
-//                                                 fill
-//                                                 style={{ objectFit: 'cover' }}
-//                                             />
-//                                             {totalPhotos > 1 && (
-//                                                 <>
-//                                                     <button
-//                                                         className="btn btn-light btn-sm position-absolute top-50 start-0 translate-middle-y ms-2 rounded-circle"
-//                                                         onClick={prevImage}
-//                                                         style={{ zIndex: 10, width: '40px', height: '40px', padding: 0 }}
-//                                                     >
-//                                                         <i className="bi bi-chevron-left"></i>
-//                                                     </button>
-//                                                     <button
-//                                                         className="btn btn-light btn-sm position-absolute top-50 end-0 translate-middle-y me-2 rounded-circle"
-//                                                         onClick={nextImage}
-//                                                         style={{ zIndex: 10, width: '40px', height: '40px', padding: 0 }}
-//                                                     >
-//                                                         <i className="bi bi-chevron-right"></i>
-//                                                     </button>
-//                                                 </>
-//                                             )}
-//                                         </>
-//                                     )}
-//                                 </div>
-
-//                                 {/* Thumbnail Gallery */}
 //                                 {totalPhotos > 1 && (
 //                                     <div className="p-2 bg-white border-top">
 //                                         <div className="d-flex gap-2 overflow-auto pb-1">
@@ -1365,10 +1179,6 @@
 //             )}
 //         </div>
 //     );
-// }
-
-
-////////new 
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -1462,6 +1272,14 @@ const getFullAddress = (hotel: HotelResponse) => {
     // Nếu có ít nhất một phần địa chỉ, trả về địa chỉ đầy đủ
     // Nếu không có gì, trả về "Chưa có địa chỉ"
     return addressParts.length > 0 ? addressParts.join(', ') : 'Chưa có địa chỉ';
+};
+
+// Hàm mở Google Maps với địa chỉ
+const openGoogleMaps = (address: string) => {
+    if (!address || address === 'Chưa có địa chỉ') return;
+    const encodedAddress = encodeURIComponent(address);
+    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+    window.open(googleMapsUrl, '_blank');
 };
 
 const formatDateForDisplay = (checkin: Date, nights: number): string => {
@@ -1910,16 +1728,6 @@ export default function HotelDetailPageClient({
                     sortDir: 'DESC'
                 });
 
-                console.log('[HotelDetailPage] Reviews fetched from API:', {
-                    total: reviewsResult.data.length,
-                    hotelId: hotelIdStr,
-                    reviews: reviewsResult.data.map(r => ({
-                        id: r.id,
-                        hotelId: r.hotelId || 'N/A',
-                        score: r.score
-                    }))
-                });
-
                 // VẤN ĐỀ: Backend ReviewResponse không có hotelId, nên không thể verify trực tiếp
                 // Backend đã filter trong query: (:hotelId IS NULL OR r.hotel.id = :hotelId)
                 // Nếu backend không nhận được hotelId (NULL), sẽ trả về TẤT CẢ reviews
@@ -1935,12 +1743,6 @@ export default function HotelDetailPageClient({
                     // Chỉ verify 1-2 reviews đầu tiên để tránh performance issue
                     const reviewsToVerify = reviewsResult.data.slice(0, Math.min(2, reviewsResult.data.length));
 
-                    console.log('[HotelDetailPage] Verifying reviews hotelId...', {
-                        total: reviewsResult.data.length,
-                        toVerify: reviewsToVerify.length,
-                        hotelId: hotelIdStr
-                    });
-
                     try {
                         const { getReviewById } = await import('@/service/reviewService');
 
@@ -1953,12 +1755,7 @@ export default function HotelDetailPageClient({
                                     if (reviewHotelId && reviewHotelId !== '' && reviewHotelId !== 'N/A') {
                                         const matches = reviewHotelId === hotelIdStr || reviewHotelId === currentHotelId;
                                         if (!matches) {
-                                            console.error('[HotelDetailPage] ❌ Review belongs to DIFFERENT hotel!', {
-                                                reviewId: review.id,
-                                                reviewHotelId,
-                                                expectedHotelId: hotelIdStr,
-                                                currentHotelId
-                                            });
+                                            // Review belongs to different hotel - silently skip
                                         }
                                         return { review, verified: matches, hotelId: reviewHotelId };
                                     }
@@ -1974,14 +1771,7 @@ export default function HotelDetailPageClient({
                         // Kiểm tra xem có review nào không thuộc hotel này không
                         const invalidReviews = verificationResults.filter(r => !r.verified);
                         if (invalidReviews.length > 0) {
-                            console.error('[HotelDetailPage] ❌ Backend filter is WRONG! Found reviews from different hotels!', {
-                                invalidCount: invalidReviews.length,
-                                hotelId: hotelIdStr,
-                                invalidReviews: invalidReviews.map(r => ({
-                                    id: r.review.id,
-                                    hotelId: r.hotelId
-                                }))
-                            });
+                            // Backend filter is wrong - found reviews from different hotels - silently handle
 
                             // Nếu có review sai, chỉ lấy những reviews đã verify đúng
                             // Nếu không có review nào đúng → verifiedReviews = [] (sẽ hiển thị "Chưa có đánh giá")
@@ -2008,12 +1798,6 @@ export default function HotelDetailPageClient({
                     // Không có reviews, không cần verify
                     verifiedReviews = reviewsResult.data;
                 }
-
-                console.log('[HotelDetailPage] Reviews after verification:', {
-                    total: reviewsResult.data.length,
-                    verified: verifiedReviews.length,
-                    hotelId: hotelIdStr
-                });
 
                 // Chỉ set reviews nếu hotelId vẫn khớp (phòng trường hợp user chuyển trang trong lúc fetch)
                 if (hotelIdStr === (hotelId as string) && hotelIdStr === hotel.id) {
@@ -2108,10 +1892,6 @@ export default function HotelDetailPageClient({
 
         // Đảm bảo hotelId vẫn khớp trước khi load more
         if (hotelIdStr !== currentHotelId) {
-            console.warn('[HotelDetailPage] Cannot load more reviews: hotelId mismatch', {
-                hotelIdStr,
-                currentHotelId
-            });
             return;
         }
 
@@ -2137,13 +1917,6 @@ export default function HotelDetailPageClient({
                 }
                 // Nếu có hotelId, kiểm tra khớp
                 const matches = review.hotelId === hotelIdStr || review.hotelId === currentHotelId;
-                if (!matches) {
-                    console.warn('[HotelDetailPage] Review hotelId mismatch in loadMore:', {
-                        reviewId: review.id,
-                        reviewHotelId: review.hotelId,
-                        currentHotelId: hotelIdStr
-                    });
-                }
                 return matches;
             });
 
@@ -2376,7 +2149,37 @@ export default function HotelDetailPageClient({
                             <h1 className="fw-bold fs-2 text-dark mb-3">{hotel.name}</h1>
                             <div className="mb-4 d-flex align-items-start">
                                 <i className="bi bi-geo-alt-fill text-danger fs-5 me-2 mt-1"></i>
-                                <span className="text-muted">{getFullAddress(hotel)}</span>
+                                <span className="text-muted me-2 flex-grow-1">{getFullAddress(hotel)}</span>
+                                <button
+                                    onClick={() => openGoogleMaps(getFullAddress(hotel))}
+                                    className="btn btn-sm btn-outline-primary d-flex align-items-center justify-content-center ms-2"
+                                    style={{
+                                        textDecoration: 'none',
+                                        transition: 'all 0.2s ease',
+                                        flexShrink: 0,
+                                        cursor: 'pointer',
+                                        borderRadius: '6px',
+                                        minWidth: '90px',
+                                        height: '36px',
+                                        padding: '4px 12px',
+                                        border: '1px solid #0d6efd',
+                                        backgroundColor: '#fff'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.transform = 'scale(1.05)';
+                                        e.currentTarget.style.backgroundColor = '#0d6efd';
+                                        e.currentTarget.style.color = '#fff';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.transform = 'scale(1)';
+                                        e.currentTarget.style.backgroundColor = '#fff';
+                                        e.currentTarget.style.color = '#0d6efd';
+                                    }}
+                                    title="Xem trên Google Maps"
+                                >
+                                    <i className="bi bi-map me-1"></i>
+                                    <span style={{ fontSize: '0.875rem', fontWeight: '600' }}>Maps</span>
+                                </button>
                             </div>
                             <div className="d-flex align-items-center flex-wrap bg-light p-3 rounded-3">
                                 <div className="ms-auto">
@@ -2647,10 +2450,6 @@ export default function HotelDetailPageClient({
 
                                     // Đảm bảo hotelId khớp trước khi reload
                                     if (hotelIdStr !== currentHotelId) {
-                                        console.warn('[HotelDetailPage] Cannot reload reviews: hotelId mismatch', {
-                                            hotelIdStr,
-                                            currentHotelId
-                                        });
                                         setIsReviewsLoading(false);
                                         return;
                                     }
@@ -2672,13 +2471,6 @@ export default function HotelDetailPageClient({
                                                 }
                                                 // Nếu có hotelId, kiểm tra khớp
                                                 const matches = review.hotelId === hotelIdStr || review.hotelId === currentHotelId;
-                                                if (!matches) {
-                                                    console.warn('[HotelDetailPage] Review hotelId mismatch in reload:', {
-                                                        reviewId: review.id,
-                                                        reviewHotelId: review.hotelId,
-                                                        currentHotelId: hotelIdStr
-                                                    });
-                                                }
                                                 return matches;
                                             });
 

@@ -458,6 +458,93 @@ const getTypeLabel = (type: LocationType) => {
     }
 };
 
+// Hàm lấy địa chỉ đầy đủ
+const getFullAddress = (hotel: HotelResponse) => {
+    if (!hotel) return 'Chưa có địa chỉ';
+
+    const addressParts: string[] = [];
+    const responseAddress = hotel.address || '';
+
+    // Chỉ thêm address nếu nó không phải là giá trị mặc định và không chứa location info đã có
+    if (responseAddress &&
+        responseAddress.trim() !== '' &&
+        responseAddress !== 'Chưa có địa chỉ') {
+
+        // Kiểm tra xem address có chứa ward, district, city name không
+        const wardName = hotel.ward?.name || '';
+        const districtName = hotel.district?.name || '';
+        const cityName = hotel.city?.name || '';
+
+        // Nếu address không chứa các location names, thì thêm vào
+        const containsLocationInfo =
+            (wardName && responseAddress.includes(wardName)) ||
+            (districtName && responseAddress.includes(districtName)) ||
+            (cityName && responseAddress.includes(cityName));
+
+        if (!containsLocationInfo) {
+            // Address là địa chỉ cụ thể (số nhà, tên đường) chưa có location info
+            addressParts.push(responseAddress);
+        } else {
+            // Address đã chứa location info, kiểm tra xem có đầy đủ không
+            const hasAllLocation =
+                wardName && responseAddress.includes(wardName) &&
+                districtName && responseAddress.includes(districtName) &&
+                cityName && responseAddress.includes(cityName);
+
+            if (hasAllLocation) {
+                // Address đã đầy đủ, không cần append thêm
+                return responseAddress;
+            } else {
+                // Address chỉ chứa một phần location, vẫn thêm vào nhưng sẽ append phần còn thiếu
+                addressParts.push(responseAddress);
+            }
+        }
+    }
+
+    // Thêm các location fields theo thứ tự: street -> ward -> district -> city
+    // Chỉ thêm nếu chưa có trong addressParts
+    if (hotel.street?.name) {
+        const alreadyHasStreet = addressParts.some(part => part.includes(hotel.street!.name!));
+        if (!alreadyHasStreet) {
+            addressParts.push(hotel.street.name);
+        }
+    }
+    if (hotel.ward?.name) {
+        const alreadyHasWard = addressParts.some(part => part.includes(hotel.ward!.name!));
+        if (!alreadyHasWard) {
+            addressParts.push(hotel.ward.name);
+        }
+    }
+    if (hotel.district?.name) {
+        const alreadyHasDistrict = addressParts.some(part => part.includes(hotel.district!.name!));
+        if (!alreadyHasDistrict) {
+            addressParts.push(hotel.district.name);
+        }
+    }
+    if (hotel.city?.name) {
+        const alreadyHasCity = addressParts.some(part => part.includes(hotel.city!.name!));
+        if (!alreadyHasCity) {
+            addressParts.push(hotel.city.name);
+        }
+    }
+
+    // Nếu có ít nhất một phần địa chỉ, trả về địa chỉ đầy đủ
+    // Nếu không có gì, trả về "Chưa có địa chỉ"
+    return addressParts.length > 0 ? addressParts.join(', ') : 'Chưa có địa chỉ';
+};
+
+// Hàm mở Google Maps với địa chỉ
+const openGoogleMaps = (address: string, event?: { preventDefault: () => void; stopPropagation: () => void }) => {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    if (!address || address === 'Chưa có địa chỉ') return;
+    const encodedAddress = encodeURIComponent(address);
+    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+    window.open(googleMapsUrl, '_blank');
+};
+
 // ---  LocationSearchInput ---
 interface LocationSearchInputProps {
     value: string;
@@ -859,6 +946,44 @@ export default function HotelsCard() {
                                             )}
                                             <div className="card-body">
                                                 <h6 className="fw-bold mb-1 text-truncate">{hotel.name}</h6>
+                                                <div className="mb-2 d-flex align-items-center">
+                                                    <i className="bi bi-geo-alt-fill text-muted small me-1"></i>
+                                                    <span className="text-muted small me-2 flex-grow-1" style={{ fontSize: '0.875rem' }}>{getFullAddress(hotel)}</span>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            openGoogleMaps(getFullAddress(hotel), e);
+                                                        }}
+                                                        className="btn btn-sm btn-outline-primary d-flex align-items-center justify-content-center ms-2"
+                                                        style={{ 
+                                                            textDecoration: 'none',
+                                                            transition: 'all 0.2s ease',
+                                                            flexShrink: 0,
+                                                            cursor: 'pointer',
+                                                            borderRadius: '6px',
+                                                            minWidth: '36px',
+                                                            height: '28px',
+                                                            padding: '2px 6px',
+                                                            border: '1px solid #0d6efd',
+                                                            backgroundColor: '#fff'
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.transform = 'scale(1.1)';
+                                                            e.currentTarget.style.backgroundColor = '#0d6efd';
+                                                            e.currentTarget.style.color = '#fff';
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.transform = 'scale(1)';
+                                                            e.currentTarget.style.backgroundColor = '#fff';
+                                                            e.currentTarget.style.color = '#0d6efd';
+                                                        }}
+                                                        title="Xem trên Google Maps"
+                                                    >
+                                                        <i className="bi bi-map me-1"></i>
+                                                        <span style={{ fontSize: '0.75rem', fontWeight: '600' }}>Maps</span>
+                                                    </button>
+                                                </div>
                                                 <div className="mb-2" onClick={(e) => e.stopPropagation()}>
                                                     <ReviewRatingDisplay
                                                         hotelId={hotel.id}
