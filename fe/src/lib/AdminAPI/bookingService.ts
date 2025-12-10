@@ -307,10 +307,6 @@ export async function getBookings(params: GetBookingsParams = {}): Promise<Pagin
             throw new Error(`Lỗi khi xử lý dữ liệu bookings: ${mapError.message}`);
         }
     } catch (error: any) {
-            } else if (statusCode >= 500) {
-            }
-        }
-
         // Xử lý các loại lỗi khác nhau
         if (error.response?.status === 401) {
             if (typeof window !== 'undefined') {

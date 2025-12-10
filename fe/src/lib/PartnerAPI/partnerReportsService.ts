@@ -169,8 +169,6 @@ export async function getPartnerRevenueReport(
         
         return response.data.data;
     } catch (error: any) {
-            params: error.config?.params,
-        });
         throw error;
     }
 }

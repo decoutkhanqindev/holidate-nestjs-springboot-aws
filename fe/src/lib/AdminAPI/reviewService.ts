@@ -164,10 +164,6 @@ export async function getReviews(params: GetReviewsParams = {}): Promise<Paginat
             params: queryParams
         });
 
-            page: response.data?.data?.page,
-            totalPages: response.data?.data?.totalPages,
-        });
-
         if (response.data?.statusCode === 200 && response.data?.data) {
             let reviews = response.data.data.content.map(mapReviewResponseToReview);
             

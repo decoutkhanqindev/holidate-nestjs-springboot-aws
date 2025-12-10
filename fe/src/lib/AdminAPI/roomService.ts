@@ -193,8 +193,6 @@ export const getRoomsByHotelId = async (
         );
 
         if (response.data.statusCode === 200 && response.data.data) {
-                availableRooms: r.availableRooms
-            })));
             const rooms = response.data.data.content.map(mapRoomResponseToRoom);
             console.log("[roomService] Mapped rooms quantity:", rooms.map(r => ({
                 id: r.id,
