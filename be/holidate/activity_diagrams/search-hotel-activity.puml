@@ -1,0 +1,24 @@
+@startuml
+|Người dùng|
+start
+:Truy cập trang chủ;
+:Nhập thông tin\n(tên, địa điểm, ngày nhận/trả phòng,\nsố người, giá, ...);
+:Nhấn nút "Tìm kiếm";
+
+|Hệ thống|
+:Tìm kiếm khách sạn theo tiêu chí;
+
+if (Có kết quả?) then (Không)
+  :Thông báo không tìm thấy khách sạn;
+  |Người dùng|
+  -> Thay đổi tiêu chí tìm kiếm;
+else (Có)
+  |Hệ thống|
+  :Hiển thị danh sách khách sạn;
+  :Thông báo số lượng kết quả tìm được;
+
+endif
+
+stop
+@enduml
+

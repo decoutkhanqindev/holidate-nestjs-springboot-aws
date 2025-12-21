@@ -1,0 +1,463 @@
+// lib/Super_Admin/hotelAdminService.ts
+import apiClient, { ApiResponse } from '@/service/apiClient';
+import { createServerApiClient } from '@/lib/AdminAPI/serverApiClient';
+import type { HotelAdmin } from '@/types';
+import { getHotels } from '@/lib/AdminAPI/hotelService';
+import { getPartnerRole } from '@/lib/AdminAPI/roleService';
+
+const baseURL = '/users';
+
+// Interface từ API response
+interface UserResponse {
+    id: string;
+    email: string;
+    fullName: string;
+    phoneNumber?: string;
+    active?: boolean; // Trạng thái active/inactive (có thể ở root hoặc trong authInfo)
+    authInfo?: {
+        id?: string;
+        authProvider?: string;
+        active?: boolean; // Trạng thái active/inactive - nằm trong authInfo!
+    };
+    role: {
+        id: string;
+        name: string;
+        description?: string;
+    };
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+interface HotelResponse {
+    id: string;
+    name: string;
+    partner?: {
+        id: string;
+        name?: string;
+        fullName?: string;
+    };
+}
+
+interface PaginatedHotelResponse {
+    content: HotelResponse[];
+    page: number;
+    size: number;
+    totalItems: number;
+    totalPages: number;
+    first: boolean;
+    last: boolean;
+    hasNext: boolean;
+    hasPrevious: boolean;
+}
+
+interface PaginatedUserResponse {
+    content: UserResponse[];
+    page: number;
+    size: number;
+    totalItems: number;
+    totalPages: number;
+    first: boolean;
+    last: boolean;
+    hasNext: boolean;
+    hasPrevious: boolean;
+}
+
+/**
+ * Map UserResponse (PARTNER role) sang HotelAdmin type
+ * Không cần fetch hotels nữa để tăng tốc độ
+ */
+function mapUserResponseToHotelAdmin(user: UserResponse): HotelAdmin {
+    // QUAN TRỌNG: active nằm trong authInfo.active, không phải user.active!
+    // Ưu tiên lấy từ authInfo.active, nếu không có thì lấy từ user.active (fallback)
+    const activeValue = user.authInfo?.active !== undefined
+        ? user.authInfo.active
+        : (user.active !== undefined ? user.active : true); // Default true nếu không có
+
+    // Xử lý active: nếu active === true → ACTIVE, nếu active === false → INACTIVE
+    const status: 'ACTIVE' | 'INACTIVE' = activeValue === true ? 'ACTIVE' : 'INACTIVE';
+
+
+    return {
+        id: parseInt(user.id) || 0, // For display/compatibility (parsed from UUID, may be 0 if not a valid number)
+        userId: user.id, // UUID string from backend - use this for API calls
+        username: user.fullName, // Frontend dùng username, backend dùng fullName
+        email: user.email,
+        managedHotel: {
+            id: '',
+            name: '', // Không hiển thị khách sạn quản lý nữa
+        },
+        status: status, // Dùng trường active từ authInfo.active hoặc user.active
+        createdAt: user.createdAt ? new Date(user.createdAt) : new Date(),
+    };
+}
+
+/**
+ * Lấy danh sách Hotel Admins (users với role PARTNER)
+ * Sử dụng backend pagination và filtering
+ */
+export async function getHotelAdmins({
+    page = 1,
+    limit = 10,
+    searchQuery = '',
+    sortBy = 'created-at',
+    sortDir = 'desc'
+}: {
+    page?: number;
+    limit?: number;
+    searchQuery?: string;
+    sortBy?: 'email' | 'full-name' | 'created-at' | 'updated-at';
+    sortDir?: 'asc' | 'desc';
+}): Promise<{
+    data: HotelAdmin[];
+    totalPages: number;
+    totalItems: number;
+    currentPage: number;
+}> {
+    try {
+        // Lấy role PARTNER để filter
+        const partnerRole = await getPartnerRole();
+        const partnerRoleId = partnerRole?.id;
+
+        if (!partnerRoleId) {
+            throw new Error('Không tìm thấy role PARTNER');
+        }
+
+        // Build query params cho backend pagination
+        const queryParams: any = {
+            'role-id': partnerRoleId, // Filter chỉ lấy PARTNER users
+            page: page - 1, // Backend dùng 0-indexed, frontend dùng 1-indexed
+            size: limit, // Page size (1-100)
+            'sort-by': sortBy,
+            'sort-dir': sortDir
+        };
+
+        // Thêm search filters nếu có search query
+        // Search có thể là email, full-name, hoặc ID (UUID)
+        if (searchQuery && searchQuery.trim()) {
+            const searchTerm = searchQuery.trim();
+
+            // Kiểm tra xem có phải UUID không (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+            const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            if (uuidPattern.test(searchTerm)) {
+                // Nếu là UUID, không thêm filter (sẽ filter ở frontend)
+                // Hoặc có thể gọi API /users/{id} riêng
+            } else {
+                // Nếu không phải UUID, search theo email hoặc full-name
+                // Backend hỗ trợ partial match, nên có thể search cả email và full-name
+                // Nhưng API chỉ hỗ trợ 1 filter mỗi lần, nên ta sẽ ưu tiên email trước
+                if (searchTerm.includes('@')) {
+                    // Có vẻ là email
+                    queryParams.email = searchTerm;
+                } else {
+                    // Có vẻ là tên
+                    queryParams['full-name'] = searchTerm;
+                }
+            }
+        }
+
+        const usersResponse = await apiClient.get<ApiResponse<PaginatedUserResponse>>(
+            baseURL,
+            { params: queryParams }
+        );
+
+        let allUsers: UserResponse[] = [];
+        let totalItemsFromBackend = 0;
+        let totalPagesFromBackend = 0;
+
+        // Backend luôn trả về paginated response
+        if (usersResponse.data?.statusCode === 200) {
+            const responseData = usersResponse.data.data;
+
+            if (responseData && typeof responseData === 'object' && 'content' in responseData) {
+                const paginatedData = responseData as PaginatedUserResponse;
+                allUsers = paginatedData.content || [];
+                totalItemsFromBackend = paginatedData.totalItems || 0;
+                totalPagesFromBackend = paginatedData.totalPages || 0;
+            }
+        }
+
+        // Nếu có search query là UUID, filter thêm ở frontend
+        let partnerUsers = allUsers;
+        if (searchQuery && searchQuery.trim()) {
+            const searchTerm = searchQuery.trim().toLowerCase();
+            const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+            if (uuidPattern.test(searchTerm)) {
+                // Search theo ID
+                partnerUsers = allUsers.filter(user =>
+                    user.id.toLowerCase().includes(searchTerm)
+                );
+            } else {
+                // Đã filter ở backend, nhưng có thể cần filter thêm nếu search không match email hoặc full-name
+                partnerUsers = allUsers.filter(user => {
+                    const emailMatch = user.email?.toLowerCase().includes(searchTerm);
+                    const nameMatch = user.fullName?.toLowerCase().includes(searchTerm);
+                    const idMatch = user.id.toLowerCase().includes(searchTerm);
+                    return emailMatch || nameMatch || idMatch;
+                });
+            }
+        }
+
+        // Map sang HotelAdmin
+        const hotelAdmins = partnerUsers.map(user => mapUserResponseToHotelAdmin(user));
+
+        // Sử dụng pagination từ backend
+        const totalItems = searchQuery && searchQuery.trim()
+            ? partnerUsers.length // Nếu có search, dùng số items đã filter
+            : totalItemsFromBackend; // Nếu không có search, dùng totalItems từ backend
+
+        const totalPages = searchQuery && searchQuery.trim()
+            ? Math.max(1, Math.ceil(partnerUsers.length / limit)) // Nếu có search, tính lại totalPages
+            : totalPagesFromBackend; // Nếu không có search, dùng totalPages từ backend
+
+        return {
+            data: hotelAdmins,
+            totalPages,
+            totalItems,
+            currentPage: page,
+        };
+    } catch (error: any) {
+        // Nếu là lỗi 403, trả về mảng rỗng
+        if (error.response?.status === 403) {
+            return {
+                data: [],
+                totalPages: 0,
+                totalItems: 0,
+                currentPage: page,
+            };
+        }
+
+        const errorMessage = error.response?.data?.message
+            || error.message
+            || 'Không thể tải danh sách admin khách sạn';
+        throw new Error(errorMessage);
+    }
+}
+
+/**
+ * Lấy danh sách hotels để chọn trong form
+ */
+export async function getHotelsForSelection(): Promise<Array<{ id: string; name: string }>> {
+    try {
+        // Lấy tất cả hotels với pagination - tăng size lên để lấy nhiều hơn
+        // Nhưng vẫn giới hạn để tránh quá tải
+        const response = await getHotels(0, 100); // Giảm từ 1000 xuống 100 để tối ưu
+        return response.hotels.map(hotel => ({
+            id: hotel.id,
+            name: hotel.name,
+        }));
+    } catch (error: any) {
+        return [];
+    }
+}
+
+/**
+ * Tạo Hotel Admin mới (tạo user với role PARTNER) - Server version
+ */
+export async function createHotelAdminServer(payload: {
+    email: string;
+    password: string;
+    fullName: string;
+    phoneNumber?: string;
+    hotelId?: string; // Hotel để gán cho partner - optional vì có thể không chọn hotel
+    authProvider?: string;
+}): Promise<UserResponse> {
+    try {
+        // Bước 1: Lấy roleId của PARTNER (mặc định role là PARTNER)
+        // API GET /roles yêu cầu ADMIN role, nên dùng serverClient
+        let partnerRoleId: string | null = null;
+        const serverClient = await createServerApiClient();
+
+
+        // Thử 1: Lấy từ API /roles (yêu cầu ADMIN role)
+        try {
+            const rolesResponse = await serverClient.get<ApiResponse<Array<{ id: string; name: string; description?: string }>>>(`/roles`);
+
+            if (rolesResponse.data?.statusCode === 200 && rolesResponse.data?.data) {
+                // Tìm role PARTNER với nhiều cách so sánh
+                const partnerRole = rolesResponse.data.data.find(role => {
+                    const roleName = (role.name || '').trim().toLowerCase();
+                    return roleName === 'partner';
+                });
+
+                if (partnerRole && partnerRole.id) {
+                    partnerRoleId = partnerRole.id;
+                }
+            } else {
+            }
+        } catch (error: any) {
+            // Error fetching roles
+        }
+
+        // Thử 2: Nếu không tìm thấy, lấy từ danh sách users PARTNER có sẵn
+        if (!partnerRoleId) {
+            try {
+                const usersResponse = await serverClient.get<ApiResponse<UserResponse[]>>(baseURL);
+
+                if (usersResponse.data?.statusCode === 200 && usersResponse.data?.data) {
+                    const partnerUsers = usersResponse.data.data.filter(
+                        user => user.role && (user.role.name || '').trim().toLowerCase() === 'partner'
+                    );
+
+                    if (partnerUsers.length > 0 && partnerUsers[0].role?.id) {
+                        partnerRoleId = partnerUsers[0].role.id;
+                    }
+                }
+            } catch (error: any) {
+                // Error fetching users
+            }
+        }
+
+        // Nếu vẫn không tìm thấy
+        if (!partnerRoleId) {
+            const errorMsg = 'Không tìm thấy role PARTNER. Vui lòng đảm bảo role PARTNER đã được tạo trong hệ thống và bạn có quyền ADMIN để truy cập API /roles.';
+            throw new Error(errorMsg);
+        }
+
+
+        // Bước 2: Tạo user với role PARTNER (serverClient đã được tạo ở trên)
+        // Chỉ gửi phoneNumber nếu có giá trị và không rỗng, đúng format
+        const userPayload: any = {
+            email: payload.email.trim(),
+            password: payload.password.trim(),
+            fullName: payload.fullName.trim(),
+            roleId: partnerRoleId,
+            authProvider: (payload.authProvider || 'LOCAL').toLowerCase(), // Backend yêu cầu lowercase: "local" không phải "LOCAL"
+        };
+
+        // Chỉ thêm phoneNumber nếu có giá trị hợp lệ và đúng format
+        // Backend pattern: ^(\+84|0)[0-9]{9,10}$
+        // Nếu phoneNumber không hợp lệ, không gửi (để null như các user thành công trong Postman)
+        if (payload.phoneNumber && payload.phoneNumber.trim()) {
+            const phoneRegex = /^(\+84|0)[0-9]{9,10}$/;
+            const trimmedPhone = payload.phoneNumber.trim();
+            if (phoneRegex.test(trimmedPhone)) {
+                userPayload.phoneNumber = trimmedPhone;
+            } else {
+                // Không thêm phoneNumber vào payload (để null như Postman)
+            }
+        }
+
+        const userResponse = await serverClient.post<ApiResponse<UserResponse>>(baseURL, userPayload);
+
+        if (userResponse.data?.statusCode === 200 && userResponse.data?.data) {
+            const newUser = userResponse.data.data;
+
+            // QUAN TRỌNG: User mới tạo có active = false, cần activate để có thể login
+            // Gọi API Update User với active = true để activate account
+            try {
+
+                const { updateUserServer } = await import('@/lib/AdminAPI/userService');
+
+                // Gọi update với active = true để activate account
+                await updateUserServer(newUser.id, {
+                    active: true
+                });
+
+            } catch (updateError: any) {
+                // Error activating user via update API
+            }
+
+            // Note: HotelUpdateRequest không có partnerId field
+            // Không thể update partner của hotel sau khi hotel đã được tạo
+            // Partner sẽ được gán khi tạo hotel mới (trong HotelCreationRequest có partnerId)
+            // Hoặc hotel đã có partner rồi thì không thể thay đổi qua API update
+
+            // Nếu cần gán hotel cho partner, có thể:
+            // 1. Chỉ cho phép tạo Hotel Admin cho hotels chưa có partner
+            // 2. Hoặc yêu cầu tạo hotel mới với partnerId của partner này
+            // 3. Hoặc backend cần hỗ trợ endpoint riêng để gán partner cho hotel
+
+            return newUser;
+        }
+
+        throw new Error('Invalid response from server');
+    } catch (error: any) {
+
+        // Xử lý lỗi validation từ backend
+        let errorMessage = 'Không thể tạo admin khách sạn';
+
+        if (error.response?.status === 400) {
+            // Lỗi validation (400 Bad Request)
+            const errorData = error.response?.data;
+
+            // Thử nhiều cách để lấy message
+            if (errorData?.message) {
+                errorMessage = errorData.message;
+            } else if (errorData?.data?.message) {
+                errorMessage = errorData.data.message;
+            } else if (errorData?.error) {
+                // Spring Boot default error format
+                errorMessage = `${errorData.error}: ${errorData.message || 'Dữ liệu không hợp lệ'}`;
+                // Nếu có validation errors chi tiết
+                if (errorData.errors && Array.isArray(errorData.errors)) {
+                    const validationErrors = errorData.errors.map((e: any) => e.defaultMessage || e.message).join(', ');
+                    errorMessage += ` (${validationErrors})`;
+                }
+            } else if (errorData?.statusCode) {
+                // ApiResponse format
+                errorMessage = errorData.message || 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại các trường thông tin.';
+            } else {
+                // Fallback với thông tin chi tiết hơn
+                errorMessage = `Dữ liệu không hợp lệ. Backend response: ${JSON.stringify(errorData)}`;
+            }
+        } else if (error.response?.status === 500) {
+            // Lỗi server (500 Internal Server Error)
+            const errorData = error.response?.data;
+
+            // Thử lấy message từ ApiResponse format
+            if (errorData?.message) {
+                errorMessage = errorData.message;
+            } else if (errorData?.data?.message) {
+                errorMessage = errorData.data.message;
+            } else if (errorData?.statusCode === 500 && errorData?.message) {
+                errorMessage = errorData.message;
+            } else {
+                errorMessage = 'Lỗi máy chủ. Vui lòng thử lại sau hoặc kiểm tra logs phía backend để biết chi tiết.';
+            }
+        } else if (error.response?.status === 404) {
+            errorMessage = error.response?.data?.message || error.response?.data?.error || 'Không tìm thấy tài nguyên. Vui lòng thử lại.';
+        } else if (error.response?.status === 403) {
+            errorMessage = 'Bạn không có quyền thực hiện thao tác này.';
+        } else if (error.response?.status === 409) {
+            // Conflict - có thể là email đã tồn tại
+            const errorData = error.response?.data;
+            if (errorData?.message) {
+                errorMessage = errorData.message;
+            } else if (errorData?.data?.message) {
+                errorMessage = errorData.data.message;
+            } else {
+                errorMessage = 'Email đã tồn tại trong hệ thống. Vui lòng sử dụng email khác.';
+            }
+        } else if (error.response?.data?.message) {
+            errorMessage = error.response.data.message;
+        } else if (error.response?.data?.data?.message) {
+            errorMessage = error.response.data.data.message;
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+
+        throw new Error(errorMessage);
+    }
+}
+
+/**
+ * Xóa Hotel Admin (xóa user) - Server version
+ */
+export async function deleteHotelAdminServer(userId: string): Promise<void> {
+    try {
+        const serverClient = await createServerApiClient();
+        const response = await serverClient.delete<ApiResponse<UserResponse>>(`${baseURL}/${userId}`);
+
+        if (response.data?.statusCode === 200 || response.status === 200 || response.status === 204) {
+            return;
+        }
+
+        throw new Error(`Invalid response status: ${response.status}`);
+    } catch (error: any) {
+        const errorMessage = error.response?.data?.message
+            || error.message
+            || 'Không thể xóa admin khách sạn';
+        throw new Error(errorMessage);
+    }
+}

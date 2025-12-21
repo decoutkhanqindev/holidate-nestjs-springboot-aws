@@ -1,0 +1,169 @@
+@startuml Holidate Use Case Diagram
+
+!define RECTANGLE class
+
+' Actors
+actor User
+actor Partner
+actor Admin
+actor VNPay
+actor "OpenAI API" as OpenAI
+
+' Generalization relationships (Hierarchy: User → Partner → Admin)
+User <|-- Partner
+Partner <|-- Admin
+
+' System boundary
+rectangle "Holidate System" {
+    ' User use cases - Authentication
+    (Đăng ký tài khoản mới) as UC_Register
+    (Đăng nhập bằng email và mật khẩu) as UC_Login
+    (Đăng nhập bằng Google OAuth2) as UC_LoginGoogle
+    (Đăng xuất) as UC_Logout
+    (Xác thực email) as UC_VerifyEmail
+    (Đặt lại mật khẩu) as UC_ResetPassword
+    (Tạo token) as UC_GenerateToken
+    (Vô hiệu hóa token) as UC_InvalidateToken
+    
+    ' User use cases - Profile
+    (Quản lý thông tin cá nhân) as UC_Profile
+    (Tìm kiếm và khám phá phòng) as UC_Search
+    (Tạo đặt phòng) as UC_CreateBooking
+    (Hủy đặt phòng) as UC_CancelBooking
+    (Đổi lịch đặt phòng) as UC_RescheduleBooking
+    (Thanh toán) as UC_Payment
+    (Check-in) as UC_CheckIn
+    (Check-out) as UC_CheckOut
+    (Viết đánh giá) as UC_WriteReview
+    (Chỉnh sửa đánh giá) as UC_EditReview
+    (Xóa đánh giá) as UC_DeleteReview
+    (Sử dụng Chatbot AI) as UC_Chatbot
+    
+    ' Partner use cases
+    (Cập nhật thông tin khách sạn) as UC_UpdateHotel
+    (Tạo phòng) as UC_CreateRoom
+    (Cập nhật phòng) as UC_UpdateRoom
+    (Xóa phòng) as UC_DeleteRoom
+    (Quản lý kho phòng) as UC_ManageInventory
+    (Xóa đặt phòng) as UC_DeleteBooking
+    (Hoàn tiền) as UC_Refund
+    (Xem báo cáo khách sạn) as UC_HotelReport
+    (Gửi yêu cầu cho Admin) as UC_SendRequest
+    
+    ' Admin use cases
+    (Quản lý người dùng) as UC_ManageUsers
+    (Quản lý vai trò) as UC_ManageRoles
+    (Quản lý địa điểm) as UC_ManageLocations
+    (Tạo khách sạn) as UC_CreateHotel
+    (Xóa khách sạn) as UC_DeleteHotel
+    (Quản lý tiện ích) as UC_ManageAmenities
+    (Quản lý ngày đặc biệt) as UC_ManageSpecialDays
+    (Quản lý khuyến mãi) as UC_ManageDiscounts
+    (Chỉnh sửa đặt phòng) as UC_EditBooking
+    (Xử lý yêu cầu từ đối tác) as UC_ProcessRequests
+    (Quản lý Chatbot AI) as UC_ManageChatbot
+    (Xem báo cáo toàn hệ thống) as UC_SystemReport
+    
+    ' External system use cases
+    (Xử lý thanh toán) as UC_ProcessPayment
+    (Gửi kết quả thanh toán) as UC_PaymentCallback
+    (Xử lý hoàn tiền) as UC_ProcessRefund
+    (Xử lý câu hỏi từ khách hàng) as UC_ProcessQuestion
+    (Trả về phản hồi AI) as UC_AIResponse
+}
+
+' User associations
+User --> UC_Register
+User --> UC_Login
+User --> UC_Logout
+User --> UC_VerifyEmail
+User --> UC_ResetPassword
+User --> UC_Profile
+User --> UC_Search
+User --> UC_CreateBooking
+User --> UC_CancelBooking
+User --> UC_RescheduleBooking
+User --> UC_Payment
+User --> UC_CheckIn
+User --> UC_CheckOut
+User --> UC_WriteReview
+User --> UC_EditReview
+User --> UC_DeleteReview
+User --> UC_Chatbot
+
+' Partner associations
+Partner --> UC_Profile
+Partner --> UC_UpdateHotel
+Partner --> UC_CreateRoom
+Partner --> UC_UpdateRoom
+Partner --> UC_DeleteRoom
+Partner --> UC_ManageInventory
+Partner --> UC_CreateBooking
+Partner --> UC_CancelBooking
+Partner --> UC_RescheduleBooking
+Partner --> UC_DeleteBooking
+Partner --> UC_CheckIn
+Partner --> UC_CheckOut
+Partner --> UC_Refund
+Partner --> UC_WriteReview
+Partner --> UC_EditReview
+Partner --> UC_DeleteReview
+Partner --> UC_HotelReport
+Partner --> UC_SendRequest
+
+' Admin associations (note: Admin inherits from User and Partner, so it has all their use cases)
+' Additional admin-only use cases:
+Admin --> UC_ManageUsers
+Admin --> UC_ManageRoles
+Admin --> UC_ManageLocations
+Admin --> UC_CreateHotel
+Admin --> UC_DeleteHotel
+Admin --> UC_ManageAmenities
+Admin --> UC_ManageSpecialDays
+Admin --> UC_ManageDiscounts
+Admin --> UC_EditBooking
+Admin --> UC_ProcessRequests
+Admin --> UC_ManageChatbot
+Admin --> UC_SystemReport
+
+' VNPay associations
+VNPay --> UC_ProcessPayment
+VNPay --> UC_PaymentCallback
+VNPay --> UC_ProcessRefund
+
+' OpenAI API associations
+OpenAI --> UC_ProcessQuestion
+OpenAI --> UC_AIResponse
+
+' Include relationships
+UC_Register ..> UC_VerifyEmail : <<include>>
+UC_Login ..> UC_GenerateToken : <<include>>
+UC_Logout ..> UC_InvalidateToken : <<include>>
+UC_CreateBooking ..> UC_Payment : <<include>>
+UC_RescheduleBooking ..> UC_Payment : <<include>>
+
+' Extend relationships
+UC_LoginGoogle <.. UC_Login : <<extend>>
+UC_Search <.. UC_Chatbot : <<extend>>
+UC_CancelBooking <.. UC_Refund : <<extend>> [nếu đã thanh toán]
+
+note right of Admin
+  Admin kế thừa tất cả use cases
+  của User và Partner thông qua
+  generalization relationship
+end note
+
+note right of VNPay
+  VNPay là hệ thống thanh toán
+  bên ngoài, xử lý thanh toán
+  và hoàn tiền
+end note
+
+note right of OpenAI
+  OpenAI API là hệ thống AI
+  bên ngoài, xử lý các yêu cầu
+  từ Chatbot AI
+end note
+
+@enduml
+

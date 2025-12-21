@@ -1,0 +1,58 @@
+@startuml
+|Người dùng|
+start
+if (Đã đăng nhập?) then (Chưa)
+  :Đăng nhập vào hệ thống;
+  |Hệ thống|
+  :Xác thực thông tin đăng nhập;
+  if (Đăng nhập thành công?) then (Không)
+    :Thông báo lỗi đăng nhập;
+    stop
+  else (Có)
+    |Người dùng|
+  endif
+else (Đã đăng nhập)
+endif
+
+|Người dùng|
+:Chọn khách sạn cần xóa;
+:Nhấn nút "Xóa khách sạn";
+:Xác nhận xóa;
+
+|Hệ thống|
+:Kiểm tra khách sạn có tồn tại?;
+
+if (Khách sạn tồn tại?) then (Không)
+  :Thông báo lỗi\nkhách sạn không tồn tại;
+  |Người dùng|
+  -> Chọn khách sạn khác;
+else (Có)
+  |Hệ thống|
+  :Kiểm tra khách sạn có phòng?;
+
+  if (Có phòng?) then (Có)
+    :Thông báo lỗi\nkhông thể xóa khách sạn có phòng;
+    |Người dùng|
+    -> Không thể xóa;
+  else (Không)
+    |Hệ thống|
+    :Kiểm tra khách sạn có đơn đặt phòng?;
+
+    if (Có đơn đặt phòng?) then (Có)
+      :Thông báo lỗi\nkhông thể xóa khách sạn có đơn đặt phòng;
+      |Người dùng|
+      -> Không thể xóa;
+    else (Không)
+      |Hệ thống|
+      :Xóa khách sạn;
+      :Thông báo xóa thành công;
+
+      |Người dùng|
+      :Nhận thông báo xóa thành công;
+    endif
+  endif
+endif
+
+stop
+@enduml
+

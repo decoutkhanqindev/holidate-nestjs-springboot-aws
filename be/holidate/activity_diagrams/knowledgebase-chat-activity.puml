@@ -1,0 +1,27 @@
+@startuml
+|Người dùng|
+start
+:Truy cập website;
+:Mở cửa sổ chat;
+
+|Người dùng|
+:Nhập câu hỏi vào khung chat;
+:Nhấn nút "Gửi";
+
+|Hệ thống|
+:Gửi câu hỏi đến AI\n(qua webhook);
+:Phân tích câu hỏi;
+:Tìm kiếm thông tin\ntrong cơ sở tri thức;
+:Tạo câu trả lời;
+:Hiển thị câu trả lời\ncho người dùng;
+
+|Người dùng|
+:Nhận câu trả lời giải đáp thắc mắc;
+
+if (Còn câu hỏi khác?) then (Có)
+  -> Nhập câu hỏi tiếp theo;
+else (Không)
+endif
+
+stop
+@enduml

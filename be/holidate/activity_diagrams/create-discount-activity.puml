@@ -1,0 +1,59 @@
+@startuml
+|Người dùng|
+start
+if (Đã đăng nhập?) then (Chưa)
+  :Đăng nhập vào hệ thống;
+  |Hệ thống|
+  :Xác thực thông tin đăng nhập;
+  if (Đăng nhập thành công?) then (Không)
+    :Thông báo lỗi đăng nhập;
+    stop
+  else (Có)
+    |Người dùng|
+  endif
+else (Đã đăng nhập)
+endif
+
+|Người dùng|
+:Truy cập trang tạo mã khuyến mãi;
+:Nhập thông tin mã khuyến mãi\n(mã, mô tả, phần trăm, giới hạn sử dụng);
+:Nhập ngày hiệu lực\n(ngày bắt đầu, ngày kết thúc);
+if (Có điều kiện áp dụng?) then (Có)
+  :Nhập điều kiện áp dụng\n(giá đặt phòng tối thiểu, số phòng tối thiểu);
+else (Không)
+endif
+if (Liên kết với khách sạn hoặc ngày đặc biệt?) then (Có)
+  :Chọn khách sạn hoặc ngày đặc biệt;
+else (Không)
+endif
+:Nhấn nút "Tạo mã khuyến mãi";
+
+|Hệ thống|
+:Kiểm tra mã đã tồn tại?;
+
+if (Mã đã tồn tại?) then (Có)
+  :Thông báo lỗi\nmã khuyến mãi đã tồn tại;
+  |Người dùng|
+  -> Nhập lại mã;
+else (Không)
+  |Hệ thống|
+  :Kiểm tra thông tin mã khuyến mãi hợp lệ\n(ngày hiệu lực, khách sạn/ngày đặc biệt nếu có);
+
+  if (Thông tin hợp lệ?) then (Không)
+    :Thông báo lỗi thông tin không hợp lệ;
+    |Người dùng|
+    -> Nhập lại thông tin;
+  else (Có)
+    |Hệ thống|
+    :Tạo mã khuyến mãi mới;
+    :Lưu thông tin vào CSDL;
+    :Thông báo tạo mã khuyến mãi thành công;
+
+    |Người dùng|
+    :Nhận thông báo tạo mã khuyến mãi thành công;
+  endif
+endif
+
+stop
+@enduml
+

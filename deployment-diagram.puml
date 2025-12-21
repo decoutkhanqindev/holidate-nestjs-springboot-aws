@@ -1,0 +1,149 @@
+@startuml
+!pragma layout smetana
+
+title Holidate System Diagram
+top to bottom direction
+
+'===============================================
+' STYLING - OPTIMIZED FOR PRESENTATIONS
+'===============================================
+skinparam defaultFontSize 16
+skinparam ArrowFontSize 14
+skinparam shadowing false
+skinparam ArrowThickness 2
+
+skinparam cloud {
+    BackgroundColor #E8F5E9
+    BorderColor #2E7D32
+    BorderThickness 2
+}
+
+skinparam node {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    BorderThickness 2
+    FontSize 16
+}
+
+skinparam component {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+    BorderThickness 2
+    FontSize 16
+}
+
+skinparam rectangle {
+    BackgroundColor #F3E5F5
+    BorderColor #7B1FA2
+    BorderThickness 2
+}
+
+'===============================================
+' EXTERNAL LAYER
+'===============================================
+actor "End User" as User
+
+cloud "Internet" as Internet {
+    node "Tenten Domain Provider" as DomainProvider {
+        component "DNS Server" as DNS
+    }
+}
+
+'===============================================
+' AWS CLOUD INFRASTRUCTURE
+'===============================================
+cloud "AWS Cloud\n(Region: ap-southeast-1)" as AWSCloud {
+    
+    '-------------------------------------------
+    ' AWS MANAGED SERVICES
+    '-------------------------------------------
+    rectangle "AWS Managed Services" as AWSServices {
+        database "S3 Storage" as S3Bucket
+        database "RDS MySQL" as RDSDatabase
+        component "ECR Registry" as ECRRegistry
+    }
+    
+    '-------------------------------------------
+    ' SECURITY GROUPS
+    '-------------------------------------------
+    rectangle "Security Groups\n(Firewall)" as SecurityGroups
+    
+    '-------------------------------------------
+    ' EC2 INSTANCE 1: WEB SERVER
+    '-------------------------------------------
+    node "EC2: Web Server\n(Ubuntu)" as WebServer {
+        
+        component "Caddy Proxy" as CaddyWeb
+        
+        rectangle "Docker Containers" as WebContainers {
+            component "Next.js App" as Frontend
+            component "Spring Boot API" as Backend
+        }
+    }
+    
+    '-------------------------------------------
+    ' EC2 INSTANCE 2: N8N SERVER
+    '-------------------------------------------
+    node "EC2: n8n Server\n(Ubuntu)" as N8NServer {
+        
+        component "Caddy Proxy" as CaddyN8N
+        
+        rectangle "Docker Container" as N8NContainer {
+            component "n8n Automation" as N8N
+            
+            rectangle "AI Components" as AIComponents #FCE4EC {
+                component "Chatbot Agent" as Chatbot
+                component "Pinecone (Vector DB)" as VectorDB
+            }
+        }
+    }
+}
+
+'===============================================
+' RELATIONSHIPS & DATA FLOW
+'===============================================
+
+'--- User to DNS ---
+User --> DNS : HTTPS Requests\n(holidate.site, api.holidate.site, n8n.holidate.site)
+
+'--- DNS to Servers ---
+DNS --> WebServer : DNS Resolves\n(holidate.site, api.holidate.site)
+DNS --> N8NServer : DNS Resolves\n(n8n.holidate.site)
+
+'--- Security Groups Protection ---
+SecurityGroups ..> RDSDatabase : Firewall\n(Port 3306)
+SecurityGroups ..> WebServer : Protects
+SecurityGroups ..> N8NServer : Protects
+
+'--- Web Server Internal Routing ---
+WebServer --> CaddyWeb : HTTPS:443
+CaddyWeb --> Frontend : Port 3000
+CaddyWeb --> Backend : Port 8080
+
+'--- Frontend to Backend Communication ---
+Frontend --> Backend : REST API Calls
+
+'--- n8n Server Internal Routing ---
+N8NServer --> CaddyN8N : HTTPS:443
+CaddyN8N --> N8N : Port 5678
+
+'--- Backend to AWS Services ---
+Backend --> RDSDatabase : JDBC:3306\n(Read/Write)
+Backend --> S3Bucket : AWS SDK\n(Upload Markdown/Files)
+
+'--- n8n to AWS S3 (RAG Workflow) ---
+N8N ..> S3Bucket : Fetch Markdown Files
+
+'--- Cross-Server Communication ---
+N8N --> Backend : REST API\n(Booking/Room Data)
+
+'--- n8n Internal Components ---
+N8N --> Chatbot : Uses
+N8N --> VectorDB : Upsert Embeddings
+
+'--- AWS ECR to Docker Containers ---
+ECRRegistry ..> WebContainers : Pull Images
+ECRRegistry ..> N8NContainer : Pull Images
+
+@enduml
+

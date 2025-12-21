@@ -1,0 +1,54 @@
+@startuml
+|Khách hàng|
+start
+:Truy cập trang đăng ký;
+:Nhập thông tin\n(họ tên, email, mật khẩu);
+:Nhấn nút "Đăng ký";
+
+|Hệ thống|
+:Kiểm tra định dạng thông tin;
+
+if (Thông tin hợp lệ?) then (Không)
+  :Thông báo lỗi sai định dạng;
+  |Khách hàng|
+  -> Nhập lại thông tin;
+else (Có)
+  |Hệ thống|
+  :Kiểm tra email trong CSDL;
+
+  if (Email đã tồn tại\nvà đã kích hoạt?) then (Có)
+    :Thông báo lỗi\ntài khoản đã tồn tại;
+    |Khách hàng|
+    -> Nhập lại thông tin;
+  else (Không)
+    |Hệ thống|
+    :Tạo tài khoản tạm thời;
+    :Lưu thông tin vào CSDL;
+
+    |Khách hàng|
+    :Nhấn nút "Gửi mã OTP";
+
+    |Hệ thống|
+    :Tạo mã OTP;
+    :Gửi email chứa mã OTP\nđến người dùng;
+
+    |Khách hàng|
+    :Nhập mã OTP nhận được;
+
+    |Hệ thống|
+    :Xác thực mã OTP;
+
+    if (Mã OTP hợp lệ?) then (Không)
+      :Thông báo lỗi\nmã OTP không đúng;
+      |Khách hàng|
+      -> Nhập lại mã OTP;
+    else (Có)
+      |Hệ thống|
+      :Kích hoạt tài khoản;
+      :Thông báo đăng ký thành công;
+    endif
+  endif
+endif
+
+stop
+@enduml

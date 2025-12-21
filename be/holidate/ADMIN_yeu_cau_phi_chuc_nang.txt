@@ -1,0 +1,112 @@
+YÊU CẦU PHI CHỨC NĂNG CHO QUẢN TRỊ VIÊN (ROLE ADMIN)
+
+1. Bảo mật (Security)
+   - Xác thực người dùng bằng JWT (JSON Web Token) với access token và refresh token
+   - Token được lưu trữ trong cookie an toàn (HttpOnly, Secure)
+   - Quản trị viên có toàn quyền truy cập và quản lý hệ thống
+   - Sử dụng role hierarchy: ADMIN có tất cả quyền của PARTNER và USER
+   - Tất cả các yêu cầu phải được xác thực (authenticated) trước khi thực hiện
+   - Dữ liệu nhạy cảm được mã hóa khi truyền qua mạng (HTTPS)
+   - Kiểm tra quyền truy cập nghiêm ngặt cho các thao tác quan trọng
+   - Logging tất cả các hoạt động quan trọng của quản trị viên để audit
+
+2. Hiệu năng (Performance)
+   - Thời gian phản hồi của API cho các thao tác quản lý: dưới 3 giây
+   - Thời gian phản hồi cho các thao tác tạo/cập nhật/xóa: dưới 5 giây
+   - Hệ thống xử lý được tối đa 1000 yêu cầu đồng thời từ quản trị viên
+   - Báo cáo và phân tích toàn hệ thống được tạo trong vòng 15 giây
+   - Tối ưu hóa truy vấn cơ sở dữ liệu cho các báo cáo phức tạp
+   - Hỗ trợ xuất báo cáo lớn dưới dạng file (PDF, Excel) một cách hiệu quả
+   - Dashboard tổng quan tải nhanh với các chỉ số quan trọng (KPI)
+
+3. Khả năng sử dụng (Usability)
+   - Giao diện quản trị trực quan, dễ sử dụng
+   - Dashboard hiển thị thông tin tổng quan một cách rõ ràng
+   - Quy trình xử lý yêu cầu từ đối tác đơn giản, dễ thao tác
+   - Biểu đồ và bảng thống kê toàn hệ thống dễ đọc và phân tích
+   - Hỗ trợ tìm kiếm và lọc dữ liệu một cách nhanh chóng
+
+4. Khả năng phục hồi (Reliability)
+   - Hệ thống đảm bảo tính nhất quán dữ liệu cho tất cả các thao tác
+   - Xử lý lỗi một cách graceful, không làm mất dữ liệu
+   - Có cơ chế retry (thử lại) tự động khi có lỗi tạm thời
+   - Đảm bảo dữ liệu báo cáo chính xác và nhất quán
+   - Hệ thống có khả năng phục hồi sau sự cố một cách nhanh chóng
+
+5. Tính toàn vẹn dữ liệu (Data Integrity)
+   - Tất cả dữ liệu đầu vào được kiểm tra và xác thực nghiêm ngặt
+   - Đảm bảo tính nhất quán dữ liệu giữa các bảng trong cơ sở dữ liệu
+   - Sử dụng transaction để đảm bảo tính nguyên tử (atomicity) của các thao tác
+   - Kiểm tra ràng buộc dữ liệu (constraints) ở cả tầng ứng dụng và cơ sở dữ liệu
+   - Đảm bảo không có dữ liệu trùng lặp hoặc không hợp lệ
+
+6. Khả năng mở rộng (Scalability)
+   - Hệ thống hỗ trợ quản lý số lượng lớn người dùng, khách sạn, phòng và đặt phòng
+   - Báo cáo có thể xử lý lượng dữ liệu rất lớn từ toàn hệ thống
+   - Hệ thống có thể mở rộng theo chiều ngang (horizontal scaling) khi cần
+   - Hỗ trợ tăng số lượng quản trị viên khi cần thiết
+
+7. Khả năng tương thích (Compatibility)
+   - Hỗ trợ các trình duyệt web phổ biến (Chrome, Firefox, Safari, Edge)
+   - Hỗ trợ cả máy tính và thiết bị di động (responsive design)
+   - Tương thích với các hệ điều hành phổ biến (Windows, macOS, iOS, Android)
+   - Tương thích với Java 21 và Spring Boot 3.5.5
+
+8. Khả năng bảo trì (Maintainability)
+   - Code được tổ chức rõ ràng, dễ đọc và bảo trì
+   - Sử dụng logging để theo dõi và debug các vấn đề
+   - Cấu hình được externalize ra file .env để dễ quản lý
+   - Có cơ chế xử lý exception tập trung
+   - Dễ dàng thêm các tính năng mới hoặc sửa đổi tính năng hiện có
+
+9. Bảo vệ quyền riêng tư (Privacy)
+   - Thông tin cá nhân của tất cả người dùng được bảo vệ
+   - Quản trị viên chỉ có thể xem thông tin cần thiết để quản lý hệ thống
+   - Tuân thủ các quy định về bảo vệ dữ liệu cá nhân
+   - Logging các hoạt động truy cập dữ liệu nhạy cảm
+
+10. Thông báo và cập nhật (Notifications)
+    - Nhận thông báo về các yêu cầu mới từ đối tác
+    - Nhận cảnh báo về các vấn đề hệ thống
+    - Nhận thông báo về các hoạt động quan trọng trong hệ thống
+
+11. Giới hạn và hạn chế (Limits and Constraints)
+    - Có giới hạn số lần thử đăng nhập sai để tránh tấn công brute force
+    - Quản trị viên có toàn quyền nhưng phải tuân thủ các quy trình bảo mật
+    - Các thao tác quan trọng (như xóa dữ liệu) cần được xác nhận
+
+12. Xử lý đồng thời (Concurrency)
+    - Hệ thống xử lý được nhiều yêu cầu đồng thời từ nhiều quản trị viên
+    - Sử dụng cơ chế khóa (locking) để tránh xung đột dữ liệu
+    - Có cơ chế retry với exponential backoff khi có xung đột
+    - Đảm bảo tính nhất quán dữ liệu khi có nhiều người cùng chỉnh sửa
+
+13. Lưu trữ và sao lưu (Storage and Backup)
+    - Dữ liệu được lưu trữ an toàn trên cơ sở dữ liệu MySQL
+    - Hình ảnh được lưu trữ trên AWS S3
+    - Có cơ chế sao lưu dữ liệu định kỳ và tự động
+    - Có kế hoạch khôi phục dữ liệu khi có sự cố
+
+14. Giám sát và theo dõi (Monitoring and Tracking)
+    - Logging tất cả các hoạt động quan trọng của quản trị viên
+    - Theo dõi hiệu suất hệ thống và phát hiện các vấn đề sớm
+    - Giám sát việc sử dụng tài nguyên hệ thống
+    - Theo dõi các lỗi và exception để xử lý kịp thời
+
+15. Quản lý Chatbot AI
+    - Hệ thống có thể xử lý nhiều cuộc trò chuyện đồng thời
+    - Chatbot phản hồi nhanh chóng (dưới 3 giây)
+    - Lưu trữ và phân tích lịch sử trò chuyện một cách an toàn
+    - Có thể cập nhật kiến thức của chatbot mà không ảnh hưởng đến hệ thống
+
+16. Xử lý thanh toán (Payment Processing)
+    - Tích hợp an toàn với VNPay để xử lý thanh toán
+    - Đảm bảo tính bảo mật của thông tin thanh toán
+    - Xử lý callback từ VNPay một cách đáng tin cậy
+    - Hỗ trợ hoàn tiền (refund) khi cần thiết
+
+17. Quản lý cấu hình (Configuration Management)
+    - Tất cả cấu hình được quản lý qua biến môi trường (.env)
+    - Dễ dàng thay đổi cấu hình mà không cần sửa code
+    - Hỗ trợ cấu hình khác nhau cho môi trường khác nhau (dev, staging, production)
+

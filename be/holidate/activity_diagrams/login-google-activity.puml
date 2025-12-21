@@ -1,0 +1,38 @@
+@startuml
+|Người dùng|
+start
+:Truy cập trang đăng nhập;
+:Nhấn nút "Đăng nhập với Google";
+
+|Hệ thống|
+:Chuyển hướng đến Google OAuth;
+
+|Người dùng|
+:Xác thực với Google\nvà cho phép truy cập;
+
+|Hệ thống|
+if (Xác thực thành công?) then (Không)
+  :Thông báo lỗi xác thực;
+  :Chuyển hướng về trang đăng nhập;
+  |Người dùng|
+  -> Thử lại hoặc\nsử dụng phương thức khác;
+else (Có)
+  |Hệ thống|
+  :Kiểm tra email trong CSDL;
+
+  if (Tài khoản chưa tồn tại?) then (Có)
+    :Tạo tài khoản mới\n(loại: Google, trạng thái: đã kích hoạt);
+    :Lưu thông tin vào CSDL;
+  else (Đã tồn tại)
+    :Cập nhật thông tin người dùng nếu có thay đổi\n(tên, ảnh đại diện);
+    :Cập nhật loại xác thực thành Google;
+    :Lưu vào CSDL;
+  endif
+
+  :Xác thực thành công;
+  :Chuyển hướng về trang chủ;
+
+endif
+
+stop
+@enduml

@@ -1,0 +1,49 @@
+@startuml
+|Người dùng|
+start
+if (Đã đăng nhập?) then (Chưa)
+  :Đăng nhập vào hệ thống;
+  |Hệ thống|
+  :Xác thực thông tin đăng nhập;
+  if (Đăng nhập thành công?) then (Không)
+    :Thông báo lỗi đăng nhập;
+    stop
+  else (Có)
+    |Người dùng|
+  endif
+else (Đã đăng nhập)
+endif
+
+|Người dùng|
+:Chọn người dùng cần xóa;
+:Nhấn nút "Xóa tài khoản";
+:Xác nhận xóa;
+
+|Hệ thống|
+:Kiểm tra người dùng có tồn tại?;
+
+if (Người dùng tồn tại?) then (Không)
+  :Thông báo lỗi\nngười dùng không tồn tại;
+  |Người dùng|
+  -> Chọn người dùng khác;
+else (Có)
+  |Hệ thống|
+  :Kiểm tra người dùng có khách sạn\nhoặc đơn đặt phòng?;
+
+  if (Có khách sạn hoặc đơn đặt phòng?) then (Có)
+    :Thông báo lỗi\nkhông thể xóa người dùng\ncó khách sạn hoặc đơn đặt phòng;
+    |Người dùng|
+    -> Không thể xóa;
+  else (Không)
+    |Hệ thống|
+    :Xóa tài khoản người dùng;
+    :Thông báo xóa thành công;
+
+    |Người dùng|
+    :Nhận thông báo xóa thành công;
+  endif
+endif
+
+stop
+@enduml
+

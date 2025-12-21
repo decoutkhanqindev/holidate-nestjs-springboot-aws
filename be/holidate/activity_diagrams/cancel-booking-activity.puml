@@ -1,0 +1,47 @@
+@startuml
+|Người dùng|
+start
+if (Đã đăng nhập?) then (Chưa)
+  :Đăng nhập hệ thống;
+  |Hệ thống|
+  if (Đăng nhập thành công?) then (Không)
+    stop
+  else (Có)
+    |Người dùng|
+  endif
+else (Đã đăng nhập)
+endif
+
+|Người dùng|
+:Chọn đơn và nhấn "Hủy đơn";
+
+|Hệ thống|
+:Kiểm tra điều kiện hủy;
+if (Hợp lệ?) then (Không)
+  :Thông báo lỗi;
+  stop
+else (Có)
+  :Tính toán phí hủy và tiền hoàn;
+  
+  if (Cần hoàn tiền?) then (Có)
+    :Gửi yêu cầu hoàn tiền;
+    |VNPay|
+    :Xử lý giao dịch hoàn tiền;
+    :Trả về kết quả;
+    |Hệ thống|
+  endif
+
+  if (Xử lý thành công?) then (Có)
+    :Cập nhật trạng thái "Đã hủy";
+    :Cập nhật lại kho phòng;
+    :Gửi email xác nhận;
+    |Người dùng|
+    :Nhận thông báo thành công;
+  else (Không)
+    |Hệ thống|
+    :Thông báo lỗi xử lý;
+  endif
+endif
+
+stop
+@enduml

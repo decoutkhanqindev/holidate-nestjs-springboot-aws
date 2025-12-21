@@ -1,0 +1,63 @@
+@startuml
+|Người dùng|
+start
+if (Đã đăng nhập?) then (Chưa)
+  :Đăng nhập vào hệ thống;
+  |Hệ thống|
+  :Xác thực thông tin đăng nhập;
+  if (Đăng nhập thành công?) then (Không)
+    :Thông báo lỗi đăng nhập;
+    stop
+  else (Có)
+    |Người dùng|
+  endif
+else (Đã đăng nhập)
+endif
+
+|Người dùng|
+:Chọn khách sạn;
+:Nhập thông tin phòng\n(tên, diện tích, số người, giá, loại giường...);
+:Chọn tiện ích phòng;
+:Tải lên ảnh phòng;
+:Nhấn nút "Tạo phòng";
+
+|Hệ thống|
+:Kiểm tra khách sạn có tồn tại?;
+
+if (Khách sạn tồn tại?) then (Không)
+  :Thông báo lỗi\nkhách sạn không tồn tại;
+  |Người dùng|
+  -> Chọn khách sạn khác;
+else (Có)
+  |Hệ thống|
+  :Kiểm tra tên phòng\nđã tồn tại trong khách sạn?;
+
+  if (Tên đã tồn tại?) then (Có)
+    :Thông báo lỗi\ntên phòng đã tồn tại;
+    |Người dùng|
+    -> Nhập lại tên phòng;
+  else (Không)
+    |Hệ thống|
+    :Kiểm tra thông tin phòng hợp lệ?;
+
+    if (Thông tin hợp lệ?) then (Không)
+      :Thông báo lỗi thông tin không hợp lệ;
+      |Người dùng|
+      -> Nhập lại thông tin;
+    else (Có)
+      |Hệ thống|
+      :Tạo phòng mới;
+      :Lưu ảnh phòng;
+      :Lưu tiện ích phòng;
+      :Lưu thông tin vào CSDL;
+      :Thông báo tạo phòng thành công;
+
+      |Người dùng|
+      :Nhận thông báo tạo phòng thành công;
+    endif
+  endif
+endif
+
+stop
+@enduml
+

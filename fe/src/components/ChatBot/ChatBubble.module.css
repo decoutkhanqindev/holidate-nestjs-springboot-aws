@@ -1,0 +1,274 @@
+.chatButton {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #0066cc;
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    font-size: 28px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.chatButton:hover {
+    transform: scale(1.1);
+}
+
+.chatBox {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    width: 380px;
+    height: 500px;
+    max-width: 90vw;
+    max-height: 70vh;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e3e6ea;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: fadeIn 0.3s ease;
+}
+
+.chatHeader {
+    background: linear-gradient(135deg, #0066cc, #00c6ff);
+    color: #fff;
+    padding: 20px;
+    font-weight: 600;
+    font-size: 16px;
+    position: relative;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.chatHeader h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.chatHeader p {
+    margin: 5px 0 0;
+    font-size: 13px;
+    opacity: 0.9;
+    font-weight: 400;
+}
+
+.chatClose {
+    position: absolute;
+    right: 12px;
+    top: 6px;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.chatMessages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background-color: #fff;
+}
+
+.chatMessages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chatMessages::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 3px;
+}
+
+.chatMessage {
+    margin-bottom: 8px;
+    opacity: 0;
+    animation: fadeInMessage 0.4s forwards;
+}
+
+.chatMessage span {
+    display: inline-block;
+    border-radius: 8px;
+    padding: 6px 12px;
+    max-width: 80%;
+    font-size: 14px;
+    word-wrap: break-word;
+    line-height: 1.5;
+}
+
+/* Style đặc biệt cho nội dung HTML trong tin nhắn */
+.chatMessage span img {
+    max-width: 100%;
+    border-radius: 10px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.chatMessage span h3 {
+    margin: 5px 0;
+    font-size: 16px;
+    color: #0066cc;
+}
+
+.chatMessage span b {
+    font-weight: 700;
+}
+
+.user {
+    text-align: right;
+}
+
+.user span {
+    background: #0066cc;
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.ai {
+    text-align: left;
+    border-bottom-left-radius: 4px;
+}
+
+.ai span {
+    background: #f0f2f5;
+    color: #333;
+}
+
+/* Đảm bảo typing indicator hiển thị đúng trong message bubble */
+.ai .typing {
+    background: transparent;
+    padding: 8px 12px;
+}
+
+/* Link trong tin nhắn bot */
+.ai span a {
+    color: #0066cc;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.ai span a:hover {
+    text-decoration: underline;
+}
+
+.chatInputArea {
+    padding: 15px;
+    border-top: 1px solid #eee;
+    background: white;
+}
+
+.chatForm {
+    display: flex;
+    gap: 8px;
+}
+
+.chatInput {
+    flex: 1;
+    border: 1px solid #ddd;
+    border-radius: 25px;
+    padding: 12px 15px;
+    font-size: 14px;
+    outline: none;
+    color: black;
+    transition: border-color 0.3s;
+}
+
+.chatInput:focus {
+    border-color: #0066cc;
+}
+
+.chatSendBtn {
+    background: #0066cc;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 12px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.3s;
+}
+
+.chatSendBtn:hover:not(:disabled) {
+    background: #005bb5;
+}
+
+.chatSendBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Hiệu ứng fade */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInMessage {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Hiệu ứng typing 3 chấm */
+.typing {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+    padding: 4px 0;
+}
+
+.typing span {
+    width: 4px;
+    height: 4px;
+    background: #0070f3;
+    border-radius: 50%;
+    animation: typingBlink 1.2s infinite ease-in-out;
+    display: inline-block;
+}
+
+.typing span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typingBlink {
+    0%, 80%, 100% {
+        opacity: 0.3;
+        transform: scale(0.8);
+    }
+
+    40% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}

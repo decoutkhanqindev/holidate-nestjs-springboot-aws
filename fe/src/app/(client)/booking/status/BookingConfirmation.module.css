@@ -1,0 +1,146 @@
+/* src/app/booking/confirmation/BookingConfirmation.module.css */
+
+.centered {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    text-align: center;
+    padding: 20px;
+}
+
+.pageContainer {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.successHeader {
+    text-align: center;
+    margin-bottom: 40px;
+    color: #28a745;
+}
+
+.successHeader h1 {
+    font-size: 2.5rem;
+    margin: 10px 0;
+}
+
+.successHeader p {
+    font-size: 1.1rem;
+    color: #555;
+}
+
+.detailsCard {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.detailsCard h2 {
+    font-size: 1.8rem;
+    margin-top: 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+}
+
+.detailsCard h3 {
+    font-size: 1.2rem;
+    color: #333;
+    margin-top: 25px;
+    margin-bottom: 15px;
+}
+
+.infoRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 12px 0;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.infoRow span:first-child {
+    color: #666;
+}
+
+.infoRow strong {
+    color: #222;
+    text-align: right;
+}
+
+.divider {
+    border: 0;
+    border-top: 1px dashed #ccc;
+    margin: 20px 0;
+}
+
+.statusConfirmed {
+    color: #28a745;
+    font-weight: bold;
+    background-color: #e9f7ec;
+    padding: 4px 10px;
+    border-radius: 12px;
+}
+
+.totalPrice {
+    font-size: 1.4rem;
+    font-weight: bold;
+    margin-top: 20px;
+}
+
+.totalPrice strong {
+    color: #d9534f;
+}
+
+.actions {
+    margin-top: 40px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.homeButton, .myBookingsButton {
+    padding: 12px 30px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.homeButton {
+    background-color: #007bff;
+    color: white;
+    border: 1px solid #007bff;
+}
+
+.homeButton:hover {
+    background-color: #0056b3;
+}
+
+.myBookingsButton {
+    background-color: transparent;
+    color: #007bff;
+    border: 1px solid #007bff;
+}
+
+.myBookingsButton:hover {
+    background-color: #f0f8ff;
+}
+
+/* Error State */
+.errorState h2 {
+    color: #dc3545;
+}
+
+.errorState p {
+    color: #555;
+    max-width: 500px;
+    margin-bottom: 20px;
+}

@@ -1,0 +1,387 @@
+{
+    "nodes": [
+      {
+        "parameters": {
+          "mode": "insert",
+          "pineconeIndex": {
+            "__rl": true,
+            "value": "holidate-training-ai-agent-n8n-index",
+            "mode": "list",
+            "cachedResultName": "holidate-training-ai-agent-n8n-index"
+          },
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+        "typeVersion": 1.3,
+        "position": [
+          640,
+          0
+        ],
+        "id": "8aaa1cb5-7414-40c1-a6bc-cb7ed6cf22ea",
+        "name": "Pinecone Vector Store",
+        "credentials": {
+          "pineconeApi": {
+            "id": "MhJjsFjO00aj8Zen",
+            "name": "PineconeApi account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "model": "text-embedding-3-large",
+          "options": {
+            "dimensions": 3072
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+        "typeVersion": 1.2,
+        "position": [
+          560,
+          256
+        ],
+        "id": "46cc6385-cb35-48b1-85f6-eabc22f629e6",
+        "name": "Embeddings OpenAI",
+        "credentials": {
+          "openAiApi": {
+            "id": "DM5TLJVcvl7xyaex",
+            "name": "OpenAi account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "url": "https://s3.ap-southeast-1.amazonaws.com/holidate-storage/?list-type=2&prefix=knowledge_base/vietnam/thu-do-ha-noi",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "aws",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          -528,
+          0
+        ],
+        "id": "441e3903-252d-4159-beb4-2de63808a244",
+        "name": "Get KB data from S3",
+        "credentials": {
+          "aws": {
+            "id": "HlsXaRvTuWFUrXHC",
+            "name": "AWS (IAM) account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "dataPropertyName": "=data",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.xml",
+        "typeVersion": 1,
+        "position": [
+          -288,
+          0
+        ],
+        "id": "45563e43-d2a7-4c1b-9bd1-c2f302e648f9",
+        "name": "Convert from XML to JSON"
+      },
+      {
+        "parameters": {
+          "fieldToSplitOut": "=ListBucketResult.Contents",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.splitOut",
+        "typeVersion": 1,
+        "position": [
+          -64,
+          0
+        ],
+        "id": "b13be1dc-dceb-4bcd-9201-c841d090ccc1",
+        "name": "Split"
+      },
+      {
+        "parameters": {
+          "bucketName": "holidate-storage",
+          "fileKey": "={{ $json.Key }}"
+        },
+        "type": "n8n-nodes-base.awsS3",
+        "typeVersion": 2,
+        "position": [
+          160,
+          0
+        ],
+        "id": "e0a76f9d-3452-4d81-9c90-cda835a063f2",
+        "name": "Download files from S3",
+        "credentials": {
+          "aws": {
+            "id": "HlsXaRvTuWFUrXHC",
+            "name": "AWS (IAM) account"
+          }
+        }
+      },
+      {
+        "parameters": {},
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          -768,
+          0
+        ],
+        "id": "7af82656-3ba3-41e9-9e6a-c9a35d44441c",
+        "name": "When clicking ‘Execute workflow’"
+      },
+      {
+        "parameters": {
+          "textSplittingMode": "custom",
+          "options": {
+            "metadata": {
+              "metadataValues": [
+                {
+                  "name": "source",
+                  "value": "={{ $json.metadata.source }}"
+                },
+                {
+                  "name": "doc_id",
+                  "value": "={{ $json.metadata.doc_id }}"
+                },
+                {
+                  "name": "doc_type",
+                  "value": "={{ $json.metadata.doc_type }}"
+                },
+                {
+                  "name": "hotel_id",
+                  "value": "={{ $json.metadata.hotel_id }}"
+                },
+                {
+                  "name": "hotel_name",
+                  "value": "={{ $json.metadata.hotel_name }}"
+                },
+                {
+                  "name": "city_name",
+                  "value": "={{ $json.metadata.city_name }}"
+                },
+                {
+                  "name": "district_name",
+                  "value": "={{ $json.metadata.district_name }}"
+                },
+                {
+                  "name": "address",
+                  "value": "={{ $json.metadata.address }}"
+                },
+                {
+                  "name": "star_rating",
+                  "value": "={{ $json.metadata.star_rating }}"
+                },
+                {
+                  "name": "review_score",
+                  "value": "={{ $json.metadata.review_score }}"
+                },
+                {
+                  "name": "review_count",
+                  "value": "={{ $json.metadata.review_count }}"
+                },
+                {
+                  "name": "price",
+                  "value": "={{ $json.metadata.price }}"
+                },
+                {
+                  "name": "amenities",
+                  "value": "={{ $json.metadata.amenities }}"
+                },
+                {
+                  "name": "breakfast_included",
+                  "value": "={{ $json.metadata.breakfast_included }}"
+                },
+                {
+                  "name": "room_name",
+                  "value": "={{ $json.metadata.room_name }}"
+                },
+                {
+                  "name": "max_adults",
+                  "value": "={{ $json.metadata.max_adults }}"
+                },
+                {
+                  "name": "max_children",
+                  "value": "={{ $json.metadata.max_children }}"
+                },
+                {
+                  "name": "view_type",
+                  "value": "={{ $json.metadata.view_type }}"
+                },
+                {
+                  "name": "bed_type",
+                  "value": "={{ $json.metadata.bed_type }}"
+                },
+                {
+                  "name": "area_sqm",
+                  "value": "={{ $json.metadata.area_sqm }}"
+                },
+                {
+                  "name": "wifi_available",
+                  "value": "={{ $json.metadata.wifi_available }}"
+                },
+                {
+                  "name": "smoking_allowed",
+                  "value": "={{ $json.metadata.smoking_allowed }}"
+                },
+                {
+                  "name": "to_beach_meters",
+                  "value": "={{ $json.metadata.to_beach_meters }}"
+                },
+                {
+                  "name": "room_type",
+                  "value": "={{ $json.metadata.room_type }}"
+                },
+                {
+                  "name": "has_balcony",
+                  "value": "={{ $json.metadata.has_balcony }}"
+                }
+              ]
+            }
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+        "typeVersion": 1.1,
+        "position": [
+          768,
+          272
+        ],
+        "id": "31376de0-7382-4a5c-862f-55e82a89dab6",
+        "name": "Default Data Loader"
+      },
+      {
+        "parameters": {
+          "chunkOverlap": 100,
+          "options": {
+            "splitCode": "markdown"
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+        "typeVersion": 1,
+        "position": [
+          752,
+          464
+        ],
+        "id": "f85e1a87-2147-4484-b458-848346df1d46",
+        "name": "Recursive Character Text Splitter"
+      },
+      {
+        "parameters": {
+          "jsCode": "// N8N CODE NODE - Clean Markdown Optimized\n// Tối ưu phần cleanedContent: loại bỏ ký tự rác, giữ nguyên nội dung ngữ nghĩa\n\nfor (const item of $input.all()) {\n  const binaryData = item.binary;\n  if (binaryData && binaryData.data) {\n    \n    // 1. ĐỌC FILE GỐC\n    const rawContent = global.Buffer.from(binaryData.data.data, 'base64').toString('utf8');\n\n    // 2. TRÍCH XUẤT METADATA TỪ YAML FRONTMATTER (25 trường cần thiết)\n    const metadata = {};\n    metadata.source = binaryData.data.fileName || \"unknown\";\n    \n    // Trích xuất YAML Frontmatter (giữa 2 dấu ---)\n    const yamlMatch = rawContent.match(/^---\\s*([\\s\\S]*?)\\s*---/);\n    const yamlContent = yamlMatch ? yamlMatch[1] : '';\n    \n    // Helper function để parse YAML value\n    const parseYamlValue = (pattern, defaultValue = null) => {\n      const match = yamlContent.match(pattern);\n      if (!match) return defaultValue;\n      const value = match[1].trim();\n      // Xử lý boolean\n      if (value === 'true') return true;\n      if (value === 'false') return false;\n      // Xử lý số\n      if (/^\\d+$/.test(value)) return parseInt(value, 10);\n      if (/^\\d+\\.\\d+$/.test(value)) return parseFloat(value);\n      // Xử lý string (bỏ dấu ngoặc kép)\n      return value.replace(/^[\"']|[\"']$/g, '');\n    };\n    \n    const parseYamlArraySimple = (fieldName) => {\n      // Tìm vị trí bắt đầu của field\n      const fieldPattern = new RegExp(`^${fieldName}:\\\\s*$`, 'm');\n      const fieldMatch = yamlContent.match(fieldPattern);\n      if (!fieldMatch) return [];\n      \n      const startIndex = fieldMatch.index + fieldMatch[0].length;\n      const remainingContent = yamlContent.substring(startIndex);\n      const lines = remainingContent.split('\\n');\n      const items = [];\n      \n      // Parse từng dòng cho đến khi gặp field mới hoặc section mới\n      for (let i = 0; i < lines.length; i++) {\n        const line = lines[i].trim();\n        \n        // Dừng khi gặp section mới (# ===) hoặc field mới (chữ cái thường + :)\n        if (line.startsWith('# ===') || /^[a-z_]+:\\s*$/.test(line)) {\n          break;\n        }\n        \n        // Bỏ qua dòng trống và comment đơn thuần\n        if (!line || (line.startsWith('#') && !line.match(/^\\s*-\\s*\"/))) {\n          continue;\n        }\n        \n        // Match pattern: - \"value\" (có thể có comment)\n        const itemMatch = line.match(/^\\s*-\\s*\"([^\"]+)\"/);\n        if (itemMatch) {\n          items.push(itemMatch[1]);\n        }\n      }\n      \n      return items;\n    };\n    \n    // === TRÍCH XUẤT 25 TRƯỜNG CẦN THIẾT ===\n    \n    // === 1. IDENTITY ===\n    // 1. source (đã set ở trên)\n    \n    // 2. doc_id\n    metadata.doc_id = parseYamlValue(/doc_id:\\s*\"([^\"]+)\"/);\n    \n    // 3. doc_type\n    metadata.doc_type = parseYamlValue(/doc_type:\\s*\"([^\"]+)\"/);\n    \n    // 4. hotel_id (fallback to parent_hotel_id)\n    metadata.hotel_id = parseYamlValue(/hotel_id:\\s*\"([^\"]+)\"/) || \n                        parseYamlValue(/parent_hotel_id:\\s*\"([^\"]+)\"/);\n    \n    // 5. hotel_name (fallback logic từ content body nếu null)\n    metadata.hotel_name = parseYamlValue(/location:\\s*[\\s\\S]*?hotel_name:\\s*\"([^\"]+)\"/) || \n                         parseYamlValue(/hotel_name:\\s*\"([^\"]+)\"/);\n    \n    // === 2. LOCATION ===\n    // 6. city_name (prefer city_name, fallback to city)\n    metadata.city_name = parseYamlValue(/city_name:\\s*\"([^\"]+)\"/) || \n                         parseYamlValue(/location:\\s*[\\s\\S]*?city_name:\\s*\"([^\"]+)\"/) ||\n                         parseYamlValue(/location:\\s*[\\s\\S]*?city:\\s*\"([^\"]+)\"/) || \n                         parseYamlValue(/city:\\s*\"([^\"]+)\"/);\n    \n    // 7. district_name (prefer district_name, fallback to district)\n    metadata.district_name = parseYamlValue(/district_name:\\s*\"([^\"]+)\"/) || \n                              parseYamlValue(/location:\\s*[\\s\\S]*?district_name:\\s*\"([^\"]+)\"/) ||\n                              parseYamlValue(/location:\\s*[\\s\\S]*?district:\\s*\"([^\"]+)\"/) || \n                              parseYamlValue(/district:\\s*\"([^\"]+)\"/);\n    \n    // 8. address (prefer full_address, fallback to address)\n    metadata.address = parseYamlValue(/full_address:\\s*\"([^\"]+)\"/) || \n                       parseYamlValue(/location:\\s*[\\s\\S]*?address:\\s*\"([^\"]+)\"/) || \n                       parseYamlValue(/address:\\s*\"([^\"]+)\"/);\n    \n    // === 3. STATS ===\n    // 9. star_rating (parse as int)\n    metadata.star_rating = parseYamlValue(/star_rating:\\s*(\\d+)/);\n    if (metadata.star_rating !== null) {\n      metadata.star_rating = parseInt(metadata.star_rating, 10);\n    }\n    \n    // 10. review_score (parse as float)\n    metadata.review_score = parseYamlValue(/review_score:\\s*([\\d.]+)/);\n    if (metadata.review_score !== null) {\n      metadata.review_score = parseFloat(metadata.review_score);\n    }\n    \n    // 11. review_count (parse as int)\n    metadata.review_count = parseYamlValue(/review_count:\\s*(\\d+)/);\n    if (metadata.review_count !== null) {\n      metadata.review_count = parseInt(metadata.review_count, 10);\n    }\n    \n    // === 4. PRICE & PROPS ===\n    // 12. price (base_price, fallback to reference_min_price, default 0)\n    const basePrice = parseYamlValue(/base_price:\\s*(\\d+)/);\n    const referenceMinPrice = parseYamlValue(/reference_min_price:\\s*(\\d+)/);\n    metadata.price = basePrice || referenceMinPrice || 0;\n    if (metadata.price !== null) {\n      metadata.price = parseInt(metadata.price, 10);\n    }\n    \n    // 13. amenities (combine amenity_tags AND room_amenity_tags into one array)\n    const amenityTags = parseYamlArraySimple('amenity_tags');\n    const roomAmenityTags = parseYamlArraySimple('room_amenity_tags');\n    metadata.amenities = [...(amenityTags || []), ...(roomAmenityTags || [])];\n    \n    // 14. breakfast_included (boolean)\n    metadata.breakfast_included = parseYamlValue(/breakfast_included:\\s*(true|false)/);\n    \n    // === 5. ROOM DETAILS ===\n    // 15. room_name\n    metadata.room_name = parseYamlValue(/room_name:\\s*\"([^\"]+)\"/);\n    \n    // 16. max_adults (parse as int)\n    metadata.max_adults = parseYamlValue(/max_adults:\\s*(\\d+)/);\n    if (metadata.max_adults !== null) {\n      metadata.max_adults = parseInt(metadata.max_adults, 10);\n    }\n    \n    // 17. max_children (parse as int)\n    metadata.max_children = parseYamlValue(/max_children:\\s*(\\d+)/);\n    if (metadata.max_children !== null) {\n      metadata.max_children = parseInt(metadata.max_children, 10);\n    }\n    \n    // 18. view_type (check view first, then view_type, including nested specs)\n    metadata.view_type = parseYamlValue(/view:\\s*\"([^\"]+)\"/);\n    if (!metadata.view_type) {\n      // Check nested specs.view_type first\n      const specsViewTypeMatch = yamlContent.match(/^specs:\\s*$/m);\n      if (specsViewTypeMatch) {\n        const specsStartIndex = specsViewTypeMatch.index + specsViewTypeMatch[0].length;\n        const specsSection = yamlContent.substring(specsStartIndex);\n        const nestedViewTypeMatch = specsSection.match(/^\\s+view_type:\\s*\"([^\"]+)\"/m);\n        if (nestedViewTypeMatch) {\n          metadata.view_type = nestedViewTypeMatch[1];\n        }\n      }\n      // Fallback to root level view_type if not found\n      if (!metadata.view_type) {\n        metadata.view_type = parseYamlValue(/view_type:\\s*\"([^\"]+)\"/);\n      }\n    }\n    \n    // 19. bed_type\n    metadata.bed_type = parseYamlValue(/bed_type:\\s*\"([^\"]+)\"/);\n    \n    // 20. area_sqm (parse as float)\n    metadata.area_sqm = parseYamlValue(/area_sqm:\\s*([\\d.]+)/);\n    if (metadata.area_sqm !== null) {\n      metadata.area_sqm = parseFloat(metadata.area_sqm);\n    }\n    \n    // === 6. ADDITIONAL IMPORTANT FIELDS ===\n    // 21. wifi_available (boolean)\n    metadata.wifi_available = parseYamlValue(/wifi_available:\\s*(true|false)/);\n    \n    // 22. smoking_allowed (boolean)\n    metadata.smoking_allowed = parseYamlValue(/smoking_allowed:\\s*(true|false)/);\n    \n    // 23. to_beach_meters (integer) - from distances.to_beach_meters\n    const distancesBeachMatch = yamlContent.match(/distances:\\s*[\\s\\S]*?to_beach_meters:\\s*(\\d+)/);\n    if (distancesBeachMatch) {\n      metadata.to_beach_meters = parseInt(distancesBeachMatch[1], 10);\n    } else {\n      metadata.to_beach_meters = parseYamlValue(/to_beach_meters:\\s*(\\d+)/);\n    }\n    \n    // 24. room_type (string)\n    metadata.room_type = parseYamlValue(/room_type:\\s*\"([^\"]+)\"/);\n    \n    // 25. has_balcony (boolean) - check nested specs.has_balcony first, then root level\n    const specsHasBalconyMatch = yamlContent.match(/^specs:\\s*$/m);\n    if (specsHasBalconyMatch) {\n      const specsStartIndex = specsHasBalconyMatch.index + specsHasBalconyMatch[0].length;\n      const specsSection = yamlContent.substring(specsStartIndex);\n      const nestedHasBalconyMatch = specsSection.match(/^\\s+has_balcony:\\s*(true|false)/m);\n      if (nestedHasBalconyMatch) {\n        metadata.has_balcony = nestedHasBalconyMatch[1] === 'true';\n      }\n    }\n    // Fallback to root level has_balcony if not found in specs\n    if (metadata.has_balcony === undefined) {\n      const hasBalconyValue = parseYamlValue(/has_balcony:\\s*(true|false)/);\n      if (hasBalconyValue !== null) {\n        metadata.has_balcony = hasBalconyValue;\n      }\n    }\n    \n    // Fallback: Trích xuất hotel_name từ content body nếu chưa có\n    if (!metadata.hotel_name && !metadata.room_name) {\n      const contentBody = rawContent.replace(/^---[\\s\\S]*?---\\s*/, '');\n      const titleMatch = contentBody.match(/^#\\s*(?:🏨|🛏️|.*?)\\s*(.+?)(?:\\s*-)?$/m);\n      if (titleMatch) {\n        metadata.hotel_name = titleMatch[1].trim();\n      }\n    }\n\n    // 3. XỬ LÝ LÀM SẠCH VĂN BẢN (TỐI ƯU)\n    let text = rawContent;\n    \n    // --- 3.1: Loại bỏ khối rác lớn (gộp regex để tối ưu) ---\n    text = text\n      .replace(/^---[\\s\\S]*?---\\s*/, '')           // Xóa YAML Frontmatter\n      .replace(/^# ===.*$/gm, '')                    // Xóa Header trang trí\n      .replace(/\\{\\{TOOL:.*?\\}\\}/g, '')              // Xóa code Tool\n      .replace(/!\\[.*?\\]\\([^)]*\\)/g, '');           // Xóa ảnh Markdown\n    \n    // --- 3.2: Decode HTML Entities (tối ưu: gộp các pattern tương tự) ---\n    text = text\n      .replace(/&#10;/g, '\\n')                       // Line feed\n      .replace(/&#13;/g, '\\n')                       // Carriage return -> newline\n      .replace(/&#9;/g, ' ')                         // Tab -> space\n      .replace(/&nbsp;|&#160;/g, ' ')                // Non-breaking space\n      .replace(/&amp;/g, '&')\n      .replace(/&lt;/g, '<')\n      .replace(/&gt;/g, '>')\n      .replace(/&quot;/g, '\"')\n      .replace(/&#39;|&apos;/g, \"'\")\n      .replace(/<[^>]*>/g, '');                      // Xóa thẻ HTML\n    \n    // Decode HTML entities dạng số và hex (chỉ giữ ký tự hợp lệ)\n    text = text\n      .replace(/&#(\\d+);/g, (_, code) => {\n        const c = parseInt(code, 10);\n        return (c === 10 || c === 13 || (c >= 32 && c <= 126) || c >= 160) \n          ? (c === 13 ? '\\n' : String.fromCharCode(c)) : '';\n      })\n      .replace(/&#x([0-9A-Fa-f]+);/g, (_, hex) => {\n        const c = parseInt(hex, 16);\n        return (c === 10 || c === 13 || (c >= 32 && c <= 126) || c >= 160) \n          ? (c === 13 ? '\\n' : String.fromCharCode(c)) : '';\n      });\n    \n    // --- 3.3: Xóa định dạng Markdown (giữ text) - tối ưu regex ---\n    text = text\n      .replace(/^#+\\s+/gm, '')                      // Xóa dấu # Header\n      .replace(/\\*\\*([^*]+)\\*\\*/g, '$1')             // Xóa Bold **\n      .replace(/\\*([^*]+)\\*/g, '$1')                 // Xóa Italic *\n      .replace(/__([^_]+)__/g, '$1')                 // Xóa Bold __\n      .replace(/^>\\s*/gm, '')                        // Xóa Blockquote >\n      .replace(/^\\s*[-*+]\\s+/gm, '')                 // Xóa dấu gạch đầu dòng list\n      .replace(/`([^`]+)`/g, '$1');                  // Xóa inline code\n    \n    // --- 3.3.5: Loại bỏ các bảng trùng lặp (DUPLICATE TABLE REMOVAL) ---\n    // Phát hiện và xóa các bảng bị duplicate, đặc biệt là bảng \"📆 Thông Tin Theo Ngày\"\n    // Strategy: Phát hiện cả header emoji VÀ dòng header bảng (sau khi xóa markdown)\n    // LƯU Ý: Header đã bị xóa markdown (#) ở bước 3.3, nên chỉ còn text thuần\n    \n    const tableLines = text.split('\\n');\n    const dedupedLines = [];\n    const seenTableHeaders = new Set();\n    const seenTableRowHeaders = new Set(); // Dòng header của bảng (không có emoji)\n    let skipUntilNextHeader = false;\n    let inTableSection = false;\n    \n    for (let i = 0; i < tableLines.length; i++) {\n      const line = tableLines[i];\n      const trimmed = line.trim();\n      \n      // Phát hiện header của bảng có emoji (SAU KHI ĐÃ XÓA MARKDOWN)\n      const isTableHeaderEmoji = /^📆\\s*Thông Tin Theo Ngày/.test(trimmed) ||\n                                 /^💰\\s*Giá\\s*&\\s*Tình Trạng Trong 7 Ngày Tới/.test(trimmed);\n      \n      // Phát hiện dòng header của bảng (không có emoji) - pattern phổ biến\n      const isTableRowHeader = /^Ngày\\s+Thứ\\s+Giá\\s*\\(VNĐ/.test(trimmed) ||\n                               /^Ngày\\s+Thứ\\s+Giá\\s*\\(VNĐ\\/đêm\\)/.test(trimmed) ||\n                               (/^Ngày/.test(trimmed) && /Thứ/.test(trimmed) && /Giá/.test(trimmed));\n      \n      // Phát hiện dòng bảng (có chứa |) - QUAN TRỌNG: phải check TRƯỚC khi flatten\n      const isTableRow = /\\|/.test(line);\n      \n      // Phát hiện dòng dữ liệu bảng (có pattern ngày tháng: 2025-11-29, 2025-12-01, etc.)\n      const isTableDataRow = /^\\d{4}-\\d{2}-\\d{2}/.test(trimmed) && \n                            (/\\bsaturday\\b|\\bsunday\\b|\\bmonday\\b|\\btuesday\\b|\\bwednesday\\b|\\bthursday\\b|\\bfriday\\b/i.test(trimmed) ||\n                             /\\d+\\.\\d+\\s+\\d+/.test(trimmed)); // Pattern: giá số + số phòng\n      \n      // Phát hiện header mới (không phải bảng duplicate) - các emoji khác\n      const isNewHeader = /^[🎯⭐🎁📋📍🛏️⏰✨👨|🏖️❌🔄💳📞📊📈📅🚭⚠️]/.test(trimmed) && \n                        !isTableHeaderEmoji;\n      \n      if (isTableHeaderEmoji) {\n        // Header có emoji\n        const tableKey = trimmed.replace(/\\s+/g, ' ').trim();\n        \n        if (seenTableHeaders.has(tableKey)) {\n          skipUntilNextHeader = true;\n          inTableSection = true;\n        } else {\n          seenTableHeaders.add(tableKey);\n          skipUntilNextHeader = false;\n          inTableSection = true;\n          dedupedLines.push(line);\n        }\n      } else if (isTableRowHeader) {\n        // Dòng header của bảng (không có emoji) - đây là dấu hiệu bắt đầu bảng mới\n        const rowHeaderKey = trimmed.replace(/\\s+/g, ' ').trim();\n        \n        if (seenTableRowHeaders.has(rowHeaderKey)) {\n          // Đã thấy dòng header này rồi = bảng duplicate\n          skipUntilNextHeader = true;\n          inTableSection = true;\n        } else {\n          // Dòng header mới\n          seenTableRowHeaders.add(rowHeaderKey);\n          skipUntilNextHeader = false;\n          inTableSection = true;\n          dedupedLines.push(line);\n        }\n      } else if (skipUntilNextHeader && inTableSection) {\n        // Đang trong bảng duplicate, bỏ qua tất cả dòng cho đến khi gặp header mới hoặc nội dung không phải bảng\n        if (isNewHeader) {\n          // Gặp header mới (emoji khác), dừng skip\n          skipUntilNextHeader = false;\n          inTableSection = false;\n          dedupedLines.push(line);\n        } else if (isTableRowHeader) {\n          // Gặp dòng header bảng mới (duplicate tiếp theo) - tiếp tục skip, không push\n          // Không làm gì, tiếp tục skip\n        } else if (!isTableDataRow && trimmed.length > 0 && !/^[\\s-:|]+$/.test(trimmed)) {\n          // Gặp nội dung không phải dữ liệu bảng (có text thực sự, không phải separator)\n          // Kiểm tra xem dòng trước đó có phải là dữ liệu bảng không\n          let prevIsTableData = false;\n          for (let j = i - 1; j >= 0 && j >= i - 5; j--) {\n            const prevLine = tableLines[j] || '';\n            const prevTrimmed = prevLine.trim();\n            if (prevTrimmed.length > 0) {\n              prevIsTableData = /^\\d{4}-\\d{2}-\\d{2}/.test(prevTrimmed);\n              break;\n            }\n          }\n          \n          if (prevIsTableData) {\n            // Dòng trước đó là dữ liệu bảng, đây là kết thúc bảng duplicate\n            skipUntilNextHeader = false;\n            inTableSection = false;\n            dedupedLines.push(line);\n          }\n        }\n        // Tất cả các dòng khác (dữ liệu bảng, dòng trống) đều bị skip - không push vào dedupedLines\n      } else {\n        // Không trong bảng duplicate, giữ nguyên\n        if (inTableSection && !isTableRow && !isTableDataRow && trimmed.length > 0) {\n          // Kết thúc section bảng nếu gặp nội dung không phải bảng\n          inTableSection = false;\n        }\n        dedupedLines.push(line);\n      }\n    }\n    \n    text = dedupedLines.join('\\n');\n    \n    // --- 3.4: Xử lý Bảng (Table Flattening) - tối ưu ---\n    text = text\n      .replace(/^\\|?[\\s-:|]+\\|?$/gm, '')             // Xóa dòng kẻ bảng\n      .replace(/\\|/g, ' ');                           // Thay dấu | bằng space\n    \n    // --- 3.5: Xóa text rác cụ thể ---\n    text = text\n      .replace(/_Thông tin.*?cập nhật sớm\\._/g, '')\n      .replace(/_Hiện tại không có.*?_/g, '')\n      .replace(/Disclaimer quan trọng/g, '')\n      .replace(/\\{\\{.*?\\}\\}/g, '');                  // Xóa tất cả template variables còn sót\n    \n    // --- 3.6: Dọn dẹp cuối cùng (tối ưu thứ tự) ---\n    text = text\n      .replace(/\\r\\n|\\r/g, '\\n')                     // Chuẩn hóa line endings (quan trọng!)\n      .replace(/[\\u200B-\\u200D\\u2060\\uFEFF]/g, '')   // Loại bỏ zero-width characters\n      .replace(/[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F-\\x9F]/g, '') // Loại bỏ control chars\n      .replace(/[\\u2028\\u2029]/g, '\\n')              // Chuẩn hóa line separators\n      .replace(/[\\u2000-\\u200A\\u202F\\u205F\\u00A0]/g, ' ') // Chuẩn hóa space\n      .replace(/[ \\t]+/g, ' ')                       // Xóa khoảng trắng thừa (quan trọng!)\n      .replace(/\\n\\s*\\n\\s*\\n+/g, '\\n\\n')            // Tối đa 2 dòng trống\n      .replace(/[ \\t]+$/gm, '')                      // Xóa trailing whitespace\n      .replace(/[\\uFFFD\\u00AD\\0]/g, '')              // Loại bỏ replacement char, soft hyphen, null\n      .trim();\n    \n    // --- 3.7: SEMANTIC CLEANING - Tối ưu cho Vector DB ---\n    \n    // 3.7.1: Sửa artifacts còn sót\n    text = text\n      .replace(/:\\s*\\}\\s*$/gm, '')                   // Xóa dấu } còn sót ở cuối dòng\n      .replace(/⚠️\\s*:\\s*$/gm, '⚠️ Disclaimer quan trọng:') // Sửa tiêu đề bị mất\n      .replace(/⚠️\\s*:\\s*\\n/g, '⚠️ Disclaimer quan trọng:\\n'); // Sửa tiêu đề bị mất (trường hợp khác)\n    \n    // 3.7.2: Loại bỏ conversational fluff (kịch bản chatbot)\n    text = text\n      .replace(/📞\\s*Liên Hệ\\s*&\\s*Hỗ Trợ[\\s\\S]*?Hãy cho tôi biết kế hoạch của bạn![\\s\\S]*$/g, '') // Xóa toàn bộ phần liên hệ\n      .replace(/Bạn có câu hỏi về khách sạn này\\?[\\s\\S]*?😊[\\s\\S]*$/g, '') // Xóa phần hỗ trợ\n      .replace(/Tôi có thể giúp bạn:[\\s\\S]*?😊[\\s\\S]*$/g, '') // Xóa danh sách hỗ trợ\n      .replace(/Hãy cho tôi biết[\\s\\S]*?😊[\\s\\S]*$/g, '') // Xóa câu kết thúc\n      .replace(/Tôi sẽ kiểm tra ngay:[\\s\\S]*$/gm, '') // Xóa câu tool call\n      .replace(/🔍\\s*Để nhận báo giá chính xác cho ngày bạn muốn đi, hãy cho tôi biết:[\\s\\S]*?Tôi sẽ kiểm tra ngay\\s*$/gm, ''); // Xóa đoạn disclaimer thừa\n    \n    // 3.7.3: Loại bỏ sections rỗng (tiêu đề không có nội dung)\n    // Xóa các section rỗng cụ thể (pattern cụ thể - xử lý cả trường hợp không có dòng trống)\n    text = text\n      .replace(/✨\\s*Tiện Nghi Nổi Bật\\s*\\n(?:\\s*\\n)?(?=[👨🛏️💰📋📍⏰⭐🎯❌🔄💳])/g, '') // Section rỗng - nhảy ngay sang header khác\n      .replace(/⭐\\s*Đánh Giá Khách Hàng\\s*\\n(?:\\s*\\n)?(?=[📋📍⏰🎯❌🔄💳])/g, '') // Section rỗng\n      .replace(/❌\\s*Chính Sách Hủy Phòng Chi Tiết\\s*\\n(?:\\s*\\n)?(?=[🔄💳📋📍⏰🎯])/g, '') // Section rỗng\n      .replace(/🔄\\s*Chính Sách Đổi Lịch Chi Tiết\\s*\\n(?:\\s*\\n)?(?=[💳📋📍⏰🎯])/g, '') // Section rỗng\n      .replace(/🎯\\s*Phù Hợp Với Ai\\?\\s*$/gm, '') // Section rỗng ở cuối file\n      .replace(/🎯\\s*Địa Điểm Giải Trí Gần Đây\\s*\\n(?:\\s*\\n)?(?=[⭐📋📍⏰🎯❌🔄💳])/g, '') // Section rỗng\n      .replace(/🎁\\s*Khuyến Mãi Đang Có\\s*\\n(?:\\s*\\n)?(?=[⭐📋📍⏰🎯❌🔄💳])/g, ''); // Section rỗng\n    \n    // Xóa pattern: Header + chỉ có dòng trống + Header mới (generic - cải thiện)\n    const lines = text.split('\\n');\n    const cleanedLines = [];\n    const headerPattern = /^[🎯⭐🎁📋📍🛏️💰⏰✨👨|🏖️❌🔄💳📞]/;\n    \n    for (let i = 0; i < lines.length; i++) {\n      const line = lines[i].trim();\n      const isHeader = headerPattern.test(line);\n      \n      if (isHeader) {\n        // Kiểm tra xem có nội dung sau header không\n        let hasContent = false;\n        let nextHeaderIndex = -1;\n        \n        // Tìm header tiếp theo hoặc nội dung thực sự\n        for (let j = i + 1; j < lines.length && j < i + 6; j++) {\n          const nextLine = lines[j].trim();\n          \n          // Nếu gặp header mới\n          if (headerPattern.test(nextLine)) {\n            nextHeaderIndex = j;\n            break;\n          }\n          \n          // Nếu có nội dung thực sự (không phải dòng trống, không phải chỉ có dấu câu)\n          if (nextLine.length > 2 && !/^[:\\-_\\s]+$/.test(nextLine)) {\n            hasContent = true;\n            break;\n          }\n        }\n        \n        // Quyết định: giữ header nếu có nội dung, xóa nếu header ngay trước header khác\n        if (hasContent) {\n          cleanedLines.push(lines[i]);\n        } else if (nextHeaderIndex === i + 1) {\n          // Header ngay trước header khác (không có dòng trống) = section rỗng, bỏ qua\n        } else if (nextHeaderIndex > 0 && nextHeaderIndex < i + 4) {\n          // Header trước header khác sau 1-3 dòng trống = section rỗng, bỏ qua\n        } else if (i === lines.length - 1) {\n          // Header ở cuối file mà không có nội dung = xóa\n        } else {\n          // Trường hợp khác, giữ lại để an toàn\n          cleanedLines.push(lines[i]);\n        }\n      } else {\n        cleanedLines.push(lines[i]);\n      }\n    }\n    \n    text = cleanedLines.join('\\n');\n    \n    // 3.7.4: Dọn dẹp lại sau khi xóa sections\n    text = text\n      .replace(/\\n{3,}/g, '\\n\\n')                     // Tối đa 2 dòng trống\n      .replace(/^\\s+|\\s+$/gm, '')                     // Xóa leading/trailing whitespace mỗi dòng\n      .trim();\n\n    // 4. GHI DỮ LIỆU RA\n    item.json.cleanedContent = text;\n    item.json.metadata = metadata;\n    item.binary = undefined;\n  }\n}\n\nreturn $input.all();\n\n/*\n * ============================================================\n * HƯỚNG DẪN SỬ DỤNG METADATA VỚI PINECONE VECTOR DB\n * ============================================================\n * \n * Metadata đã được trích xuất từ YAML Frontmatter và sẵn sàng cho Pinecone filtering.\n * \n * CẤU HÌNH DATA LOADER (Pinecone):\n * \n * 1. Metadata Fields cho Filtering:\n *    - doc_type: \"hotel_profile\" | \"room_detail\"\n *    - doc_id, hotel_id, room_id: UUID strings\n *    - location: country, city, district (strings)\n *    - star_rating: integer (1-5)\n *    - reference_min_price, base_price: integer (VNĐ)\n *    - amenity_tags, location_tags, vibe_tags: arrays of strings\n *    - distances: to_beach_meters, to_city_center_meters (integers)\n *    - policies: breakfast_included, smoking_allowed (booleans)\n * \n * 2. Ví dụ Query với Metadata Filtering:\n * \n *    // Tìm khách sạn có bể bơi tại Nha Trang\n *    filter = {\n *      doc_type: \"hotel_profile\",\n *      city: \"thanh-pho-nha-trang\",\n *      amenity_tags: { $in: [\"swimming_pool\", \"pool\"] }\n *    }\n * \n *    // Tìm phòng giá dưới 1 triệu tại Golden Hotel\n *    filter = {\n *      doc_type: \"room_detail\",\n *      parent_hotel_id: \"4b2d0a2d-cc1f-4030-8c07-5fa09b8229cf\",\n *      base_price: { $lt: 1000000 }\n *    }\n * \n *    // Tìm khách sạn 4-5 sao gần biển (< 500m)\n *    filter = {\n *      doc_type: \"hotel_profile\",\n *      star_rating: { $gte: 4 },\n *      to_beach_meters: { $lt: 500 }\n *    }\n * \n * 3. Cấu trúc Metadata trong Pinecone:\n *    {\n *      id: metadata.doc_id,\n *      values: [vector embeddings],\n *      metadata: {\n *        doc_type: metadata.doc_type,\n *        hotel_id: metadata.hotel_id,\n *        city: metadata.city,\n *        star_rating: metadata.star_rating,\n *        reference_min_price: metadata.reference_min_price,\n *        amenity_tags: metadata.amenity_tags,  // Array\n *        // ... các trường khác\n *      }\n *    }\n * \n * 4. Lưu ý:\n *    - Arrays (amenity_tags, location_tags) cần được filter bằng $in operator\n *    - Numbers (price, distance) dùng $lt, $lte, $gt, $gte\n *    - Booleans dùng exact match\n *    - Strings dùng exact match hoặc $in cho multiple values\n */\n\n"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          400,
+          0
+        ],
+        "id": "5606c41d-1eb4-4b94-a515-c6af95f43f22",
+        "name": "Convert Markdown files to Text files"
+      }
+    ],
+    "connections": {
+      "Embeddings OpenAI": {
+        "ai_embedding": [
+          [
+            {
+              "node": "Pinecone Vector Store",
+              "type": "ai_embedding",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get KB data from S3": {
+        "main": [
+          [
+            {
+              "node": "Convert from XML to JSON",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Convert from XML to JSON": {
+        "main": [
+          [
+            {
+              "node": "Split",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Split": {
+        "main": [
+          [
+            {
+              "node": "Download files from S3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Download files from S3": {
+        "main": [
+          [
+            {
+              "node": "Convert Markdown files to Text files",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "When clicking ‘Execute workflow’": {
+        "main": [
+          [
+            {
+              "node": "Get KB data from S3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Default Data Loader": {
+        "ai_document": [
+          [
+            {
+              "node": "Pinecone Vector Store",
+              "type": "ai_document",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Recursive Character Text Splitter": {
+        "ai_textSplitter": [
+          [
+            {
+              "node": "Default Data Loader",
+              "type": "ai_textSplitter",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Convert Markdown files to Text files": {
+        "main": [
+          [
+            {
+              "node": "Pinecone Vector Store",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {},
+    "meta": {
+      "templateCredsSetupCompleted": true,
+      "instanceId": "c57b70723f54864769ece4aeb1aa72368bc75704a74d49344e0597a9701afb0d"
+    }
+  }

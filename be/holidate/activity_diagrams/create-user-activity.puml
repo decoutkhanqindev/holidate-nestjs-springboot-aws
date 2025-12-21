@@ -1,0 +1,54 @@
+@startuml
+|Người dùng|
+start
+if (Đã đăng nhập?) then (Chưa)
+  :Đăng nhập vào hệ thống;
+  |Hệ thống|
+  :Xác thực thông tin đăng nhập;
+  if (Đăng nhập thành công?) then (Không)
+    :Thông báo lỗi đăng nhập;
+    stop
+  else (Có)
+    |Người dùng|
+  endif
+else (Đã đăng nhập)
+endif
+
+|Người dùng|
+:Truy cập trang tạo tài khoản người dùng;
+:Nhập thông tin người dùng\n(email, mật khẩu, họ tên, vai trò);
+if (Có thông tin địa chỉ?) then (Có)
+  :Chọn thông tin địa chỉ\n(quốc gia, tỉnh, thành phố, quận, phường, đường);
+else (Không)
+endif
+:Nhấn nút "Tạo tài khoản";
+
+|Hệ thống|
+:Kiểm tra email đã tồn tại?;
+
+if (Email đã tồn tại?) then (Có)
+  :Thông báo lỗi\nemail đã tồn tại;
+  |Người dùng|
+  -> Nhập lại email;
+else (Không)
+  |Hệ thống|
+  :Kiểm tra thông tin người dùng hợp lệ\n(vai trò, địa chỉ nếu có);
+
+  if (Thông tin hợp lệ?) then (Không)
+    :Thông báo lỗi thông tin không hợp lệ;
+    |Người dùng|
+    -> Nhập lại thông tin;
+  else (Có)
+    |Hệ thống|
+    :Tạo tài khoản người dùng mới;
+    :Lưu thông tin vào CSDL;
+    :Thông báo tạo tài khoản thành công;
+
+    |Người dùng|
+    :Nhận thông báo tạo tài khoản thành công;
+  endif
+endif
+
+stop
+@enduml
+

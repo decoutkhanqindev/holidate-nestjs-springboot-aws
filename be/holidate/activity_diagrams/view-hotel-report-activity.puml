@@ -1,0 +1,51 @@
+@startuml
+|Người dùng|
+start
+if (Đã đăng nhập?) then (Chưa)
+  :Đăng nhập vào hệ thống;
+  |Hệ thống|
+  :Xác thực thông tin đăng nhập;
+  if (Đăng nhập thành công?) then (Không)
+    :Thông báo lỗi đăng nhập;
+    stop
+  else (Có)
+    |Người dùng|
+  endif
+else (Đã đăng nhập)
+endif
+
+|Người dùng|
+:Truy cập trang báo cáo khách sạn;
+:Chọn khách sạn;
+:Chọn khoảng thời gian\n(tuần, tháng, quý hoặc tùy chỉnh);
+if (Muốn so sánh với kỳ trước?) then (Có)
+  :Chọn khoảng thời gian so sánh;
+else (Không)
+endif
+:Nhấn nút "Xem báo cáo";
+
+|Hệ thống|
+:Kiểm tra khách sạn thuộc về đối tác?;
+
+if (Khách sạn hợp lệ?) then (Không)
+  :Thông báo lỗi\nkhông có quyền truy cập;
+  |Người dùng|
+  -> Chọn khách sạn khác;
+else (Có)
+  |Hệ thống|
+  :Tổng hợp dữ liệu từ các đơn đặt phòng\nđã hoàn thành trong khoảng thời gian;
+  :Tính toán các chỉ số\n(doanh thu, số phòng đã bán,\ntỷ lệ lấp đầy, tỷ lệ hủy phòng);
+  if (Có so sánh với kỳ trước?) then (Có)
+    :Tính toán chỉ số kỳ trước;
+    :So sánh và tính phần trăm thay đổi;
+  else (Không)
+  endif
+  :Hiển thị báo cáo\n(biểu đồ và bảng số liệu);
+
+  |Người dùng|
+  :Xem báo cáo hiệu quả kinh doanh\n(doanh thu, số phòng, tỷ lệ lấp đầy, tỷ lệ hủy);
+endif
+
+stop
+@enduml
+

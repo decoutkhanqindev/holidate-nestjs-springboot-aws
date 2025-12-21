@@ -1,0 +1,19 @@
+@startuml
+|Người dùng|
+start
+:Nhấn vào phòng\ntừ danh sách;
+
+|Hệ thống|
+:Lấy thông tin chi tiết phòng từ CSDL;
+
+if (Phòng không tồn tại?) then (Có)
+  :Thông báo lỗi\nphòng không tồn tại;
+else (Tồn tại)
+  |Hệ thống|
+  :Hiển thị thông tin chi tiết phòng\n(tên, mô tả, hình ảnh, giá,\ntiện ích, chính sách, ...);
+
+endif
+
+stop
+@enduml
+

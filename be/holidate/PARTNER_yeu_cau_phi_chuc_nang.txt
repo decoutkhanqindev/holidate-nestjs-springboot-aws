@@ -1,0 +1,74 @@
+YÊU CẦU PHI CHỨC NĂNG CHO ĐỐI TÁC (ROLE PARTNER)
+
+1. Bảo mật (Security)
+   - Xác thực người dùng bằng JWT (JSON Web Token) với access token và refresh token
+   - Token được lưu trữ trong cookie an toàn (HttpOnly, Secure)
+   - Chỉ có thể quản lý khách sạn, phòng và đặt phòng của chính mình
+   - Tất cả các yêu cầu phải được xác thực (authenticated) trước khi thực hiện
+   - Dữ liệu nhạy cảm được mã hóa khi truyền qua mạng (HTTPS)
+   - Thông tin kho phòng (room inventory) chỉ có đối tác và quản trị viên mới được xem
+   - Kiểm tra quyền sở hữu trước khi cho phép cập nhật hoặc xóa dữ liệu
+
+2. Hiệu năng (Performance)
+   - Thời gian phản hồi của API cho các thao tác quản lý: dưới 3 giây
+   - Thời gian phản hồi cho các thao tác tạo/cập nhật phòng: dưới 5 giây
+   - Hệ thống xử lý được tối đa 500 yêu cầu đồng thời từ đối tác
+   - Tối ưu hóa truy vấn cơ sở dữ liệu cho các báo cáo và phân tích
+   - Báo cáo và phân tích được tạo trong vòng 10 giây
+   - Hỗ trợ xuất báo cáo dưới dạng file (PDF, Excel) một cách nhanh chóng
+
+3. Khả năng sử dụng (Usability)
+   - Giao diện quản lý trực quan, dễ sử dụng
+   - Dashboard báo cáo hiển thị thông tin quan trọng một cách rõ ràng
+   - Quy trình gửi yêu cầu cho quản trị viên đơn giản, dễ hiểu
+   - Biểu đồ và bảng thống kê dễ đọc và phân tích
+
+4. Khả năng phục hồi (Reliability)
+   - Hệ thống đảm bảo tính nhất quán dữ liệu khi quản lý phòng và kho phòng
+   - Xử lý lỗi một cách graceful, không làm mất dữ liệu
+   - Có cơ chế retry (thử lại) tự động khi có lỗi tạm thời
+   - Đảm bảo dữ liệu báo cáo chính xác và nhất quán
+
+5. Tính toàn vẹn dữ liệu (Data Integrity)
+   - Tất cả dữ liệu đầu vào được kiểm tra và xác thực trước khi xử lý
+   - Giá phòng phải là số dương
+   - Số lượng phòng trong kho phòng phải là số không âm
+   - Ngày tháng phải hợp lệ và đúng định dạng
+   - Thông tin khách sạn và phòng phải đầy đủ và chính xác
+   - Đảm bảo không có xung đột khi cập nhật kho phòng đồng thời
+
+6. Khả năng mở rộng (Scalability)
+   - Hệ thống hỗ trợ đối tác quản lý nhiều khách sạn và phòng
+   - Báo cáo có thể xử lý lượng dữ liệu lớn từ nhiều đặt phòng
+   - Hệ thống có thể mở rộng để hỗ trợ thêm nhiều đối tác
+
+7. Khả năng tương thích (Compatibility)
+   - Hỗ trợ các trình duyệt web phổ biến (Chrome, Firefox, Safari, Edge)
+   - Hỗ trợ cả máy tính và thiết bị di động (responsive design)
+   - Tương thích với các hệ điều hành phổ biến (Windows, macOS, iOS, Android)
+
+8. Bảo vệ quyền riêng tư (Privacy)
+   - Thông tin cá nhân và thông tin khách sạn được bảo vệ
+   - Chỉ đối tác mới có thể xem thông tin chi tiết về khách sạn và phòng của mình
+   - Dữ liệu báo cáo chỉ hiển thị thông tin liên quan đến khách sạn của đối tác
+
+9. Thông báo và cập nhật (Notifications)
+   - Nhận thông báo về trạng thái yêu cầu gửi cho quản trị viên
+   - Nhận thông báo về các đặt phòng mới
+   - Nhận cảnh báo khi kho phòng sắp hết
+
+10. Giới hạn và hạn chế (Limits and Constraints)
+    - Có giới hạn số lần thử đăng nhập sai để tránh tấn công brute force
+    - Đối tác không thể tự tạo hoặc xóa khách sạn (chỉ quản trị viên mới có quyền này)
+    - Đối tác chỉ có thể quản lý khách sạn và phòng của chính mình
+
+11. Xử lý đồng thời (Concurrency)
+    - Hệ thống xử lý được nhiều yêu cầu cập nhật kho phòng đồng thời
+    - Sử dụng cơ chế khóa (locking) để tránh xung đột dữ liệu
+    - Có cơ chế retry với exponential backoff khi có xung đột
+
+12. Lưu trữ và sao lưu (Storage and Backup)
+    - Dữ liệu được lưu trữ an toàn trên cơ sở dữ liệu
+    - Hình ảnh khách sạn và phòng được lưu trữ trên AWS S3
+    - Có cơ chế sao lưu dữ liệu định kỳ
+

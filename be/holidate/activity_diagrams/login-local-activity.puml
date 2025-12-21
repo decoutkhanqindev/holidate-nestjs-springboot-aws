@@ -1,0 +1,59 @@
+@startuml
+|Người dùng|
+start
+:Truy cập trang đăng nhập;
+:Nhập thông tin\n(email, mật khẩu);
+:Nhấn nút "Đăng nhập";
+
+|Hệ thống|
+:Kiểm tra định dạng thông tin;
+
+if (Thông tin hợp lệ?) then (Không)
+  :Thông báo lỗi sai định dạng;
+  |Người dùng|
+  -> Nhập lại thông tin;
+else (Có)
+  |Hệ thống|
+  :Kiểm tra email trong CSDL;
+
+  if (Tài khoản không tồn tại?) then (Có)
+    :Thông báo lỗi\ntài khoản không tồn tại;
+    |Người dùng|
+    -> Nhập lại thông tin;
+  else (Tồn tại)
+    |Hệ thống|
+    :Kiểm tra loại xác thực;
+
+    if (Không phải tài khoản local?) then (Có)
+      :Thông báo lỗi\nkhông được phép đăng nhập;
+      |Người dùng|
+      -> Sử dụng phương thức\nxác thực khác;
+    else (Là tài khoản local)
+      |Hệ thống|
+      :Kiểm tra trạng thái tài khoản;
+
+      if (Tài khoản chưa kích hoạt?) then (Có)
+        :Thông báo lỗi\ntài khoản chưa kích hoạt;
+        |Người dùng|
+        -> Kích hoạt tài khoản;
+      else (Đã kích hoạt)
+        |Hệ thống|
+        :Kiểm tra mật khẩu;
+
+        if (Mật khẩu không đúng?) then (Có)
+          :Thông báo lỗi\nmật khẩu không đúng;
+          |Người dùng|
+          -> Nhập lại mật khẩu;
+        else (Đúng)
+          |Hệ thống|
+          :Xác thực thành công;
+          :Thông báo đăng nhập thành công;
+          :Chuyển hướng đến trang chủ;
+        endif
+      endif
+    endif
+  endif
+endif
+
+stop
+@enduml

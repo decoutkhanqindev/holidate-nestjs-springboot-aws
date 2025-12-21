@@ -1,0 +1,90 @@
+CÁC CHỨC NĂNG CỦA KHÁCH HÀNG (ROLE USER)
+
+1. Xác thực và đăng nhập
+   - Đăng ký tài khoản mới (tự đăng ký với role User)
+   - Đăng nhập bằng email và mật khẩu
+   - Đăng nhập bằng Google OAuth2
+   - Đăng xuất
+   - Xác thực email (OTP)
+   - Đặt lại mật khẩu (quên mật khẩu)
+
+2. Quản lý thông tin cá nhân
+   - Xem thông tin tài khoản của mình
+   - Cập nhật thông tin cá nhân (tên, email, số điện thoại, địa chỉ, v.v.)
+
+3. Tìm kiếm và khám phá phòng
+   - Tìm kiếm khách sạn
+     + Tìm kiếm theo tên khách sạn
+     + Tìm kiếm theo địa điểm (quốc gia, tỉnh/thành phố, thành phố, quận/huyện, phường/xã, đường/phố)
+     + Lọc theo hạng sao (star rating)
+     + Lọc theo tiện ích (amenities) như wifi, bể bơi, phòng gym, v.v.
+     + Tìm kiếm theo ngày check-in và check-out
+     + Tìm kiếm theo số lượng người lớn, trẻ em và số phòng cần
+     + Lọc theo khoảng giá (giá tối thiểu và tối đa)
+     + Sắp xếp kết quả theo nhiều tiêu chí (ngày tạo, giá, v.v.)
+     + Phân trang kết quả tìm kiếm
+     + Xem chi tiết thông tin khách sạn
+   
+   - Xem danh sách phòng
+     + Xem danh sách phòng của một khách sạn
+     + Lọc phòng theo trạng thái
+     + Sắp xếp phòng theo nhiều tiêu chí
+     + Phân trang danh sách phòng
+     + Xem chi tiết thông tin phòng (giá, tiện ích, hình ảnh, mô tả, v.v.)
+   
+   - Xem đánh giá
+     + Xem đánh giá của khách sạn
+     + Lọc đánh giá theo điểm số (từ điểm tối thiểu đến tối đa)
+     + Sắp xếp đánh giá theo ngày tạo
+     + Phân trang danh sách đánh giá
+     + Xem chi tiết từng đánh giá
+   
+   - Xem thông tin địa điểm
+     + Xem danh sách các quốc gia
+     + Xem danh sách các tỉnh/thành phố
+     + Xem danh sách các thành phố
+     + Xem danh sách các quận/huyện
+     + Xem danh sách các phường/xã
+     + Xem danh sách các đường/phố
+     + Tìm kiếm địa điểm theo tên
+   
+   - Xem tiện ích
+     + Xem danh sách tất cả tiện ích
+     + Xem tiện ích theo danh mục
+   
+   - Xem khuyến mãi
+     + Xem danh sách khuyến mãi
+     + Tìm kiếm khuyến mãi theo mã
+     + Lọc khuyến mãi theo trạng thái (đang hoạt động, đã hết hạn, v.v.)
+     + Lọc khuyến mãi theo khoảng phần trăm giảm giá
+     + Lọc khuyến mãi theo khách sạn
+     + Xem chi tiết thông tin khuyến mãi
+   
+   - Chatbot AI hỗ trợ tìm kiếm phòng
+     + Trò chuyện với chatbot AI để tìm phòng phù hợp
+     + Mô tả nhu cầu bằng ngôn ngữ tự nhiên (ví dụ: "Tôi cần phòng có view biển, giá dưới 2 triệu, ở Đà Nẵng vào cuối tuần")
+     + Chatbot AI sẽ gợi ý các phòng phù hợp dựa trên yêu cầu
+     + Đặt câu hỏi về tiện ích, giá cả, vị trí để được tư vấn
+     + Xem lịch sử trò chuyện với chatbot
+
+4. Quản lý đặt phòng
+   - Tạo đặt phòng mới
+   - Xem trước giá trước khi đặt (tính tổng tiền dựa trên ngày, số đêm, phòng, khuyến mãi)
+   - Xem danh sách đặt phòng của mình
+   - Xem chi tiết một đặt phòng
+   - Hủy đặt phòng
+   - Đổi lịch đặt phòng (thay đổi ngày check-in/check-out)
+   - Thanh toán
+   - Thực hiện check-in khi đến khách sạn
+   - Thực hiện check-out khi rời khách sạn
+
+5. Quản lý đánh giá
+   - Viết đánh giá sau khi sử dụng dịch vụ
+   - Chỉnh sửa đánh giá đã viết
+   - Xóa đánh giá của mình
+
+LƯU Ý:
+- Khách hàng chỉ có thể xem và quản lý thông tin, đặt phòng và đánh giá của chính mình.
+- Khách hàng không thể xóa đặt phòng (chỉ đối tác và quản trị viên mới có quyền này).
+- Khách hàng không thể quản lý khách sạn, phòng, giá cả, khuyến mãi hay các thiết lập hệ thống (chỉ đối tác và quản trị viên mới có quyền này).
+

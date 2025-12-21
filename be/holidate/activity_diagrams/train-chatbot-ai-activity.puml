@@ -1,0 +1,42 @@
+@startuml
+|Người dùng|
+start
+if (Đã đăng nhập?) then (Chưa)
+  :Đăng nhập vào hệ thống;
+  |Hệ thống|
+  :Xác thực thông tin đăng nhập;
+  if (Đăng nhập thành công?) then (Không)
+    :Thông báo lỗi đăng nhập;
+    stop
+  else (Có)
+    |Người dùng|
+  endif
+else (Đã đăng nhập)
+endif
+
+|Người dùng|
+:Truy cập giao diện quản lý AI;
+if (Cách thức nạp dữ liệu?) then (Đồng bộ từ hệ thống)
+  :Chọn loại đồng bộ\n(đồng bộ toàn bộ hoặc chỉ thay đổi);
+  :Nhấn nút "Đồng bộ dữ liệu";
+else (Tải lên tài liệu)
+  :Tải lên tài liệu quy định mới;
+  :Nhấn nút "Nạp dữ liệu";
+endif
+
+|Hệ thống|
+if (Đồng bộ từ hệ thống?) then (Có)
+  :Thu thập dữ liệu khách sạn\n(thông tin, phòng, chính sách, tiện ích...);
+  :Xử lý và chuyển đổi thành định dạng\nphù hợp cho AI;
+else (Tải lên tài liệu)
+  :Xử lý tài liệu đã tải lên;
+endif
+:Tạo vector đặc trưng (Embedding)\nvà lưu trữ vào cơ sở dữ liệu Vector;
+:Cập nhật cơ sở tri thức (Knowledge Base);
+
+|Người dùng|
+:Thông báo hoàn thành huấn luyện\nChatbot đã "học" kiến thức mới;
+
+stop
+@enduml
+

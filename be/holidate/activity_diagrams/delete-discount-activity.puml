@@ -1,0 +1,49 @@
+@startuml
+|Người dùng|
+start
+if (Đã đăng nhập?) then (Chưa)
+  :Đăng nhập vào hệ thống;
+  |Hệ thống|
+  :Xác thực thông tin đăng nhập;
+  if (Đăng nhập thành công?) then (Không)
+    :Thông báo lỗi đăng nhập;
+    stop
+  else (Có)
+    |Người dùng|
+  endif
+else (Đã đăng nhập)
+endif
+
+|Người dùng|
+:Chọn mã khuyến mãi cần xóa;
+:Nhấn nút "Xóa mã khuyến mãi";
+:Xác nhận xóa;
+
+|Hệ thống|
+:Kiểm tra mã khuyến mãi có tồn tại?;
+
+if (Mã khuyến mãi tồn tại?) then (Không)
+  :Thông báo lỗi\nmã khuyến mãi không tồn tại;
+  |Người dùng|
+  -> Chọn mã khuyến mãi khác;
+else (Có)
+  |Hệ thống|
+  :Kiểm tra mã khuyến mãi có liên kết\nvới khách sạn, ngày đặc biệt\nhoặc đã được sử dụng trong đơn đặt phòng?;
+
+  if (Có liên kết hoặc đã sử dụng?) then (Có)
+    :Thông báo lỗi\nkhông thể xóa mã khuyến mãi\ncó liên kết hoặc đã sử dụng;
+    |Người dùng|
+    -> Không thể xóa;
+  else (Không)
+    |Hệ thống|
+    :Xóa mã khuyến mãi;
+    :Thông báo xóa thành công;
+
+    |Người dùng|
+    :Nhận thông báo xóa thành công;
+  endif
+endif
+
+stop
+@enduml
+

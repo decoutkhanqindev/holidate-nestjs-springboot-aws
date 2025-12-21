@@ -1,0 +1,52 @@
+@startuml
+|Người dùng|
+start
+if (Đã đăng nhập?) then (Chưa)
+  :Đăng nhập vào hệ thống;
+  |Hệ thống|
+  :Xác thực thông tin đăng nhập;
+  if (Đăng nhập thành công?) then (Không)
+    :Thông báo lỗi đăng nhập;
+    stop
+  else (Có)
+    |Người dùng|
+  endif
+else (Đã đăng nhập)
+endif
+
+|Người dùng|
+:Chọn phòng;
+:Nhập số ngày cần tạo kho phòng;
+:Nhấn nút "Tạo kho phòng";
+
+|Hệ thống|
+:Kiểm tra phòng có tồn tại?;
+
+if (Phòng tồn tại?) then (Không)
+  :Thông báo lỗi\nphòng không tồn tại;
+  |Người dùng|
+  -> Chọn phòng khác;
+else (Có)
+  |Hệ thống|
+  :Kiểm tra số ngày hợp lệ?;
+
+  if (Số ngày hợp lệ?) then (Không)
+    :Thông báo lỗi\nsố ngày không hợp lệ;
+    |Người dùng|
+    -> Nhập lại số ngày;
+  else (Có)
+    |Hệ thống|
+    :Tạo bản ghi kho phòng\ncho từng ngày (từ hôm nay);
+    :Mỗi bản ghi có giá và số phòng còn lại\ntừ thông tin phòng;
+    :Lưu danh sách bản ghi vào CSDL;
+    :Thông báo tạo kho phòng thành công;
+
+    |Người dùng|
+    :Nhận thông báo tạo kho phòng thành công;
+    :Xem danh sách bản ghi kho phòng đã tạo;
+  endif
+endif
+
+stop
+@enduml
+

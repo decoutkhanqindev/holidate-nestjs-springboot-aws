@@ -1,0 +1,58 @@
+@startuml
+|Người dùng|
+start
+if (Đã đăng nhập?) then (Chưa)
+  :Đăng nhập vào hệ thống;
+  |Hệ thống|
+  :Xác thực thông tin đăng nhập;
+  if (Đăng nhập thành công?) then (Không)
+    :Thông báo lỗi đăng nhập;
+    stop
+  else (Có)
+    |Người dùng|
+  endif
+else (Đã đăng nhập)
+endif
+
+|Người dùng|
+:Chọn người dùng cần cập nhật\n(hoặc tự cập nhật thông tin);
+:Nhập thông tin cần cập nhật\n(họ tên, số điện thoại, địa chỉ, giới tính, ngày sinh...);
+if (Có thay đổi địa chỉ?) then (Có)
+  :Chọn thông tin địa chỉ mới\n(quốc gia, tỉnh, thành phố, quận, phường, đường);
+else (Không)
+endif
+if (Có thay đổi ảnh đại diện?) then (Có)
+  :Tải lên ảnh đại diện mới;
+else (Không)
+endif
+:Nhấn nút "Cập nhật";
+
+|Hệ thống|
+:Kiểm tra quyền truy cập\nvà người dùng có tồn tại?;
+
+if (Có quyền và người dùng tồn tại?) then (Không)
+  :Thông báo lỗi\nkhông có quyền hoặc người dùng không tồn tại;
+  |Người dùng|
+  -> Chọn người dùng khác hoặc kiểm tra lại;
+else (Có)
+  |Hệ thống|
+  :Kiểm tra thông tin cập nhật hợp lệ\n(địa chỉ, số điện thoại nếu có);
+
+  if (Thông tin hợp lệ?) then (Không)
+    :Thông báo lỗi thông tin không hợp lệ;
+    |Người dùng|
+    -> Nhập lại thông tin;
+  else (Có)
+    |Hệ thống|
+    :Cập nhật thông tin người dùng;
+    :Lưu thông tin vào CSDL;
+    :Thông báo cập nhật thành công;
+
+    |Người dùng|
+    :Nhận thông báo cập nhật thành công;
+  endif
+endif
+
+stop
+@enduml
+
